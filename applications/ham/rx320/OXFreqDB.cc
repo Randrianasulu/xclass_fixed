@@ -497,7 +497,7 @@ void OXFreqDB::SetWindowTitle(char *title) {
 
   if (title) {
     char *wname = new char[strlen(title) + strlen(pname) + 10];
-    sprintf(wname, "%s - %s", pname, title);
+    sprintf(wname, "%s - %s%s", pname, title, _changed ? " *" : "");
     SetWindowName(wname);
     delete wname;
   } else {
@@ -628,6 +628,7 @@ void OXFreqDB::SetChanged(int onoff) {
      _menuFile->EnableEntry(M_FILE_SAVEAS);
    _changed = False;
   }
+  SetWindowTitle(_filename);
 }
 
 int OXFreqDB::IsSaved() {

@@ -1,7 +1,7 @@
 Intro
 -----
 
-This is the alpha version 0.4 of rx320, a Linux control program for the
+This is the alpha version 0.4.2 of rx320, a Linux control program for the
 Ten-Tec RX320 receiver with a graphical user interface.
 
 Currently the program is capable of communicating with the receiver using
