@@ -1,0 +1,56 @@
+Intro
+-----
+
+This is the alpha version 0.2 of rx320, a Linux control program for the
+Ten-Tec RX320 receiver with a graphical interface.
+
+Currently the program is capable of communicating with the receiver using
+one of the available serial ports. There is some support for managing
+frequency database files: the program can read and save files in Clifton
+Turner's *.320 format, and the receiver can be tuned to selected stations.
+However, new stations can be entered but existing ones cannot be edited (the
+edit dialog appears, but changes are not written back).
+
+No frequency sweep modes are implemented yet.
+
+The program saves the whole receiver state on exit, including the two VFO
+frequencies, and restores them on startup. The receiver is also reinitialized
+every time a power-on is detected.
+
+Right-clicking on an empty space between buttons popups a menu which lets
+you to open the frequency database window. Note that you can have several
+of these windows open simultaneously. From the File menu of the database
+window you can then open a *.320 file. Double-click on station names to
+tune the receiver into that station.
+
+The main tuning knob works more like a real one (i.e. you click on the small
+hole and move the mouse around in circles), and not like the knob in the
+Ten-Tec's Windows program.
+
+You can also use the Right and Left arrow keys to tune up and down in
+frequency with the currently selected tuning step, or PgUp and PgDn to tune
+by 10 times the current step. Use the number keys to enter directly a
+frequency (in Hertz), finish with Enter to tune to that frequency or with
+Escape to abort the operation.
+
+
+Installation
+------------
+
+To compile and run the program you need to have xclass version 0.6.2 or
+higher installed in your system (xclass is currently available from
+http://xclass.sourceforge.net and ftp://mitac11.uia.ac.be/pub/xclass).
+In order to build the executable go to the directory where you unpacked
+the sources and type 'make'. Then copy the resulting rx320 to somewhere
+in your $PATH.
+
+To run the program, just type rx320 and the main window should appear. The
+serial port device defaults to /dev/ttyS1, and if you're using another port
+you'll have to modify the startup file manually. Just exit the program, edit
+the startup file (usually saved as $HOME/.xclassrc/etc/rx320rx), modify
+accordingly the "device" option under "[defaults]" and restart the program.
+Make sure you have the correct permissions to access the serial port.
+
+
+Have fun,
+Hector.

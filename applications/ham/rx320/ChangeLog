@@ -1,0 +1,44 @@
+30/08/01
+
+- Preliminary version. Got the communication working.
+
+
+31/08/01
+
+- Added main panel, S meter.
+
+
+01/09/01
+
+- Changed the frequency calculations: use long integers instead of floating
+  point values in order to avoid rounding problems.
+
+
+02/09/01
+
+- Implemented tuning knob.
+
+- Added a few keyboard shortcuts.
+
+
+11/11/01 (0.1)
+
+- The serial port is no longer fixed to /dev/ttyS1, although the settings
+  have to be changed manually by editing the rx320rc file.
+
+- Released first alpha version.
+
+
+12/11/01 (0.2)
+
+- Added OFreqRecord class to handle frequency records in Clifton Turner's
+  *.320 Frequency File Format.
+
+
+25/11/01
+
+- Added Frequency Database viewer.
+
+- Added Station edit dialog.
+
+- Added support (experimental) for reading *.cdf files.
