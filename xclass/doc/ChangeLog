@@ -2062,3 +2062,14 @@ OPicture.cc
 26/03/02
 
 - Disabled the 'inline' test in the configure script.
+
+
+18/06/02  (0.6.4)
+
+- Changed the return type of OXMainFrame::CloseWindow() from void to int.
+  Now the function returns True if the window was successfully closed,
+  False otherwise. Note that this change introduces incompatibilities
+  with existing applications, but these shouldn't be difficult to update.
+  Right now the xclass library does not make any use of the return value,
+  but it can be useful to applications that manage several top-level
+  windows (like rx320).

@@ -355,10 +355,11 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
   _GrabAltKey(XK_t);
 }
 
-void OXFileDialog::CloseWindow() {
+int OXFileDialog::CloseWindow() {
   if (_file_info->filename) delete[] _file_info->filename;
   _file_info->filename = NULL;
   delete this;
+  return True;
 }
 
 int OXFileDialog::HandleKey(XKeyEvent *event) {

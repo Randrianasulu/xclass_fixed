@@ -71,7 +71,7 @@ public:
            unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXMsgBox();
 
-  virtual void CloseWindow();
+  virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
 protected:

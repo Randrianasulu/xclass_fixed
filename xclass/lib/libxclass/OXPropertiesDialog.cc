@@ -202,8 +202,9 @@ OXPropertiesDialog::~OXPropertiesDialog() {
   delete _tname;
 }
 
-void OXPropertiesDialog::CloseWindow() {
+int OXPropertiesDialog::CloseWindow() {
   delete this;
+  return True;
 }
 
 void OXPropertiesDialog::StatFile() {

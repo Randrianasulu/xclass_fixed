@@ -46,10 +46,11 @@ OXTransientFrame::~OXTransientFrame() {
 
 // Override this to intercept close...
 
-void OXTransientFrame::CloseWindow() {
+int OXTransientFrame::CloseWindow() {
   // The following delete calls OXMainFrame's destructor,
   // which does a DestroyWindow()
   delete this;
+  return True;
 }
 
 // Position transient frame centered relative to the parent frame.

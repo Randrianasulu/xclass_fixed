@@ -230,9 +230,10 @@ OXMsgBox::~OXMsgBox() {
   delete L5;
 }
 
-void OXMsgBox::CloseWindow() {
+int OXMsgBox::CloseWindow() {
   if (_ret_code) *_ret_code = ID_CLOSE;
   delete this;
+  return True;
 }
 
 int OXMsgBox::ProcessMessage(OMessage *msg) {

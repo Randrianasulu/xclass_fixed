@@ -82,7 +82,7 @@ public:
   virtual int HandleSelection(XSelectionEvent *event);
   virtual int HandleSelectionRequest(XSelectionRequestEvent *event);
   virtual int HandleSelectionClear(XSelectionClearEvent *event);
-  virtual void CloseWindow();
+  virtual int CloseWindow();
   
   virtual void Reconfig();
 

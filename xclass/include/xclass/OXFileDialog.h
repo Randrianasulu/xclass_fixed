@@ -56,10 +56,10 @@ public:
                int dlg_type, OFileInfo *file_info);
   virtual ~OXFileDialog();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
-  virtual int  HandleMapNotify(XMapEvent *event);
-  virtual int  HandleKey(XKeyEvent *event);
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int HandleMapNotify(XMapEvent *event);
+  virtual int HandleKey(XKeyEvent *event);
 
 protected:
   OXFileDialog(const OXWindow *p, const OXWindow *main);

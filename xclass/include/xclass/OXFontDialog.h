@@ -40,9 +40,9 @@ public:
                OString *nret = NULL, OString *sample = NULL);
   virtual ~OXFontDialog();
   
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
-  virtual int  HandleKey(XKeyEvent *event);
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int HandleKey(XKeyEvent *event);
   
 protected:
   void _GetFontName();

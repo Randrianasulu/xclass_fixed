@@ -283,8 +283,9 @@ OXFontDialog::OXFontDialog(const OXWindow *p, const OXWindow *t,
 OXFontDialog::~OXFontDialog() {
 }
 
-void OXFontDialog::CloseWindow() {
+int OXFontDialog::CloseWindow() {
   delete this;
+  return True;
 }
 
 int OXFontDialog::HandleKey(XKeyEvent *event) {

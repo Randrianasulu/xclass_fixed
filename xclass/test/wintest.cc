@@ -82,7 +82,7 @@ public:
   OXTestMainFrame(const OXWindow *p, int w, int h);
   virtual ~OXTestMainFrame();
 
-virtual int ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OXCompositeFrame *_statusFrame;
@@ -104,8 +104,8 @@ public:
                unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXTestDialog();
 
-  virtual void CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
+
 protected:
   OXCompositeFrame *Frame1, *f1, *f2, *f3, *f4;
   OXButton *OkButton, *CancelButton, *btn1, *btn2, *chk1, *chk2, *rad1, *rad2;
@@ -121,7 +121,6 @@ public:
                unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXTestMsgBox();
 
-  virtual void CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
 protected:
@@ -533,10 +532,6 @@ OXTestDialog::~OXTestDialog() {
   delete L3;
 }
 
-void OXTestDialog::CloseWindow() {
-  delete this;
-}
-
 int OXTestDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
@@ -720,10 +715,6 @@ OXTestMsgBox::~OXTestMsgBox() {
   delete L5;
   delete L6;
   delete L21;
-}
-
-void OXTestMsgBox::CloseWindow() {
-  delete this;
 }
 
 int OXTestMsgBox::ProcessMessage(OMessage *msg) {

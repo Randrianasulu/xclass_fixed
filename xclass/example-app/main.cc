@@ -133,8 +133,8 @@ OXMain::~OXMain() {
   delete _menuHelp;
 }
 
-void OXMain::CloseWindow() {
-  OXMainFrame::CloseWindow();
+int OXMain::CloseWindow() {
+  return OXMainFrame::CloseWindow();
 }
 
 OXPopupMenu *OXMain::_MakePopup(struct _popup *p) {
