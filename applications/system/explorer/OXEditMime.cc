@@ -40,11 +40,15 @@
 #include <xclass/utils.h>
 
 #include "OXEditMime.h"
+#include "OXIconSelDialog.h"
 #include "OXExplorer.h"
 
 
 extern struct _default_icon default_icon[];
 extern OMimeTypes *MimeTypeList;
+
+
+#define ID_CHANGEICON  (ID_OK+ID_CANCEL+100)
 
 
 //-------------------------------------------------------------------
@@ -99,7 +103,7 @@ OXEditMimeDialog::OXEditMimeDialog(const OXWindow *p, const OXWindow *main,
     icon1 = new OXIcon(Ihf, pic, 32, 32);
     Ily = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 10, 10, 15, 15);
 
-    SetIcon = new OXTextButton(Ihf, new OHotString("Change &Icon..."), 100);
+    SetIcon = new OXTextButton(Ihf, new OHotString("Change &Icon..."), ID_CHANGEICON);
     SetIcon->Associate(this);
     lyl = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y);
     lyr = new OLayoutHints(LHINTS_RIGHT | LHINTS_CENTER_Y);
@@ -235,6 +239,10 @@ int OXEditMimeDialog::ProcessMessage(OMessage *msg) {
               if (_retc) *_retc = ID_OK;
             case ID_CANCEL:
               CloseWindow();
+              break;
+
+            case ID_CHANGEICON:
+              new OXIconSelDialog(_client->GetRoot(), this, NULL);
               break;
 
           }

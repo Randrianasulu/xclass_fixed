@@ -17,6 +17,7 @@ SRCS = main.cc \
 	OXCopyBox.cc \
 	OXOptions.cc \
 	OXEditMime.cc \
+	OXIconSelDialog.cc \
 	OXOpenWith.cc \
 	ORecycledFiles.cc
 
