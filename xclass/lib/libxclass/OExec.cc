@@ -80,7 +80,7 @@ OExec::OExec(OXClient *client, const char *prog, char *argv[],
     if (pipe_io) {
       _input_fd = fd0[1];  // we write to the application's input
       close(fd0[0]);
-      _output_fd = fd1[0]; // likewise, we read fron application's output
+      _output_fd = fd1[0]; // likewise, we read from application's output
       close(fd1[1]);
       _error_fd = fd2[0];
       close(fd2[1]);

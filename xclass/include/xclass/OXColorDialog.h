@@ -104,6 +104,10 @@ protected:
   int _ncolors, _click, _cx, _cy, _cz;
   OColor _currentColor;
   ORectangle _colormapRect, _sliderRect;
+  
+private:
+  int colormap[64][3];
+  unsigned long pixel[64];
 };
 
 //----------------------------------------------------------------------

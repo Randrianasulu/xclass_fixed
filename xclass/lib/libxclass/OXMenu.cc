@@ -934,9 +934,13 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
                               (_current->_popup->GetParent())->GetId(),
                               _w, _current->_ey, &ax, &ay, &wdummy);
 
-        int pw = _current->_popup->GetDefaultWidth();
+        ODimension ps = _current->_popup->GetDefaultSize();
 
-        if (ax + pw > _client->GetDisplayWidth()) ax -= _w + pw - 7;
+        if (ax + ps.w > _client->GetDisplayWidth())
+          ax -= _w + ps.w - 7;
+
+        if (ay + ps.h > _client->GetDisplayHeight())
+          ay = _client->GetDisplayHeight() - ps.h - 3;
 
         _current->_popup->PlaceMenu(ax-3, ay-1, False, False);
         _popdown = True;
@@ -963,9 +967,13 @@ int OXPopupMenu::HandleTimer(OTimer *t) {
                             (_current->_popup->GetParent())->GetId(),
                             _w, _current->_ey, &ax, &ay, &wdummy);
 
-      int pw = _current->_popup->GetDefaultWidth();
+      ODimension ps = _current->_popup->GetDefaultSize();
 
-      if (ax + pw > _client->GetDisplayWidth()) ax -= _w + pw - 7;
+      if (ax + ps.w > _client->GetDisplayWidth())
+        ax -= _w + ps.w - 7;
+
+      if (ay + ps.h > _client->GetDisplayHeight())
+        ay = _client->GetDisplayHeight() - ps.h - 3;
 
       _current->_popup->PlaceMenu(ax-3, ay-1, False, False);
       _popdown = True;
@@ -1308,22 +1316,23 @@ void OXMenuTitle::SetState(int state) {
   _state = state;
   if (state) {
     if (_menu) {
-      int ax, ay;
+      int ax, ay, dpyw, dpyh;
       Window wdummy;
 
       XTranslateCoordinates(GetDisplay(), _id, (_menu->GetParent())->GetId(),
-                            0, 0, &ax, &ay, &wdummy);
+                            0, _h, &ax, &ay, &wdummy);
 
-      int pw = _menu->GetDefaultWidth();
+      ODimension ps = _menu->GetDefaultSize();
 
-#if 1
-      if (ax + pw > _client->GetDisplayWidth()) ax -= pw - _w - 2;
-#else
-      if (ax + pw > _client->GetDisplayWidth()) ax += _w + 2;
-#endif
+      dpyw = _client->GetDisplayWidth();
+      dpyh = _client->GetDisplayHeight();
+
+      if (ax + ps.w > dpyw) ax -= ps.w - _w - 2;
+      if (ax + ps.w > dpyw) ax = dpyw - ps.w - 1;  // if still off-screen
+      if (ay + ps.h > dpyh) ay -= ps.h + _h;
 
       // Place the menu just under the window:
-      _menu->PlaceMenu(ax-1, ay+_h, True, False);
+      _menu->PlaceMenu(ax-1, ay, True, False);
     }
   } else {
     if (_menu) {

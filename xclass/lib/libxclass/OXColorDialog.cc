@@ -452,9 +452,6 @@ void OXColorPick::_CreateImages() {
 // display modes with reduced number of colors. The Floyd-Steinberg error
 // diffusion dithering algorithm is used.
 
-int colormap[64][3];
-unsigned long pixel[64];
-
 // This routine is called in PseudoColor modes only.
 
 void OXColorPick::_AllocColors() {

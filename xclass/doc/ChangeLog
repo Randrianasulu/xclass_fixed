@@ -2194,3 +2194,8 @@ OPicture.cc
 17/07/02
 
 - OXPopupMenu: added support for side pixmaps.
+
+
+21/07/02
+
+- OXColorPick: colormap[] and pixel[] arrays are now private class members.
