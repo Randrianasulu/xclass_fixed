@@ -189,8 +189,8 @@ char *OHtmlUri::BuildUri() {
   char *z;
 
   if (zScheme)    n += strlen(zScheme) + 1;
-  if (zAuthority) n += strlen(zAuthority) + 2;
-  if (zPath)      n += strlen(zPath) + 2;
+  if (zAuthority) n += strlen(zAuthority) + 3;
+  if (zPath)      n += strlen(zPath) + 1;
   if (zQuery)     n += strlen(zQuery) + 1;
   if (zFragment)  n += strlen(zFragment) + 1;
   z = new char[n];
@@ -204,13 +204,14 @@ char *OHtmlUri::BuildUri() {
     sprintf(&z[n], "//%s", zAuthority);
     n += strlen(&z[n]);
   }
+  if (zAuthority && zAuthority[strlen(zAuthority)-1] != '/' &&
+      !(zPath && zPath[0] == '/')) {
+    strcat(z, "/");
+    ++n;
+  }
   if (zPath) {
     sprintf(&z[n], "%s", zPath);
     n += strlen(&z[n]);
-    if (zPath[strlen(zPath)-1] != '/') {
-      strcat(z, "/");
-      ++n;
-    }
   }
   if (zQuery) {
     sprintf(&z[n], "?%s", zQuery);
