@@ -110,6 +110,8 @@ OXTextEdit::OXTextEdit(const OXWindow *p, int w, int h, int id,
   _cursorPos = _textIndex = OPosition(0, 0);
   _cursorLastX = 0;
 
+  _autoUpdate = True;
+
   _tabWidth = TAB_WIDTH;
   _blinkTime = 250;
 
@@ -432,10 +434,10 @@ int OXTextEdit::HandleMotion(XMotionEvent *event) {
 //   Ctrl-Ins, Shift-Ins, Backspace, Delete, Shift-Delete
 
 int OXTextEdit::HandleKey(XKeyEvent *event) {
-  char input[2] = { 0, 0 };
-  int  charcount;
+  char input[4] = { 0, 0, 0, 0 };
+  int  charcount, update = _autoUpdate;
   KeySym keysym;
-  XComposeStatus compose = { NULL, 0 };
+  static XComposeStatus compose = { NULL, 0 };
   OTextLine *line;
 
   if (_items.size() == 0) AddLine("");  //return True;
@@ -452,6 +454,8 @@ int OXTextEdit::HandleKey(XKeyEvent *event) {
         case XK_V: case XK_v: if (!_readOnly) Paste(); return True;
       }
     }
+
+    _autoUpdate = True;
 
     switch (keysym) {
       case XK_Left:
@@ -584,8 +588,9 @@ int OXTextEdit::HandleKey(XKeyEvent *event) {
         }
         break;
 
-      case XK_Tab:
       default:
+        if ((charcount == 1) && (event->state & Mod1Mask)) *input |= 0x80;
+      case XK_Tab:
         if (_readOnly || charcount == 0) break;
         if (_hasSelection) {
           DeleteSelection();
@@ -640,6 +645,8 @@ int OXTextEdit::HandleKey(XKeyEvent *event) {
     }
 
   }
+
+  _autoUpdate = update;
 
   return True;
 }
@@ -916,10 +923,12 @@ void OXTextEdit::InsertText(const char *string, int len) {
   _changed = True;
   _UpdateCursor(_textIndex);
   _cursorLastX = _cursorPos.x;
-  CalcMaxItemSize();
-  _needItemLayout = True;
-  Layout();
-  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+  if (_autoUpdate) {
+    CalcMaxItemSize();
+    _needItemLayout = True;
+    Layout();
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+  }
 }
 
 // Return the whole contents of the text widget in a single OString object.
@@ -1495,9 +1504,11 @@ void OXTextEdit::SplitLine(int lnum, int charpos) {
     _items.push_back(newline);
 
   _changed = True;
-  NeedRedraw(ORectangle(line->GetPosition(), _canvas->GetSize()));
-  CalcMaxItemSize();
-  Layout();
+  if (_autoUpdate) {
+    NeedRedraw(ORectangle(line->GetPosition(), _canvas->GetSize()));
+    CalcMaxItemSize();
+    Layout();
+  }
 }
 
 // Join the specified line and the next into a new single one.
@@ -1512,8 +1523,10 @@ void OXTextEdit::JoinLine(int lnum) {
     delete _items[lnum+1];
     _items.erase(_items.begin() + lnum + 1); // .erase(&_items[lnum+1]);
     _changed = True;
-    Layout();
-    NeedRedraw(ORectangle(line->GetPosition(), _canvas->GetSize()));
+    if (_autoUpdate) {
+      Layout();
+      NeedRedraw(ORectangle(line->GetPosition(), _canvas->GetSize()));
+    }
   }
 }
 
@@ -1527,7 +1540,7 @@ void OXTextEdit::DeleteChar(int lnum, int charpos) {
     line->RemoveChar(charpos);
     line->Resize(line->GetDefaultSize());
     _changed = True;
-    _CheckLayout(line);
+    if (_autoUpdate) _CheckLayout(line);
   } else if (lnum < _items.size()-1) {
     JoinLine(lnum);
   }
@@ -1586,8 +1599,6 @@ void OXTextEdit::DeleteSelection() {
 }
 
 //----------------------------------------------------------------------
-
-// The following 3 routines *really* need a serious rework...
 
 void OXTextEdit::SelectToPos(OPosition mousePos) {
   OTextLine *item;
@@ -1735,6 +1746,20 @@ void OXTextEdit::UnSelectAll() {
 
     OItemViewMessage message(_msgType, MSG_SELCHANGED, _id);
     SendMessage(_msgObject, &message);
+  }
+}
+
+void OXTextEdit::AutoUpdate(int onoff) {
+  if (_autoUpdate != onoff) {
+    _autoUpdate = onoff;
+    if (_autoUpdate) {
+      _UpdateCursor(_textIndex);
+      _cursorLastX = _cursorPos.x;
+      CalcMaxItemSize();
+      _needItemLayout = True;
+      Layout();
+      NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+    }
   }
 }
 

@@ -57,9 +57,15 @@
 
 // window arrangement modes
 
-#define MDI_TILE_HORIZONTAL	1
-#define MDI_TILE_VERTICAL	2
-#define MDI_CASCADE		3
+#define MDI_TILE_HORIZONTAL	 1
+#define MDI_TILE_VERTICAL	 2
+#define MDI_CASCADE		 3
+
+// geometry value masks for ConfigureWindow() call
+
+#define MDI_CLIENT_GEOMETRY      (1<<0)
+#define MDI_DECOR_GEOMETRY       (1<<2)
+#define MDI_ICON_GEOMETRY        (1<<3)
 
 
 class OXGC;
@@ -69,11 +75,29 @@ class OXMdiDecorFrame;
 class OXMdiFrame;
 
 
-struct SMdiFrameList {
+//----------------------------------------------------------------------
+
+class OMdiFrameList {
+public:
+  OXMdiDecorFrame *GetDecorFrame() const { return decor; }
+  OMdiFrameList *GetPrev() const { return prev; }
+  OMdiFrameList *GetNext() const { return next; }
+  OMdiFrameList *GetCyclePrev() const { return cyclePrev; }
+  OMdiFrameList *GetCycleNext() const { return cycleNext; }
+
+  friend class OXMdiMainFrame;
+
+protected:
   OXMdiDecorFrame *decor;
   XID frameid;
-  SMdiFrameList *prev, *next;
-  SMdiFrameList *cyclePrev, *cycleNext;
+  OMdiFrameList *prev, *next;
+  OMdiFrameList *cyclePrev, *cycleNext;
+};
+
+class OMdiGeometry {
+public:
+  ORectangle client, decoration, icon;
+  int value_mask;
 };
 
 
@@ -110,19 +134,28 @@ public:
   void CirculateUp();
   void CirculateDown();
   
-  OXMdiFrame *GetCurrent();
-  OXMdiFrame *GetMdiFrame(XID id);
+  OXMdiFrame *GetCurrent() const;
+  OXMdiFrame *GetMdiFrame(XID id) const;
   bool SetCurrent(XID newcurrent);
   bool SetCurrent(OXMdiFrame *f);
 
   OXPopupMenu *GetWinListMenu() const { return _winListMenu; }
   OXMdiMenuBar *GetMenu() const { return _menuBar; }
-  long GetNumberOfFrame() const { return _numberOfFrames; }
+
+  OMdiFrameList *GetWindowList(int current = False) const
+      { return current ? _current : _children; }
+  long GetNumberOfFrames() const { return _numberOfFrames; }
   
   void SetResizeMode(int mode = MDI_DEFAULT_RESIZE_MODE);
   
   ORectangle GetBBox() const;
   ORectangle GetMinimizedBBox() const;
+
+  OMdiGeometry GetWindowGeometry(OXMdiFrame *f) const;
+  void ConfigureWindow(OXMdiFrame *f, OMdiGeometry &geom);
+
+  bool IsMaximized(OXMdiFrame *f);
+  bool IsMinimized(OXMdiFrame *f);
 
   friend class OXMdiFrame;
 
@@ -130,9 +163,9 @@ protected:
   void AddMdiFrame(OXMdiFrame *f);
   bool RemoveMdiFrame(OXMdiFrame *f);
 
-  bool SetCurrent(SMdiFrameList *newcurrent);
-  OXMdiDecorFrame *GetDecorFrame(XID id);
-  OXMdiDecorFrame *GetDecorFrame(OXMdiFrame *frame);
+  bool SetCurrent(OMdiFrameList *newcurrent);
+  OXMdiDecorFrame *GetDecorFrame(XID id) const;
+  OXMdiDecorFrame *GetDecorFrame(OXMdiFrame *frame) const;
 
   void UpdateWinListMenu();
   
@@ -140,8 +173,8 @@ protected:
   OXMdiMenuBar *_menuBar;
   OXFrame *_container;
   OXPopupMenu *_winListMenu;
-  SMdiFrameList *_children;
-  SMdiFrameList *_current;
+  OMdiFrameList *_children;
+  OMdiFrameList *_current;
 
   int _current_x, _current_y, _resizeMode;
   const OXFont *_fontCurrent, *_fontNotCurrent;

@@ -241,6 +241,8 @@ public:
   
   void SetDecorBorderWidth(int bw);
 
+  const OXMdiFrame *GetMdiFrame() const { return _frame; }
+
   friend class OXMdiMainFrame;
 
 protected:

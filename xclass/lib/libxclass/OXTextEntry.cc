@@ -450,7 +450,7 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
   int  n, len, text_changed = False;
   char tmp[10];
   KeySym keysym;
-  XComposeStatus compose = { NULL, 0 };
+  static XComposeStatus compose = { NULL, 0 };
 
   if (!IsEnabled()) return True;
 
@@ -528,6 +528,7 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
       break;
       
     default:
+      if ((n > 0) && (event->state & Mod1Mask)) *tmp |= 0x80;
       if (_selection_on && (strlen(tmp) > 0)) {
         int start, ns;
         
@@ -542,11 +543,13 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
       text_changed = True;
       break;
   }
+
   if (text_changed) {
     NeedRedraw();
     OTextEntryMessage msg(MSG_TEXTENTRY, MSG_TEXTCHANGED, _widgetID, keysym);
     SendMessage(_msgObject, &msg);
   }
+
   return True;
 }
 

@@ -67,6 +67,12 @@ OXCheckButton::OXCheckButton(const OXWindow *p, OString *s, int ID,
     if (main) main->UnregisterButton(this);
 }
 
+ODimension OXCheckButton::GetDefaultSize() const {
+  int w = (_tw == 0) ? _offd->GetWidth() : _tw + _offd->GetWidth() + 9;
+  int h = (_th == 0) ? _offd->GetHeight() : _th + 2;                      
+  return ODimension(w, h);           
+}
+
 void OXCheckButton::_SetState(int state) {
   if (state != _state) {
     _state = state;
@@ -210,7 +216,7 @@ void OXCheckButton::_DoRedraw() {
 
   cw = 13;
 //  y0 = ty + ((_th - cw) >> 1);
-  y0 = ty +1;
+  y0 = (_th == 0) ? 0 : ty +1;
 
   ClearArea(0, y0, cw, cw);
 
@@ -227,6 +233,8 @@ void OXCheckButton::_DoRedraw() {
     else
       _off->Draw(GetDisplay(), _id, _normGC->GetGC(), 0, y0);
   }
+
+  if (!_text) return;
 
   if (!IsEnabled()) {
     unsigned long forecolor = _normGC->GetForeground();

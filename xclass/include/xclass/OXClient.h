@@ -118,6 +118,8 @@ public:
   void WaitFor(OXWindow *w);
   void WaitForUnmap(OXWindow *w);
 
+  void FlushRedraw();
+
   const OResourcePool *GetResourcePool() const { return _resourcePool; }
 
   void ReloadResources();

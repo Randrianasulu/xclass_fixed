@@ -86,6 +86,7 @@ OXMainFrame::~OXMainFrame() {
   if (_focusMgr) delete _focusMgr;
   if (_dndManager) delete _dndManager;
   DestroyWindow();
+  XSync(GetDisplay(), False);
   if (_bindlist) delete _bindlist;
   _bindlist = NULL; // =!= Deletion of buttons and other widgets during
                     // automatic OXCompositeFrame cleanup can cause

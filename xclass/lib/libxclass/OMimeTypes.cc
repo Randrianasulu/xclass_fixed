@@ -279,6 +279,9 @@ void OMimeTypes::AddType(char *description,
 
   OMime *tmpmime = new OMime;
 
+  listptr = list;
+  while (listptr->next) listptr = listptr->next;
+
   listptr->next = tmpmime;
   listptr = tmpmime;
 

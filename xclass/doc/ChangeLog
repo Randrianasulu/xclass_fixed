@@ -2295,3 +2295,66 @@ OPicture.cc
 23/08/02
 
 - Added RenameEntry() and SetEntryPic() to OXPopupMenu.
+
+
+30/08/02  (0.7.5)
+
+- OXView: added SetupBackgroundColor() method.
+
+
+06/09/02
+
+- OXTextButton (OXCheckButton, OXRadioButton): allow the string to be NULL.
+
+- OFocusOwner: do not (re)assign focus to a window if it was unmapped.
+
+
+09/09/02
+
+- Added AutoUpdate() method to OXTextEdit. When inserting large amounts of
+  text to the widget by calling repeatedly InsertText(), the time spent in
+  doing a full document layout can become considerable. In that case it
+  is better to switch off the automatic relayout, do the necessary text
+  insertions, then turn the automatic relayout on again. A full layout is
+  automatically done by the widget when the AutoUpdate() is set to True.
+
+
+17/09/02
+
+- Added an OException class to be used as a base for exceptions thrown by
+  xclass objects.
+
+
+19/09/02
+
+- Corrected a bug in OXSpinner::GetValue().
+
+
+05/11/02
+
+- Corrected a bug in OMimeTypes::AddType().
+
+
+24/04/03
+
+- OXMdiMainFrame: added GetWindowList().
+
+- OXPopupMenu: do not pop-down a submenu if the corresponding popup entry
+  is disabled.
+
+
+25/04/03
+
+- Added the following methods to OXMdiMainFrame:
+    GetWindowGeometry() - returns the full geometry information (decoration
+                          geometry, client window geometry and icon position)
+                          for the specified MDI window.
+    ConfigureWindow()   - configures the MDI window geometry (decoration or
+                          client window geometry, and/or icon position)
+  These operations are very useful for saving/restoring MDI workspaces.
+
+
+03/05/03
+
+- OResourcePool::FindIniFile(): changed the search order for read operations,
+  the system ini file must be the last in the chain.

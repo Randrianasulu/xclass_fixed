@@ -19,37 +19,23 @@
 
 **************************************************************************/
 
-#ifndef __OXCHECKBUTTON_H
-#define __OXCHECKBUTTON_H
-
-#include <X11/Xlib.h>
-
-#include <xclass/utils.h>
-#include <xclass/OXTextButton.h>
+#ifndef __OEXCEPTION_H
+#define __OEXCEPTION_H
 
 
 //----------------------------------------------------------------------
 
-class OXCheckButton : public OXTextButton {
-protected:
-  static const OPicture *_on, *_off, *_ond, *_offd;
-  static int _init;
+// This is the base class for all exceptions thrown by xclass objects
 
+class OException : public OBaseObject {
 public:
-  OXCheckButton(const OXWindow *p, OString *s, int ID,
-                unsigned int option = 0);
+  OException() { _msg = "Exception"; }
 
-  virtual ODimension GetDefaultSize() const;
-
-  virtual int  HandleKey(XKeyEvent *event);
-  virtual int  HandleButton(XButtonEvent *event);
-  virtual int  HandleCrossing(XCrossingEvent *event);
-  virtual void SetState(int state) { _SetState(_prevstate = state); }
+  const char *GetMessage() const { return _msg; }
 
 protected:
-  virtual void _DoRedraw();
-  void _SetState(int state);
+  char *_msg;    // a descriptive message, usually telling what caused
+                 // the exception
 };
 
-
-#endif  // __OXCHECKBUTTON_H
+#endif  // __OEXCEPTION_H

@@ -135,7 +135,7 @@ void OXSpinner::SetRange(float min, float max, float step) {
 }
 
 float OXSpinner::GetValue() {
-  _SetValue();
+  _GetValue();
   return _value;
 }
 

@@ -64,13 +64,18 @@ OXTextButton::OXTextButton(const OXWindow *p, OString *s, int ID,
     _font = _defaultFont;
     _normGC = (OXGC *) _defaultGC;
 
-    _tl = _font->ComputeTextLayout(_text->GetString(), _text->GetLength(),
-                                   _wrapLength, _justify, _textFlags,
-                                   &_tw, &_th);
+    if (_text) {
+      _tl = _font->ComputeTextLayout(_text->GetString(), _text->GetLength(),
+                                     _wrapLength, _justify, _textFlags,
+                                     &_tw, &_th);
+    } else {
+      _tl = NULL;
+      _tw = _th = 0;
+    }
 
     OXMainFrame *main = (OXMainFrame *) _toplevel;
 
-    if ((hotchar = s->GetHotChar()) != 0) {
+    if (s && ((hotchar = s->GetHotChar()) != 0)) {
       if ((_hkeycode = XKeysymToKeycode(GetDisplay(), hotchar)) != 0) {
         if (main) {
           main->BindKey(this, _hkeycode, Mod1Mask);
@@ -95,7 +100,7 @@ OXTextButton::~OXTextButton() {
     }
   }
   if (_text) delete _text;
-  delete _tl;
+  if (_tl) delete _tl;
   if (_normGC != _defaultGC) delete _normGC;
   if (_font != _defaultFont) _client->FreeFont((OXFont *) _font);
 
@@ -104,6 +109,7 @@ OXTextButton::~OXTextButton() {
 }
 
 void OXTextButton::SetText(OString *new_text) {
+  // TODO: change key binding to the new hot char
   if (new_text) {
     if (_text) delete _text;
     _text = new_text;
@@ -129,10 +135,15 @@ void OXTextButton::SetTextColor(unsigned int color) {
 }
 
 void OXTextButton::Layout() {
-  delete _tl;
-  _tl = _font->ComputeTextLayout(_text->GetString(), _text->GetLength(),
-                                 _wrapLength, _justify, _textFlags,
-                                 &_tw, &_th);
+  if (_tl) delete _tl;
+  if (_text) {
+    _tl = _font->ComputeTextLayout(_text->GetString(), _text->GetLength(),
+                                   _wrapLength, _justify, _textFlags,
+                                   &_tw, &_th);
+  } else {
+    _tl = NULL;
+    _tw = _th = 0;
+  }
   NeedRedraw(True);
 }
 
@@ -161,6 +172,8 @@ void OXTextButton::_DoRedraw() {
     FillRectangle(_hibckgndGC, 2, 2, _w-4, _h-4);
     DrawLine(_hilightGC, 2, 2, _w-3, 2);
   }
+
+  if (!_text) return;
 
   if (!IsEnabled()) {
     unsigned long forecolor = _normGC->GetForeground();

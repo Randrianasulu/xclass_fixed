@@ -113,7 +113,8 @@ int OFocusManager::FocusPrevious(OXFrame *f) {
 }     
 
 int OFocusManager::AssignFocus(OXFrame *f) {
-  if (f && f->TakesFocus() && f->IsVisible() && f->IsEnabled()) {
+  if (f && f->TakesFocus() && f->IsVisible() && f->IsMapped() &&
+           f->IsEnabled()) {
     f->RequestFocus();
     return True;
   }

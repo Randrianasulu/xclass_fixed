@@ -48,6 +48,8 @@ OXView::OXView(const OXWindow *p, int w, int h, int id,
 
     SetLayoutManager(NULL);
 
+    _docBgndColor = _defaultDocumentBackground;
+
     _canvas = new OXViewCanvas(this, 10, 10, CHILD_FRAME | OWN_BKGND);
     _sboptions = sboptions;
 
@@ -107,8 +109,10 @@ void OXView::SetupBackgroundPic(const OPicture *pic) {
   unsigned int mask;
 
   if (!pic) {
-    mask = GCForeground;
-    gcv.foreground = _defaultDocumentBackground;
+    mask = GCForeground | GCFillStyle | GCGraphicsExposures;
+    gcv.fill_style = FillSolid;
+    gcv.foreground = _docBgndColor;
+    gcv.graphics_exposures = True;
     _canvas->SetBackgroundPixmap(None);
     _canvas->SetBackgroundColor(gcv.foreground);
   } else {
@@ -118,6 +122,19 @@ void OXView::SetupBackgroundPic(const OPicture *pic) {
     gcv.graphics_exposures = True;
     _canvas->SetBackgroundPixmap(pic->GetPicture());
   }
+
+  XChangeGC(GetDisplay(), _backGC, mask, &gcv);
+
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+}
+
+void OXView::SetupBackgroundColor(unsigned long color) {
+  XGCValues gcv;
+  unsigned int mask;
+
+  mask = GCForeground;
+  gcv.foreground = _docBgndColor = color;
+  _canvas->SetBackgroundColor(gcv.foreground);
 
   XChangeGC(GetDisplay(), _backGC, mask, &gcv);
 

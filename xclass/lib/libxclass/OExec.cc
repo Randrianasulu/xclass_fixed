@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
 #include <sys/wait.h>
 
 #include <xclass/OExec.h>
@@ -62,6 +63,11 @@ OExec::OExec(OXClient *client, const char *prog, char *argv[],
     pipe(fd2);
   }
 
+  sigset_t smask;
+  sigemptyset(&smask);
+  sigaddset(&smask, SIGCHLD);
+  sigprocmask(SIG_BLOCK, &smask, NULL);
+
   _pid = fork();
   if (_pid == 0) {
     if (pipe_io) {
@@ -92,6 +98,7 @@ OExec::OExec(OXClient *client, const char *prog, char *argv[],
   }
 
   _childList->Add(_pid, (XPointer) this);
+  sigprocmask(SIG_UNBLOCK, &smask, NULL);
 
   _status = 0;
   _persistent = persistent;

@@ -682,25 +682,24 @@ char *OResourcePool::FindIniFile(const char *name, int mode) const {
     sprintf(inipath, "%s/etc/%s", _userRoot, name);
     if (access(inipath, R_OK) == 0) return inipath;
 
-    // 2: if not found, search in ${_systemRoot}/etc
-
-    sprintf(inipath, "%s/etc/%s", _systemRoot, name);
-    if (access(inipath, R_OK) == 0) return inipath;
-
-    // 3: if still not found, try just ${HOME}/.name
+    // 2: if not found, try just ${HOME}/.name
 
     sprintf(inipath, "%s/%s%s", _homeDir, (*name == '.') ? "" : ".", name);
     if (access(inipath, R_OK) == 0) return inipath;
 
+    // 3: if still not found, search in ${_systemRoot}/etc
+
+    sprintf(inipath, "%s/etc/%s", _systemRoot, name);
+    if (access(inipath, R_OK) == 0) return inipath;
+
     // 4: not found, return NULL...
+
     delete[] inipath;
     return NULL;
 
   } else {
 
-    // if writing, we'll only attemp to do it in ${_userRoot}/etc
-    // note that we do not check for the existence of the file, since
-    // this could be the first time the file is being created
+    // we'll only attempt to save the file in ${_userRoot}/etc
 
     sprintf(inipath, "%s/etc", _userRoot);
 
@@ -709,8 +708,7 @@ char *OResourcePool::FindIniFile(const char *name, int mode) const {
       return inipath;
     }
 
-    // the _userRoot directory apparently doesn't exist yet, lets
-    // create it
+    // the _userRoot directory apparently doesn't exist yet, create it
 
     if (MakePath(inipath, 0777) == 0) {
       sprintf(inipath, "%s/etc/%s", _userRoot, name);

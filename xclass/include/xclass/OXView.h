@@ -121,6 +121,7 @@ public:
   const OXViewCanvas *GetCanvas() const { return _canvas; }
 
   void SetupBackgroundPic(const OPicture *pic);
+  void SetupBackgroundColor(unsigned long color);
 
 protected:
   virtual void _DoRedraw();
@@ -143,6 +144,7 @@ protected:
   OPosition _offset;             // space for headers and/or other additional
                                  // artifacts... in fact, this should be a
                                  // rectangle!
+  unsigned long _docBgndColor;
 
   OXViewCanvas *_canvas;
   OXHScrollBar *_hsb;

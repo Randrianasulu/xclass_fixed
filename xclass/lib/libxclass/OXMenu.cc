@@ -896,11 +896,13 @@ int OXPopupMenu::HandleKey(XKeyEvent *event) {
 
       case XK_Right:
         if (!_popdown && _current && _current->_type == MENU_POPUP) {
-          Activate(_current, False);
-          _popdown = True;
-          OXPopupMenu *p = _current->_popup;
-          if (p) p->Activate(p->_first);
-          return True;
+          if (_current->_status & MENU_ENABLE_MASK) {
+            Activate(_current, False);
+            _popdown = True;
+            OXPopupMenu *p = _current->_popup;
+            if (p) p->Activate(p->_first);
+            return True;
+          }
         }
         return False;
         break;
@@ -970,7 +972,7 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
   if (entry) {
     entry->_status |= MENU_ACTIVE_MASK;
     DrawEntry(entry);
-    if (entry->_type == MENU_POPUP) {
+    if ((entry->_type == MENU_POPUP) && (entry->_status & MENU_ENABLE_MASK)) {
       if (delayed) {
         _delay = new OTimer(this, 350);
       } else {
@@ -1005,26 +1007,27 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
 int OXPopupMenu::HandleTimer(OTimer *t) {
   if (t != _delay) return False;
 
-  if (_current != NULL)
-    if (_current->_type == MENU_POPUP) {
-      int ax, ay;
-      Window wdummy;
+  if (_current && 
+      (_current->_type == MENU_POPUP) &&
+      (_current->_status & MENU_ENABLE_MASK)) {
+    int ax, ay;
+    Window wdummy;
 
-      XTranslateCoordinates(GetDisplay(), _id,
-                            (_current->_popup->GetParent())->GetId(),
-                            _w, _current->_ey, &ax, &ay, &wdummy);
+    XTranslateCoordinates(GetDisplay(), _id,
+                          (_current->_popup->GetParent())->GetId(),
+                          _w, _current->_ey, &ax, &ay, &wdummy);
 
-      ODimension ps = _current->_popup->GetDefaultSize();
+    ODimension ps = _current->_popup->GetDefaultSize();
 
-      if (ax + ps.w > _client->GetDisplayWidth())
-        ax -= _w + ps.w - 7;
+    if (ax + ps.w > _client->GetDisplayWidth())
+      ax -= _w + ps.w - 7;
 
-      if (ay + ps.h > _client->GetDisplayHeight())
-        ay = _client->GetDisplayHeight() - ps.h - 3;
+    if (ay + ps.h > _client->GetDisplayHeight())
+      ay = _client->GetDisplayHeight() - ps.h - 3;
 
-      _current->_popup->PlaceMenu(ax-3, ay-1, False, False);
-      _popdown = True;
-    }
+    _current->_popup->PlaceMenu(ax-3, ay-1, False, False);
+    _popdown = True;
+  }
 
   delete _delay;
   _delay = NULL;

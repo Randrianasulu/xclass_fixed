@@ -696,6 +696,15 @@ int OXClient::_DoRedraw() {
   return True;
 }
 
+void OXClient::FlushRedraw() {
+#if 1
+  XEvent event;
+  while (XCheckMaskEvent(GetDisplay(), ExposureMask, &event))
+    HandleEvent(&event);
+#endif
+  _DoRedraw();
+  XSync(GetDisplay(), False);
+}
 
 int OXClient::HandleEvent(XEvent *Event) {
   OXWindow *w;

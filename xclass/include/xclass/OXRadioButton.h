@@ -39,8 +39,7 @@ public:
   OXRadioButton(const OXWindow *p, OString *s, int ID,
                 unsigned int option = 0);
 
-  virtual ODimension GetDefaultSize() const
-          { return ODimension(_tw+22, _th+2); }
+  virtual ODimension GetDefaultSize() const;
 
   virtual int  HandleKey(XKeyEvent *event);
   virtual int  HandleButton(XButtonEvent *event);

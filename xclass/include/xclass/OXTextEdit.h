@@ -131,6 +131,8 @@ public:
   bool TextChanged() const { return _changed; }
   bool IsReadOnly() const { return _readOnly; }
   virtual void SetReadOnly(bool ro);
+  
+  void AutoUpdate(int onoff = True);
 
 protected:
   virtual void _GotFocus();
@@ -165,6 +167,7 @@ protected:
   unsigned int _tabWidth;
   ODimension _margin;
   int _cursorState, _blinkTime, _cursorLastX;
+  int _autoUpdate;
   OTimer *_cursorBlink;
   OPosition _cursorPos;  // the cursor position is in screen text units
                          // (line;char)

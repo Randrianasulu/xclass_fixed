@@ -167,7 +167,7 @@ public:
        { XCopyArea(GetDisplay(), _id, _id, gc, sx, sy, w, h, dx, dy); }
 
   void DefineCursor(Cursor cursor)
-       { XDefineCursor(GetDisplay(), _id, cursor); }
+       { XDefineCursor(GetDisplay(), _id, cursor); XSync(GetDisplay(), False); }
   void UndefineCursor()
        { XUndefineCursor(GetDisplay(), _id); }
 

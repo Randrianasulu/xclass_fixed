@@ -101,7 +101,7 @@ OXMdiMainFrame::OXMdiMainFrame(const OXWindow *p, OXMdiMenuBar *menuBar,
 }
 
 OXMdiMainFrame::~OXMdiMainFrame() {
-  SMdiFrameList *tmp, *travel = _children;
+  OMdiFrameList *tmp, *travel = _children;
 
   while (travel) {
     tmp = travel->next;
@@ -127,7 +127,7 @@ OXMdiMainFrame::~OXMdiMainFrame() {
 }
 
 void OXMdiMainFrame::SetResizeMode(int mode) {
-  SMdiFrameList *travel;
+  OMdiFrameList *travel;
 
   _resizeMode = mode;
   for (travel = _children; travel; travel = travel->next) {
@@ -165,11 +165,11 @@ int OXMdiMainFrame::HandleKey(XKeyEvent *event) {
 }
 
 void OXMdiMainFrame::AddMdiFrame(OXMdiFrame *frame) {
-  SMdiFrameList *travel;
+  OMdiFrameList *travel;
 
   frame->UnmapWindow();
 
-  travel = new SMdiFrameList;
+  travel = new OMdiFrameList;
   travel->cyclePrev = travel->cycleNext = travel;
   travel->prev = NULL;
   if (_children) _children->prev = travel;
@@ -200,7 +200,7 @@ void OXMdiMainFrame::AddMdiFrame(OXMdiFrame *frame) {
 }
 
 bool OXMdiMainFrame::RemoveMdiFrame(OXMdiFrame *frame) {
-  SMdiFrameList *travel = _children;
+  OMdiFrameList *travel = _children;
 
   while (travel && (travel->frameid != frame->GetId())) travel = travel->next;
   if (!travel) return False;
@@ -250,7 +250,7 @@ bool OXMdiMainFrame::SetCurrent(XID id) {
     return True;
   }
 
-  SMdiFrameList *travel = _children;
+  OMdiFrameList *travel = _children;
   while (travel && (travel->decor->GetId() != id)) travel = travel->next;
   if (!travel) return False;
 
@@ -263,14 +263,14 @@ bool OXMdiMainFrame::SetCurrent(OXMdiFrame *f) {
     return True;
   }
 
-  SMdiFrameList *travel = _children;
+  OMdiFrameList *travel = _children;
   while (travel && (travel->decor->_frame != f)) travel = travel->next;
   if (!travel) return False;
 
   return SetCurrent(travel);
 }
 
-bool OXMdiMainFrame::SetCurrent(SMdiFrameList *newcurrent) {
+bool OXMdiMainFrame::SetCurrent(OMdiFrameList *newcurrent) {
 
   if (_current && (_current == newcurrent)) {
     _current->decor->RaiseWindow();
@@ -379,21 +379,21 @@ void OXMdiMainFrame::CirculateDown() {
   }
 }
 
-OXMdiDecorFrame *OXMdiMainFrame::GetDecorFrame(OXMdiFrame *frame) {
-  SMdiFrameList *travel = _children;
+OXMdiDecorFrame *OXMdiMainFrame::GetDecorFrame(OXMdiFrame *frame) const {
+  OMdiFrameList *travel = _children;
   while (travel && (travel->decor->_frame != frame)) travel = travel->next;
   if (!travel) return NULL;
   return travel->decor;
 }
 
-OXMdiDecorFrame *OXMdiMainFrame::GetDecorFrame(XID id) {
-  SMdiFrameList *travel = _children;
+OXMdiDecorFrame *OXMdiMainFrame::GetDecorFrame(XID id) const {
+  OMdiFrameList *travel = _children;
   while (travel && (travel->decor->_id != id)) travel = travel->next;
   if (!travel) return NULL;
   return travel->decor;
 }
 
-OXMdiFrame *OXMdiMainFrame::GetMdiFrame(XID id) {
+OXMdiFrame *OXMdiMainFrame::GetMdiFrame(XID id) const {
   OXMdiDecorFrame *frame = GetDecorFrame(id);
   if (!frame) return NULL;
   return frame->_frame;
@@ -404,7 +404,7 @@ ORectangle OXMdiMainFrame::GetBBox() const {
     return ORectangle(0, 0, _w - 2 * _bw, _h - 2 * _bw);
   } else {
     ORectangle rect;
-    SMdiFrameList *travel;
+    OMdiFrameList *travel;
 
     for (travel = _children; travel; travel = travel->next) {
       ORectangle wrect(travel->decor->GetPosition(),
@@ -418,7 +418,7 @@ ORectangle OXMdiMainFrame::GetBBox() const {
 
 ORectangle OXMdiMainFrame::GetMinimizedBBox() const {
   ORectangle rect;
-  SMdiFrameList *travel;
+  OMdiFrameList *travel;
   int first = True;
 
   for (travel = _children; travel; travel = travel->next) {
@@ -435,7 +435,7 @@ ORectangle OXMdiMainFrame::GetMinimizedBBox() const {
 
 void OXMdiMainFrame::UpdateWinListMenu() {
   char buf[256], scut;
-  SMdiFrameList *travel;
+  OMdiFrameList *travel;
   const OPicture *pic;
 
   _winListMenu->RemoveAllEntries();
@@ -477,7 +477,7 @@ void OXMdiMainFrame::ArrangeFrames(int mode) {
   int w = _w - 2 * _bw;  //GetContainer()->GetWidth();
   int h = _h - 2 * _bw;  //GetContainer()->GetHeight();
 
-  SMdiFrameList *tmp, *travel;
+  OMdiFrameList *tmp, *travel;
 
   for (travel = _children; travel; travel = travel->next) {
     if (travel->decor->IsMaximized())
@@ -548,7 +548,7 @@ void OXMdiMainFrame::ArrangeFrames(int mode) {
 // This is an attempt to an "smart" minimized window re-arrangement.
 
 void OXMdiMainFrame::ArrangeMinimized() {
-  SMdiFrameList *travel, *closest;
+  OMdiFrameList *travel, *closest;
   int x, y, w, h;
 
   bool arranged = True;
@@ -770,7 +770,7 @@ void OXMdiMainFrame::Minimize(OXMdiFrame *mdiframe) {
     y = GetViewPort()->GetHeight() - h;
 
     while (1) {
-      SMdiFrameList *travel;
+      OMdiFrameList *travel;
       bool taken = false;
 
       // find an empty spot...
@@ -887,13 +887,95 @@ int OXMdiMainFrame::ContextHelp(OXMdiFrame *mdiframe) {
     return False;
 }
 
-OXMdiFrame *OXMdiMainFrame::GetCurrent() {
+OXMdiFrame *OXMdiMainFrame::GetCurrent() const {
   if (_current)
     return _current->decor->_frame;
   else
     return NULL;
 }
 
+OMdiGeometry OXMdiMainFrame::GetWindowGeometry(OXMdiFrame *f) const {
+  OMdiGeometry geom;
+
+  geom.value_mask = 0;
+
+  const OXMdiDecorFrame *frame = GetDecorFrame(f);
+  if (frame) {
+    int th = frame->_titlebar->GetDefaultHeight();
+    int bw = frame->_bw;
+
+    if (frame->_isMinimized || frame->_isMaximized) {
+      geom.decoration = ORectangle(frame->_preResizeX,
+                                   frame->_preResizeY,
+                                   (unsigned) frame->_preResizeWidth,
+                                   (unsigned) frame->_preResizeHeight);
+    } else {
+      geom.decoration = ORectangle(frame->_x,
+                                   frame->_y,
+                                   (unsigned) frame->_w,
+                                   (unsigned) frame->_h);
+    }
+    geom.value_mask |= MDI_DECOR_GEOMETRY;
+
+    geom.client = ORectangle(geom.decoration.x + bw,
+                             geom.decoration.y + bw + th,
+                             (unsigned) (geom.decoration.w - 2 * bw),
+                             (unsigned) (geom.decoration.h - 2 * bw - th));
+    geom.value_mask |= MDI_CLIENT_GEOMETRY;
+
+    if (frame->_minimizedUserPlacement) {
+      int mh = th + 2 * bw;
+      int mw = MINIMIZED_WIDTH * mh;
+
+      geom.icon = ORectangle(frame->_minimizedX,
+                             frame->_minimizedY,
+                             (unsigned) mw,
+                             (unsigned) mh);
+      geom.value_mask |= MDI_ICON_GEOMETRY;
+    }
+
+  }
+
+  return geom;
+}
+
+void OXMdiMainFrame::ConfigureWindow(OXMdiFrame *f, OMdiGeometry &geom) {
+  OXMdiDecorFrame *frame = GetDecorFrame(f);
+  if (frame) {
+    if (geom.value_mask & MDI_DECOR_GEOMETRY) {
+      if (frame->_isMinimized || frame->_isMaximized) {
+        frame->_preResizeX = geom.decoration.x;
+        frame->_preResizeY = geom.decoration.y;
+        frame->_preResizeWidth = geom.decoration.w;
+        frame->_preResizeHeight = geom.decoration.h;
+      } else {
+        frame->MoveResize(geom.decoration.x, geom.decoration.y,
+                          geom.decoration.w, geom.decoration.h);
+      }
+    } else if (geom.value_mask & MDI_CLIENT_GEOMETRY) {
+    }
+    if (geom.value_mask & MDI_ICON_GEOMETRY) {
+      frame->_minimizedX = geom.icon.x;
+      frame->_minimizedY = geom.icon.y;
+      frame->_minimizedUserPlacement = True;
+      if (frame->_isMinimized)
+        frame->Move(frame->_minimizedX, frame->_minimizedY);
+    }
+    Layout();
+  }
+}
+
+bool OXMdiMainFrame::IsMaximized(OXMdiFrame *f) {
+  OXMdiDecorFrame *frame = GetDecorFrame(f);
+  if (frame) return frame->IsMaximized();
+  return false;
+}
+
+bool OXMdiMainFrame::IsMinimized(OXMdiFrame *f) {
+  OXMdiDecorFrame *frame = GetDecorFrame(f);
+  if (frame) return frame->IsMinimized();
+  return false;
+}
 
 //----------------------------------------------------------------------
 
