@@ -32,17 +32,16 @@
 #include <xclass/OXClient.h>
 #include <xclass/OXWindow.h>
 #include <xclass/OXMainFrame.h>
-#include <xclass/OXButton.h>
+#include <xclass/OXTextButton.h>
 #include <xclass/OXIcon.h>
 #include <xclass/OXLabel.h>
 #include <xclass/OXFont.h>
 #include <xclass/OTimer.h>
 #include <xclass/OString.h>
-#include <xclass/OResourcePool.h>
 #include <xclass/ODNDmanager.h>
 #include <xclass/OXMsgBox.h>
-
-#include <xclass/OXListView.h>
+#include <xclass/OSelectedPicture.h>
+#include <xclass/OResourcePool.h>
 
 static Atom URI_list = None;
 static Atom TextPlain = None;
@@ -82,7 +81,7 @@ public:
     return True;
   }
 
-  virtual Atom HandleDNDposition(int x, int y, Atom action) {
+  virtual Atom HandleDNDposition(int x, int y, Atom action, int xr, int yr) {
     if (action == ODNDmanager::DNDactionCopy) return action;
     return None;
   }
@@ -143,7 +142,7 @@ public:
 
   virtual int ProcessMessage(OMessage *msg);
 
-  virtual Atom HandleDNDposition(int x, int y, Atom action);
+  virtual Atom HandleDNDposition(int x, int y, Atom action, int xr, int yr);
   virtual Atom HandleDNDenter(Atom *typelist);
   virtual int  HandleDNDleave();
   virtual int  HandleDNDdrop(ODNDdata *);
@@ -222,8 +221,6 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
 
   MapSubwindows();
   Resize(GetDefaultSize());
-
-  _dndManager->SetRootProxy();
 }
 
 OXMain::~OXMain() {
@@ -356,6 +353,12 @@ int OXMain::HandleMotion(XMotionEvent *event) {
       if (_dndManager && ((f == _icon[0]) || (f == _icon[1]))) {
         _SetDragPixmap((OXIcon *) f);
         _dragging = _dndManager->StartDrag(f, event->x_root, event->y_root);
+        if (!_dragging) {
+          new OXMsgBox(_client->GetRoot(), _toplevel,
+                       new OString("OXMain"),
+                       new OString("Failed to acquire ownership of XdndSelection"),
+                       MB_ICONASTERISK, ID_OK);
+        }
       }
     }
   }
@@ -409,7 +412,7 @@ int OXMain::HandleDNDdrop(ODNDdata *data) {
   return True;
 }
 
-Atom OXMain::HandleDNDposition(int x, int y, Atom action) {
+Atom OXMain::HandleDNDposition(int x, int y, Atom action, int xr, int yr) {
   char tmp[256];
 
   sprintf(tmp, "Accepting action %#d", action);
