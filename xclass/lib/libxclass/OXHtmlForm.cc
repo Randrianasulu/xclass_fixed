@@ -440,6 +440,8 @@ int OXHtml::ControlSize(OHtmlInput *pElem) {
       if (size == 1) {
         OXDDListBox *lb = new OXDDListBox(_canvas, pElem->cnt);
         AddSelectOptions((OXListBox *) lb->GetListBox(), pElem, pElem->pEnd);
+        OXLBEntry *e = lb->GetListBox()->GetSelectedEntry();
+        if (e) lb->Select(e->ID());
         lb->Resize(200, lb->GetDefaultHeight());
         lb->Associate(this);
         SizeAndLink(lb, pElem);
