@@ -146,7 +146,7 @@ int OXMenuBar::HandleButton(XButtonEvent *event) {
     }
     XUngrabPointer(GetDisplay(), CurrentTime);
     XUngrabKeyboard(GetDisplay(), CurrentTime);
-    XFlush(GetDisplay());
+    XSync(GetDisplay(), False);
 
     for (ptr = _flist; ptr != NULL; ptr = ptr->next)
       ((OXMenuTitle *)ptr->frame)->SetState(False);
@@ -291,7 +291,7 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
 
     XUngrabPointer(GetDisplay(), CurrentTime);
     XUngrabKeyboard(GetDisplay(), CurrentTime);
-    XFlush(GetDisplay());
+    XSync(GetDisplay(), False);
 
     for (ptr = _flist; ptr != NULL; ptr = ptr->next)
       ((OXMenuTitle *)ptr->frame)->SetState(False);
@@ -716,7 +716,7 @@ int OXPopupMenu::HandleButton(XButtonEvent *event) {
     if (_hasgrab) {
       XUngrabPointer(GetDisplay(), CurrentTime);
       XUngrabKeyboard(GetDisplay(), CurrentTime);
-      XFlush(GetDisplay());
+      XSync(GetDisplay(), False);
     }
     if (_current) {
       _current->_status &= ~MENU_ACTIVE_MASK;
@@ -811,7 +811,7 @@ int OXPopupMenu::HandleKey(XKeyEvent *event) {
       int ID = EndMenu();
       XUngrabPointer(GetDisplay(), CurrentTime);
       XUngrabKeyboard(GetDisplay(), CurrentTime);
-      XFlush(GetDisplay());
+      XSync(GetDisplay(), False);
       if (ptr) {
         ptr->_status &= ~MENU_ACTIVE_MASK;
         if (ptr->_status & MENU_ENABLE_MASK) {

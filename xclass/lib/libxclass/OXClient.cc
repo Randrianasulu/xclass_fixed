@@ -735,6 +735,10 @@ int OXClient::HandleMaskEvent(XEvent *Event, Window wid) {
         return True;
       }
     }
+    if (w->HandleMaskEvent(Event)) {
+      w->HandleEvent(Event);
+      return True;
+    }
   }
 
   if (Event->type == ButtonPress ||

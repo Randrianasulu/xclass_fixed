@@ -377,12 +377,14 @@ int OXItemView::HandleButton(XButtonEvent *event) {
     _selDragStart = _selAnchor;
     _selDragEnd = _selDragStart;
 
-    if (!inv && !add && _hasSelection) {
-      selChange = True;
-      UnSelectAll();
-    }
-
     selItem = GetItemByPos(_selAnchor);
+
+    if ((event->button == Button1) || !selItem || !selItem->IsSelected()) {
+      if (!inv && !add && _hasSelection) {
+        selChange = True;
+        UnSelectAll();
+      }
+    }
 
     if (selItem) {
       if (inv) {

@@ -51,15 +51,16 @@ public:
   const class OXWindow *GetParent() const { return _parent; }
   const class OXWindow *GetTopLevel() const { return _toplevel; }
 
-  virtual int  HandleExpose(XExposeEvent *event) {
+  virtual int HandleExpose(XExposeEvent *event) {
     if (event->count == 0) _client->NeedRedraw(this);
     return True;
   }
-  virtual int  HandleGraphicsExpose(XGraphicsExposeEvent *event) {
+  virtual int HandleGraphicsExpose(XGraphicsExposeEvent *event) {
     if (event->count == 0) _client->NeedRedraw(this);
     return True;
   }
-  virtual int  HandleEvent(XEvent * /*event*/) { return False; }
+  virtual int HandleEvent(XEvent * /*event*/) { return False; }
+  virtual int HandleMaskEvent(XEvent * /*event*/) { return False; }
 
   virtual void Move(int x, int y);
   virtual void Resize(int w, int h);

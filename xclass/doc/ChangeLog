@@ -2219,3 +2219,15 @@ OPicture.cc
   another popup.
 
 - OXTextButton() added SetMargins() method, similar to OXLabel's one.
+
+
+28/07/02
+
+- Added HandleMaskEvent() method to OXWindow. This is a hook for events that
+  would be otherwise discarded by OXClient::HandleMaskEvent(). This can be
+  required to properly handle sync pointer grabs (GrabModeSync) during
+  WaitFor() loops, which otherwise would freeze the whole client. The
+  function returns False if no further dispatching of the event is desired,
+  the event will be then discarded by OXClient::HandleMaskEvent(). If True
+  is returned, HandleMaskEvent() will then dispatch the event in the usual
+  way by issuing a call to OXWindow::HandleEvent().
