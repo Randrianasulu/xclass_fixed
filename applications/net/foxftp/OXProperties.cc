@@ -63,7 +63,7 @@ OXFtpPropertiesDialog::OXFtpPropertiesDialog(const OXWindow *p, const OXWindow *
     _path = StrDup(path);
     _fitem = fitem;
     _pic = pic;
-    _link  = _client->GetPicture("slink.s.xpm");
+    _link = _client->GetPicture("slink.s.xpm");
 
     frame = new OXHorizontalFrame(this, 60, 20, FIXED_WIDTH);
     b1 = new OXTextButton(frame, new OHotString("OK"), ID_OK);
@@ -93,7 +93,7 @@ OXFtpPropertiesDialog::OXFtpPropertiesDialog(const OXWindow *p, const OXWindow *
     _l8 = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP, 5, 5, 5, 5);
 
     AddFrame(frame = new OXHorizontalFrame(this, 10, 10), _l1);
-    _fileIcon = new OXFileIcon(frame, _pic, _link,
+    _fileIcon = new OXFileIcon(frame, _pic, _fitem->_is_link ? _link : NULL,
                                CHILD_FRAME, _defaultFrameBackground);
 
     _fileName = new OXTextEntry(frame, NULL, 101);

@@ -55,6 +55,7 @@
 // - get rid of perror messages (calling app should use a MsgBox)
 // - use OTimer's for timeouts
 // - replace select calls with OFileHandler's
+// - handle "broken pipe" cases
 
 
 //----------------------------------------------------------------------

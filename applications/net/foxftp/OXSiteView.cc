@@ -263,7 +263,7 @@ void OXSiteView::UpdateLists(ODir *delem) {
   char *p, buf[PATH_MAX];
   OFile *felem;
 
-  _lv->Clear(); ////_fc->RemoveAll();
+  _lv->Clear();
   p = delem->GetPath();
   if (p[0] != '/')
     sprintf(buf, "%s/%s", _connectName, delem->GetPath());
@@ -446,11 +446,13 @@ void OXSiteView::UpdateTree(const char *path) {
       if (!i2) {
         i2 = _lt->AddItem(i1, p, NULL, NULL);
         i2->open = true;
+        _lt->SortChildren(i1);
       }
       i1 = i2;
     } while ((p = strtok(NULL, "/\\")) != NULL);
   }
-  _lt->SortChildren(NULL);
+  //_lt->SortChildren(root);
+  //_lt->Sort(root);
   _client->NeedRedraw(_lt);
 }
 

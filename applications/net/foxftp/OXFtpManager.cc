@@ -318,6 +318,7 @@ OXBookmarkProp::OXBookmarkProp(const OXWindow *p, const OXWindow *main,
 
   SetDefaultAcceptButton(_tbOk);
   SetDefaultCancelButton(_tbCancel);
+  SetFocusOwner(_tename);
 
   SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_MAXIMIZE | MWM_DECOR_MENU,
             MWM_FUNC_ALL | MWM_FUNC_MAXIMIZE | MWM_FUNC_RESIZE,

@@ -187,7 +187,7 @@ static _tb_data ftp_tb[] = {
   { "tb-refresh.xpm", tb_refresh_xpm, NULL, NULL, "tbu-refresh.xpm", tbu_refresh_xpm,
     "Refresh", "Refresh List", BUTTON_NORMAL, M_VIEW_REFRESH, NULL },
   { "tb-stop.xpm", tb_stop_xpm, NULL, NULL, "tbu-stop.xpm", tbu_stop_xpm,
-    "Stop", "Stop Loading", BUTTON_NORMAL, M_VIEW_STOP, NULL },
+    "Stop", "Stop Transfer", BUTTON_NORMAL, M_VIEW_STOP, NULL },
   { "", NULL,  NULL, NULL, NULL, NULL, NULL, NULL, -1,  -1,  NULL },
   { "tb-delete.xpm", tb_delete_xpm, NULL, NULL, "tbu-delete.xpm", tbu_delete_xpm,
     "Delete", "Delete Selected", BUTTON_NORMAL, M_EDIT_DELETE, NULL },
