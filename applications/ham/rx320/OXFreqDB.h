@@ -97,8 +97,8 @@ protected:
   OXMenuBar *_menuBar;
   OXPopupMenu *_menuFile, *_menuEdit, *_menuView, *_menuHelp;
 
-  char *_filename;
-  int _changed;
+  char *_filename, *_path;
+  int _changed, _exiting;
 };
 
 

@@ -62,3 +62,13 @@
 - Corrected a bug in the frequency database viewer that caused the
   application to crash when enter was presed in order to tune to the
   selected station.
+
+
+28/07/02 (0.4.2)
+
+- Avoid displaying multiple message boxes if the user keeps pressing the
+  close button and the file is not saved.
+
+- Each database window now keeps the full path to loaded filename.
+  Previously other database instances could change the current dir, and
+  the file would get saved in a different directory.

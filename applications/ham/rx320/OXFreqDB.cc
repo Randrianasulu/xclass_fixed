@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <xclass/utils.h>
@@ -42,13 +43,11 @@
 #include "main.h"
 
 // TODO:
-// - keep the full path to loaded filename, since other database instances
-//   could change the current dir, and the file would get saved somewhere
-//   else.
 // - OFDBitem: highlight the full line. Select by clicking anywhere on the
 //   line.
 // - View options: font size, which columns.
 // - Save: as *.320 or *.cdf file.
+// - Print database.
 
 char *filetypes[] = { "All files",       "*",
                       "Frequency files", "*.320",
@@ -159,6 +158,8 @@ void OFDBitem::ChangeFreqRecord(OFreqRecord *fr) {
 OXFreqDB::OXFreqDB(const OXWindow *p, OXMain *m, int w, int h) :
   OXMainFrame(p, w, h) {
 
+  _exiting = False;
+
   _rxmain = m;
 
   prev = next = NULL;
@@ -230,6 +231,7 @@ OXFreqDB::OXFreqDB(const OXWindow *p, OXMain *m, int w, int h) :
                                         0, 0, 3, 0));
 
   _filename = NULL;
+  _path = NULL;
   SetChanged(False);
 
   SetWindowTitle(NULL);
@@ -253,10 +255,17 @@ OXFreqDB::~OXFreqDB() {
   delete _menuHelp;
 
   if (_filename) delete[] _filename;
+  if (_path) delete[] _path;
 }
 
 int OXFreqDB::CloseWindow() {
+  if (_exiting) {
+    XBell(GetDisplay(), 0);
+    return False;
+  }
+  _exiting = True;
   switch (IsSaved()) {
+  case ID_CLOSE:
   case ID_CANCEL:
     break;
   case ID_YES:
@@ -266,6 +275,7 @@ int OXFreqDB::CloseWindow() {
     _rxmain->RemoveFreqDBwindow(this);
     return OXMainFrame::CloseWindow();
   }
+  _exiting = False;
   return False;
 }
 
@@ -312,6 +322,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
 
             //case M_FILE_NEW:
             //  switch (IsSaved()) {
+            //    case ID_CLOSE:
             //    case ID_CANCEL:
             //      break;
             //    case ID_YES:
@@ -324,6 +335,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
 
             case M_FILE_OPEN:
               switch (IsSaved()) {
+                case ID_CLOSE:
                 case ID_CANCEL:
                   break;
                 case ID_YES:
@@ -565,11 +577,14 @@ void OXFreqDB::DoOpen() {
 
   fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
   fi.file_types = filetypes;
+  fi.ini_dir = _path;
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
   if (fi.filename) {
     ReadFile(fi.filename);
     if (_filename) delete[] _filename;
     _filename = StrDup(fi.filename);
+    if (_path) delete[] _path;
+    _path = StrDup(fi.ini_dir);
     SetWindowTitle(_filename);
     UpdateStatus();
     SetChanged(False);
@@ -580,6 +595,8 @@ void OXFreqDB::DoSave(char *fname) {
   int retc, newfile = False;
   OFileInfo fi;
   FILE *fp;
+
+  if (_path) chdir(_path);
 
   if (!fname) {
     fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
