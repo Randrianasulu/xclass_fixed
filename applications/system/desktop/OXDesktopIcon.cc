@@ -59,6 +59,7 @@ const OXFont *OXDesktopIcon::_defaultFont = NULL;
 extern ODNDmanager *dndManager;
 extern Atom URI_list;
 
+
 //---------------------------------------------------------------------------
 
 OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
@@ -96,6 +97,7 @@ OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
 
   _active = _last_state = False;
   _bdown = False;
+  _button = 0;
   _dragging = False;
 
   _normGC = _defaultGC;
@@ -253,22 +255,22 @@ int OXDesktopIcon::HandleButton(XButtonEvent *event) {
   event->window = _fw->GetId();
   event->subwindow = _id;
 
-  _fw->HandleButton(event);
+  if (!_dragging) _fw->HandleButton(event);
 
-  if (event->button == Button1) {
-    if (event->type == ButtonPress) {
-      _bdown = True;
-      bx = _x;
-      by = _y;
-      x0 = event->x;
-      y0 = event->y;
-    } else {  // ButtonRelease
-      if (_dragging) _dndManager->Drop();
-      _bdown = False;
-      _dragging = False;
-      if ((bx != _x) || (by != _y)) {
-//        PlaceIcon();
-      }
+  if (event->type == ButtonPress) {
+    _bdown = True;
+    _button = event->button;
+    bx = _x;
+    by = _y;
+    x0 = event->x;
+    y0 = event->y;
+  } else {  // ButtonRelease
+    if (_dragging) _dndManager->Drop();
+    _bdown = False;
+    _button = 0;
+    _dragging = False;
+    if ((bx != _x) || (by != _y)) {
+//      PlaceIcon();
     }
   }
 
@@ -300,8 +302,18 @@ int OXDesktopIcon::HandleMotion(XMotionEvent *event) {
   }
 
   if (_dragging) {
-    _dndManager->Drag(event->x_root, event->y_root,
-                      ODNDmanager::DNDactionCopy, event->time);
+    int action;
+
+    if (event->state & Button3Mask) {
+      action = ODNDmanager::DNDactionAsk;
+    } else {
+      if (event->state & ControlMask) {
+        action = ODNDmanager::DNDactionCopy;
+      } else {
+        action = ODNDmanager::DNDactionMove;
+      }
+    }
+    _dndManager->Drag(event->x_root, event->y_root, action, event->time);
   }
 
   return True;

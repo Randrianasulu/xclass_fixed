@@ -107,7 +107,7 @@ protected:
   OString *_name;
   int _active, _last_state, _dragging, _tw, _th, _ta, _type, _is_link;
   unsigned long _size;
-  int x0, y0, bx, by, _bdown;
+  int x0, y0, bx, by, _button, _bdown;
   OXFrame *_fw;
   const OPicture *_pic, *_lpic;
   OXGC *_normGC;
