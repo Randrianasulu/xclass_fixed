@@ -283,11 +283,6 @@ OXFontDialog::OXFontDialog(const OXWindow *p, const OXWindow *t,
 OXFontDialog::~OXFontDialog() {
 }
 
-int OXFontDialog::CloseWindow() {
-  delete this;
-  return True;
-}
-
 int OXFontDialog::HandleKey(XKeyEvent *event) {
   if ((event->type == KeyPress) && (event->state & Mod1Mask)) {
     int keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);

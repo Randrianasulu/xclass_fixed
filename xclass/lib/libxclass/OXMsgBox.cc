@@ -232,8 +232,7 @@ OXMsgBox::~OXMsgBox() {
 
 int OXMsgBox::CloseWindow() {
   if (_ret_code) *_ret_code = ID_CLOSE;
-  delete this;
-  return True;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXMsgBox::ProcessMessage(OMessage *msg) {

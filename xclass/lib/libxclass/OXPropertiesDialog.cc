@@ -202,11 +202,6 @@ OXPropertiesDialog::~OXPropertiesDialog() {
   delete _tname;
 }
 
-int OXPropertiesDialog::CloseWindow() {
-  delete this;
-  return True;
-}
-
 void OXPropertiesDialog::StatFile() {
 
   _lstat_errno = _stat_errno = 0;

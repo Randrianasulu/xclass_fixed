@@ -289,11 +289,12 @@ int OXMainFrame::HandleSelectionClear(XSelectionClearEvent *event) {
 }
 
 
-// Override this to intercept close, returns True if the window was
-// successfully closed, False otherwise.
+// Override this to intercept close.
+// The function returns True if the window was successfully closed,
+// False otherwise.
 
 int OXMainFrame::CloseWindow() {
-  delete this;
+  delete this;  // note that the destructor calls DestroyWindow()
   return True;
 }
 

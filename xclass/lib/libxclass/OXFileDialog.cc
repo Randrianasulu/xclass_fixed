@@ -358,8 +358,7 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
 int OXFileDialog::CloseWindow() {
   if (_file_info->filename) delete[] _file_info->filename;
   _file_info->filename = NULL;
-  delete this;
-  return True;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXFileDialog::HandleKey(XKeyEvent *event) {

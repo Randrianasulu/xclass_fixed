@@ -41,7 +41,6 @@ public:
   virtual ~OXFontDialog();
   
   virtual int ProcessMessage(OMessage *msg);
-  virtual int CloseWindow();
   virtual int HandleKey(XKeyEvent *event);
   
 protected:

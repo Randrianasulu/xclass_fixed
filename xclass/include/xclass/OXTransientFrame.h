@@ -34,8 +34,6 @@ public:
                    unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXTransientFrame();
 
-  virtual int CloseWindow();
-  
   void CenterOnParent(int croot = True);
 
 protected:
