@@ -123,16 +123,18 @@ static struct _popup window_popup = {
   { "&Cascade",           M_WINDOW_CASCADE,      0, NULL },
   { "Tile &Horizontally", M_WINDOW_HORIZONTALLY, 0, NULL },
   { "Tile &Vertically",   M_WINDOW_VERTICALLY,   0, NULL },
+  { "",                   -1,                    0, NULL },
+  { "Arrange &Icons",     M_WINDOW_ICONS,        0, NULL },
   { NULL,                 -1,                    0, NULL } }
 };
 
 static struct _popup help_popup = {
   { NULL }, {
-  { "&Contents...", M_HELP_CONTENTS, MENU_DISABLED },
-  { "&Search...",   M_HELP_SEARCH,   MENU_DISABLED },
-  { "",             -1,              0, NULL },
-  { "&About...",    M_HELP_ABOUT,    0 },
-  { NULL,           -1,              0, NULL } }
+  { "&Contents...", M_HELP_CONTENTS, MENU_DISABLED, NULL },
+  { "&Search...",   M_HELP_SEARCH,   MENU_DISABLED, NULL },
+  { "",             -1,              0,             NULL },
+  { "&About...",    M_HELP_ABOUT,    0,             NULL },
+  { NULL,           -1,              0,             NULL } }
 };
 
 #include "icons/tb-connect.xpm"
@@ -695,6 +697,10 @@ int OXFtpMain::ProcessMessage(OMessage *msg) {
 
             case M_WINDOW_CASCADE:
               _mainFrame->Cascade();
+              break;
+
+            case M_WINDOW_ICONS:
+              _mainFrame->ArrangeMinimized();
               break;
 
             case M_EDIT_DELETE:

@@ -31,7 +31,7 @@ class OXFtpConfig;
 #include <xclass/OXMdi.h>
 
 
-#define FOXFTP_VERSION  "0.5"
+#define FOXFTP_VERSION  "0.5.1"
 
 
 #define M_FILE_NEW		1
@@ -80,6 +80,7 @@ class OXFtpConfig;
 #define M_WINDOW_CASCADE	81
 #define M_WINDOW_HORIZONTALLY	82
 #define M_WINDOW_VERTICALLY	83
+#define M_WINDOW_ICONS          84
 
 #define M_HELP_CONTENTS		91
 #define M_HELP_SEARCH		92
