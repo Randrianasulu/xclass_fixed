@@ -336,6 +336,11 @@ int OXDDListBox::HandleKey(XKeyEvent *event) {
     case XK_Up:
       _lb->MoveSelectUp(GetSelectedEntry());
       e = _lb->GetSelectedEntry();
+      if (!e) {
+        e = _lb->GetFirstEntry();
+        if (e) _lb->Select(e->ID());
+      }
+      if (!e) return True;
       _selentry->UpdateEntry(e);
       Layout();
       msg.entryID = e->ID();
@@ -345,6 +350,11 @@ int OXDDListBox::HandleKey(XKeyEvent *event) {
     case XK_Down: 
       _lb->MoveSelectDown(GetSelectedEntry());
       e = _lb->GetSelectedEntry();
+      if (!e) {
+        e = _lb->GetFirstEntry();
+        if (e) _lb->Select(e->ID());
+      }
+      if (!e) return True;
       _selentry->UpdateEntry(e);
       Layout();
       msg.entryID = e->ID();
