@@ -32,7 +32,7 @@
 #include <xclass/OXTextEdit.h>
 #include <xclass/OString.h>
 
-#define NOTEPAD_VERSION    "0.8.2"
+#define NOTEPAD_VERSION    "0.9.1"
 
 #define M_FILE_NEW         101
 #define M_FILE_OPEN        102
@@ -50,6 +50,7 @@
 #define M_EDIT_TIMEDATE    207
 #define M_EDIT_LINEBREAK   208
 #define M_EDIT_SELFONT     209
+#define M_EDIT_SETTABS     210
 
 #define M_SEARCH_FIND      301
 #define M_SEARCH_FINDNEXT  302

@@ -68,7 +68,6 @@ int main(int argc, char **argv) {
 }
 
 OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
-  char tmp[BUFSIZ];
 
   _menuBarLayout = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 1, 1);
   _menuBarItemLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 0, 4, 0, 0);
@@ -96,6 +95,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
   _menuEdit->AddEntry(new OHotString("Time/&Date\tF5"), M_EDIT_TIMEDATE);
   _menuEdit->AddSeparator();
   _menuEdit->AddEntry(new OHotString("Set &Font..."), M_EDIT_SELFONT);
+  _menuEdit->AddEntry(new OHotString("Set Ta&b Width..."), M_EDIT_SETTABS);
 
   _menuEdit->DisableEntry(M_EDIT_CUT);
   _menuEdit->DisableEntry(M_EDIT_COPY);
@@ -236,7 +236,6 @@ void OXMain::SaveFile(char *fname) {
 
 void OXMain::SaveFileAs() {
   OFileInfo fi;
-  char *p, tmp[1024];
 
   fi.MimeTypesList = NULL;
   fi.file_types = filetypes;
@@ -366,13 +365,11 @@ void OXMain::Search(int ret) {
 
 void OXMain::Goto() {
   long ret;
-  char tmp[1024];
 
   new OXGotoBox(clientX->GetRoot(), this, 400, 150, &ret);
 
-  if (ret >= 0) {
+  if (ret >= 0)
     _te->SetCursorPosition(OPosition(0, ret-1), True);
-  }
 }
 
 void OXMain::TimeDate() {
@@ -389,7 +386,7 @@ void OXMain::About() {
   info.title = "fOX Notepad version " NOTEPAD_VERSION "\n"
                "A simple text editor.\n"
                "Compiled with xclass version "XCLASS_VERSION;
-  info.copyright = "Copyright © 1997-2001 by H. Radke and H. Peraza";
+  info.copyright = "Copyright © 1997-2002 by H. Radke and H. Peraza";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"
@@ -412,6 +409,7 @@ int OXMain::HandleTimer(OTimer *t) {
 int OXMain::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
   OItemViewMessage *vmsg = (OItemViewMessage *) msg;
+  int tabw;
   char tmp[1024];
 
   switch (msg->type) {
@@ -535,6 +533,15 @@ int OXMain::ProcessMessage(OMessage *msg) {
       case M_EDIT_SELFONT:
         new OXFontDialog(_client->GetRoot(), this, _fontName);
         _te->SetFont(_client->GetFont(_fontName->GetString()));
+        break;
+
+      case M_EDIT_SETTABS:
+        tabw = _te->GetTabWidth();
+        new OXSetTabsBox(clientX->GetRoot(), this, 400, 150, &tabw);
+        if (tabw >= 0) {
+          if (tabw < 1) tabw = 1; else if (tabw > 100) tabw = 100;
+          _te->SetTabWidth(tabw);
+        }
         break;
 
       //------------------------------- Search

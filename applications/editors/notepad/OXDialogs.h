@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <xclass/utils.h>
 #include <xclass/OXWindow.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXLabel.h>
@@ -61,8 +62,25 @@ protected:
   OLayoutHints *L1, *L5, *L6, *L21;
   OXTextEntry *goTo;
   OTextBuffer *tbgoTo;
-  OXLabel *lgoTo;
   long *ret;
+};
+
+class OXSetTabsBox : public OXTransientFrame {
+public:
+  OXSetTabsBox(const OXWindow *p, const OXWindow *main,
+               int w, int h, int *ret_val,
+	       unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
+  virtual ~OXSetTabsBox();
+
+  virtual int ProcessMessage(OMessage *msg);
+
+protected:
+  OXCompositeFrame *f1, *f2;
+  OXButton *OkButton, *CancelButton;
+  OLayoutHints *L1, *L5, *L6, *L21;
+  OXTextEntry *_te;
+  OTextBuffer *_tb;
+  int *ret;
 };
 
 class OXSearchBox : public OXTransientFrame {

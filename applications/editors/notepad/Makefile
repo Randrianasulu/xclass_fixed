@@ -4,7 +4,7 @@ prefix=/usr/local
 exec_prefix=${prefix}
 
 CXX=c++
-CXXFLAGS=`xc-config --cflags` -g 
+CXXFLAGS=`xc-config --cflags` -g
 LIBS=`xc-config --libs`
 EXTRALIBS=
 LDFLAGS= 

@@ -11,7 +11,8 @@ Changes to the last release
 ---------------------------
 
 - OXTextEdit was rewritten and moved to the xclass library.
-- TABs are now handled properly.
+- TABs are now handled properly (the default tab width of 8 can be changed
+  too).
 - Added some shortcuts:
 
 	Ctrl + x                     : cut

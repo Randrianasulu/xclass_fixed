@@ -29,8 +29,6 @@
 OXGotoBox::OXGotoBox(const OXWindow *p, const OXWindow *main,
                      int w, int h, long *ret_val, unsigned long options) :
   OXTransientFrame(p, main, w, h, options) {
-    int i, ax, ay;
-    Window wdummy;  
 
     ret = ret_val;
 
@@ -49,12 +47,12 @@ OXGotoBox::OXGotoBox(const OXWindow *p, const OXWindow *main,
 
     L1 = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 2, 2, 0, 3);
     L21 = new OLayoutHints(LHINTS_TOP | LHINTS_RIGHT, 2, 5, 3, 0);
-    
+
     f1->AddFrame(GotoButton, L1);
     f1->AddFrame(CancelButton, L1);
     AddFrame(f1, L21);
-              
-    lgoTo = new OXLabel(f2, new OHotString("&Goto Line:"));
+
+    OXLabel *lgoTo = new OXLabel(f2, new OHotString("&Goto Line:"));
     goTo = new OXTextEntry(f2, tbgoTo = new OTextBuffer(50));
     goTo->Associate(this);          
     goTo->Resize(150, goTo->GetDefaultHeight());
@@ -76,14 +74,8 @@ OXGotoBox::OXGotoBox(const OXWindow *p, const OXWindow *main,
 
     MapSubwindows();
     Resize(GetDefaultSize());
-    
-    // position relative to the parent's window
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                          (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                          &ax, &ay, &wdummy);
-    Move(ax, ay);
+
+    CenterOnParent();
 
     SetWMSize(_w, _h);
     SetWMSizeHints(_w, _h, _w, _h, 0, 0);
@@ -101,17 +93,15 @@ OXGotoBox::~OXGotoBox() {
                           
 int OXGotoBox::ProcessMessage(OMessage *msg) {
  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
- const char *string;
           
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_BUTTON:
         
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case 1:
-              string = tbgoTo->GetString();
-              *ret= (long)atof(string);
+              *ret = (long) atof(tbgoTo->GetString());
               CloseWindow();
               break;
 
@@ -128,13 +118,132 @@ int OXGotoBox::ProcessMessage(OMessage *msg) {
       break;  
     
     case MSG_TEXTENTRY:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_TEXTCHANGED:
-          string = tbgoTo->GetString();
-          if (strlen(string) == 0)
+          if (strlen(tbgoTo->GetString()) == 0)
             GotoButton->Disable();
           else
             GotoButton->Enable();
+          break;
+
+        default:
+          break;
+      } 
+      break;
+
+    default:
+      break;
+  }
+
+  return True;
+}         
+
+
+//----------------------------------------------------------------------
+
+OXSetTabsBox::OXSetTabsBox(const OXWindow *p, const OXWindow *main,
+                           int w, int h, int *ret_val,
+                           unsigned long options) :
+  OXTransientFrame(p, main, w, h, options) {
+
+    ret = ret_val;
+
+    ChangeOptions((GetOptions() & ~VERTICAL_FRAME) | HORIZONTAL_FRAME);
+  
+    f1 = new OXCompositeFrame(this, 60, 20, VERTICAL_FRAME | FIXED_WIDTH);
+    f2 = new OXCompositeFrame(this, 60, 20, HORIZONTAL_FRAME);
+
+    OkButton = new OXTextButton(f1, new OHotString("&OK"), 1);
+    CancelButton = new OXTextButton(f1, new OHotString("&Cancel"), 2);
+
+    f1->Resize(CancelButton->GetDefaultWidth()+20, GetDefaultHeight());
+
+    OkButton->Associate(this);
+    CancelButton->Associate(this);
+
+    L1 = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 2, 2, 0, 3);
+    L21 = new OLayoutHints(LHINTS_TOP | LHINTS_RIGHT, 2, 5, 3, 0);
+    
+    f1->AddFrame(OkButton, L1);
+    f1->AddFrame(CancelButton, L1);
+    AddFrame(f1, L21);
+              
+    OXLabel *label = new OXLabel(f2, new OHotString("&Tab Width:"));
+    _te = new OXTextEntry(f2, _tb = new OTextBuffer(5));
+    _te->Associate(this);
+    _te->Resize(150, _te->GetDefaultHeight());
+
+    char tmp[20];
+    sprintf(tmp, "%d", *ret);
+    _te->AddText(0, tmp);
+    
+    L5 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 3, 5, 0, 0);
+    L6 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 0, 2, 0, 0);
+     
+    f2->AddFrame(label, L5);
+    f2->AddFrame(_te, L5);
+    AddFrame(f2, L21);
+
+    SetDefaultAcceptButton(OkButton);
+    SetDefaultCancelButton(CancelButton);
+    SetFocusOwner(_te);
+              
+    SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_MAXIMIZE | MWM_DECOR_MENU,
+                MWM_FUNC_ALL | MWM_FUNC_MAXIMIZE | MWM_FUNC_RESIZE,
+                MWM_INPUT_MODELESS);
+
+    MapSubwindows();
+    Resize(GetDefaultSize());
+
+    CenterOnParent();
+    
+    SetWMSize(_w, _h);
+    SetWMSizeHints(_w, _h, _w, _h, 0, 0);
+    
+    SetWindowName("Set Tab Width");
+     
+    MapWindow();
+    _client->WaitFor(this);
+}
+    
+OXSetTabsBox::~OXSetTabsBox() {
+  delete L1; delete L5; delete L6;
+  delete L21;
+}
+
+int OXSetTabsBox::ProcessMessage(OMessage *msg) {
+ OWidgetMessage *wmsg = (OWidgetMessage *) msg;
+
+  switch (msg->type) {
+    case MSG_BUTTON:
+        
+      switch (msg->action) {
+        case MSG_CLICK:
+          switch (wmsg->id) {
+            case 1:
+              *ret = atoi(_te->GetString());
+              CloseWindow();
+              break;
+
+            case 2:
+              *ret = -1;
+              CloseWindow();
+              break;
+          }
+          break;
+
+        default:
+          break;
+      }
+      break;  
+    
+    case MSG_TEXTENTRY:
+      switch (msg->action) {
+        case MSG_TEXTCHANGED:
+          if (strlen(_te->GetString()) == 0)
+            OkButton->Disable();
+          else
+            OkButton->Enable();
           break;
 
         default:
@@ -156,8 +265,6 @@ OXSearchBox::OXSearchBox(const OXWindow *p, const OXWindow *main,
                          int w, int h, search_struct *sstruct, int *ret_val, 
                          unsigned long options) :
   OXTransientFrame(p, main, w, h, options) {
-    int i, ax, ay;
-    Window wdummy;  
 
     ret = ret_val;
     s = sstruct;
@@ -244,14 +351,8 @@ OXSearchBox::OXSearchBox(const OXWindow *p, const OXWindow *main,
                 MWM_INPUT_MODELESS);
     MapSubwindows();
     Resize(GetDefaultSize());
-    
-    // position relative to the parent's window
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                          (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                          &ax, &ay, &wdummy);
-    Move(ax, ay);
+
+    CenterOnParent();
 
     SetWMSize(_w, _h);
     SetWMSizeHints(_w, _h, _w, _h, 0, 0);
@@ -269,7 +370,6 @@ OXSearchBox::~OXSearchBox() {
                           
 int OXSearchBox::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-  const char *string;
 
   switch (msg->type) {
     case MSG_BUTTON:
@@ -278,10 +378,8 @@ int OXSearchBox::ProcessMessage(OMessage *msg) {
         case MSG_CLICK:
           switch (wmsg->id) {
             case 1:
-              string = tbsearch->GetString();
-              s->buffer = new char[strlen(string)];
-              strcpy(s->buffer, string);
-              *ret= True;
+              s->buffer = StrDup(tbsearch->GetString());
+              *ret = True;
               CloseWindow();
               break;
 
@@ -318,8 +416,7 @@ int OXSearchBox::ProcessMessage(OMessage *msg) {
     case MSG_TEXTENTRY:
       switch (msg->action) {
         case MSG_TEXTCHANGED:
-          string = tbsearch->GetString();
-          if (strlen(string) == 0)
+          if (strlen(tbsearch->GetString()) == 0)
             SearchButton->Disable();
           else
             SearchButton->Enable();
@@ -344,8 +441,6 @@ OXPrintBox::OXPrintBox(const OXWindow *p, const OXWindow *main, int w, int h,
                        char **printerName, char **printProg, int *ret_val, 
                        unsigned long options) :
   OXTransientFrame(p, main, w, h, options) {
-    int i, ax, ay;
-    Window wdummy;  
               
     pprinter = printerName;
     pprintCommand = printProg;
@@ -410,13 +505,7 @@ OXPrintBox::OXPrintBox(const OXWindow *p, const OXWindow *main, int w, int h,
     MapSubwindows();
     Resize(GetDefaultSize());
     
-    // position relative to the parent's window
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                          (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                          &ax, &ay, &wdummy);
-    Move(ax, ay);
+    CenterOnParent();
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_MAXIMIZE | MWM_DECOR_MENU,
                 MWM_FUNC_ALL | MWM_FUNC_MAXIMIZE | MWM_FUNC_RESIZE,
@@ -435,25 +524,19 @@ OXPrintBox::~OXPrintBox() {
 
 int OXPrintBox::ProcessMessage(OMessage *msg) { 
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-  const char *string;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_BUTTON:
         
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case 1:
-              *ret= True;
-              string = tbprinter->GetString();
-              delete *pprinter;
-              *pprinter = new char[strlen(string)+1];
-              strcpy(*pprinter, string);
-
-              string = tbprintCommand->GetString();
-              delete *pprintCommand;
-              *pprintCommand = new char[strlen(string)+1];
-              strcpy(*pprintCommand, string);
+              *ret = True;
+              delete[] *pprinter;
+              *pprinter = StrDup(tbprinter->GetString());
+              delete[] *pprintCommand;
+              *pprintCommand = StrDup(tbprintCommand->GetString());
               CloseWindow();
               break;
 
