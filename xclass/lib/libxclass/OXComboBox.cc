@@ -25,6 +25,8 @@
 #include <xclass/OXComboBox.h>
 #include <xclass/OString.h>
 
+#include "icons/arrow-down.xpm"
+
 const OPicture *OXComboBox::_bpic = NULL;
 
 
@@ -39,7 +41,7 @@ OXComboBox::OXComboBox(const OXWindow *p, char *name, int id,
     _msgObject = p;
 
     if (!_bpic) {
-      _bpic = _client->GetPicture("arrow-down.xpm");
+      _bpic = _client->GetPicture("arrow-down.xpm", XCP_arrow_down);
       if (!_bpic) FatalError("OXComboBox: missing required pixmap");
     }
 

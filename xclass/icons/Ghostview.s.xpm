@@ -4,7 +4,7 @@ static char * Ghostview_s_xpm[] = {
 " 	s None	c None",
 ".	c black",
 "X	c white",
-"o	c #820782078207",
+"o	c #808080",
 "                                ",
 "                                ",
 "            ......              ",

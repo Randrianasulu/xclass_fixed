@@ -809,7 +809,7 @@ Atom OXFileList::HandleDNDposition(int x, int y, Atom action,
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(_canvas, x, y, &nx, &ny);
 #endif
 
-  OFileItem *fi = (OFileItem *) GetItemByPos(OPosition(nx, ny));
+  OFileItem *fi = (OFileItem *) GetItemByPos(ToVirtual(OPosition(nx, ny)));
 
   if (fi != _dragOver) {
     // leaving _dragOver

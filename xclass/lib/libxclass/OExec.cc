@@ -94,6 +94,7 @@ OExec::OExec(OXClient *client, const char *prog, char *argv[],
 }
 
 OExec::~OExec() {
+  _childList->Remove(_pid);  // this must be done first!
   if (_idle) delete _idle;
   if (_input_fd  >= 0) close(_input_fd);
   if (_output_fd >= 0) close(_output_fd);
@@ -102,7 +103,6 @@ OExec::~OExec() {
     Kill();
     //if (_pid > 0) waitpid(_pid, &_status, WNOHANG);
   }
-  _childList->Remove(_pid);
 }
 
 int OExec::HandleIdleEvent(OIdleHandler *idle) {

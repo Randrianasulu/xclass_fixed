@@ -1950,3 +1950,11 @@ OPicture.cc
 - Removed XK_Execute from key handling methods, since it seems to give
   problems with newer versions of XFree86
 
+
+07/11/01 (0.6.2)
+
+- Corrected a bug in OExec's destructor that could potentially cause the
+  application to crash.
+
+- Corrected a bug in OXFileList::HandleDNDposition() - needed to convert
+  to virtual coordinates.
