@@ -21,6 +21,8 @@ ICONS = Ghostview.s.xpm \
 	Netscape.s.xpm \
 	Netscape.t.xpm \
 	Notepad.s.xpm \
+	OnyX.t.xpm \
+	OnyX.s.xpm \
 	PExplorer1616.xpm \
 	PExplorer3232.xpm \
 	POINT.xpm \

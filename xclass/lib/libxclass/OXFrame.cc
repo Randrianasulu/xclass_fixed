@@ -266,6 +266,7 @@ int OXFrame::HandleConfigureNotify(XConfigureEvent *event) {
   if ((event->width != _w) || (event->height != _h)) {
     _w = event->width;
     _h = event->height;
+    _Resized();
     Layout();
   }
   return True;

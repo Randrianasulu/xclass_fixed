@@ -268,8 +268,11 @@ void OXMainFrame::SetFocusOwner(OXFrame *f) {
 }
 
 int OXMainFrame::HandleConfigureNotify(XConfigureEvent *event) {
-  _x = event->x;
-  _y = event->y;
+  if (event->send_event) {
+    _x = event->x;
+    _y = event->y;
+    _Moved();
+  }
   OXCompositeFrame::HandleConfigureNotify(event);
   return True;
 }

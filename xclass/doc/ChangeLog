@@ -2498,3 +2498,17 @@ OPicture.cc
   type selected. Note that since file_types[] is arranged in pairs, a
   file_type_index value of N actually points to the 2*N-th entry in
   file_types[].
+
+
+09/09/04
+
+- Fixed some minor OXTextEntry redraw problems.
+
+
+11/09/04
+
+- OXMainFrame::HandleConfigureNotify(): update _x and _y and call _Moved()
+  only when send_event is True.
+
+- OXFrame::HandleConfigureNotify(): call _Resized() from here too to keep
+  OnyX IDE happy.

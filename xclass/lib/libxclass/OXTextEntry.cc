@@ -148,13 +148,17 @@ void OXTextEntry::DrawCursor(bool mode) {
   int y = 2 + _insets.t;
   int x = 2 + _insets.l;
 
+  int cursor_height = _th - 1;
+  if (cursor_height > _h - _insets.t - _insets.b)
+    cursor_height = _h - _insets.t - _insets.b;
+
   int cursor_width = 2;
 
   if (mode) {
     FillRectangle(_normGC->GetGC(), _cursor_x - _vstart_x + x, y,
-                  cursor_width, _th - 1);
+                  cursor_width, cursor_height);
   } else {
-    ClearArea(_cursor_x - _vstart_x + x, y, cursor_width, _th + 1);
+    ClearArea(_cursor_x - _vstart_x + x, y, cursor_width, cursor_height);
     if (_text->GetTextLength() > _cursor_ix) {
       OXGC *drawGC = _normGC;
       Font oldfont = _selGC->GetFont();
@@ -217,15 +221,17 @@ void OXTextEntry::_DoRedraw() {
                      0, 0, &rect, 1, Unsorted);
   XSetClipRectangles(GetDisplay(), _selGC->GetGC(),
                      0, 0, &rect, 1, Unsorted);
+  XSetClipRectangles(GetDisplay(), _selbackGC->GetGC(),
+                     0, 0, &rect, 1, Unsorted);
 
-  ClearArea(_insets.l, y - 1, 4 - _insets.l, _th +1);
+  ClearArea(_insets.l, rect.y, 4 - _insets.l, rect.height);
   _normGC->SetBackground(_backPixel);
   _DrawImageString(_normGC->GetGC(), x + _insets.l + 2, y + _ascent,
                    start_char, end_char - start_char + 1);
   int xr = _TextWidth(0, _text->GetTextLength()) - _vstart_x;
   if (xr + _insets.l + 2 < _w - _insets.r)
-    ClearArea(xr + _insets.l + 2, y - 1,
-              _w - _insets.r - (xr + _insets.l + 2), _th +1);
+    ClearArea(xr + _insets.l + 2, rect.y,
+              _w - _insets.r - (xr + _insets.l + 2), rect.height);
 
   if (_selection_on) {
     int xs, ws, ixs, iws;
@@ -252,6 +258,7 @@ void OXTextEntry::_DoRedraw() {
   }
   _normGC->SetClipMask(None);
   _selGC->SetClipMask(None);
+  _selbackGC->SetClipMask(None);
   DrawCursor(_cursor_on);
 }
 
