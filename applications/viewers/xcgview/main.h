@@ -112,7 +112,7 @@ public:
 
   void SetWindowTitle(const char *title);
   void UpdateStatus();
-  void OpenFile(const char *fname);
+  void OpenFile(const char *fname, int die = False);
   void DoOpen();
   void DoReopen();
   void DoSaveMarked();
@@ -137,7 +137,7 @@ public:
 
 protected:
   void _SetupGhostview();
-  void _NewFile(int n);
+  void _NewFile(int n, int home = True);
   void _ShowPage(int n);
   void _BuildPagemediaMenu();
   void _SetOrientation(int n);

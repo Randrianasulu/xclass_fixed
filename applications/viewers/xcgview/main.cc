@@ -131,8 +131,9 @@ int main(int argc, char **argv) {
   OXClient *clientX = new OXClient(argc, argv);
 
   OXMain *mainw = new OXMain(clientX->GetRoot(), 600, 400);
-  if (argc > 1) mainw->OpenFile(argv[1]);
   mainw->MapWindow();
+
+  if (argc > 1) mainw->OpenFile(argv[1], True);
 
   clientX->Run();
 
@@ -573,7 +574,7 @@ void OXMain::ErrorMsg(int icon_type, char *msg) {
 
 //----------------------------------------------------------------------
 
-void OXMain::OpenFile(const char *fname) {
+void OXMain::OpenFile(const char *fname, int die) {
   struct stat sbuf;
   char buf[BUFSIZ];
   FILE *fp;
@@ -581,8 +582,12 @@ void OXMain::OpenFile(const char *fname) {
   if (!fname) return;
 
   if ((fp = fopen(fname, "r")) == NULL) {
-    fprintf(stderr, "Could not open input file: \"%s\"\n", fname);
-    exit(1);
+    if (die) {
+      fprintf(stderr, "Could not open input file: \"%s\"\n", fname);
+      exit(1);
+    } else {
+      ErrorMsg(MB_ICONSTOP, "Could not open file.");
+    }
   } else {
     _filename = StrDup(fname);
     if (*fname == '/') {
@@ -652,7 +657,7 @@ void OXMain::DoReopen() {
   }
   stat(_full_filename, &sbuf);
   mtime = sbuf.st_mtime;
-  _NewFile(page);
+  _NewFile(page, False);
   _ShowPage(page);
 }
 
@@ -1295,8 +1300,12 @@ void OXMain::_SetupGhostview() {
   if (output_dlg) output_dlg->Clear();
 }
 
-void OXMain::_NewFile(int n) {
+void OXMain::_NewFile(int n, int home) {
   _SetupGhostview();
+  if (home) {
+    _canvas->SetHPos(0);
+    _canvas->SetVPos(0);
+  }
 }
 
 void OXMain::_ShowPage(int n) {
@@ -1317,7 +1326,7 @@ void OXMain::_ShowPage(int n) {
         return;
       }
       mtime = sbuf.st_mtime;
-      _NewFile(n);
+      _NewFile(n, False);
     }
   }
 
