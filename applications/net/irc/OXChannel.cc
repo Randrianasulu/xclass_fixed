@@ -1,18 +1,19 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <X11/keysym.h>
 #include <errno.h>
 
-#include "OXDCCFile.h"
+#include <X11/keysym.h>
+
 #include "IRCcodes.h"
 #include "OIrcMessage.h"
 #include "OXChannel.h"
 #include "OXIrc.h"
-#include "OXConfirmDlg.h"
 
+#include "OXDCCFile.h"
 #include "OXDCCChannel.h" //////
 
+#include "versiondef.h"
 
 //----------------------------------------------------------------------
 
@@ -28,9 +29,7 @@ extern OLayoutHints *expandxexpandylayout;
 extern OLayoutHints *menubarlayout;
 extern OLayoutHints *menuitemlayout;
 
-//extern OXPopupMenu *_nick_actions, *_nick_ctcp;
-
-extern OSettings  *foxircSettings;
+extern OSettings *foxircSettings;
 
 extern char *filetypes[];
 
@@ -40,12 +39,12 @@ OXChannel::OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
                      const char *ch, int init) :
   OXTransientFrame(p, main, 1, 1) {
   char wname[100];
-  int  ax, ay;
-  Window wdummy;
 
   _server = s;
   _next = _prev = NULL;
   _name = StrDup(ch);
+
+  _InitHistory();
   
   _cinfo = foxircSettings->FindChannel(_name);
   if (!_cinfo) _cinfo = new OChannelInfo();
@@ -70,26 +69,27 @@ OXChannel::OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
     SetFocusOwner(_sayentry);
 
 //    sprintf(wname, "%s Private Message", _name);
-    sprintf(wname, "fOXIrc - %s", _name);
+    sprintf(wname, "%s - %s", FOXIRC_NAME, _name);
     SetWindowName(wname);
 
-    //---- position relative to the parent's window
- 
-    XTranslateCoordinates(GetDisplay(),
-                          s->GetId(), GetParent()->GetId(),
-                          50, 50, &ax, &ay, &wdummy);
-
-    Move(ax, ay);
+    CenterOnParent();
 
     MapWindow();
   }
 }
 
 OXChannel::~OXChannel() {
+  _ClearHistory();
   delete[] _name;
 }
 
 //------------------------------------------------------------------------
+
+int OXChannel::CloseWindow() {
+  // Tell OXIrc to remove us from the chain...
+  _server->RemoveChannel(this);
+  return OXTransientFrame::CloseWindow();
+}
 
 void OXChannel::_AddView() {
   _hf = new OXCompositeFrame(this, 10, 10, HORIZONTAL_FRAME);
@@ -110,19 +110,32 @@ void OXChannel::_AddView() {
   _vf->AddFrame(_sayentry, topexpandxlayout1);
 }
 
-int OXChannel::CloseWindow() {
-  // Tell OXIrc to remove us from the chain...
-  _server->RemoveChannel(this);
-  return OXTransientFrame::CloseWindow();
+void OXChannel::_InitHistory() {
+  _historyCurrent = 0;
+  _history.clear();
 }
 
-void OXChannel::Say(char *nick, char *message, int mode) {
-  char m[TCP_BUFFER_LENGTH];
-  int  int1 = 0, int2 = 0;
+void OXChannel::_AddToHistory(const char *str) {
+  if (_history.size() > 0)
+    if (strcmp(_history[_history.size() - 1], str) == 0) return;
+  _history.push_back(StrDup(str));
+  _historyCurrent = _history.size();
+}
+
+void OXChannel::_ClearHistory() {
+  for (int i = 0; i < _history.size(); ++i) delete[] _history[i];
+  _history.clear();
+}
+
+void OXChannel::Say(const char *nick, char *message, int mode) {
+  char m[IRC_MSG_LENGTH];
+  int  int1 = 0, int2 = 0, ctcp = false;
 
   m[0] = '\0';
+
   if (message[0] == 1) {
-    for (int1=1; int1<strlen(message); int1++)
+
+    for (int1 = 1; int1 < strlen(message); ++int1)
       if (message[int1] == 1) message[int1] = 0;
 
     if (!strncmp(message+1, "ACTION", 6)) {
@@ -130,27 +143,32 @@ void OXChannel::Say(char *nick, char *message, int mode) {
         sprintf(m, "%s %s", nick+1, message+8);
       else
         sprintf(m, "%s %s", nick, message+8);
-      Log(m, 1);
+      Log(m, P_COLOR_ACTION);
       return;
+
     } else if ((!strncmp(message+1, "PING", 4)) ||
              (!strncmp(message+1, "ECHO", 4))) {
       sscanf(message+6, "%i", &int2);
       if (mode == NOTICE) {
-        sprintf(m, "PING reply from %s: %i seconds.", nick, time(NULL)-int2);
+        sprintf(m, "PING reply from %s: %ld seconds.", nick, time(NULL)-int2);
       } else {
-        sprintf(m, "NOTICE %s :\001%s\001\n", nick, message+1);
-	OTcpMessage msg(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, m);
-	SendMessage(_server, &msg);
+        sprintf(m, "NOTICE %s :\001%s\001", nick, message+1);
+	_server->SendRawCommand(m);
         sprintf(m, "%s requested %s.", nick, message+1);
       }
+      ctcp = true;
+
     } else if (!strncmp(message+1, "VERSION", 7)) {
       if (mode == NOTICE) {
         sprintf(m, "VERSION reply from %s: %s", nick, message+9);
       } else {
-        sprintf(m, "VERSION %s", FOXIRCVERSION);
+        sprintf(m, "VERSION %s %s %s",
+                   FOXIRC_NAME, FOXIRC_VERSION, FOXIRC_HOMEPAGE);
         _server->CTCPSend(nick, m, NOTICE);
         sprintf(m, "%s requested VERSION.", nick);
-      } 
+      }
+      ctcp = true;
+
     } else if (!strncmp(message+1, "CLIENTINFO", 10)) {
       if (mode == NOTICE) {
         sprintf(m, "CLIENTINFO reply from %s: %s", nick, message+12);
@@ -159,6 +177,8 @@ void OXChannel::Say(char *nick, char *message, int mode) {
         _server->CTCPSend(nick, m, NOTICE);
         sprintf(m, "%s requested CLIENTINFO.", nick);
       }
+      ctcp = true;
+
     } else if (!strncmp(message+1, "DCC", 3)) {
       if (mode == NOTICE) {
         sprintf(m, "DCC reply from %s: %s", nick, message+1);
@@ -166,63 +186,81 @@ void OXChannel::Say(char *nick, char *message, int mode) {
         sprintf(m, "%s requested DCC: %s.", nick, message+1);
         ProcessDCCRequest(nick, message+1);
       }
+
     } else {
 //      _server->CTCPSend(nick, message+1, PRIVMSG);
       sprintf(m, "%s CTCP: %s", nick, message+1);
+      ctcp = true;
     }
-    Log(m, 2);
+
+    if (ctcp && foxircSettings->SendToInfo(P_LOG_CTCP))
+      _server->Log(m, P_COLOR_CTCP);
+    else
+      Log(m, P_COLOR_CTCP);
+
 //  } else if (!strcasecmp(nick, _name)) {
-//    sprintf(m, "%c2=%c11%s%c2=%c0 %s", 3, 3, nick, 3, 3, message);
+//    sprintf(m, "\003%d=\003%d%s\003%d=\003%d %s", 2, 11, nick, 2, 0, message);
 //    //sprintf(m, "%s", message);
+
   } else if (!strcasecmp(nick, _name)) { // for MSG windows
     if (mode == DCC)
-      sprintf(m, "%c9=%c15%s%c9=%c %s", 3, 3, ((char *)nick)+1, 3, 3, message);
+      sprintf(m, "\003%d=\003%d%s\003%d=\003 %s", 9, 15, nick+1, 9, message);
+//    else if (mode == NOTICE)
+//      sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 9, 15, nick, 9, message);
     else
-      sprintf(m, "%c13<%c15%s%c13>%c %s", 3, 3, nick, 3, 3, message);
+      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 9, 15, nick, 9, message);
     Log(m);    
-  } else if (!strcasecmp(nick, _server->_nick)) {
+
+  } else if (!strcasecmp(nick, _server->GetNick())) {  // our own text
     if (mode == DCC)
-      sprintf(m, "%c9<%c15%s%c9>%c %s", 3, 3, nick, 3, 3, message);
+      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 8, 15, nick, 8, message);
+    else if (mode == NOTICE)
+      sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 8, 15, nick, 8, message);
     else
-      sprintf(m, "%c13<%c15%s%c13>%c %s", 3, 3, nick, 3, 3, message);
+      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 8, 15, nick, 8, message);
     Log(m);
-  } else {
-    sprintf(m, "%c12<%c15%s%c12>%c %s", 3, 3, nick, 3, 3, message);
+
+  } else {  // other's text
+    
+    if (mode == NOTICE) {
+      if (*nick) {
+        sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 11, 15, nick, 11, message);
+      } else {
+        sprintf(m, "%s", message);
+        Log(m, P_COLOR_NOTICE);
+        return;
+      }
+    } else {
+      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 11, 15, nick, 11, message);
+    }
+      
     //sprintf(m, "<%s> %s", nick, message);
     Log(m);
+
   }
+
   if (strchr(m, '\007')) XBell(GetDisplay(), 0);
 }
 
-void OXChannel::Log(char *message) {
-  Log(message, 11);
+void OXChannel::Log(const char *message) {
+  Log(message, P_COLOR_TEXT);
 }
 
-void OXChannel::Log(char *message, char *color) {
+void OXChannel::Log(const char *message, int color) {
 
 //  if (foxircSettings->CheckMisc(P_MISC_POPUP_WINDOW)) RaiseWindow();
-// if (foxircSettings->CheckChannelFlags(_name,AUTO_RAISE_WINDOW)) RaiseWindow();
-  if (_cinfo->flags & AUTO_RAISE_WINDOW ) RaiseWindow();
+//  if (foxircSettings->CheckChannelFlags(_name, AUTO_RAISE_WINDOW)) RaiseWindow();
+  if (_cinfo->flags & AUTO_RAISE_WINDOW) RaiseWindow();
 
   OLineDoc *l = new OLineDoc();
-  l->SetCanvas(_log->_style_server);
-  l->SetColor(color);
-  l->Fill(message);
-  _log->AddLine(l);
-  _logw->ScrollUp();
-}
-void OXChannel::Log(char *message, int color) {
-  if (_cinfo->flags & AUTO_RAISE_WINDOW ) RaiseWindow();
-
-  OLineDoc *l = new OLineDoc();
-  l->SetCanvas(_log->_style_server);
-  l->SetColor(foxircSettings->GetColorID(color));
+  l->SetCanvas(_log->GetTextFrame());
+  l->SetDefaultColor(foxircSettings->GetPixelID(color));
   l->Fill(message);
   _log->AddLine(l);
   _logw->ScrollUp();
 }
 
-void OXChannel::StartDCCChat(char *nick) {
+void OXChannel::StartDCCChat(const char *nick) {
   char char1[20], char2[256];
   unsigned long hostnum;
   unsigned short portnum;
@@ -231,34 +269,35 @@ void OXChannel::StartDCCChat(char *nick) {
   OXDCCChannel *xdcc = (OXDCCChannel *) _server->GetChannel(char1);
 
   if (!xdcc->Listen(&hostnum, &portnum)) {
-    _server->GetChannel(char1)->Log("Failed to create server socket", "yellow");
+    xdcc->Log("Failed to create server socket", P_COLOR_NOTIFY);
     printf("StartDCCChat: Listen Failed!\n");
   } else {
-    printf("Listening for DCC Chat with %s on IP %lu Port %d\n",
+    printf("Listening for DCC Chat with %s on IP %u Port %d\n",
            nick, ntohl(hostnum), ntohs(portnum));
-    sprintf(char2, "DCC CHAT chat %lu %d", ntohl(hostnum), ntohs(portnum));
+    sprintf(char2, "DCC CHAT chat %u %d", ntohl(hostnum), ntohs(portnum));
     _server->CTCPSend(nick, char2, PRIVMSG);  
   }
 }
 
-void OXChannel::AcceptDCCChat(char *inick, char *iserver, int iport) {
-  char char1[TCP_BUFFER_LENGTH];
+void OXChannel::AcceptDCCChat(const char *nick,
+                              const char *server, int port) {
+  char char1[IRC_MSG_LENGTH];
 
-  sprintf(char1, "=%s", inick);
+  sprintf(char1, "=%s", nick);
   OXDCCChannel *xdcc = (OXDCCChannel *) _server->GetChannel(char1);
-  xdcc->Connect(iserver, iport);
+  xdcc->Connect(server, port);
 }
 
-void OXChannel::ProcessDCCRequest(char *nick, char *string) {
+void OXChannel::ProcessDCCRequest(const char *nick, const char *string) {
   int  ret;
-  char char1[TCP_BUFFER_LENGTH], char2[TCP_BUFFER_LENGTH],
-       char3[TCP_BUFFER_LENGTH], char4[TCP_BUFFER_LENGTH],
-       char5[TCP_BUFFER_LENGTH], char6[TCP_BUFFER_LENGTH];
+  char char1[IRC_MSG_LENGTH], char2[IRC_MSG_LENGTH],
+       char3[IRC_MSG_LENGTH], char4[IRC_MSG_LENGTH],
+       char5[IRC_MSG_LENGTH], char6[IRC_MSG_LENGTH];
 
   if (sscanf(string, "DCC %s %s %s %s %s",
                      char1, char2, char3, char4, char5) == 5) {
     printf("ahh a DCC send\n");
-    OXDCCFile *tp = new OXDCCFile(_client->GetRoot(), nick, char2, char3, char4, char5);
+    new OXDCCFile(_client->GetRoot(), nick, char2, char3, char4, char5, &ret);
 
 //    sprintf(char6, "%s wishes to send you %s which is %s bytes in size", 
 //            nick, char2, char5);
@@ -276,8 +315,15 @@ void OXChannel::ProcessDCCRequest(char *nick, char *string) {
 //      printf("Ignoring %s from %s\n", char2, nick);
 //    }
 
+    if (ret == ID_DCC_REJECT) {
+      printf("Refusing send from %s\n", nick);
+      sprintf(char1, "DCC REJECT SEND %s", char2);
+      _server->CTCPSend(nick, char1, NOTICE);
+
+    }
+
   } else if (sscanf(string, "DCC %s %s %s %s",
-                             char1, char2, char3, char4, char5) == 4) {
+                             char1, char2, char3, char4) == 4) {
     printf("ahh a DCC chat\n");
     sprintf(char6, "%s wishes to chat with you ", nick);
     new OXMsgBox(_client->GetRoot(), this, new OString("DCC Confirm"), 
@@ -299,59 +345,59 @@ void OXChannel::ProcessDCCRequest(char *nick, char *string) {
   } else if (sscanf(string, "DCC REJECT %s %s", char1, char2) == 2) {
     if (strcasecmp(char1, "chat") == 0) { 
       _server->CTCPSend(nick, "DCC REJECT CHAT chat", NOTICE);
-      printf("A Rejecting chat from %s\n", nick);
+      printf("A chat reject from %s\n", nick);
       sprintf(char3, "=%s", nick);
       OXChannel *ch = _server->FindChannel(char3);
-      if (ch) ((OXDCCChannel *) ch)->CloseUp();
+      if (ch) ((OXDCCChannel *) ch)->Disconnect();
     }
                                 
   }
 }
 
 int OXChannel::ProcessMessage(OMessage *msg) {
-  char char1[TCP_BUFFER_LENGTH], 
-       char3[TCP_BUFFER_LENGTH],
-       char4[TCP_BUFFER_LENGTH],
-       m[TCP_BUFFER_LENGTH];
+  char char1[IRC_MSG_LENGTH], char3[IRC_MSG_LENGTH];
   char *strtmp;
-  int n;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_TEXTENTRY:
       {
       OTextEntryMessage *tmsg = (OTextEntryMessage *) msg;
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_TEXTCHANGED:
 
-          switch(tmsg->keysym) {
+          switch (tmsg->keysym) {
             case XK_Return:
               strcpy(char1, _sayentry->GetString());
               if (strlen(char1) > 0) {
 		strtmp = strtok(char1, "\n");
 		while (strtmp) {
-                  sprintf(char3, "PRIVMSG %s :%s\n", _name, strtmp);
-                  OIrcMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, char3);
-                  SendMessage(_server, &message);
-                  Say(_server->_nick, strtmp, PRIVMSG);
-                  _history.Add(StrDup(strtmp));
+                  sprintf(char3, "PRIVMSG %s :%s", _name, strtmp);
+                  _server->SendRawCommand(char3);
+                  Say(_server->GetNick(), strtmp, PRIVMSG);
+                  _AddToHistory(strtmp);
                   strtmp = strtok(NULL, "\n");
 		}
-		historyCurrent = _history.GetSize();
+		_historyCurrent = _history.size();
 	        _sayentry->Clear();
               }
 	      break;
 
 	    case XK_Up:
-	      _sayentry->Clear();
-	      if ((_history.GetAt(historyCurrent)) && (historyCurrent > 0))
-                _sayentry->AddText(0, _history.GetAt(historyCurrent--));
+              if ((_history.size() > 0) &&
+                  (_historyCurrent > 0)) {
+                _sayentry->Clear();
+                _sayentry->AddText(0, _history[--_historyCurrent]);
+              }
               break;
 
 	    case XK_Down:
-	      _sayentry->Clear();
-	      if ((_history.GetAt(historyCurrent)) && 
-                  (_history.GetSize() > historyCurrent)) 
-                _sayentry->AddText(0, _history.GetAt(historyCurrent++));
+              _sayentry->Clear();
+              if ((_history.size() > 0) &&
+                  (_historyCurrent < _history.size() - 1)) {
+                _sayentry->AddText(0, _history[++_historyCurrent]);
+              } else {
+                _historyCurrent = _history.size();
+              }
 	      break;
           }
           break;
@@ -361,9 +407,9 @@ int OXChannel::ProcessMessage(OMessage *msg) {
 
     case INCOMING_IRC_MSG:
       {
-        OIrcMessage *ircmsg = (OIrcMessage*)msg;
+        OIrcMessage *ircmsg = (OIrcMessage *) msg;
 
-        switch(msg->action) {
+        switch (msg->action) {
           default:
 	    break;
         }
@@ -372,19 +418,3 @@ int OXChannel::ProcessMessage(OMessage *msg) {
   }
   return True;
 }
-
-/*
-void OXChannel::HandleModeChange(char *mode) {
-  char char1[TCP_BUFFER_LENGTH],
-       char2[TCP_BUFFER_LENGTH],
-       char3[TCP_BUFFER_LENGTH],
-       char4[TCP_BUFFER_LENGTH],
-       char5[TCP_BUFFER_LENGTH],
-       char6[TCP_BUFFER_LENGTH];
-
-  if (sscanf(mode, "+%s %s ", char1, char2) == 2) {
-
-  } else
-    if(sscanf(mode,"-%s %s ", char1, char2) == 2) {
-}
-*/

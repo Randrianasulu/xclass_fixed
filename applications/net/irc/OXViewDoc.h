@@ -11,15 +11,12 @@
 #include "OViewDoc.h"
 
 class OXViewDoc;
+class OXGC;
+
+
+//----------------------------------------------------------------------
 
 class OXViewDocFrame : public OXFrame, public OXWidget {
-friend class OXViewDoc;
-
-protected:
-  OViewDoc *_document;
-
-  GC _backgc;
-
 public:
   OXViewDocFrame(OXWindow *parent, int w, int h, unsigned int options,
               unsigned long back = _defaultDocumentBackground);
@@ -42,12 +39,18 @@ public:
     DrawRegion(event->x, event->y, event->width, event->height, True);
     return True;
   }
+  OXGC *GetGC() { return _gc; }
 
   virtual void Layout();
+
+  friend class OXViewDoc;
 
 protected:
   virtual void DrawRegion(int x, int y, int w, int h, int clear);
 
+  OViewDoc *_document;
+
+  OXGC *_backgc, *_gc;
   int _tx, _ty;
 };
 
@@ -57,32 +60,32 @@ protected:
 #define FORCE_VSCROLL 8
 
 class OXViewDoc : public OXCompositeFrame {
-
-protected:
-  unsigned long _background;
-
 public:
   OXViewDoc(const OXWindow *parent, OViewDoc *d,
             int w, int h, unsigned int options,
             unsigned long back = _defaultDocumentBackground);
   virtual ~OXViewDoc();
 
-  void SetScrollOptions(int o) { _scroll_options = o; }
-
-  int  LoadFile(char *fname);
-  void Clear();
+  virtual int HandleButton(XButtonEvent *event);
   virtual int ProcessMessage(OMessage *msg);
-  virtual void AdjustScrollbars();
-  virtual void Layout();
+
   virtual ODimension GetDefaultSize() const { return ODimension(_w, _h); }
+
+  virtual void Layout();
+
+  int  LoadFile(const char *fname);
+  void Clear();
+  void AdjustScrollbars();
+  void SetScrollOptions(int o) { _scroll_options = o; }
   void SetupBackground(unsigned long back) { _canvas->SetupBackground(back); }
   void SetupBackgroundPic(const char *name) { _canvas->SetupBackgroundPic(name); }
-
-  int GetBackground() { return _background; }
-
+  int  GetBackground() { return _background; }
   void ScrollUp();
+  void Redisplay();
 
 protected:
+  unsigned long _background;
+
   OViewDoc *_document;
   OXViewDocFrame  *_canvas;
   OXHScrollBar *_hscrollbar;
@@ -91,4 +94,5 @@ protected:
   int _scroll_options;
 };
 
-#endif
+
+#endif  // __OXVIEWDOC_H

@@ -23,7 +23,6 @@
 #define __OXCONFIRMDLG_H
 
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXTextButton.h>
 #include <xclass/OXLabel.h>
@@ -31,7 +30,6 @@
 #include <xclass/OX3dLines.h>
 #include <xclass/OXMsgBox.h>
 #include <xclass/OString.h>
-#include <xclass/OTimer.h>
 #include <xclass/utils.h>
 
 
@@ -40,12 +38,12 @@
 class OXConfirmDlg : public OXTransientFrame {
 public:
   OXConfirmDlg(const OXWindow *p, const OXWindow *main,
-               OString *title, OString *text,
+               OString *title, OString *text, OString *label = NULL,
                OString *msg = NULL, int *ret_code = NULL,
+               int buttons = ID_YES | ID_NO,
                unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXConfirmDlg();
 
-  virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
 protected:

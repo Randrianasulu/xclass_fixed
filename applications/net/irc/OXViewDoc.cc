@@ -1,14 +1,16 @@
 #include <stdio.h>
+
 #include <xclass/utils.h>
 #include <xclass/OResourcePool.h>
+#include <xclass/OGC.h>
 
 #include "OXViewDoc.h"
 #include "OXPreferences.h"
 
 #define ALWAYS_SCROLLED 1
 
-extern OSettings  *foxircSettings;
-extern unsigned long IRCcolors[];
+extern OSettings *foxircSettings;
+
 
 //----------------------------------------------------------------------
 
@@ -23,61 +25,48 @@ OXViewDocFrame::OXViewDocFrame(OXWindow *parent, int x, int y,
 
 //  bckgnd_pix = GetResourcePool()->GetDocumentBckgndPicture();
   if (bckgnd_pix) {
-//    FatalError("Missing background pixmap: back2.xpm");
     mask = GCTile | GCFillStyle | GCGraphicsExposures;
     SetBackgroundPixmap(bckgnd_pix->GetPicture());
     gcv.tile = bckgnd_pix->GetPicture();
     gcv.fill_style = FillTiled;
     gcv.graphics_exposures = True;
-  } else{
-    printf("No Pix defaulting..\n");
-    mask = GCForeground | GCBackground;
- // gcv.fill_style = FillSolid; | GCFillStyle
-//  gcv.line_style = LineSolid; GCLineStyle |
-//  gcv.line_width = 0; GCLineWidth  | 
-    gcv.foreground = IRCcolors[foxircSettings->GetColorID(20)];
-    gcv.background = _defaultDocumentForeground;
+  } else {
+    mask = GCForeground | GCBackground | GCGraphicsExposures;
+    gcv.foreground = foxircSettings->GetPixelID(P_COLOR_BACKGROUND);
+    gcv.background = gcv.foreground;
+    gcv.graphics_exposures = True;
     SetBackgroundColor(gcv.foreground);
   }
-  _backgc = XCreateGC(GetDisplay(), _id, mask, &gcv);
+  _backgc = new OXGC(GetDisplay(), _id, mask, &gcv);
+
+  _gc = new OXGC(GetDisplay(), _id);
+  _gc->SetFont(foxircSettings->GetFont()->GetId());
+  _gc->SetBackground(foxircSettings->GetPixelID(P_COLOR_BACKGROUND));
 
   _tx = 0;
   _ty = 0;
 }
 
-//---------------------------------------------------------------------------
+OXViewDocFrame::~OXViewDocFrame() {
+  Clear();
+  delete _backgc;
+  delete _gc;
+}
 
 void OXViewDocFrame::SetupBackgroundPic(const char *name) {
   const OPicture *bckgnd_pix = _client->GetPicture(name);
-  if (!bckgnd_pix) return;  // set tile to None...
-
-  XGCValues gcv;
-  int mask = GCTile | GCFillStyle | GCGraphicsExposures;
+  if (!bckgnd_pix) return;  // should set tile to None...
 
   SetBackgroundPixmap(bckgnd_pix->GetPicture());
-  gcv.tile = bckgnd_pix->GetPicture();
-  gcv.fill_style = FillTiled;
-  gcv.graphics_exposures = True;
-  XChangeGC(GetDisplay(), _backgc, mask, &gcv);
+  _backgc->SetTile(bckgnd_pix->GetPicture());
+  _backgc->SetFillStyle(FillTiled);
 }
 
 void OXViewDocFrame::SetupBackground(unsigned long back) {
-
-  XGCValues gcv;
-  int mask;
-
-  mask = GCForeground | GCBackground;
- // gcv.fill_style = FillSolid; | GCFillStyle
-//  gcv.line_style = LineSolid; GCLineStyle |
-//  gcv.line_width = 0; GCLineWidth  | 
-  gcv.foreground = back;
-  gcv.background = _defaultDocumentForeground;
   SetBackgroundColor(back);
-  XChangeGC(GetDisplay(), _backgc, mask, &gcv);
-}
-
-OXViewDocFrame::~OXViewDocFrame() {
-  Clear();
+  _backgc->SetBackground(back);
+  _backgc->SetForeground(back);
+  _gc->SetBackground(back);
 }
 
 void OXViewDocFrame::Clear() {
@@ -85,6 +74,7 @@ void OXViewDocFrame::Clear() {
 }
 
 void OXViewDocFrame::Layout() {
+  _document->SetWidth(_w);
   _document->Layout();
 }
 
@@ -102,11 +92,11 @@ void OXViewDocFrame::DrawRegion(int x, int y, int w, int h, int clear) {
 
     gcv.ts_x_origin = -_tx;
     gcv.ts_y_origin = -_ty;
-    XChangeGC(GetDisplay(), _backgc, mask, &gcv);
+    XChangeGC(GetDisplay(), _backgc->GetGC(), mask, &gcv);
 
-    XFillRectangle(GetDisplay(), _id, _backgc, x, y, w, h);
+    XFillRectangle(GetDisplay(), _id, _backgc->GetGC(), x, y, w, h);
+
 //    XClearArea(GetDisplay(), _id, x, y, w, h, false);
-
   }
 
 //    XClearArea(GetDisplay(), _id, x, y, w, h,false);
@@ -114,16 +104,13 @@ void OXViewDocFrame::DrawRegion(int x, int y, int w, int h, int clear) {
 //  _document->DrawRegion(GetDisplay(), _id, 0, 0, &rect);
 }
 
-//---------------------------------------------------------------------------
-
 void OXViewDocFrame::HScrollWindow(int x) {
   XPoint points[4];
   int xsrc, ysrc, xdest, ydest;
 
   // These points are the same for both cases, so set them here.
 
-  if (x == _tx)
-    return;
+  if (x == _tx) return;
 
   points[0].y = points[3].y = 0;
   points[1].y = points[2].y = _h;
@@ -150,8 +137,11 @@ void OXViewDocFrame::HScrollWindow(int x) {
     points[1].x = points[0].x = _w - xsrc; // +1;
     points[3].x = points[2].x = _w;
   }
+
   // Copy the scrolled region to its new position
-  XCopyArea(GetDisplay(), _id, _id, _backgc, xsrc, ysrc, _w, _h, xdest, ydest);
+  XCopyArea(GetDisplay(), _id, _id, _backgc->GetGC(),
+            xsrc, ysrc, _w, _h, xdest, ydest);
+
   // Set the new origin
   _tx = x;
   DrawRegion(points[0].x, points[0].y,
@@ -164,8 +154,7 @@ void OXViewDocFrame::VScrollWindow(int y) {
 
   // These points are the same for both cases, so set them here.
 
-  if (y == _ty)
-    return;
+  if (y == _ty) return;
 
   points[0].x = points[3].x = 0;
   points[1].x = points[2].x = _w;
@@ -192,14 +181,17 @@ void OXViewDocFrame::VScrollWindow(int y) {
     points[1].y = points[0].y = _h - ysrc; // +1;
     points[3].y = points[2].y = _h;
   }
+
   // Copy the scrolled region to its new position
-  XCopyArea(GetDisplay(), _id, _id, _backgc, xsrc, ysrc, _w, _h, xdest, ydest);
+  XCopyArea(GetDisplay(), _id, _id, _backgc->GetGC(),
+            xsrc, ysrc, _w, _h, xdest, ydest);
+
   // Set the new origin
   _ty = y;
   DrawRegion(points[0].x, points[0].y,
              points[2].x - points[0].x, points[2].y - points[0].y, True);
 
-{
+#if 1
   XEvent event;
 
   XSync(GetDisplay(), False);
@@ -208,10 +200,11 @@ void OXViewDocFrame::VScrollWindow(int y) {
     HandleGraphicsExpose((XGraphicsExposeEvent *) &event);
     if (event.xgraphicsexpose.count == 0) break;
   }
-}
+#endif
 }
 
-//============================================================================
+
+//----------------------------------------------------------------------
 
 OXViewDoc::OXViewDoc(const OXWindow *parent, OViewDoc *d, int x, int y,
                        unsigned int options, unsigned long back) :
@@ -228,23 +221,54 @@ OXViewDoc::OXViewDoc(const OXWindow *parent, OViewDoc *d, int x, int y,
   _vscrollbar = new OXVScrollBar(this, 16, 16, CHILD_FRAME);
   _hscrollbar = new OXHScrollBar(this, 16, 16, CHILD_FRAME);
 
+  _vscrollbar->SetDelay(10, 10);
+  _vscrollbar->SetMode(SB_ACCELERATED);
+  _hscrollbar->SetDelay(10, 10);
+  _hscrollbar->SetMode(SB_ACCELERATED);
+
   AddFrame(_canvas, NULL);
   AddFrame(_hscrollbar, NULL);
   AddFrame(_vscrollbar, NULL);
 
   MapSubwindows();
+
+  AddInput(ButtonPressMask | ButtonReleaseMask);
 }
 
 OXViewDoc::~OXViewDoc() {
 }
 
-int OXViewDoc::LoadFile(char *fname) {
-  char wintitle[100];
-  FILE * file = fopen(fname, "r");
+int OXViewDoc::HandleButton(XButtonEvent *event) {
+  if (event->type == ButtonPress) {
+    int amount, ch;
+
+    ch = _canvas->GetHeight();
+    amount = max(ch / 6, 1);
+
+    if (event->state & ShiftMask)
+      amount = 1;
+    else if (event->state & ControlMask)
+      amount = ch - max(ch / 20, 1);
+
+    if (event->button == Button4) {
+      _vscrollbar->SetPosition(_vscrollbar->GetPosition() - amount);
+      return True;
+    } else if (event->button == Button5) {
+      _vscrollbar->SetPosition(_vscrollbar->GetPosition() + amount);
+      return True;
+    }
+
+  }
+  return False;
+}
+
+int OXViewDoc::LoadFile(const char *fname) {
+  FILE *file = fopen(fname, "r");
   if (file) {
     _document->LoadFile(file);
     fclose(file);
     Layout();
+    Redisplay();
     return True;
   }
   return False;
@@ -258,17 +282,18 @@ void OXViewDoc::Clear() {
 int OXViewDoc::ProcessMessage(OMessage *msg) {
   OScrollBarMessage *sbmsg = (OScrollBarMessage *) msg;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_HSCROLL:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_SLIDERTRACK:
         case MSG_SLIDERPOS:
           _canvas->HScrollWindow(sbmsg->pos);
           break;
       }
       break;
+
     case MSG_VSCROLL:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_SLIDERTRACK:
         case MSG_SLIDERPOS:
           _canvas->VScrollWindow(sbmsg->pos);
@@ -276,14 +301,15 @@ int OXViewDoc::ProcessMessage(OMessage *msg) {
       }
       break;
   }
+
   return True;
 }
 
 void OXViewDoc::AdjustScrollbars() {
   int tdw, tdh, tcw, tch;
 
-  tch = _h - (_bw << 1);
-  tcw = _w - (_bw << 1);
+  tch = _h - _insets.t - _insets.b;
+  tcw = _w - _insets.l - _insets.r;
   tdw = _canvas->_document->GetWidth();
   tdh = _canvas->_document->GetHeight();
 
@@ -307,8 +333,11 @@ void OXViewDoc::AdjustScrollbars() {
 void OXViewDoc::Layout() {
   int tcw, tch;
 
-  _canvas->_h = (tch = _h - (_bw << 1)) - _hscrollbar->GetDefaultHeight();
-  _canvas->_w = (tcw = _w - (_bw << 1)) - _vscrollbar->GetDefaultWidth();
+  tch = _h - _insets.t - _insets.b;
+  tcw = _w - _insets.l - _insets.r;
+
+  _canvas->_h = tch - _hscrollbar->GetDefaultHeight();
+  _canvas->_w = tcw - _vscrollbar->GetDefaultWidth();
   _canvas->Layout();
   
   if (((tch >= _canvas->_document->GetHeight()) ||
@@ -323,7 +352,7 @@ void OXViewDoc::Layout() {
       _canvas->_tx = 0;
     } else {
       tch -= _hscrollbar->GetDefaultHeight();
-      _hscrollbar->MoveResize(_bw, _bw + tch,
+      _hscrollbar->MoveResize(_insets.l, _insets.t + tch,
                               tcw, _hscrollbar->GetDefaultHeight());
       _hscrollbar->MapWindow();
     }
@@ -336,16 +365,16 @@ void OXViewDoc::Layout() {
       _canvas->_tx = 0;
     } else {
       tch -= _hscrollbar->GetDefaultHeight();
-      _hscrollbar->MoveResize(_bw, _bw + tch,
+      _hscrollbar->MoveResize(_insets.l, _insets.t + tch,
                               tcw, _hscrollbar->GetDefaultHeight());
       _hscrollbar->MapWindow();
     }
-    _vscrollbar->MoveResize(_bw + tcw, _bw,
-                            _vscrollbar->GetDefaultHeight(), tch);
+    _vscrollbar->MoveResize(_insets.l + tcw, _insets.t,
+                            _vscrollbar->GetDefaultWidth(), tch);
     _vscrollbar->MapWindow();
   }
   AdjustScrollbars();
-  _canvas->MoveResize(_bw, _bw, tcw, tch);
+  _canvas->MoveResize(_insets.l, _insets.t, tcw, tch);
 }
 
 void OXViewDoc::ScrollUp() {
@@ -355,4 +384,13 @@ void OXViewDoc::ScrollUp() {
   if (pos == _canvas->_ty)
     _canvas->DrawRegion(0, 0, _canvas->_w, _canvas->_h, False);
   _vscrollbar->SetPosition(pos);
+}
+
+void OXViewDoc::Redisplay() {
+#if 0
+  _canvas->ClearWindow();
+#else
+  _canvas->DrawRegion(0, 0, _canvas->_w, _canvas->_h, True);
+#endif
+  Layout();
 }

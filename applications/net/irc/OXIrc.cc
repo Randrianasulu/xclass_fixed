@@ -11,6 +11,9 @@
 
 #include <X11/keysym.h>
 
+#include <xclass/utils.h>
+#include <xclass/OXFontDialog.h>
+
 #include "IRCcodes.h"
 #include "OIrcMessage.h"
 #include "OXChannel.h"
@@ -21,136 +24,231 @@
 #include "OXIrc.h"
 #include "OXServerDlg.h"
 #include "OXConfirmDlg.h"
+#include "OXPasswdDlg.h"
 #include "OXChannelDialog.h"
+#include "OXChannelList.h"
+#include "OXServerTree.h"
+#include "OXViewLogFile.h"
+
+#include "versiondef.h"
 
 #include "pixmaps/tb-open.xpm"
 #include "pixmaps/tb-save.xpm"
 #include "pixmaps/tb-print.xpm"
-#include "pixmaps/tb-setup.xpm"
 #include "pixmaps/tb-conn.xpm"
 #include "pixmaps/tb-dconn.xpm"
+#include "pixmaps/tb-join.xpm"
+#include "pixmaps/tb-invisible.xpm"
+#include "pixmaps/tb-wallops.xpm"
+#include "pixmaps/tb-srvmsgs.xpm"
+#include "pixmaps/tb-ircop.xpm"
+#include "pixmaps/tb-setup.xpm"
+
+
+//----------------------------------------------------------------------
+
+// Menu and toolbar definitions
+
+#define M_IRC_CONNECT     1001
+#define M_IRC_DISCONNECT  1002
+#define M_IRC_AWAY        1003
+#define M_IRC_EXIT        1004
+
+#define M_LOG_OPEN        2000
+#define M_LOG_FLUSH       2001  // not used anymore
+#define M_LOG_PRINT       2002
+#define M_LOG_CLOSE       2003
+#define M_LOG_EMPTY       2004
+#define M_LOG_VIEW        2005
+
+#define M_SERV_RAW        3001
+#define M_SERV_NICK       3002
+#define M_SERV_WALLOPS    3003
+#define M_SERV_LINKS      3004
+#define M_SERV_VERSION    3005
+#define M_SERV_MOTD       3006
+#define M_SERV_TIME       3007
+#define M_SERV_TRACE      3008
+#define M_SERV_ADMIN      3009
+#define M_SERV_LUSERS     3010
+#define M_SERV_INFO       3011
+#define M_SERV_STATS      3012
+#define M_SERV_OPER       3013
+#define M_SERV_REHASH     3014
+#define M_SERV_RESTART    3015
+#define M_SERV_SQUIT      3016
+
+#define M_USERS_WHO       4001
+#define M_USERS_WHOIS     4002
+#define M_USERS_WHOWAS    4003
+#define M_USERS_MODE      4004
+#define M_USERS_CTCP      4005
+#define M_USERS_DCC       4006
+#define M_USERS_INVITE    4007
+#define M_USERS_MSG       4008
+#define M_USERS_NOTICE    4009
+#define M_USERS_FINGER    4010
+#define M_USERS_TIME      4011
+#define M_USERS_TRACE     4012
+#define M_USERS_UHOST     4013
+#define M_USERS_KILL      4014
+
+#define M_CHAN_JOIN       5001
+#define M_CHAN_WHO        5002
+#define M_CHAN_LIST       5003
+#define M_CHAN_NAMES      5004
+#define M_CHAN_NOTICE     5005
+#define M_CHAN_MONITOR    5006
+#define M_CHAN_CTCP       5007
+
+#define M_EDIT_COPY       6001
+#define M_EDIT_SELECTALL  6002
+#define M_EDIT_INVERTSEL  6003
+#define M_EDIT_PREFS      6004
+
+#define M_VIEW_TOOLBAR    7001
+#define M_VIEW_STATUSBAR  7002
+#define M_VIEW_FONT       7003
+#define M_VIEW_COLORS     7004
+
+#define M_HELP_CONTENTS   8001
+#define M_HELP_INDEX      8002
+#define M_HELP_ABOUT      8003
+
+#define TB_INVISIBLE      9001
+#define TB_WALLOPS        9002
+#define TB_SNOTICES       9003
+#define TB_IRCOP          9004
+
 
 SToolBarData tdata[] = {
-  { "tb-open.xpm",   tb_open,  "Open Log",          BUTTON_NORMAL, 801,  NULL },
-  { "tb-save.xpm",   tb_save,  "Flush Log",         BUTTON_NORMAL, 802,  NULL },
-  { "tb-print.xpm",  tb_print, "Print Log",         BUTTON_NORMAL, 803,  NULL },
-  { "",              NULL,     0,                   0,             -1,   NULL },
-  { "tb-conn.xpm",   tb_conn,  "Connect to Server", BUTTON_NORMAL, 1001, NULL },
-  { "tb-dconn.xpm",  tb_dconn, "Close connection",  BUTTON_NORMAL, 1002, NULL },
-  { "",              NULL,     0,                   0,             -1,   NULL },
-  { "tb-setup.xpm",  tb_setup, "Setup Preferences", BUTTON_NORMAL, 2005, NULL },
-  { NULL,            NULL,     NULL,                0,             0,    NULL }
+  { "tb-open.xpm",      tb_open,      "View Log",                 BUTTON_NORMAL, M_LOG_VIEW,       NULL },
+  { "tb-save.xpm",      tb_save,      "Save Log",                 BUTTON_NORMAL, M_LOG_OPEN,       NULL },
+  { "tb-print.xpm",     tb_print,     "Print Log",                BUTTON_NORMAL, M_LOG_PRINT,      NULL },
+  { "",                 NULL,         0,                          0,             -1,               NULL },
+  { "tb-conn.xpm",      tb_conn,      "Connect to Server",        BUTTON_NORMAL, M_IRC_CONNECT,    NULL },
+  { "tb-dconn.xpm",     tb_dconn,     "Close connection",         BUTTON_NORMAL, M_IRC_DISCONNECT, NULL },
+  { "",                 NULL,         0,                          0,             -1,               NULL },
+  { "tb-join.xpm",      tb_join,      "Join channel...",          BUTTON_NORMAL, M_CHAN_JOIN,      NULL },
+  { "",                 NULL,         0,                          0,             -1,               NULL },
+  { "tb-invisible.xpm", tb_invisible, "Toggle Invisible mode",    BUTTON_ONOFF,  TB_INVISIBLE,     NULL },
+  { "tb-wallops.xpm",   tb_wallops,   "Toggle Wallops mode",      BUTTON_ONOFF,  TB_WALLOPS,       NULL },
+  { "tb-srvmsgs.xpm",   tb_srvmsgs,   "Toggle Receive of Server Notices", BUTTON_ONOFF, TB_SNOTICES, NULL },
+  { "tb-ircop.xpm",     tb_ircop,     "Toggle IRC Operator Mode", BUTTON_ONOFF,  TB_IRCOP,         NULL },
+  { "",                 NULL,         0,                          0,             -1,               NULL },
+  { "tb-setup.xpm",     tb_setup,     "Setup Preferences",        BUTTON_NORMAL, M_EDIT_PREFS,     NULL },
+  { NULL,               NULL,         NULL,                       0,             0,                NULL }
 };
 
 SPopupData plogdata = {
   { NULL }, {
-  { "&Open...", 801,             0, NULL },
-  { "&Flush",   802, MENU_DISABLED, NULL },
-  { "&Close",   804, MENU_DISABLED, NULL },
-  { "",          -1,            -1, NULL },
-  { "&Empty",   805, MENU_DISABLED, NULL },
-  { NULL,        -1,            -1, NULL } }
+  { "&View...",    M_LOG_VIEW,  0,             NULL },
+  { "",            -1,          -1,            NULL },
+  { "&Save as...", M_LOG_OPEN,  0,             NULL },
+  { "&Close",      M_LOG_CLOSE, MENU_DISABLED, NULL },
+  { "",            -1,          -1,            NULL },
+  { "&Empty",      M_LOG_EMPTY, MENU_DISABLED, NULL },
+  { NULL,          -1,          -1,            NULL } }
 };
+
 
 SPopupData pservdata = {
   { NULL }, {
-  { "&Raw...",      5001,          0, NULL },
-  { "&Nick...",     5002,          0, NULL },
-  { "&Wallops...",  5003,          0, NULL },
-  { "&Links...",    1,             0, NULL },
-  { "&Version...",  1,             0, NULL },
-  { "&Motd",        5006,          0, NULL },
-  { "&Time...",     1,             0, NULL },
-  { "T&race...",    1,             0, NULL },
-  { "&Admin...",    1, MENU_DISABLED, NULL },
-  { "L&users...",   1,             0, NULL },
-  { "&Info...",     1,             0, NULL },
-  { "&Stats...",    1,             0, NULL },
-  { "&Oper...",     1, MENU_DISABLED, NULL },
-  { "Re&hash",      1, MENU_DISABLED, NULL },
-  { "R&estart",     1, MENU_DISABLED, NULL },
-  { "S&quit",       1, MENU_DISABLED, NULL },
-  { NULL,          -1,            -1, NULL } }
+  { "&Raw...",      M_SERV_RAW,     0,             NULL },
+  { "",             -1,             0,             NULL },
+  { "&Nick...",     M_SERV_NICK,    0,             NULL },
+  { "&Wallops...",  M_SERV_WALLOPS, 0,             NULL },
+  { "&Links...",    M_SERV_LINKS,   0,             NULL },
+  { "&Version...",  M_SERV_VERSION, 0,             NULL },
+  { "&Motd...",     M_SERV_MOTD,    0,             NULL },
+  { "&Time...",     M_SERV_TIME,    0,             NULL },
+  { "T&race...",    M_SERV_TRACE,   0,             NULL },
+  { "&Admin...",    M_SERV_ADMIN,   0,             NULL },
+  { "L&users...",   M_SERV_LUSERS,  0,             NULL },
+  { "&Info...",     M_SERV_INFO,    0,             NULL },
+  { "&Stats...",    M_SERV_STATS,   0,             NULL },
+  { "&Oper...",     M_SERV_OPER,    0,             NULL },
+  { "Re&hash",      M_SERV_REHASH,  MENU_DISABLED, NULL },
+  { "R&estart",     M_SERV_RESTART, MENU_DISABLED, NULL },
+  { "S&quit",       M_SERV_SQUIT,   MENU_DISABLED, NULL },
+  { NULL,           -1,             -1,            NULL } }
 };
 
 SPopupData pusersdata = {
   { NULL }, {
-  { "W&ho",      1,  0, NULL },
-  { "&Whois",    1,  0, NULL },
-  { "Whow&as",   1,  0, NULL },
-  { "&Mode",     1,  0, NULL },
-  { "&CTCP",     1,  0, NULL },
-  { "&DCC",      1,  0, NULL },
-  { "&Invite",   1,  0, NULL },
-  { "M&sg",      1,  0, NULL },
-  { "&Notice",   1,  0, NULL },
-  { "&Finger",   1,  0, NULL },
-  { "&Time",     1,  0, NULL },
-  { "T&race",    1,  0, NULL },
-  { "&Userhost", 1,  0, NULL },
-  { "&Kill",     1,  0, NULL },
-  { NULL,       -1, -1, NULL } }
+  { "W&ho...",      M_USERS_WHO,    0,  NULL },
+  { "&Whois...",    M_USERS_WHOIS,  0,  NULL },
+  { "Whow&as...",   M_USERS_WHOWAS, 0,  NULL },
+  { "&Mode...",     M_USERS_MODE,   0,  NULL },
+  { "&CTCP...",     M_USERS_CTCP,   0,  NULL },
+  { "&DCC...",      M_USERS_DCC,    0,  NULL },
+  { "&Invite...",   M_USERS_INVITE, 0,  NULL },
+  { "M&sg...",      M_USERS_MSG,    0,  NULL },
+  { "&Notice...",   M_USERS_NOTICE, 0,  NULL },
+  { "&Finger...",   M_USERS_FINGER, 0,  NULL },
+  { "&Time...",     M_USERS_TIME,   0,  NULL },
+  { "T&race...",    M_USERS_TRACE,  0,  NULL },
+  { "&Userhost...", M_USERS_UHOST,  0,  NULL },
+  { "&Kill...",     M_USERS_KILL,   0,  NULL },
+  { NULL,           -1,             -1, NULL } }
 };
 
 SPopupData pchandata = {
   { NULL }, {
-  { "&Favourites...",  1,  0, NULL },
-  { "",               -1,  0, NULL },
-  { "&Join...",        5000,  0, NULL },
-  { "&Who...",         1,  0, NULL },
-  { "&List...",        1,  0, NULL },
-  { "&Names...",       1,  0, NULL },
-  { "N&otice...",      1,  0, NULL },
-  { "&Monitor...",     1,  0, NULL },
-  { "&CTCP...",        1,  0, NULL },
-  { NULL,          -1, -1, NULL } }
+  { "&Join...",        M_CHAN_JOIN,       0,  NULL },
+  { "",                -1,                0,  NULL },
+  { "&Who...",         M_CHAN_WHO,        0,  NULL },
+  { "&List...",        M_CHAN_LIST,       0,  NULL },
+  { "&Names...",       M_CHAN_NAMES,      0,  NULL },
+  { "N&otice...",      M_CHAN_NOTICE,     0,  NULL },
+  { "&Monitor...",     M_CHAN_MONITOR,    0,  NULL },
+  { "&CTCP...",        M_CHAN_CTCP,       0,  NULL },
+  { NULL,              -1,                -1, NULL } }
 };
 
 SPopupData mircdata = {
   { NULL }, {
-  { "&Connect to...", 1001,              0, NULL },
-  { "&Disconnect",    1002,              0, NULL },
-  { "&Away",          1003,  MENU_DISABLED, NULL },
-  { "&Brb",           1004,  MENU_DISABLED, NULL },
-  { "",                 -1,              0, NULL },
-  { "&Log",           1005,              0, &plogdata   },
-  { "&Servers",       1006,              0, &pservdata  },
-  { "&Users",         1007,              0, &pusersdata },
-  { "C&hannels",      1008,              0, &pchandata  },
-  { "",                 -1,              0, NULL },
-  { "E&xit",          1009,              0, NULL },
-  { NULL,               -1,             -1, NULL } }
+  { "&Connect to...", M_IRC_CONNECT,    0,              NULL },
+  { "&Disconnect",    M_IRC_DISCONNECT, MENU_DISABLED,  NULL },
+  { "&Away",          M_IRC_AWAY,       MENU_DISABLED,  NULL },
+  { "",               -1,               0,              NULL },
+  { "&Log",           -1,               0,              &plogdata   },
+  { "&Servers",       -1,               0,              &pservdata  },
+  { "&Users",         -1,               0,              &pusersdata },
+  { "C&hannels",      -1,               0,              &pchandata  },
+  { "",               -1,               0,              NULL },
+  { "E&xit",          M_IRC_EXIT,       0,              NULL },
+  { NULL,             -1,               -1,             NULL } }
 };
 
 SPopupData meditdata = {
   { NULL }, {
-  { "Cu&t",              2001, MENU_DISABLED, NULL },
-  { "&Copy",             2002, MENU_DISABLED, NULL },
-  { "",                    -1,             0, NULL },
-  { "Select &All",       2003, MENU_DISABLED, NULL },
-  { "&Invert Selection", 2004, MENU_DISABLED, NULL },
-  { "",                    -1,             0, NULL },
-  { "&Preferences...",   2005,             0, NULL },
-  { NULL,                  -1,            -1, NULL } }
+  { "&Copy",             M_EDIT_COPY,      MENU_DISABLED, NULL },
+  { "",                  -1,               0,             NULL },
+  { "Select &All",       M_EDIT_SELECTALL, MENU_DISABLED, NULL },
+  { "&Invert Selection", M_EDIT_INVERTSEL, MENU_DISABLED, NULL },
+  { "",                  -1,               0,             NULL },
+  { "&Preferences...",   M_EDIT_PREFS,     0,             NULL },
+  { NULL,                -1,               -1,            NULL } }
 };
 
 SPopupData mviewdata = {
   { NULL }, {
-  { "&Toolbar",    3001,  MENU_CHECKED, NULL },
-  { "Status &Bar", 3002,  MENU_CHECKED, NULL },
-  { "",              -1,             0, NULL },
-  { "&Fonts...",   3003, MENU_DISABLED, NULL },
-  { "&Colors...",  3004, 	     0, NULL },
-  { NULL,            -1,            -1, NULL } }
+  { "&Toolbar",    M_VIEW_TOOLBAR,   MENU_CHECKED, NULL },
+  { "Status &Bar", M_VIEW_STATUSBAR, MENU_CHECKED, NULL },
+  { "",            -1,               0,            NULL },
+  { "&Font...",    M_VIEW_FONT,      0,            NULL },
+  { "&Colors...",  M_VIEW_COLORS,    0,            NULL },
+  { NULL,          -1,               -1,           NULL } }
 };
 
 SPopupData mhelpdata = {
   { NULL }, {
-  { "&Contents...", 4001, MENU_DISABLED, NULL },
-  { "&Search...",   4002, MENU_DISABLED, NULL },
-  { "",               -1,             0, NULL },
-  { "&About...",    4003,             0, NULL },
-  { NULL,             -1,            -1, NULL } }
+  { "&Contents...", M_HELP_CONTENTS, MENU_DISABLED, NULL },
+  { "&Index...",    M_HELP_INDEX,    MENU_DISABLED, NULL },
+  { "",             -1,              0,             NULL },
+  { "&About...",    M_HELP_ABOUT,    0,             NULL },
+  { NULL,           -1,              -1,            NULL } }
 };
 
 
@@ -189,9 +287,6 @@ OLayoutHints *menubarlayout =
 OLayoutHints *menuitemlayout =
     new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 0, 4, 0, 0);
 
-unsigned long IRCcolors[16];
-OGC *_ircGCs[16];
-
 extern OSettings  *foxircSettings;
 
 char *filetypes[] = { "All files",  "*",
@@ -199,10 +294,18 @@ char *filetypes[] = { "All files",  "*",
                       "Text files", "*.txt",
                       NULL,         NULL };
 
+#define PING_INTERVAL  180
+
+
+//----------------------------------------------------------------------
+
 OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   OXMainFrame(p, 400, 300) {
 
-  channels = NULL;
+  _channels = NULL;
+  _channelList = NULL;
+  _serverTree = NULL;
+  _viewLogFile = NULL;
   _logfile = NULL;
   _logfilename = NULL;
   _fh = NULL;
@@ -211,63 +314,8 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   _avcmode = 0x00444100L; // 0L;
   _avumode = 0x00088100L; // 0L;
 
-  // color table, similar to the one used by mIRC and cIRCus
-/* 
-  //   This is the old table using the color's name
-  //   Which didn't seem to match the mirc colors very well
-  //   So I've updated the table to use the RRGGBB color form
-  //    Mike
-
-  IRCcolors[0]  = _client->GetColorByName("white");
-  IRCcolors[1]  = _client->GetColorByName("black");
-  IRCcolors[2]  = _client->GetColorByName("royalblue");
-  IRCcolors[3]  = _client->GetColorByName("darkgreen");
-  IRCcolors[4]  = _client->GetColorByName("red3");
-  IRCcolors[5]  = _client->GetColorByName("brown");
-  IRCcolors[6]  = _client->GetColorByName("mediumpurple");
-  IRCcolors[7]  = _client->GetColorByName("orange");
-  IRCcolors[8]  = _client->GetColorByName("yellow");
-  IRCcolors[9]  = _client->GetColorByName("lightgreen");
-  IRCcolors[10] = _client->GetColorByName("cyan");
-  IRCcolors[11] = _client->GetColorByName("lightcyan");
-  IRCcolors[12] = _client->GetColorByName("lightblue");
-  IRCcolors[13] = _client->GetColorByName("pink");
-  IRCcolors[14] = _client->GetColorByName("darkslategray");
-  IRCcolors[15] = _client->GetColorByName("lightgray");
-*/
-  IRCcolors[0]  = _client->GetColorByName("white");
-  _ircGCs[0] = new OGC(_client,"white");
-  IRCcolors[1]  = _client->GetColorByName("black");
-  _ircGCs[1] = new OGC(_client,"black");
-  IRCcolors[2]  = _client->GetColorByName("#00007F");
-  _ircGCs[2] = new OGC(_client,"#00007F");
-  IRCcolors[3]  = _client->GetColorByName("#007F00");
-  _ircGCs[3] = new OGC(_client,"#007F00");
-  IRCcolors[4]  = _client->GetColorByName("#FF0000");
-  _ircGCs[4] = new OGC(_client,"#FF0000");
-  IRCcolors[5]  = _client->GetColorByName("#7F0000");
-  _ircGCs[5] = new OGC(_client,"#7F0000");
-  IRCcolors[6]  = _client->GetColorByName("#7F007F");
-  _ircGCs[6] = new OGC(_client,"#7F007F");
-  IRCcolors[7]  = _client->GetColorByName("#FF7F00");
-  _ircGCs[7] = new OGC(_client,"#FF7F00");
-  IRCcolors[8]  = _client->GetColorByName("#FFFF00");
-  _ircGCs[8] = new OGC(_client,"#FFFF00");
-  IRCcolors[9]  = _client->GetColorByName("#00FF00");
-  _ircGCs[9] = new OGC(_client,"#00FF00");
-  IRCcolors[10] = _client->GetColorByName("#007F7F");
-  _ircGCs[10] = new OGC(_client,"#007F7F");
-  IRCcolors[11] = _client->GetColorByName("#00FFFF");
-  _ircGCs[11] = new OGC(_client,"#00FFFF");
-  IRCcolors[12] = _client->GetColorByName("#0000FF");
-  _ircGCs[12] = new OGC(_client,"#0000FF");
-  IRCcolors[13] = _client->GetColorByName("#FF00FF");
-  _ircGCs[13] = new OGC(_client,"#FF00FF");
-  IRCcolors[14] = _client->GetColorByName("#7F7F7F");
-  _ircGCs[14] = new OGC(_client,"#7F7F7F");
-  IRCcolors[15] = _client->GetColorByName("#CFCFCF");
-  _ircGCs[15] = new OGC(_client,"#CFCFCF");
-
+  _umode = 0L;
+  _lag = 0;
 
   SetLayoutManager(new OVerticalLayout(this));
 
@@ -301,11 +349,19 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   AddFrame(_toolBarSep, topexpandxlayout3);
   AddFrame(_toolBar, topexpandxlayout2);
 
-  //---- log window
+  //---- join channel entry
 
-  _channelentry = new OXTextEntry(this, new OTextBuffer(100));
+  OXHorizontalFrame *hf = new OXHorizontalFrame(this);
+  _channelentry = new OXTextEntry(hf, new OTextBuffer(100));
   _channelentry->ChangeOptions(FIXED_WIDTH | SUNKEN_FRAME | DOUBLE_BORDER);
-  AddFrame(_channelentry, topexpandxlayout);
+  hf->AddFrame(new OXLabel(hf, new OString("Join:")),
+               new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 0, 5, 0, 0));
+  hf->AddFrame(_channelentry, topexpandxlayout3);
+  AddFrame(hf, topexpandxlayout);
+
+  _channelentry->Associate(this);
+
+  //---- log window
 
   _logw = new OXViewDoc(this, _log = new OTextDoc(), 10, 10,
                               SUNKEN_FRAME | DOUBLE_BORDER);
@@ -316,13 +372,13 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
 
   _statusBar = new OXStatusBar(this);
   AddFrame(_statusBar, new OLayoutHints(LHINTS_BOTTOM | LHINTS_EXPAND_X,
-                               0, 0, 3, 0));
+                                        0, 0, 3, 0));
 
 
-  _mview->CheckEntry(3001);
-  _mview->CheckEntry(3002);
+  _mview->CheckEntry(M_VIEW_TOOLBAR);
+  _mview->CheckEntry(M_VIEW_STATUSBAR);
 
-  SetWindowName("fOXIrc");
+  SetWindowName(FOXIRC_NAME);
   SetClassHints("fOXIrc", "foxirc");
 
   MapSubwindows();
@@ -330,31 +386,35 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   Resize(600, 380);
 
   if (getenv("USER"))
-    strcpy(_username, getenv("USER"));
+    _username = StrDup(getenv("USER"));
   else if (getenv("LOGNAME"))
-    strcpy(_username, getenv("LOGNAME"));
+    _username = StrDup(getenv("LOGNAME"));
   else
-    strcpy(_username, "unknown");
+    _username = StrDup("unknown");
 
   if (nick && *nick)
-    strcpy(_nick, nick);
+    _nick = StrDup(nick);
   else
-    strcpy(_nick, _username);
+    _nick = StrDup(_username);
 
   if (getenv("HOSTNAME"))
-    strcpy(_hostname, getenv("HOSTNAME"));
+    _hostname = StrDup(getenv("HOSTNAME"));
   else
-    strcpy(_hostname, "unknown.host");
+    _hostname = StrDup("unknown.host");
 
   if (server)
-    strcpy(_server, server);
+    _server = StrDup(server);
   else
-    strcpy(_server, "");
+    _server = StrDup("");
+
+  _realserver = StrDup(_server);
 
   if (getenv("LOGNAME"))
-    strcpy(_ircname, getenv("LOGNAME"));
+    _ircname = StrDup(getenv("LOGNAME"));
   else
-    strcpy(_ircname, _username);
+    _ircname = StrDup(_username);
+
+  _passwd = NULL;
 
   _port = port;
 
@@ -362,49 +422,70 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   _irc->Associate(this);
 
   _connected = False;
+  _pingTimer = NULL;
 
-  _statusBar->SetWidth(0, 250);
+  _statusBar->SetWidth(0, 300);
   _statusBar->AddLabel(100, LHINTS_RIGHT);
   _statusBar->AddLabel(500);
 
   _statusBar->SetText(0, new OString("Not connected."));
-  _statusBar->SetText(1, new OString("Lag: 0 secs"));
+  _statusBar->SetText(1, new OString(""));
   _statusBar->SetText(2, new OString(nick));
 
 }
 
 OXIrc::~OXIrc() {
+  if (_channelList) _channelList->CloseWindow();
+  if (_viewLogFile) _viewLogFile->CloseWindow();
+  if (_serverTree) _serverTree->CloseWindow();
+
   _irc->Close();
   if (_logfile) DoCloseLog();
+
+  if (_nick) delete[] _nick;
+  if (_ircname) delete[] _ircname;
+  if (_username) delete[] _username;
+  if (_hostname) delete[] _hostname;
+  if (_server) delete[] _server;
+  if (_realserver) delete[] _realserver;
+  if (_passwd) delete[] _passwd;
+
+  if (_pingTimer) delete _pingTimer;
 }
 
 int OXIrc::CloseWindow() {
-  OString *lmsg = new OString("QUIT");
 
-  if (_connected && foxircSettings->Confirm(P_CONFIRM_LEAVE)) {
-    int retc;
-    OString *msg = new OString("");
-    OString *title = new OString("Quit IRC?");
-    OString *text = new OString("Really Quit fOXirc?");
+  if (_connected) {
+    OString *lmsg = new OString("QUIT");
 
-    new OXConfirmDlg(_client->GetRoot(), this, title, text, msg, &retc);
-    if (retc == ID_NO) return False;
-    if (msg->GetLength() > 0) {
-      lmsg->Append(" :");
-      lmsg->Append(msg);
+    if (foxircSettings->Confirm(P_CONFIRM_QUIT)) {
+      int retc;
+      OString *msg = new OString(FOXIRC_NAME);
+               msg->Append(" ");
+               msg->Append(FOXIRC_HOMEPAGE);
+      OString *title = new OString("Quit IRC?");
+      OString *label = new OString("Message:");
+      OString *text = new OString("Really Quit fOXirc?");
+
+      new OXConfirmDlg(_client->GetRoot(), this, title, text, label,
+                       msg, &retc);
+      if (retc == ID_NO) return False;
+      if (msg->GetLength() > 0) {
+        lmsg->Append(" :");
+        lmsg->Append(msg);
+      }
     } else {
-      lmsg->Append(" : fOXIrc http://www.foxproject.org");   // hmmm...
+      lmsg->Append(" :");
+      lmsg->Append(FOXIRC_NAME);
+      lmsg->Append(" ");
+      lmsg->Append(FOXIRC_HOMEPAGE);
     }
-  } else {
-    lmsg->Append(" : fOXIrc http://www.foxproject.org");   // hmmm...
-  }
 
-  OIrcMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0,
-                      (char *) lmsg->GetString());
-  SendMessage(_irc, &message);
-//  sleep(2);
-  Disconnect();
-  while (channels) channels->CloseWindow();
+    SendRawCommand(lmsg->GetString());
+    // sleep(2); or flush?
+    Disconnect();
+  }
+  while (_channels) _channels->CloseWindow();
 
   return OXMainFrame::CloseWindow();
 }
@@ -413,7 +494,7 @@ OXPopupMenu *OXIrc::MakePopup(SPopupData *p) {
 
   OXPopupMenu *popup = new OXPopupMenu(_client->GetRoot());
 
-  for (int i=0; p->popup[i].name != NULL; ++i) {
+  for (int i = 0; p->popup[i].name != NULL; ++i) {
     if (strlen(p->popup[i].name) == 0) {
       popup->AddSeparator();
     } else {
@@ -428,9 +509,7 @@ OXPopupMenu *OXIrc::MakePopup(SPopupData *p) {
       if (p->popup[i].state & MENU_CHECKED)
         popup->CheckEntry(p->popup[i].id);
       if (p->popup[i].state & MENU_RCHECKED)
-        popup->RCheckEntry(p->popup[i].id,
-                           p->popup[i].id,
-                           p->popup[i].id);
+        popup->RCheckEntry(p->popup[i].id, p->popup[i].id, p->popup[i].id);
     }
   }
   p->ptr = popup;
@@ -439,32 +518,83 @@ OXPopupMenu *OXIrc::MakePopup(SPopupData *p) {
   return popup;
 }
 
-void OXIrc::Log(const char *message) {
-  Log(message, 11);
-}
+//----------------------------------------------------------------------
 
-void OXIrc::Log(const char *message, char *color) {
-  OLineDoc *l = new OLineDoc();
-  l->SetCanvas(_log->_style_server);
-  l->SetColor(color);
-  l->Fill((char*)message);
-  _log->AddLine(l);
-  _logw->ScrollUp();
-  if (_logfile) {
-    fprintf(_logfile, "%s\n", message);
-    _plog->EnableEntry(802);  // flush
+void OXIrc::UpdateStatusBar(int field) {
+  char tmp[256];
+
+  // connection status
+  if (field == 0 || field < 0) {
+    if (_connected) {
+      sprintf(tmp, "Connected to %s:%d", _realserver, _port);
+      _statusBar->SetText(0, new OString(tmp));
+    } else {
+      _statusBar->SetText(0, new OString("Not connected."));
+    }
+  }
+
+  // lag time
+  if (field == 1 || field < 0) {
+    if (_connected) {
+      sprintf(tmp, "Lag: %ld sec", _lag);
+      _statusBar->SetText(1, new OString(tmp));
+    } else {
+      _statusBar->SetText(1, new OString(""));
+    }
+  }
+
+  // nick
+  if (field == 2 || field < 0) {
+    if (_connected) {
+      strcpy(tmp, _nick);
+      if (_umode != 0L) {
+        strcat(tmp, " (");
+        if (_umode & UMODE_INVISIBLE) strcat(tmp, "Invisible, ");
+        if (_umode & UMODE_SNOTICES)  strcat(tmp, "SrvMsgs, ");
+        if (_umode & UMODE_WALLOPS)   strcat(tmp, "Wallops, ");
+        if (_umode & UMODE_IRCOP)     strcat(tmp, "IRC-op, ");
+        if (_mirc->IsEntryChecked(M_IRC_AWAY)) strcat(tmp, "Away, ");
+        tmp[strlen(tmp)-1] = '\0';
+        tmp[strlen(tmp)-1] = '\0';
+        strcat(tmp, ")");
+      }
+      _statusBar->SetText(2, new OString(tmp));
+
+      // update toolbar mode buttons here too...
+      tdata[9].button->SetState((_umode & UMODE_INVISIBLE) ? BUTTON_ENGAGED : BUTTON_UP);
+      tdata[10].button->SetState((_umode & UMODE_WALLOPS) ? BUTTON_ENGAGED : BUTTON_UP);
+      tdata[11].button->SetState((_umode & UMODE_SNOTICES) ? BUTTON_ENGAGED : BUTTON_UP);
+      tdata[12].button->SetState((_umode & UMODE_IRCOP) ? BUTTON_ENGAGED : BUTTON_UP);
+
+      if (_umode & UMODE_IRCOP) {
+        _pserv->EnableEntry(M_SERV_REHASH);
+        _pserv->EnableEntry(M_SERV_RESTART);
+        _pserv->EnableEntry(M_SERV_SQUIT);
+      } else {
+        _pserv->DisableEntry(M_SERV_REHASH);
+        _pserv->DisableEntry(M_SERV_RESTART);
+        _pserv->DisableEntry(M_SERV_SQUIT);
+      }
+    } else {
+      _statusBar->SetText(2, new OString(_nick));
+    }
   }
 }
+
+void OXIrc::Log(const char *message) {
+  Log(message, P_COLOR_TEXT);
+}
+
 void OXIrc::Log(const char *message, int color) {
   OLineDoc *l = new OLineDoc();
-  l->SetCanvas(_log->_style_server);
-  l->SetColor(foxircSettings->GetColorID(color));
-  l->Fill((char*)message);
+  l->SetCanvas(_log->GetTextFrame());
+  l->SetDefaultColor(foxircSettings->GetPixelID(color));
+  l->Fill((char *) message);
   _log->AddLine(l);
   _logw->ScrollUp();
   if (_logfile) {
     fprintf(_logfile, "%s\n", message);
-    _plog->EnableEntry(802);  // flush
+    fflush(_logfile);
   }
 }
 
@@ -486,35 +616,56 @@ int OXIrc::Connect(char *server, int port) {
 
     if (_connected) Disconnect();
 
-    strcpy(_server, server);
+    if (_server && (_server != server)) {
+      delete[] _server;
+      _server = StrDup(server);
+    }
+
+    if (_realserver) delete[] _realserver;
+    _realserver = StrDup(_server);
+
     _port = port;
 
     if ((retc = _irc->Connect(_server, _port)) < 0) {
       sprintf(tmp, "Connection to %s:%d failed (%s).",
                    _server, _port, strerror(errno));
-      Log(tmp, 4);
+      Log(tmp, P_COLOR_SERVER_1);
       return retc;
     }
 
     sprintf(tmp, "Connecting to server %s, port %d", _server, _port);
-    Log(tmp, 4);
+    Log(tmp, P_COLOR_SERVER_1);
 
     if (_fh) delete _fh;
     _fh = new OFileHandler(this, _irc->GetFD(), XCM_WRITABLE | XCM_EXCEPTION);
+
+    _mirc->EnableEntry(M_IRC_DISCONNECT);
+    _mirc->UnCheckEntry(M_IRC_AWAY);
+    _mirc->EnableEntry(M_IRC_AWAY);
   }
   return -1;
 }
 
 int OXIrc::Disconnect() {
   _irc->Close();
+
   if (_connected) {
     _connected = False;
-    if (_fh) delete _fh;
-    _fh = NULL;
-    Log("Connection closed.", 4);
-    Log(" ", 4);
+    Log("Connection closed.", P_COLOR_SERVER_1);
+    Log(" ", P_COLOR_SERVER_1);
   }
-  _statusBar->SetText(0, new OString("Not connected."));
+
+  if (_fh) delete _fh;
+  _fh = NULL;
+
+  if (_pingTimer) delete _pingTimer;
+  _pingTimer = NULL;
+
+  _mirc->DisableEntry(M_IRC_DISCONNECT);
+  _mirc->UnCheckEntry(M_IRC_AWAY);
+  _mirc->DisableEntry(M_IRC_AWAY);
+
+  UpdateStatusBar();
 
   // should close all channels, ask for confirmation, etc...
   // (if connecting to a different server, shall we re-join all active
@@ -528,23 +679,39 @@ int OXIrc::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
 
     _connected = True;
 
-    sprintf(tmp, "Connected to %s:%d", _server, _port);
-    _statusBar->SetText(0, new OString(tmp));
-    _statusBar->SetText(2, new OString(_nick));
-
     if (_fh) delete _fh;
     _fh = new OFileHandler(this, _irc->GetFD(), XCM_READABLE);
 
-    Log("Connected, logging in...", 4);
-    OIrcMessage msg1(OUTGOING_IRC_MSG, NICK, 0, 0, 0, 0, _nick);
-    OIrcMessage msg2(OUTGOING_IRC_MSG, USER, 0, 0, 0, 0,
-                     _username, _hostname, _server, _ircname);
-    SendMessage(_irc, &msg1);
-    SendMessage(_irc, &msg2);
+    Log("Connected, logging in...", P_COLOR_SERVER_1);
+
+    _umode = 0L;
+    _lag = 0;
+
+    _mirc->EnableEntry(M_IRC_DISCONNECT);
+    _mirc->UnCheckEntry(M_IRC_AWAY);
+    _mirc->EnableEntry(M_IRC_AWAY);
+
+    UpdateStatusBar(0);
+    UpdateStatusBar(2);
+
+    if (_passwd && *_passwd) {
+      sprintf(tmp, "PASS %s", _passwd);
+      SendRawCommand(tmp);
+    }
+
+    sprintf(tmp, "NICK %s", _nick);
+    SendRawCommand(tmp);
+
+    sprintf(tmp, "USER %s %s %s :%s",
+                 _username, _hostname, _server, _ircname);
+    SendRawCommand(tmp);
+
     //Log(" ");
 
+#if 0  // postpone this until we get the login confirmation
     if (foxircSettings->CheckMisc(P_MISC_POPUP_CHAN_CN))
       new OXChannelDialog(_client->GetRoot(), this);
+#endif
 
   } else {
     _irc->Receive();
@@ -553,6 +720,22 @@ int OXIrc::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
   return True;
 }
 
+int OXIrc::HandleTimer(OTimer *t) {
+  if (t != _pingTimer) return False;
+
+  delete _pingTimer;
+  _pingTimer = NULL;
+
+  if (_connected) {
+    char cmd[IRC_MSG_LENGTH];
+
+    sprintf(cmd, "PING %lu %s", time(NULL), _realserver);
+    SendRawCommand(cmd);
+    _pingTimer = new OTimer(this, PING_INTERVAL * 1000);
+  }
+
+  return True;
+}
 
 // Find a channel window with the given name, if not found create it.
 
@@ -562,32 +745,39 @@ OXChannel *OXIrc::GetChannel(const char *channel) {
 
   if ((ch = FindChannel(channel)) != NULL) return ch;
 
-  if (foxircSettings->CheckChannelFlags(channel,TRANSIENT_WINDOW))
+  if (foxircSettings->CheckChannelFlags(channel, TRANSIENT_WINDOW))
     main = this;
   else
     main = NULL;
 
-  if (channel && *channel == '#') {
+  if (channel && (*channel == '#' || *channel == '&')) {
+    char str[IRC_MSG_LENGTH];
+
     ch = new OXChatChannel(_client->GetRoot(), main, this, channel);
-    {
-      OIrcMessage message(OUTGOING_IRC_MSG, NAMES, 0, 0, 0, 0, (char *)channel);
-      SendMessage(this, &message);
-    }
+
+    sprintf(str, "NAMES %s", channel);
+    SendRawCommand(str);
+
     ((OXChatChannel *) ch)->EnableChannelMode(_avcmode);
+
   } else if (channel && *channel == '=') {
     ch = new OXDCCChannel(_client->GetRoot(), main, this, channel);
+
   } else {
     ch = new OXMsgChannel(_client->GetRoot(), main, this, channel);
+
   }
 
   // new channels are added to the beginning of the list...
 
-  ch->_next = channels;
+  ch->_next = _channels;
   if (ch->_next) ch->_next->_prev = ch;
   ch->_prev = NULL;
-  channels = ch;
-  if(ch->_cinfo->background)
-	  ch->_logw->SetupBackgroundPic(ch->_cinfo->background);
+  _channels = ch;
+
+  if (ch->_cinfo->background)
+    ch->_logw->SetupBackgroundPic(ch->_cinfo->background);
+
   return ch;
 }
 
@@ -597,96 +787,232 @@ OXChannel *OXIrc::GetChannel(const char *channel) {
 OXChannel *OXIrc::FindChannel(const char *channel) {
   OXChannel *ch;
 
-  for (ch = channels; ch; ch = ch->_next) {
+  for (ch = _channels; ch; ch = ch->_next) {
     if (strcasecmp(channel, ch->_name) == 0) return ch;
   }
 
   return NULL;
 }
 
+// Remove the specified channel window from the chain.
+
 void OXIrc::RemoveChannel(OXChannel *ch) {
-  if (channels == ch) channels = ch->_next;
+  if (_channels == ch) _channels = ch->_next;
   if (ch->_next) ch->_next->_prev = ch->_prev;
   if (ch->_prev) ch->_prev->_next = ch->_next;
 }
 
+// Called when the user closes the channel list window.
+
+void OXIrc::ChannelListClosed() {
+  _channelList = NULL;
+}
+
+// Called when the user closes the server tree window.
+
+void OXIrc::ServerTreeClosed() {
+  _serverTree = NULL;
+}
+
+// Called when the user closes the external log view window.
+
+void OXIrc::ViewLogFileClosed() {
+  _viewLogFile = NULL;
+}
+
+// Return the channel list window, or create it if it does not exist.
+
+OXChannelList *OXIrc::GetChannelList() {
+  if (!_channelList)
+    _channelList = new OXChannelList(_client->GetRoot(), NULL, this, 100, 100);
+  return _channelList;
+}
+
+// Return the server tree window, or create it if it does not exist.
+
+OXServerTree *OXIrc::GetServerTree() {
+  if (!_serverTree)
+    _serverTree = new OXServerTree(_client->GetRoot(), NULL, this, 100, 100);
+  return _serverTree;
+}
+
+// Return the log file viewer window, or create it if it does not exist.
+
+OXViewLogFile *OXIrc::GetViewLogFile() {
+  if (!_viewLogFile)
+    _viewLogFile = new OXViewLogFile(_client->GetRoot(), NULL, this);
+  return _viewLogFile;
+}
+
 int OXIrc::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-  char char1[TCP_BUFFER_LENGTH], char2[TCP_BUFFER_LENGTH],
-       char3[TCP_BUFFER_LENGTH], char4[TCP_BUFFER_LENGTH],
-       char5[TCP_BUFFER_LENGTH], char6[TCP_BUFFER_LENGTH],
-       char7[TCP_BUFFER_LENGTH], char8[TCP_BUFFER_LENGTH];
+  char str[512];
 
-  int  int1, int2, int3;
-  time_t tm, tm2;
-
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_BUTTON:
     case MSG_MENU:
       switch (msg->action) {
         case MSG_CLICK:
-          switch(wmsg->id) {
-            case 801: DoOpenLog();  break;
-            case 802: DoFlushLog(); break;
-            case 804: DoCloseLog(); break;
-            case 805: DoEmptyLog(); break;
+          switch (wmsg->id) {
+            //------------------------------ Menu: IRC
 
-            case 1001:
+            case M_IRC_CONNECT:
               DoConnect();
               break;
 
-            case 1002:
+            case M_IRC_DISCONNECT:
               Disconnect();
               break;
 
-            case 1009:
-              CloseWindow();
-              delete _client;
+            case M_IRC_AWAY:
+              DoAway();
               break;
 
-            case 2005:
+            case M_IRC_EXIT:
+              CloseWindow();
+              break;
+
+            //------------------------------ Menu: Log
+
+            case M_LOG_OPEN:
+              DoOpenLog();
+              break;
+
+            case M_LOG_CLOSE:
+              DoCloseLog();
+              break;
+
+            case M_LOG_EMPTY:
+              DoEmptyLog();
+              break;
+
+            case M_LOG_VIEW:
+              DoViewLog();
+              break;
+
+            //------------------------------ Menu: Edit
+
+            case M_EDIT_PREFS:
               new OXPreferencesDialog(_client->GetRoot(), this, foxircSettings);
               break;
 
-            case 3001:
+            //------------------------------ Menu: View
+
+            case M_VIEW_TOOLBAR:
               DoToggleToolBar();
               break;
 
-            case 3002:
+            case M_VIEW_STATUSBAR:
               DoToggleStatusBar();
               break;
 
-	    case 3004:
-		{
-//		static int s = 0;
-//	    	new OX16ColorDialog(_client->GetRoot(),this,&s);
-//		printf("S is %d\n",s);
-		}
-		break;
-            case 4003:
+            case M_VIEW_FONT:
+              DoChangeFont();
+              break;
+
+	    case M_VIEW_COLORS:
+              break;
+
+            //------------------------------ Menu: Help
+
+            case M_HELP_ABOUT:
               DoHelpAbout();
               break;
 
-            case 5000:
+            //------------------------------ Menu: Channels
+
+            case M_CHAN_JOIN:
               new OXChannelDialog(_client->GetRoot(), this);
 	      break;
 	      
-            case 5001:
+            case M_CHAN_WHO:
+              DoWho();
+              break;
+
+            case M_CHAN_LIST:
+              DoList();
+              break;
+
+            //------------------------------ Menu: Users
+
+            case M_USERS_WHO:
+              DoWho();
+              break;
+
+            case M_USERS_WHOIS:
+              DoWhois();
+              break;
+
+            case M_USERS_WHOWAS:
+              DoWhowas();
+              break;
+
+            //------------------------------ Menu: Servers
+
+            case M_SERV_RAW:
               DoRaw();
               break;
 
-            case 5002:
+            case M_SERV_NICK:
               DoNick();
               break;
 
-            case 5003:
+            case M_SERV_WALLOPS:
               DoWallops();
               break;
 
-            case 5006:
+            case M_SERV_MOTD:
               DoMotd();
               break;
 
+            case M_SERV_VERSION:
+              DoVersion();
+              break;
+
+            case M_SERV_ADMIN:
+              DoAdmin();
+              break;
+
+            case M_SERV_LINKS:
+              DoLinks();
+              break;
+
+            case M_SERV_LUSERS:
+              DoLusers();
+              break;
+
+            case M_SERV_TIME:
+              DoTime();
+              break;
+
+            case M_SERV_INFO:
+              DoInfo();
+              break;
+
+            case M_SERV_TRACE:
+              DoTrace();
+              break;
+
+            case M_SERV_OPER:
+              DoOper();
+              break;
+
+            case M_SERV_REHASH:
+              SendRawCommand("REHASH");
+              break;
+
+            case M_SERV_RESTART:
+              SendRawCommand("RESTART");
+              break;
+
+            //------------------------------ Menu: user modes
+
+            case TB_INVISIBLE:
+            case TB_WALLOPS:
+            case TB_SNOTICES:
+            case TB_IRCOP:
+              ToggleUMode(wmsg->id);
+              break;
           }
         break;
       }
@@ -695,15 +1021,12 @@ int OXIrc::ProcessMessage(OMessage *msg) {
     case MSG_TEXTENTRY:
       {
         OTextEntryMessage *tmsg = (OTextEntryMessage *) msg;
-        switch(msg->action) {
+        switch (msg->action) {
           case MSG_TEXTCHANGED:
-            switch(tmsg->keysym) {
+            switch (tmsg->keysym) {
               case XK_Return:
-                strcpy(char1, _channelentry->GetString());
-                if (strlen(char1) > 0) {
-                  OIrcMessage message(OUTGOING_IRC_MSG, JOIN, 0, 0, 0, 0, char1);
-                  SendMessage(this, &message);
-                }
+                strcpy(str, _channelentry->GetString());
+                if (strlen(str) > 0) JoinChannel(str);
 	        _channelentry->Clear();
                 break;
             }
@@ -712,567 +1035,975 @@ int OXIrc::ProcessMessage(OMessage *msg) {
       }
       break;
 
-    case OUTGOING_TCP_MSG:
-      SendMessage(_irc, msg);
-      break;
-
     case INCOMING_IRC_MSG:
       {
         OIrcMessage *ircmsg = (OIrcMessage *) msg;
+        char nick[512];
 
-        switch(msg->action) {
-          case AUTH:
-            Log(ircmsg->string3->GetString(), 5);
-            break;
-
-          case PRIVMSG:
-          case NOTICE:
-            if (!strcasecmp(ircmsg->string1->GetString(), _nick)) {
-              GetChannel(ircmsg->string2->GetString())
-                             ->Say((char *)ircmsg->string2->GetString(),
-                                   (char *)ircmsg->string3->GetString(),
-                                   msg->action);
-            } else {
-              GetChannel(ircmsg->string1->GetString())
-                             ->Say((char *)ircmsg->string2->GetString(),
-                                   (char *)ircmsg->string3->GetString(),
-                                   msg->action);
-            }
-	    break;
-
-          case MODE:
-            if (strcmp(ircmsg->string1->GetString(), _nick) == 0) {
-              sprintf(char6, "Mode change \"%s\" for user %s by %s", 
-                             ircmsg->string3->GetString(),
-                             ircmsg->string1->GetString(),
-                             ircmsg->string2->GetString());
-              Log(char6, 9);
-            } else {
-              // It is OK to pass a NULL ptr to SendMessage.
-              SendMessage(FindChannel(ircmsg->string1->GetString()), msg);
-            }
-            break;
-
-          case LEAVE:
-          case KICK:
-          case TOPIC_SET:
-            SendMessage(FindChannel(ircmsg->string1->GetString()), msg);
-	    break;
-
-          case JOIN:
-          case NICKLIST:
-            SendMessage(GetChannel(ircmsg->string1->GetString()), msg);
-	    break;
-
-          case NICK:
-          case QUIT:
-            for(OXChannel *i = channels; i; i= i->_next)
-              SendMessage(i, msg);  // OK to send it to all windows???
-	    break;
-
-          case SPECIAL:
-            //char1[0] = '\0';
-            //sscanf(char1, "%s", ircmsg->string4->GetString());
-            switch (ircmsg->parm1) {
-              case RPL_WELCOME:    // :Welcome...
-              case RPL_YOURHOST:   // :Your host is...
-              case RPL_CREATED:    // :This server was created...
-              case RPL_PROTOCTL:   // 5
-              case RPL_LUSERCLIENT:
-              case RPL_LUSERME:
-              case RPL_STATSCONN:  // :Highest connection count...
-              case RPL_LOCALUSERS:
-              case RPL_GLOBALUSERS:
-              case RPL_WHOISMODES:
-                Log(ircmsg->string4->GetString(), 5);
-                break;
-
-              case RPL_INVITING:
-                if (sscanf(ircmsg->string4->GetString(), "%s %s", 
-                           char1, char2) == 2) {
-                  sprintf(char3, "Inviting %s to %s", char1, char2);
-                  Log(char3, 6);
-                }
-                break;
-		
-              case 381: // :you are now an ircop..
-              case 396: // :info set to
-                Log(ircmsg->string4->GetString(), 12);
-		break;
-
-              case RPL_LUSEROP:
-              case RPL_LUSERUNKNOWN:
-              case RPL_LUSERCHANNELS:
-                if (sscanf(ircmsg->string4->GetString(), "%d :", &int1) == 1) {
-                  char *s = strchr(ircmsg->string4->GetString(), ':');
-                  if (s) ++s;
-                  sprintf(char6, "%d", int1);
-                  if (s && *s) sprintf(char6, "%s %s", char6, s);
-                  Log(char6, 5);
-                } else {
-                  Log(ircmsg->string4->GetString(), 5);
-                }
-                break;
-
-              //--------------------------------- WHOIS responses
-
-              case RPL_WHOISUSER:
-              case RPL_WHOISSERVER:
-              case RPL_WHOISCHANNELS:
-              case RPL_WHOISIDLE:
-              case RPL_ENDOFWHOIS:
-              case RPL_ENDOFWHOWAS:
-              case RPL_WHOISOPERATOR:
-              case RPL_WHOISHELPOP:
-              case RPL_WHOISSADMIN:
-              case RPL_WHOISADMIN:
-              case RPL_WHOISNETWORK:
-              case RPL_WHOWASUSER:
-              case 379: // : is a services admin
-              case 378: // : Real Hostname :
-                ProcessWhois(ircmsg->parm1, ircmsg->string4->GetString());
-                break;
-
-              case RPL_AWAY:  // this can be part of WHOIS response, but other
-                              // can generate this response as well.
-                if (sscanf(ircmsg->string4->GetString(), "%s :", char1) == 1) {
-                  char *s = strchr(ircmsg->string4->GetString(), ':');
-                  if (s) ++s;
-                  sprintf(char6, "%s is away", char1);
-                  if (s && *s) sprintf(char6, "%s (%s)", char6, s);
-                  /*GetChannel(char1)->*/Log(char6, 5);
-                }
-                break;
-
-              //--------------------------------- MOTD
-
-              case RPL_MOTDSTART:
-              case RPL_MOTD:
-                Log(ircmsg->string4->GetString(), 4);
-                break;
-              case RPL_ENDOFMOTD:
-                Log("End of MOTD", 5);
-                break;
-              case ERR_NOMOTD:
-                sprintf(char6, "%s", 
-                        (ircmsg->string4) ? 
-                        ircmsg->string4->GetString() : "No MOTD");
-                Log(char6, 5);
-                break;
-
-              //---------------------------------
-
-              case RPL_MYINFO:  // 004 - host, version, umodes, cmodes
-                {
-                if (sscanf(ircmsg->string4->GetString(), "%s %s %s %s",
-                           char1, char2, char3, char4) == 4) {
-                  _avumode = ModeBits(char3);
-                  _avcmode = ModeBits(char4);
-                  sprintf(char1, "umodes available: %s, channel modes available: %s",
-                                 char3, char4);
-                  Log(char1, 5);
-                  }
-                }
-                break;
-
-              case RPL_CHANNELMODEIS:
-                break;
-
-              //--------------------------------- Names List
-
-              case RPL_NAMREPLY:
-	        {
-                  OIrcMessage message(INCOMING_IRC_MSG, NICKLIST, 0, 0, 0, 0,
-	                              (char*)(ircmsg->string3->GetString()),
-				      (char*)(ircmsg->string4->GetString()));
-                  ProcessMessage(&message);
-	        }
-              case RPL_ENDOFNAMES:
-                break;
-
-              //---------------------------------
-
-              case RPL_CREATIONTIME:  // channel creation time
-                if (sscanf(ircmsg->string4->GetString(), "%s %lu",
-                           char1, &tm) == 2) {
-                  OIrcMessage message(INCOMING_IRC_MSG, SPECIAL,
-                                      ircmsg->parm1, (long) tm, 0, 0);
-                  SendMessage(GetChannel(char1), &message);
-                }
-                break;
-
-              case ERR_CHANOPRIVSNEEDED:
-                if (sscanf(ircmsg->string4->GetString(), "%s :%n",
-                           char1, &int1) == 1) {
-                  OIrcMessage message(INCOMING_IRC_MSG, SPECIAL,
-                                      ircmsg->parm1, 0, 0, 0);
-                  SendMessage(GetChannel(char1), &message);
-                }
-                break;
-
-              case ERR_NOSUCHNICK:
-              case ERR_NOSUCHSERVER:
-              case ERR_NOSUCHCHANNEL:
-              case ERR_CANNOTSENDTOCHAN:
-              case ERR_TOOMANYCHANNELS:
-              case ERR_WASNOSUCHNICK:
-              case ERR_TOOMANYTARGETS:
-              case ERR_NOORIGIN:
-              case 464: // :invalid password
-              case 491: // :No O-lines for your host
-                Log(ircmsg->string4->GetString(), 3);
-                break;
-
-              case 364: // link
-                ProcessLink((char *) ircmsg->string4->GetString());
-                break;
-
-	      case 433: // :Nick is already in use..
-                if (sscanf(ircmsg->string4->GetString(), "%s :", char1) == 1) {
-                  sprintf(char6, "Nickname %s is already in use", char1);
-                  Log(char6, 3);
-                  OString *tmp = new OString("");
-                  int retn;
-                  sprintf(char6, "%s\nPlease enter another nick", char6);
-                  new OXConfirmDlg(_client->GetRoot(), this,
-               		new OString("Change Nick"), new OString(char6),
-              	        tmp, &retn);
-		  if (retn != ID_NO)
-                    ChangeNick(tmp->GetString());
-		  else
-                    ChangeNick(_nick);
-                  delete tmp;
-                }
-                break;
-
-              //--------------------------------- TOPIC responses
-
-              case RPL_TOPIC:
-                if (sscanf(ircmsg->string4->GetString(), "%s %n",
-                           char1, &int1) == 1) {
-                  char *s = (char *) ircmsg->string4->GetString();
-                  if (int1 < strlen(s)) {
-                    if (s[int1] == ':') ++int1;
-                    OIrcMessage message(INCOMING_IRC_MSG, TOPIC,
-                                        0, 0, 0, 0, s+int1);
-                    SendMessage(GetChannel(char1), &message);
-                  }
-                }
-                break;
-
-              case RPL_TOPICWHOTIME:
-                if (sscanf(ircmsg->string4->GetString(), "%s %s %lu",
-                           char1, char2, &tm) == 3) {
-                  OIrcMessage message(INCOMING_IRC_MSG, TOPIC_SETBY,
-                                      (long) tm, 0, 0, 0, char2);
-                  SendMessage(GetChannel(char1), &message);
-                }
-                break;
-
-              //--------------------------------- Misc error responses
-
-              case ERR_UNKNOWNCOMMAND:
-                strcpy(char6, "Unknown command");
-                if (sscanf(ircmsg->string4->GetString(), "%s :", char1) == 1) {
-                  sprintf(char6, "%s: %s", char6, char1);
-                }
-                Log(char6, 3);
-                break;
-
-              //--------------------------------- All others/unknown
-//      //
-//      //
-//      //
-//  //  //
-//  //  //
- //////// 
- 
-//#fOX Zapper NetAdmin.FoxChat.Net roadkill.FoxChat.net Zapper G*@ :1 High Voltage
-//#fOX Big_Mac foxproject.org Wild.FoxChat.Net Poki H :0 "Poki the wonderbot"
-//* services foxchat.net services.foxchat.net ChanServ H* :3 Channel Server
-//#fOX mike itchy2-16-70.ionsys.com Wild.FoxChat.Net Foxxer H :0 Me
-
-	      case 352:   // Who reply. (channel, login, host, server, nick
-		
-		if(sscanf(ircmsg->string4->GetString(),"%s %s %s %s %s %s :%d",
-		char1 , char2, char3 ,char4, char5,char6,&int1)==6){
-		//chan login   host  server  nick  status
-//		printf("found char1:%s, char2:%s, char3:%s, char4:%s, char5:%s, char5:%s\n",
-//		char1,char2,char3,char4,char5,char6);
-		sprintf(char7,"%64s %64s %s %s@%s [%d:%s]",
-			char1,char5,char6,char2,char3,int1,char4);
-
-		    char *s = strchr(ircmsg->string4->GetString(), ':');
-		    if (s) ++s;
-    			while ((s) && isdigit(s[0])) s++;
-
-    		    if (s)
-		    	sprintf(char7,"%s (%s)",char7,s);
-            	    Log(char7, 3);
-		}
-		break;
-              default:
-                sprintf(char6, "Unknown SPECIAL INCOMING_IRC_MSG (%03d - %s)", 
-                        ircmsg->parm1, (ircmsg->string4) ? 
-                        ircmsg->string4->GetString() : "<null>");
-                Log(char6, 3);
-                break;
-            }
-	    break;
-
-          case ERROR:
-            Log(ircmsg->string1->GetString(), 3);
-            break;
-
-          case WALLOPS:
-            sprintf(char6, "Wallops from %s [%s]", 
-                        ircmsg->string1->GetString(), (ircmsg->string2) ? 
-                        ircmsg->string2->GetString() : "<null>");
-            Log(char6, 19);
-            break;
-
-          case INVITE:
-            {
-            int retval;
-
-            sprintf(char6, "%s invites you to join channel %s\n"
-                           "Do you want to join the channel?", 
-                        ircmsg->string1->GetString(),
-                        ircmsg->string3->GetString());
-            new OXMsgBox(_client->GetRoot(), this,
-                         new OString("Invite Dialog"), new OString(char6),
-                         MB_ICONQUESTION, ID_YES|ID_IGNORE, &retval);
-            if (retval == ID_YES) {
-              OIrcMessage message(OUTGOING_IRC_MSG, JOIN, 0, 0, 0, 0,
-                                 (char *) ircmsg->string3->GetString());
-              SendMessage(this, &message);
-            }
-            }
-            break;
-
-          default:
-	    printf("Incorrect/Unknown INCOMING_IRC_MESSAGE\n");
-            break;
+        nick[0] = '\0';
+        if (ircmsg->prefix) {
+          char *p = strchr(ircmsg->prefix, '!');
+          if (p) {
+            strncpy(nick, ircmsg->prefix, p - ircmsg->prefix);
+            nick[p - ircmsg->prefix] = '\0';
+          }
         }
+
+        if (isdigit(*ircmsg->command)) {  // numeric response?
+          int cmd = atoi(ircmsg->command);
+
+          switch (cmd) {
+            case RPL_WELCOME:         // 001 :Welcome...
+              if (_realserver) {
+                delete[] _realserver;
+                _realserver = StrDup(ircmsg->prefix);
+                UpdateStatusBar(0);
+              }
+              if (foxircSettings->CheckMisc(P_MISC_POPUP_CHAN_CN)) {
+                new OXChannelDialog(_client->GetRoot(), this);
+              }
+              // fall thru...
+            case RPL_YOURHOST:        // 002 :Your host is...
+            case RPL_CREATED:         // 003 :This server was created...
+            case RPL_LOCALUSERS:      // (265)
+            case RPL_GLOBALUSERS:     // (266)
+              Log(ircmsg->argv[1], P_COLOR_SERVER_2);
+              break;
+
+            case RPL_MYINFO:          // 004 - host, version, umodes, cmodes
+              _avumode = ModeBits(ircmsg->argv[3]);
+              _avcmode = ModeBits(ircmsg->argv[4]);
+              sprintf(str, "user modes available: %s, channel modes available: %s",
+                           ircmsg->argv[3], ircmsg->argv[4]);
+              Log(str, P_COLOR_SERVER_2);
+              if (!_pingTimer) {
+                _pingTimer = new OTimer(this, 30000);  // 1st time
+              }
+              break;
+
+            case RPL_PROTOCTL:        // 005 ... :are supported by this server
+              str[0] = '\0';
+              for (int i = 1; i < ircmsg->argc; ++i) {
+                if (*ircmsg->argv[i]) {
+                  if (i > 1) strcat(str, " ");
+                  strcat(str, ircmsg->argv[i]);
+                }
+              }
+              Log(str, P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- USERHOST reply
+
+            //case RPL_USERHOST:        // 302 - :nickname*=+/-hostname ...
+            //  break;
+
+            //--------------------------------- ISON
+
+            case RPL_ISON:            // 303
+              {
+                time_t now = time(NULL);
+                if (foxircSettings->SendToInfo(P_LOG_ISON)) {
+                  sprintf(str, "%s: signon by %s detected",
+                               DateString(now), ircmsg->argv[1]);
+                  Log(str, P_COLOR_NOTICE);
+                } else {
+                  sprintf(str, "%s:\nSignon by %s detected.", 
+                                str, ircmsg->argv[1]);
+                  new OXMsgBox(_client->GetRoot(), this,
+                               new OString("Notify"),
+                               new OString(str),
+                               MB_ICONASTERISK, ID_OK);
+                }
+              }
+              break;
+
+            //--------------------------------- AWAY
+
+            case RPL_AWAY:            // 301 - this can be part of WHOIS
+                                      //       responses as well...
+              sprintf(str, "%s is away", ircmsg->argv[1]);
+              if (ircmsg->argv[2] && *ircmsg->argv[2])
+                sprintf(str, "%s (%s)", str, ircmsg->argv[2]);
+              /*GetChannel(ircmsg->argv[0])->*/Log(str, P_COLOR_SERVER_2);
+              break;
+
+            case RPL_NOWAWAY:         // 306
+              Log(ircmsg->argv[ircmsg->argc-1], P_COLOR_NOTICE);  // argv[1]
+              _mirc->CheckEntry(M_IRC_AWAY);
+              UpdateStatusBar(2);
+              break;
+
+            case RPL_UNAWAY:          // 305
+              Log(ircmsg->argv[ircmsg->argc-1], P_COLOR_NOTICE);  // argv[1]
+              _mirc->UnCheckEntry(M_IRC_AWAY);
+              UpdateStatusBar(2);
+              break;
+
+            //--------------------------------- WHOIS responses
+
+            case RPL_WHOISMODES:      // (377) (379 in rush 2.7.5)
+              Log(ircmsg->argv[1], P_COLOR_SERVER_2);
+              break;
+
+            case RPL_WHOISCHANNELS:   // 319
+            case RPL_WHOISIDLE:       // 317
+            case RPL_ENDOFWHOIS:      // 318
+            case RPL_ENDOFWHOWAS:     // 369
+            //case RPL_WHOISREGNICK:    // (307)
+            case RPL_WHOISADMIN:      // (308)
+            case RPL_WHOISSADMIN:     // (309)
+            case RPL_WHOISHELPOP:     // (310)
+            case RPL_WHOISUSER:       // (311)
+            case RPL_WHOISSERVER:     // (312)
+            case RPL_WHOISOPERATOR:   // (313)
+            case RPL_WHOISNETWORK:    // (380)
+            case RPL_WHOWASUSER:      // 314
+            case 379:                 // 379 :is a services admin
+            case 320:                 // 320 :is an identified user
+            case RPL_WHOISHOST:       // (378) : Real Hostname :
+              ProcessWhois(cmd, ircmsg);
+              break;
+
+            //--------------------------------- LIST
+
+            case RPL_LISTSTART:       // 321 (this RPL is said to be obsolete!)
+              if (foxircSettings->SendToInfo(P_LOG_CHAN_LIST))
+                ; //Log(ircmsg->argv[1], P_COLOR_SERVER_2);
+              else
+                GetChannelList()->ClearList();
+              break;
+
+            case RPL_LIST:            // 322 - list reply: #chan nnn :title
+              if (foxircSettings->SendToInfo(P_LOG_CHAN_LIST)) {
+                sprintf(str, "%-10s %3s %s",
+                             ircmsg->argv[1],
+                             ircmsg->argv[2],
+                             ircmsg->argv[3]);
+                Log(str, P_COLOR_SERVER_2);
+              } else {
+                GetChannelList()->AddChannel(ircmsg->argv[1],
+                                             atoi(ircmsg->argv[2]),
+                                             ircmsg->argv[3]);
+              }
+              break;
+
+            case RPL_LISTEND:         // 323 - end of list
+              if (foxircSettings->SendToInfo(P_LOG_CHAN_LIST))
+                Log("End of LIST", P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- TOPIC responses
+
+            case RPL_TOPIC:           // 332
+            case RPL_TOPICWHOTIME:    // (333)
+              SendMessage(FindChannel(ircmsg->argv[1]), msg);
+              break;
+
+            //case RPL_NOTOPIC:         // 331
+            //  break;
+
+            //--------------------------------- misc channel replies
+
+            //case RPL_UNIQOPIS:        // 325 ???
+            //  break;
+
+            case RPL_CHANNELMODEIS:   // 324
+              if (FindChannel(ircmsg->argv[1])) {
+                SendMessage(FindChannel(ircmsg->argv[1]), msg);
+              } else {
+                sprintf(str, "Mode for %s: %s",
+                             ircmsg->argv[1], ircmsg->argv[2]);
+                Log(str, P_COLOR_SERVER_2);
+              }
+              break;
+
+            case RPL_CREATIONTIME:    // (329) channel creation time
+              if (FindChannel(ircmsg->argv[1])) {
+                SendMessage(FindChannel(ircmsg->argv[1]), msg);
+              } else {
+                sprintf(str, "The channel %s was created on %s",
+                             ircmsg->argv[1], DateString(ircmsg->argv[2]));
+                Log(str, P_COLOR_SERVER_2);
+              }
+              break;
+
+            //--------------------------------- INVITE succeeded
+
+            case RPL_INVITING:        // 341
+              sprintf(str, "Inviting %s to %s",
+                           ircmsg->argv[1], ircmsg->argv[2]);
+              Log(str, P_COLOR_INVITE);
+              break;
+		
+            //--------------------------------- SUMMON in progress
+
+            //case RPL_SUMMONING:       // 342
+            //  break;
+
+            //--------------------------------- channel invitation list
+
+            //case RPL_INVITELIST:      // 346
+            //case RPL_ENDOFINVITELIST: // 347
+            //  break;
+
+            //--------------------------------- channel exception list
+
+            //case RPL_EXCEPTLIST:      // 348
+            //case RPL_ENDOFEXCEPTLIST: // 349
+            //  break;
+
+            //--------------------------------- VERSION
+
+            case RPL_VERSION:         // 351
+              if (ircmsg->argv[2] && *ircmsg->argv[2])
+                sprintf(str, "%s is running %s",
+                             ircmsg->argv[2], ircmsg->argv[1]);
+              else
+                sprintf(str, "%s is running %s",
+                             _realserver, ircmsg->argv[1]);
+              Log(str, P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- WHO reply
+
+            case RPL_WHOREPLY:        // 352 - #channel login host server nick
+            case RPL_ENDOFWHO:        // 315
+              ProcessWho(cmd, ircmsg);
+              break;
+
+            //--------------------------------- NAMES List
+
+            case RPL_NAMREPLY:        // 353
+              if (FindChannel(ircmsg->argv[2]))
+                SendMessage(FindChannel(ircmsg->argv[2]), msg);
+              else
+                Log(ircmsg->argv[ircmsg->argc-1], P_COLOR_SERVER_2);
+              break;
+
+            case RPL_ENDOFNAMES:      // 366
+              if (!FindChannel(ircmsg->argv[1]))
+                Log("End of NAMES", P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- LINKS
+
+            case RPL_LINKS:           // 364
+            case RPL_ENDOFLINKS:      // 365
+              ProcessLink(cmd, ircmsg);
+              break;
+
+            //--------------------------------- channel active ban list
+
+            case RPL_BANLIST:         // 367
+              if (FindChannel(ircmsg->argv[1])) {
+                SendMessage(FindChannel(ircmsg->argv[1]), msg);
+              } else {
+                if (ircmsg->argc == 5) {
+                  sprintf(str, "%s is banned from %s (set by %s on %s)",
+                               ircmsg->argv[2], ircmsg->argv[1],
+                               ircmsg->argv[3], DateString(ircmsg->argv[4]));
+                } else {
+                  sprintf(str, "%s is banned from channel %s",
+                               ircmsg->argv[1], ircmsg->argv[2]);
+                }
+                Log(str, P_COLOR_SERVER_2);
+              }
+              break;
+
+            case RPL_ENDOFBANLIST:    // 368
+              if (FindChannel(ircmsg->argv[1])) {
+                SendMessage(FindChannel(ircmsg->argv[1]), msg);
+              } else {
+                Log("End of BAN list", P_COLOR_SERVER_2);
+              }
+              break;
+
+            //--------------------------------- INFO
+
+            case RPL_INFOMORE:        // (370) (rush 2.7.5)
+            case RPL_INFO:            // 371
+            case RPL_INFOSTART:       // (373)
+              Log(ircmsg->argv[1], P_COLOR_SERVER_1);
+              break;
+
+            case RPL_ENDOFINFO:       // 374
+              Log("End of INFO", P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- MOTD
+
+            case RPL_MOTDSTART:       // 375
+            case RPL_MOTD:            // 372
+              Log(ircmsg->argv[1], P_COLOR_SERVER_1);
+              break;
+
+            case RPL_ENDOFMOTD:       // 376
+              Log("End of MOTD", P_COLOR_SERVER_2);
+              break;
+
+            case ERR_NOMOTD:          // 422
+              sprintf(str, "%s", ircmsg->argv[1] ? ircmsg->argv[1] : "No MOTD");
+              Log(str, P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- misc responses
+
+            case RPL_YOUREOPER:       // 381 :you are now an ircop..
+            case 396:                 // 396 :info set to
+              Log(ircmsg->argv[1], P_COLOR_NOTICE);
+              break;
+
+            case RPL_REHASHING:       // 382 - 'config-file' :rehashing
+              sprintf(str, "Rehasing %s", ircmsg->argv[1]);
+              Log(str, P_COLOR_NOTICE);
+              break;
+
+            //case RPL_YOURESERVICE:    // 383 - :you are service ...
+            //  break;
+
+            //case RPL_UMODEIS:         // 221
+            //  break;
+
+            //--------------------------------- TIME
+
+            case RPL_TIME:            // 391
+              sprintf(str, "It is %s at %s",
+                           ircmsg->argv[ircmsg->argc-1], ircmsg->argv[1]);
+              Log(str, P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- USERS (if supported by server)
+
+            //case RPL_USERSSTART:      // 392 :userID terminal host
+            //case RPL_USERS:           // 393
+            //case RPL_ENDOFUSERS:      // 394 :end of users
+            //case RPL_NOUSERS:         // 395 :nobody logged in
+            //  break;
+
+            //--------------------------------- TRACE
+
+            //case RPL_TRACELINK:       // 200
+            //case RPL_TRACECONNECTING: // 201
+            //case RPL_TRACEHANDSHAKE:  // 202
+            //case RPL_TRACEUNKNOWN:    // 203
+            //case RPL_TRACEOPERATOR:   // 204
+            //case RPL_TRACEUSER:       // 205
+            //case RPL_TRACESERVER:     // 206
+            //case RPL_TRACESERVICE:    // 207
+            //case RPL_TRACENEWTYPE:    // 208
+            //case RPL_TRACECLASS:      // 209
+            //case RPL_TRACERECONNECT:  // 210
+            //case RPL_TRACELOG:        // 261
+            //case RPL_TRACEEND:        // 262
+            //  break;
+
+            //--------------------------------- STATS
+
+            //case RPL_STATSLINKINFO:   // 211
+            //case RPL_STATSCOMMANDS:   // 212
+            //case RPL_STATSUPTIME:     // 242
+            //case RPL_STATSOLINE:      // 243
+            //case RPL_STATSCLINE:      // (213)
+            //case RPL_STATSNLINE:      // (214)
+            //case RPL_STATSILINE:      // (215)
+            //case RPL_STATSKLINE:      // (216)
+            //case RPL_STATSQLINE:      // (217)
+            //case RPL_STATSYLINE:      // (218)
+            //case RPL_STATSBLINE:      // (220)
+            //case RPL_STATSLLINE:      // (241)
+            //case RPL_STATSHLINE:      // (244)
+            //case RPL_STATSSLINE:      // (245)
+            //case RPL_STATSXLINE:      // (247)
+            //case RPL_STATSULINE:      // (248)
+            //case RPL_STATSDEBUG:      // (249)
+            //case RPL_ENDOFSTATS:      // 219
+            //  break;
+
+            case RPL_STATSCONN:       // (250) :Highest connection count...
+              Log(ircmsg->argv[1], P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- SERVLIST
+
+            //case RPL_SERVLIST:        // 234
+            //case RPL_SERVLISTEND:     // 235
+            //  break;
+
+            //--------------------------------- LUSERS
+
+            case RPL_LUSERCLIENT:     // 251
+            case RPL_LUSERME:         // 255
+              Log(ircmsg->argv[1], P_COLOR_SERVER_2);
+              break;
+
+            case RPL_LUSEROP:         // 252
+            case RPL_LUSERUNKNOWN:    // 253
+            case RPL_LUSERCHANNELS:   // 254
+              sprintf(str, "%s %s", ircmsg->argv[1], ircmsg->argv[2]);
+              Log(str, P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- ADMIN reply
+
+            case RPL_ADMINME:         // 256
+            case RPL_ADMINLOC1:       // 257
+            case RPL_ADMINLOC2:       // 258
+            case RPL_ADMINEMAIL:      // 259
+              ProcessAdmin(cmd, ircmsg);
+              break;
+
+            //--------------------------------- server dropped command
+
+            //case RPL_TRYAGAIN:        // 263
+            //  break;
+
+            //--------------------------------- errors
+
+            //case ERR_BANLISTFULL:     // 478
+            case ERR_CHANOPRIVSNEEDED: // 482
+              if (FindChannel(ircmsg->argv[1]))
+                SendMessage(FindChannel(ircmsg->argv[1]), msg);
+              else
+                ProcessIrcError(cmd, ircmsg);
+              break;
+
+            case ERR_NICKNAMEINUSE:   // 433 :Nick is already in use..
+              {
+                sprintf(str, "Nickname %s is already in use",
+                             ircmsg->argv[1]);
+                Log(str, P_COLOR_HIGHLIGHT);
+                OString tmp("");
+                int retn;
+                strcat(str, "\nPlease enter another nick");
+                new OXConfirmDlg(_client->GetRoot(), this,
+                        new OString("Change Nick"), new OString(str),
+                        new OString("Nick:"), &tmp, &retn, ID_OK | ID_CANCEL);
+                if (retn != ID_CANCEL)
+                  ChangeNick(tmp.GetString());
+		else
+                  ChangeNick(_nick);
+              }
+              break;
+
+            //--------------------------------- All others/unknown
+
+            default:
+              if ((cmd >= 400) && (cmd <= 599)) {
+                // generic error responses with no special handling
+                ProcessIrcError(cmd, ircmsg);
+              } else {
+                sprintf(str, "Unknown reply (%03d - ", cmd);
+                for (int i = 1; i < ircmsg->argc; ++i) {
+                  if (*ircmsg->argv[i]) {
+                    if (i > 1) strcat(str, " ");
+                    strcat(str, ircmsg->argv[i]);
+                  }
+                }
+                strcat(str, ")");
+                Log(str, P_COLOR_HIGHLIGHT);
+              }
+              break;
+          }
+
+        } else if (strcasecmp(ircmsg->command, "PING") == 0) {
+
+          sprintf(str, "PONG :%s", ircmsg->argv[0]);
+          SendRawCommand(str);
+
+        } else if (strcasecmp(ircmsg->command, "PONG") == 0) {
+
+          // this is a response to our PING command: calculate lag 
+          time_t tm;
+
+          tm = strtoul(ircmsg->argv[1], (char **) 0, 10);
+          _lag = time(NULL) - tm;
+          UpdateStatusBar(1);
+
+        } else if (strcasecmp(ircmsg->command, "NOTICE") == 0) {
+
+          if (ircmsg->argv[0] && (strcasecmp(ircmsg->argv[0], "AUTH") == 0)) {
+            Log(ircmsg->argv[1], P_COLOR_NOTICE);
+          } else if (!*nick) {
+            const char *channel = ircmsg->argv[0];
+            if (*channel == '@') {
+              ++channel;
+              GetChannel(channel)->Say("", ircmsg->argv[1], NOTICE);
+            } else {
+              Log(ircmsg->argv[1], P_COLOR_NOTICE);
+            }
+          } else {
+            if (strcasecmp(ircmsg->argv[0], _nick) == 0) {
+              GetChannel(nick)->Say(nick, ircmsg->argv[1], NOTICE);
+            } else {
+              GetChannel(ircmsg->argv[0])->Say(nick, ircmsg->argv[1], NOTICE);
+            }
+          }
+
+        } else if ((strcasecmp(ircmsg->command, "PRIVMSG") == 0)) {
+
+          if (strcasecmp(ircmsg->argv[0], _nick) == 0) {
+            GetChannel(nick)->Say(nick, ircmsg->argv[1], PRIVMSG);
+          } else {
+            GetChannel(ircmsg->argv[0])->Say(nick, ircmsg->argv[1], PRIVMSG);
+          }
+
+        } else if ((strcasecmp(ircmsg->command, "MODE") == 0)) {
+
+          if (strcmp(ircmsg->argv[0], _nick) == 0) {
+            sprintf(str, "Mode change \"%s\" for user %s by %s", 
+                         ircmsg->argv[1],
+                         ircmsg->argv[0],
+                         ircmsg->prefix);
+            ProcessUMode(ircmsg->argv[1]);
+            Log(str, P_COLOR_MODE);
+          } else {
+            // It is OK to pass a NULL ptr to SendMessage.
+            SendMessage(FindChannel(ircmsg->argv[0]), msg);
+          }
+
+        } else if ((strcasecmp(ircmsg->command, "PART") == 0)) {
+
+          SendMessage(FindChannel(ircmsg->argv[0]), msg);
+
+        } else if ((strcasecmp(ircmsg->command, "KICK") == 0)) {
+
+          SendMessage(FindChannel(ircmsg->argv[0]), msg);
+
+        } else if ((strcasecmp(ircmsg->command, "TOPIC") == 0)) {
+
+          SendMessage(FindChannel(ircmsg->argv[0]), msg);
+
+        } else if ((strcasecmp(ircmsg->command, "JOIN") == 0)) {
+
+          if (strcmp(nick, _nick) == 0) {
+            // we just joined a new channel...
+            SendMessage(GetChannel(ircmsg->argv[0]), msg);
+            sprintf(str, "MODE :%s", ircmsg->argv[0]);
+            SendRawCommand(str);
+          } else {
+            SendMessage(FindChannel(ircmsg->argv[0]), msg);
+          }
+
+        } else if ((strcasecmp(ircmsg->command, "NICK") == 0)) {
+
+          if (strcmp(ircmsg->argv[0], _nick) == 0) {
+            // the server decided to change *our* nick!
+            // (some ChanServ/NickServ services might do that)
+            sprintf(str, "Your nick has been changed to %s", ircmsg->argv[0]);
+            if (_nick) delete[] _nick;
+            _nick = StrDup(ircmsg->argv[0]);
+            Log(str, P_COLOR_NOTICE);
+          }
+
+          for (OXChannel *i = _channels; i; i= i->_next)
+            SendMessage(i, msg);  // OK to send it to all windows???
+
+        } else if ((strcasecmp(ircmsg->command, "QUIT") == 0)) {
+
+          for (OXChannel *i = _channels; i; i= i->_next)
+            SendMessage(i, msg);  // OK to send it to all windows???
+
+        } else if ((strcasecmp(ircmsg->command, "SILENCE") == 0)) {
+
+          sprintf(str, "User %s %ssilenced",
+                       ircmsg->argv[0] + 1,
+                       *ircmsg->argv[0] == '-' ? "un" : "");
+          Log(str, P_COLOR_MODE);
+
+        } else if ((strcasecmp(ircmsg->command, "ERROR") == 0)) {
+
+          Log(ircmsg->argv[0], P_COLOR_HIGHLIGHT);
+
+        } else if ((strcasecmp(ircmsg->command, "ERROR:") == 0)) {
+
+          Log(ircmsg->rawmsg, P_COLOR_HIGHLIGHT);
+
+        } else if ((strcasecmp(ircmsg->command, "WALLOPS") == 0)) {
+
+          char *who = nick;
+          if (!*nick) who = ircmsg->prefix;
+
+          sprintf(str, "Wallops from %s: %s", who, ircmsg->argv[0]);
+          Log(str, P_COLOR_WALLOPS);
+
+        } else if ((strcasecmp(ircmsg->command, "INVITE") == 0)) {
+
+          int retval;
+          char *who = nick;
+          if (!*nick) who = ircmsg->prefix;
+
+          sprintf(str, "%s invites you to join channel %s\n"
+                       "Do you want to join the channel?", 
+                       who, ircmsg->argv[1]);
+          new OXMsgBox(_client->GetRoot(), this,
+                       new OString("Invite Dialog"), new OString(str),
+                       MB_ICONQUESTION, ID_YES|ID_IGNORE, &retval);
+          if (retval == ID_YES) JoinChannel(ircmsg->argv[1]);
+
+        } else {
+
+          sprintf(str, "Unknown command (%s)", ircmsg->command);
+          Log(str, P_COLOR_HIGHLIGHT);
+
+        }
+
       }
       break;
 
-    case OUTGOING_IRC_MSG:
-      {
-        OIrcMessage *ircmsg = (OIrcMessage *) msg;
-
-        switch(msg->action) {
-          case JOIN:
-            sprintf(char1, "JOIN %s\nMODE %s\n", 
-	            ircmsg->string1->GetString(), 
-		    ircmsg->string1->GetString());
-	    {
-              OTcpMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, char1);
-              SendMessage(_irc, &message);
-	    }
-	    break;
-
-          case NAMES:
-            sprintf(char1, "NAMES %s\n", ircmsg->string1->GetString());
-	    {
-              OTcpMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, char1);
-              SendMessage(_irc, &message);
-	    }
-	    break;
-
-          case LEAVE:
-            sprintf(char1, "PART %s\n", ircmsg->string1->GetString());
-	    {
-              OTcpMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, char1);
-              SendMessage(_irc, &message);
-	    }
-	    break;
-
-          case TOPIC_SET:
-            sprintf(char1, "TOPIC %s :%s\n",
-                           ircmsg->string1->GetString(),
-                           ircmsg->string2->GetString());
-	    {
-              OTcpMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, char1);
-              SendMessage(_irc, &message);
-	    }
-	    break;
-
-          default:
-	    break;
-	}
-      }
+    case OUTGOING_TCP_MSG:
+      FatalError("OXIrc: OUTGOING_TCP_MSG");
       break;
 
     case BROKEN_PIPE:
-      Log("Connection reset by peer", 4);
+      Log("Connection reset by peer", P_COLOR_SERVER_1);
       Disconnect();
       break;
 
   }
+
   return True;
 }
 
+
+//----------------------------------------------------------------------
+
+void OXIrc::CTCPSend(const char *nick, char *command, int mode) {
+  char str[512];
+
+  if ((mode >= 0) && (mode <= 1)) {
+    sprintf(str, "%s %s :\001%s\001",
+                 (mode == NOTICE) ? "NOTICE" : "PRIVMSG",
+                 nick, command);
+    SendRawCommand(str);
+  }
+}
+
+// Change the current nick name, and signal the server accordingly.
+
 void OXIrc::ChangeNick(const char *nick) {
-  strcpy(_nick, nick);
-  OIrcMessage msg(OUTGOING_IRC_MSG, NICK, 0, 0, 0, 0, _nick);
-  SendMessage(_irc, &msg);
-  _statusBar->SetText(2, new OString(_nick));
-}
+  char str[IRC_MSG_LENGTH];
 
-void OXIrc::ProcessWhois(int cmd, const char *arg) {
-  char char1[TCP_BUFFER_LENGTH], char2[TCP_BUFFER_LENGTH],
-       char3[TCP_BUFFER_LENGTH], char6[TCP_BUFFER_LENGTH];
-  time_t tm, tm2;
-
-  char6[0] = '\0';
-
-  switch (cmd) {
-    case RPL_WHOISUSER:
-      if (sscanf(arg, "%s %s %s", char1, char2, char3) == 3) {
-        char *s = strchr(arg, ':');
-        if (s) ++s;
-        sprintf(char6, "%s is %s@%s", char1, char2, char3);
-        if (s && *s) sprintf(char6, "%s (%s)", char6, s);
-      }
-      break;
-
-    case RPL_WHOWASUSER:
-      if (sscanf(arg, "%s %s %s", char1, char2, char3) == 3) {
-        char *s = strchr(arg, ':');
-        if (s) ++s;
-        sprintf(char6, "%s was %s@%s", char1, char2, char3);
-        if (s && *s) sprintf(char6, "%s (%s)", char6, s);
-      }
-      break;
-
-    case RPL_WHOISSERVER:
-      if (sscanf(arg, "%s %s", char1, char2) == 2) {
-        char *s = strchr(arg, ':');
-        if (s) ++s;
-        sprintf(char6, "%s is on irc via server %s", char1, char2);
-        if (s && *s) sprintf(char6, "%s (%s)", char6, s);
-      }
-      break;
-
-    case RPL_WHOISCHANNELS:
-      if (sscanf(arg, "%s :", char1) == 1) {
-        char *s = strchr(arg, ':');
-        if (s) ++s;
-        sprintf(char6, "%s is on channels: %s", char1, s);
-      }
-      break;
-
-    case RPL_WHOISIDLE:
-      if (sscanf(arg, "%s %s %s", char1, char2, char3) == 3) {
-        tm = strtoul(char2, (char **)0, 10);
-        printf("tm is %lu\n", tm);
-        char *itime = BuildSecondTime(tm);
-        tm2 = strtoul(char3, (char **)0, 10);
-        printf("tm2 is %lu\n", tm2);
-        sprintf(char6, "%s has been idle %s and signon was at %s", 
-                        char1, itime, ctime(&tm2));
-      }
-      break;
-
-    case RPL_ENDOFWHOIS:
-      if (sscanf(arg, "%s :", char1) == 1) {
-        sprintf(char6, "End of Whois");
-      }
-      break;
-
-    case RPL_ENDOFWHOWAS:
-      if (sscanf(arg, "%s :", char1) == 1) {
-        sprintf(char6, "End of Whowas");
-      }
-      break;
-
-    case RPL_WHOISOPERATOR:
-    case RPL_WHOISHELPOP:
-    case RPL_WHOISSADMIN:
-    case RPL_WHOISADMIN:
-    case RPL_WHOISNETWORK:
-    case 379:
-      if (sscanf(arg, "%s :", char1) == 1) {
-        char *s = strchr(arg, ':');
-        if (s) ++s;
-        sprintf(char6, "%s", char1);
-        if (s && *s) sprintf(char6, "%s %s", char6, s);
-      }
-      break;
-
-    case 378: // Real Hostname
-        char *s = strchr(arg, ':');
-        if (s) ++s;
-        if (s && *s) sprintf(char6, "Real Hostname is%s", s);
-      break;
-
+  if (nick && *nick) {
+    if (nick != _nick) {  // see ERR_NICKNAMEINUSE case above...
+      if (_nick) delete[] _nick;
+      _nick = StrDup(nick);
     }
-
-  if (foxircSettings->SendToInfo(P_LOG_WHOIS)) {
-    /*GetChannel(char1)->*/Log(char6, 5);
-  } else {
+    sprintf(str, "NICK %s", _nick);
+    SendRawCommand(str);
+    UpdateStatusBar(2);
   }
 }
 
-void OXIrc::CTCPSend(char *nick, char *command, int mode) {
-  char s[TCP_BUFFER_LENGTH];
+void OXIrc::JoinChannel(const char *channel) {
+  char str[IRC_MSG_LENGTH];
 
-  if ((mode >= 0) && (mode <=1)) {
-    sprintf(s, "%s %s :%c%s%c\n", ((mode == NOTICE) ? "NOTICE" : "PRIVMSG"),
-               nick, 1, command, 1);
-    OTcpMessage message(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, s);
-    SendMessage(_irc, &message);
-  }
+  sprintf(str, "JOIN :%s", channel);
+  SendRawCommand(str);
+  // wait until we actually join the channel...
+  //sprintf(str, "MODE :%s", channel);
+  //SendRawCommand(str);
 }
 
-unsigned long OXIrc::ModeBits(char *mode_str) {
-  int i, bit;
-  unsigned long mode_bits = 0L;
-    
-  if (!mode_str) return 0L;
-    
-  for (i=0; i<strlen(mode_str); ++i) {
-    if (mode_str[i] == ' ') break;
-    bit = mode_str[i] - 'a';  // use tolower here?
-    if (bit >= 0 && bit <= 26) mode_bits |= (1 << bit);
+void OXIrc::ToggleUMode(int which) {
+  OXButton *b;
+  char m[3];
+
+  switch (which) {
+    case TB_INVISIBLE:
+      b = tdata[9].button;
+      m[1] = 'i';
+      break;
+
+    case TB_WALLOPS:
+      b = tdata[10].button;
+      m[1] = 'w';
+      break;
+
+    case TB_SNOTICES:
+      b = tdata[11].button;
+      m[1] = 's';
+      break;
+
+    case TB_IRCOP:
+      b = tdata[12].button;
+      m[1] = 'o';
+      if (b->GetState() != BUTTON_UP) {
+        b->SetState(BUTTON_UP);
+        DoOper();
+        return;
+      }
+      break;
   }
 
-  return mode_bits;
+  m[0] = (b->GetState() == BUTTON_UP) ? '-' : '+';
+  m[2] = '\0';
+
+  SendUMode(m);
 }
 
 void OXIrc::DoConnect() {
   int retc;
 
-  OString *msg = new OString("");
   OString *title = new OString("Connect to Server");
   OServerInfo *info = new OServerInfo();
 
-  if (*_server) {
-    info->hostname = new char[strlen(_server)+1];
-    strcpy(info->hostname, _server);
-  }
-
-  if (*_nick) {
-    info->nick = new char[strlen(_nick)+1];
-    strcpy(info->nick, _nick);
-  }
-
-  if (*_ircname) {
-    info->ircname = new char[strlen(_ircname)+1];
-    strcpy(info->ircname, _ircname);
-  }
+  if (_server  && *_server)  info->hostname = StrDup(_server);  // _realserver?
+  if (_nick    && *_nick)    info->nick = StrDup(_nick);
+  if (_ircname && *_ircname) info->ircname = StrDup(_ircname);
+  if (_passwd  && *_passwd)  info->passwd = StrDup(_passwd);
 
   info->port = _port;
 
   new OXServerDlg(_client->GetRoot(), this, title, info, &retc);
   if (retc == ID_OK) {
-    strcpy(_nick, info->nick);
-    strcpy(_ircname, info->ircname);
+    if (_nick) delete[] _nick;
+    _nick = StrDup(info->nick);
+    if (_ircname) delete[] _ircname;
+    _ircname = StrDup(info->ircname);
+    if (_passwd) delete[] _passwd;
+    _passwd = NULL;
+    if (info->passwd) _passwd = StrDup(info->passwd);
     Connect(info->hostname, info->port);
   }
 
   delete info;
+}
+
+void OXIrc::DoAway() {
+  // TODO: get responses from a dialog box
+  if (_mirc->IsEntryChecked(M_IRC_AWAY)) {
+    SendRawCommand("AWAY");
+    _mirc->UnCheckEntry(M_IRC_AWAY);
+  } else {
+    SendRawCommand("AWAY :Back soon.");
+    _mirc->CheckEntry(M_IRC_AWAY);
+  }
+}
+
+void OXIrc::DoList() {
+  SendRawCommand("LIST");
+}
+
+void OXIrc::DoMotd() {
+  OString cmd("MOTD"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoVersion() {
+  OString cmd("VERSION"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoLinks() {
+  OString cmd("LINKS"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoLusers() {
+  OString cmd("LUSERS"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoAdmin() {
+  OString cmd("ADMIN"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoTime() {
+  OString cmd("TIME"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoInfo() {
+  OString cmd("INFO"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoNick() {
+  OString tmp(_nick ? _nick : "");
+  int retn;
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   new OString("Change Nick"),
+                   new OString("Please enter Nick"),
+                   new OString("Nick:"),
+                   &tmp, &retn, ID_OK | ID_CANCEL);
+
+  if (retn != ID_CANCEL) ChangeNick(tmp.GetString());
+}
+
+void OXIrc::DoWho() {
+  OString cmd("WHO"), arg("");
+  int retn;
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   &cmd, new OString("Enter query mask"),
+                   new OString("Mask:"),
+                   &arg, &retn, ID_OK | ID_CANCEL);
+
+  if (retn == ID_OK) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoWhois() {
+  OString cmd("WHOIS"), arg("");
+  int retn;
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   &cmd, new OString("Enter nick name"),
+                   new OString("Nick:"),
+                   &arg, &retn, ID_OK | ID_CANCEL);
+
+  if (retn == ID_OK) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoWhowas() {
+  OString cmd("WHOWAS"), arg("");
+  int retn;
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   &cmd, new OString("Enter nick name"),
+                   new OString("Nick:"),
+                   &arg, &retn, ID_OK | ID_CANCEL);
+
+  if (retn == ID_OK) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoRaw() {
+  if (_connected) {
+    OString tmp("");
+    int ret;
+
+    new OXConfirmDlg(_client->GetRoot(), this,
+                     new OString("Send Raw Command"),
+	             new OString("Enter raw command to send to the server"),
+                     new OString("Command:"),
+                     &tmp, &ret, ID_OK | ID_CANCEL);
+
+    if (ret != ID_CANCEL) SendRawCommand(tmp.GetString());
+  }
+}
+
+void OXIrc::DoWallops() {
+  OString tmp("");
+  int retn;
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   new OString("Send Wallops"), 
+                   new OString("Please enter Wallops Message"),
+                   new OString("Message:"),
+                   &tmp, &retn, ID_OK | ID_CANCEL);
+
+  if (retn != ID_CANCEL) SendWallops(tmp.GetString());
+}
+
+void OXIrc::DoTrace() {
+  OString cmd("TRACE"), arg("");
+  int retc;
+
+  OString *text = new OString("Enter nick or server name\n(default is ");
+           text->Append(_realserver);
+           text->Append(")");
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   new OString(&cmd), text, new OString("Name:"),
+                   &arg, &retc, ID_OK | ID_CANCEL);
+
+  if (retc == ID_OK) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoOper() {
+  int retc;
+
+  OString wname("OPER");
+  OString *text = new OString("Enter name and password");
+  if (_realserver && *_realserver) {
+    text->Append("\nfor ");
+    text->Append(_realserver);
+  }
+  OString login("");
+  OString passwd("");
+
+  new OXPasswdDlg(_client->GetRoot(), this, &wname, text,
+                  &login, &passwd, &retc);
+
+  if (retc == ID_OK) {
+    char str[256];
+    sprintf(str, "OPER %s %s", login.GetString(), passwd.GetString());
+    SendRawCommand(str);
+  }
 }
 
 void OXIrc::DoOpenLog() {
@@ -1287,8 +2018,7 @@ void OXIrc::DoOpenLog() {
   fi.file_types = filetypes;
   new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
   if (fi.filename) {
-    _logfilename = new char[strlen(fi.filename)+1];
-    strcpy(_logfilename, fi.filename);
+    _logfilename = StrDup(fi.filename);
     _logfile = fopen(_logfilename, "a");
     if (!_logfile) {
       OString stitle("File Open Error");
@@ -1297,12 +2027,12 @@ void OXIrc::DoOpenLog() {
       new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
                    MB_ICONSTOP, ID_OK);
       delete[] _logfilename;
+      _logfilename = NULL;
     }
     time_t now = time(NULL);
     fprintf(_logfile, "****** IRC log started %s", ctime(&now));
-    _plog->EnableEntry(802);  // flush
-    _plog->EnableEntry(804);  // close
-    _plog->EnableEntry(805);  // empty
+    _plog->EnableEntry(M_LOG_CLOSE);  // close
+    _plog->EnableEntry(M_LOG_EMPTY);  // empty
   }
 }
 
@@ -1312,18 +2042,10 @@ void OXIrc::DoCloseLog() {
     fprintf(_logfile, "****** IRC log ended %s", ctime(&now));
     fclose(_logfile);
     _logfile = NULL;
-    delete[] _logfile;
-    _logfile = NULL;
-    _plog->DisableEntry(802);  // flush
-    _plog->DisableEntry(804);  // close
-    _plog->DisableEntry(805);  // empty
-  }
-}
-
-void OXIrc::DoFlushLog() {
-  if (_logfile) {
-    fflush(_logfile);
-    _plog->DisableEntry(802);  // flush
+    delete[] _logfilename;
+    _logfilename = NULL;
+    _plog->DisableEntry(M_LOG_CLOSE);  // close
+    _plog->DisableEntry(M_LOG_EMPTY);  // empty
   }
 }
 
@@ -1333,176 +2055,390 @@ void OXIrc::DoEmptyLog() {
 void OXIrc::DoPrintLog() {
 }
 
+void OXIrc::DoViewLog() {
+  OFileInfo fi;
+
+  fi.MimeTypesList = NULL;
+  fi.file_types = filetypes;
+  new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
+  if (fi.filename) {
+    GetViewLogFile()->Load(fi.filename);
+  }
+}
+
+void OXIrc::DoChangeFont() {
+  OString f(foxircSettings->GetFont()->NameOfFont());
+
+  new OXFontDialog(_client->GetRoot(), this, &f);
+
+  foxircSettings->SetFont(f.GetString());
+  foxircSettings->Save();
+  _logw->Redisplay();
+}
+
 void OXIrc::DoToggleToolBar() {
   if (_toolBar->IsVisible()) {
     HideFrame(_toolBar);
     HideFrame(_toolBarSep);
-    _mview->UnCheckEntry(3001);
+    _mview->UnCheckEntry(M_VIEW_TOOLBAR);
   } else {
     ShowFrame(_toolBar);
     ShowFrame(_toolBarSep);
-    _mview->CheckEntry(3001);
+    _mview->CheckEntry(M_VIEW_TOOLBAR);
   }
 }
 
 void OXIrc::DoToggleStatusBar() {
   if (_statusBar->IsVisible()) {
     HideFrame(_statusBar);
-    _mview->UnCheckEntry(3002);
+    _mview->UnCheckEntry(M_VIEW_STATUSBAR);
   } else {
     ShowFrame(_statusBar);
-    _mview->CheckEntry(3002);
+    _mview->CheckEntry(M_VIEW_STATUSBAR);
   }
 }
 
 void OXIrc::DoHelpAbout() {
   OAboutInfo info;
   
-  info.wname = "About fOXIrc";
-  info.title = FOXIRCVERSION"\nA cool IRC client program";
+  info.wname = "About "FOXIRC_NAME;
+  info.title = FOXIRC_NAME" "FOXIRC_VERSION" ("FOXIRC_RELEASE_DATE")\n"
+               "A cool IRC client program";
   info.copyright = "Copyright © 1998-1999 by the fOX Project Team.";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
-              "General Public License.\n Coders: \n "
-	      "Ben Ciaccio, Mike McDonald, Hector Peraza, Rodolphe Suescun\n"
-              "irc.foxchat.net  #foxchat";
+              "General Public License.\n\nCoders:\n"
+	      "Ben Ciaccio, Mike McDonald, Hector Peraza, Rodolphe Suescun\n\n"
+              "irc.foxchat.net  #foxchat\n"
+              FOXIRC_HOMEPAGE;
   info.title_font = (OXFont *) _client->GetFont("Times -14 bold");
 
   new OXAboutDialog(_client->GetRoot(), this, &info);
 }
 
+int OXIrc::PromptServer(OString *cmd, OString *arg) {
+  int retc;
+  OString *text = new OString("Enter server pattern\n(default is ");
+           text->Append(_realserver);
+           text->Append(")");
 
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   new OString(cmd), text, new OString("Pattern:"),
+                   arg, &retc, ID_OK | ID_CANCEL);
+
+  return (retc == ID_OK);
+}
+
+
+//----------------------------------------------------------------------
+
+void OXIrc::ProcessWhois(int cmd, OIrcMessage *msg) {
+  char str[512];
+  time_t tm;
+
+  switch (cmd) {
+    case RPL_WHOISUSER:
+      sprintf(str, "%s is %s@%s", msg->argv[1], msg->argv[2], msg->argv[3]);
+      if (msg->argv[5] && *msg->argv[5])
+        sprintf(str, "%s (%s)", str, msg->argv[5]);
+      break;
+
+    case RPL_WHOWASUSER:
+      sprintf(str, "%s was %s@%s", msg->argv[1], msg->argv[2], msg->argv[3]);
+      if (msg->argv[5] && *msg->argv[5])
+        sprintf(str, "%s (%s)", str, msg->argv[5]);
+      break;
+
+    case RPL_WHOISSERVER:
+      sprintf(str, "%s is on irc via server %s", msg->argv[1], msg->argv[2]);
+      if (msg->argv[3] && *msg->argv[3])
+        sprintf(str, "%s (%s)", str, msg->argv[3]);
+      break;
+
+    case RPL_WHOISCHANNELS:
+      sprintf(str, "%s is on channels: %s", msg->argv[1], msg->argv[2]);
+      break;
+
+    case RPL_WHOISIDLE:
+      if (msg->argc < 4) {
+        tm = strtoul(msg->argv[2], (char **) 0, 10);
+        char *itime = BuildSecondTime(tm);
+        sprintf(str, "%s has been idle %s", msg->argv[1], itime);
+      } else {
+        tm = strtoul(msg->argv[2], (char **) 0, 10);
+        char *itime = BuildSecondTime(tm);
+        sprintf(str, "%s has been idle %s and signon was at %s", 
+                     msg->argv[1], itime, DateString(msg->argv[3]));
+      }
+      break;
+
+    case RPL_ENDOFWHOIS:
+      sprintf(str, "End of WHOIS");
+      break;
+
+    case RPL_ENDOFWHOWAS:
+      sprintf(str, "End of WHOWAS");
+      break;
+
+    case RPL_WHOISOPERATOR:
+    case RPL_WHOISHELPOP:
+    case RPL_WHOISSADMIN:
+    case RPL_WHOISADMIN:
+    case RPL_WHOISNETWORK:
+    case 379:
+    case 320:
+      strcpy(str, msg->argv[1]);
+      if (msg->argv[2] && *msg->argv[2])
+        sprintf(str, "%s %s", str, msg->argv[2]);
+      break;
+
+    case RPL_WHOISHOST: // Real Hostname
+      if (msg->argc > 1)
+        sprintf(str, "Real Hostname is %s", msg->argv[msg->argc-1]);
+      break;
+
+  }
+
+  if (foxircSettings->SendToInfo(P_LOG_WHOIS)) {
+    Log(str, P_COLOR_SERVER_2);
+  } else {
+  }
+}
+
+//#fOX Zapper NetAdmin.FoxChat.Net roadkill.FoxChat.net Zapper G*@ :1 High Voltage
+//#fOX Big_Mac foxproject.org Wild.FoxChat.Net Poki H :0 "Poki the wonderbot"
+//* services foxchat.net services.foxchat.net ChanServ H* :3 Channel Server
+//#fOX mike itchy2-16-70.ionsys.com Wild.FoxChat.Net Foxxer H :0 Me
+
+void OXIrc::ProcessWho(int cmd, OIrcMessage *msg) {
+  char *chan, *user, *host, *server, *nick, *mode, *name;
+  char str[512];
+  int  hopcnt;
+
+  switch (cmd) {
+    case RPL_WHOREPLY:   // #channel login host server nick
+
+      //chan login   host  server  nick  status
+
+      chan = msg->argv[1];
+      user = msg->argv[2];
+      host = (msg->argc == 8) ? msg->argv[3] : "";
+      server = msg->argv[msg->argc - 4];  // msg->argv[4];
+      nick = msg->argv[msg->argc - 3];    // msg->argv[5];
+      mode = msg->argv[msg->argc - 2];    // msg->argv[6];
+      hopcnt = atoi(msg->argv[msg->argc-1]);  // msg->argv[7]
+
+      sprintf(str, "%-10s %-10s %-4s %s@%s [%d:%s]",
+                   chan, nick, mode, user, host, hopcnt, server);
+
+      name = msg->argv[msg->argc-1];  // msg->argv[7]
+      while (isdigit(*name)) name++;
+      while (*name && (*name == ' ')) ++name;
+
+      if (*name) sprintf(str, "%s (%s)", str, name);
+
+      // if (foxircSettings->SendToInfo(P_LOG_WHOIS)) ...
+      Log(str, P_COLOR_SERVER_2);
+      break;
+
+    case RPL_ENDOFWHO:
+      Log("End of WHO", P_COLOR_SERVER_2);
+      break;
+
+  }
+}
+
+void OXIrc::ProcessAdmin(int cmd, OIrcMessage *msg) {
+  char str[512];
+
+  switch (cmd) {
+    case RPL_ADMINME:
+    case RPL_ADMINLOC1:
+    case RPL_ADMINLOC2:
+    case RPL_ADMINEMAIL:  // this isn't neccessarily an e-mail address...
+      Log(msg->argv[1], P_COLOR_SERVER_2);
+      break;
+  }
+}
+
+void OXIrc::ProcessUMode(const char *modestr) {
+  const char *p;
+  int mode, add = false;
+
+  for (p = modestr; *p; ++p) {
+    if (*p == '+') {
+      add = true;
+      continue;
+    } else if (*p == '-') {
+      add = false;
+      continue;
+    } else {
+      switch (*p) {
+        case 'i': mode = UMODE_INVISIBLE; break;
+        case 's': mode = UMODE_SNOTICES; break;
+        case 'w': mode = UMODE_WALLOPS; break;
+        case 'o':
+        case 'O': mode = UMODE_IRCOP; break;
+        default: mode = 0; break;
+      }
+      if (add) _umode |= mode; else _umode &= ~mode;
+    }
+  }
+
+  UpdateStatusBar(2);
+}
+
+void OXIrc::ProcessLink(int cmd, OIrcMessage *msg) {
+  char str[512];
+
+  switch (cmd) {
+    case RPL_LINKS:
+      if (msg->argc == 4) {
+        OServerLink *link;
+
+        char *s = msg->argv[3];
+        while (isdigit(*s)) ++s;
+        while (*s == ' ') ++s;
+
+        link = new OServerLink(msg->argv[1], msg->argv[2],
+                               s, atoi(msg->argv[3]));
+
+        GetServerTree()->AddLink(link);
+
+        sprintf(str, "%s (%s) is connected to %s [%d]",
+                     link->serverName, link->serverMsg,
+                     link->connectedTo, link->hop);
+        Log(str, P_COLOR_SERVER_2);
+
+      } else {
+        sprintf(str, "Invalid Link (argc %d)", msg->argc);
+        Log(str, P_COLOR_SERVER_2);
+      }
+      break;
+
+    case RPL_ENDOFLINKS:
+      GetServerTree()->BuildTree();
+      Log("End of LINKS", P_COLOR_SERVER_2);
+      break;
+  }
+}
+
+void OXIrc::ProcessIrcError(int cmd, OIrcMessage *msg) {
+  char str[512];
+
+  if (msg->argc > 2) {
+    str[0] = '\0';
+    for (int i = 1; i < msg->argc - 1; ++i) {
+      if (i > 1) strcat(str, " ");
+      strcat(str, msg->argv[i]);
+    }
+    sprintf(str, "%s: %s", str, msg->argv[msg->argc-1]);
+  } else {
+    strcpy(str, msg->argv[1]);
+  }
+
+  if (foxircSettings->SendToInfo(P_LOG_ERROR)) {
+    Log(str, P_COLOR_HIGHLIGHT);
+  } else {
+    char tmp[256];
+
+    sprintf(tmp, "IRC error %03d", cmd);
+    new OXMsgBox(_client->GetRoot(), this,
+                 new OString(tmp),
+                 new OString(str),
+                 MB_ICONSTOP, ID_OK);
+  }
+}
+
+unsigned long OXIrc::ModeBits(char *mode_str) {
+  int i, bit;
+  unsigned long mode_bits = 0L;
+    
+  if (!mode_str) return 0L;
+    
+  for (i = 0; i < strlen(mode_str); ++i) {
+    if (mode_str[i] == ' ') break;
+    bit = mode_str[i] - 'a';  // use tolower here?
+    if (bit >= 0 && bit <= 26) mode_bits |= (1 << bit);
+  }
+
+  return mode_bits;
+}
 
 #define DAYSECS 86400
 #define HOURSECS 3600
 #define MINUTESECS 60
 
 char *OXIrc::BuildSecondTime(time_t tm) {
-  static char char1[TCP_BUFFER_LENGTH];
+  static char str[256];
   unsigned long tem = tm;
 
-  char1[0] = 0;
+  str[0] = 0;
 
   // days ?
   if (tem / DAYSECS) {
-    sprintf(char1, "%d Days ", tem/DAYSECS);
+    sprintf(str, "%ld Days ", tem / DAYSECS);
     tem %= DAYSECS;
   }
 
   // hours ?
   if (tem / HOURSECS) {
-    sprintf(char1, "%s%d Hours ", char1, tem/HOURSECS);
+    sprintf(str, "%s%ld Hours ", str, tem / HOURSECS);
     tem %= HOURSECS;
   }
 
   // minutes ?
   if (tem / MINUTESECS) {
-    sprintf(char1, "%s%d Minutes ", char1, tem/MINUTESECS);
+    sprintf(str, "%s%ld Minutes ", str, tem / MINUTESECS);
     tem %= MINUTESECS;
   }
 
   if (tem > 0)
-    sprintf(char1, "%s%d Seconds", char1, tem);
+    sprintf(str, "%s%ld Seconds", str, tem);
 
-  return char1;
+  return str;
 }
 
-void OXIrc::DoMotd() {
-  SendRawCommand("MOTD");
+char *OXIrc::DateString(time_t tm) {
+  static char str[256];
+
+  strcpy(str, ctime(&tm));
+  if (str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0';
+
+  return str;
 }
 
-void OXIrc::DoNick() {
-  OString *tmp = new OString("");
-  int retn;
-
-  new OXConfirmDlg(_client->GetRoot(), this, new OString("Change Nick"),
-                   new OString("Please enter Nick"), tmp, &retn);
-
-  if (retn != ID_NO) ChangeNick(tmp->GetString());
-  delete tmp;
-}
-
-void OXIrc::DoRaw() {
-  if (_connected) {
-    OString *temp = new OString("");
-    int ret;
-
-    new OXConfirmDlg(_client->GetRoot(), this, new OString("Send Raw Command"),
-	new OString("Enter raw command to send to server"), temp, &ret);
-
-    if (ret != ID_NO) SendRawCommand(temp->GetString());
-    delete temp;
-  }
-}
-
-void OXIrc::DoWallops() {
-  OString *tmp = new OString("");
-  int retn;
-
-  new OXConfirmDlg(_client->GetRoot(), this, new OString("Send Wallops"), 
-      new OString("Please enter Wallops Message"), tmp, &retn);
-
-  if (retn != ID_NO) SendWallops(tmp->GetString());
-  delete tmp;
+char *OXIrc::DateString(const char *tmstr) {
+  return DateString((time_t) strtoul(tmstr, (char **) 0, 10));
 }
 
 void OXIrc::SendWallops(const char *mess) {
-  char m[TCP_BUFFER_LENGTH];
+  char m[IRC_MSG_LENGTH];
 
-  sprintf(m, "WALLOPS :%s\n", mess);
+  sprintf(m, "WALLOPS :%s", mess);
   SendRawCommand(m);
 }
 
 void OXIrc::SendUMode(const char *mod) {
-  char m[TCP_BUFFER_LENGTH];
+  char m[IRC_MSG_LENGTH];
 
-  sprintf(m, "MODE %s %s\n", _nick, mod);
+  sprintf(m, "MODE %s %s", _nick, mod);
   SendRawCommand(m);
 }
 
 void OXIrc::SendMode(const char *chan, const char *mod) {
-  char m[TCP_BUFFER_LENGTH];
+  char m[IRC_MSG_LENGTH];
 
-  sprintf(m, "MODE %s %s\n", chan, mod);
+  sprintf(m, "MODE %s %s", chan, mod);
   SendRawCommand(m);
 }
 
 void OXIrc::SendRawCommand(const char *command) {
-  if(_connected) {
-    char m[TCP_BUFFER_LENGTH];
+  if (_connected) {
+    char m[IRC_MSG_LENGTH];
 
-    sprintf(m, "%s\n", command);
-    OTcpMessage msg(OUTGOING_TCP_MSG, 0, 0, 0, 0, 0, m);
+    sprintf(m, "%s\r\n", command);
+    OTcpMessage msg(OUTGOING_TCP_MSG, 0, m);
     SendMessage(_irc, &msg);
-    //sprintf(m, "Sent raw command %s.", command);
-    //Log(m);
-  }
-}
-
-void OXIrc::ProcessLink(char *string) {
-  char char1[TCP_BUFFER_LENGTH], char2[TCP_BUFFER_LENGTH];
-  int  int1;
-
-  if (sscanf(string, "%s %s :%d ", char1, char2, &int1) == 3) { //link
-    Linkstrut *link = new Linkstrut();
-
-    link->servername = StrDup(char1);
-    link->connectedto = StrDup(char2);
-    link->hop = int1;
-
-    char *s = strchr(string, ':');
-    if (s) ++s;
-    while ((s) && isdigit(s[0])) s++;
-
-    if (s)
-      link->servermsg = StrDup(s);
-    else
-      link->servermsg = NULL;
-
-    Links.Add(link);
-
-  } else {
-    sprintf(char1, "Invalid Link %s", string);
-    Log(char1, 5);
   }
 }

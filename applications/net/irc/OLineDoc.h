@@ -2,10 +2,10 @@
 #define __OLINEDOC_H
 
 #include <stdio.h>
+
 #include <X11/Xlib.h>
 
 #include "OViewDoc.h"
-#include "OGC.h"
 
 
 #define MAXLINESIZE       8000
@@ -18,25 +18,25 @@
 #define ATTRIB_FGCOLOR    0x08
 #define ATTRIB_BGCOLOR    0x10
 
+class OXViewDocFrame;
 
-class OGC;
-class OXTextFrame;
+
+//----------------------------------------------------------------------
 
 class OLineDoc : public OViewDoc {
 public:
   OLineDoc();
-  ~OLineDoc();
+  virtual ~OLineDoc();
 
-  void SetCanvas(OXTextFrame *c);
-  void SetColor(char *c);
-  void SetColor(int color);
+  void SetCanvas(OXViewDocFrame *c);
+  void SetDefaultColor(unsigned long colorc);
 
   OLineDoc *next, *prev;
   OLineDoc *InsertBefore(OLineDoc *l);
   OLineDoc *InsertAfter(OLineDoc *l);
 
   void Clear();
-  int  Fill(char *buf);
+  int  Fill(const char *buf);
   int  LoadFile(FILE *file);
 
   void Layout();
@@ -48,15 +48,16 @@ public:
                        char *str, int len, char attrib, char color);
 
 protected:
-  OXTextFrame *_style_server;
+  OXViewDocFrame *_textFrame;
 
   char *chars;    // line of text
   char *color;    // bg and fg colors
   char *attrib;   // attrib (bold, reverse, etc...)
   int  lnlen;     // length of line (i.e. number of chars)
-
-  OGC  *_gc;
-  int  ll;        // length of displayed line in chars
+  
+  unsigned long _defaultFg;
+  const OXFont *_cachedFont;
 };
+
 
 #endif  // __OLINEDOC_H

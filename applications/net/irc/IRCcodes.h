@@ -18,6 +18,12 @@
  */
 
 /*
+ * -- HP -- 18 Aug 2002
+ *
+ * Added RPL_INFOMORE
+ */
+
+/*
  * -- Cabal95 -- 05 Aug 1997
  *
  * Added numerics 600-799 as numeric_replies2[], we ran out
@@ -285,6 +291,7 @@
 #define RPL_ENDOFBANLIST     368
 /* rpl_endofwhowas above (369) */
 
+#define RPL_INFOMORE         370
 #define	RPL_INFO             371
 #define	RPL_MOTD             372
 #define	RPL_INFOSTART        373

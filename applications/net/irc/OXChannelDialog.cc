@@ -7,21 +7,32 @@
 
 extern OSettings  *foxircSettings;
 
+#define CHN_ID_TEXT		1001
+#define CHN_ID_LIST		1002
+#define CHN_ID_ADD		1003
+#define CHN_ID_EDIT		1004
+#define CHN_ID_DELETE		1005
+#define CHN_ID_JOIN		1006
+#define CHN_ID_NAMES		1007
+#define CHN_ID_OK		1008
+#define CHN_ID_CHECK		1009
+
+
 //-----------------------------------------------------------------------
 
 OXChannelDialog::OXChannelDialog(const OXWindow *p, OXIrc *main,
                                  unsigned long options) :
   OXTransientFrame(p, main, 10, 10, options) {
 
-    int ax, ay, width = 0, height = 0;
-    unsigned int root_w, root_h, dummy;
-    Window wdummy;
+    int width = 0, height = 0;
 
-  OLayoutHints *butlay   = new OLayoutHints(LHINTS_EXPAND_X,2,2,2,2);
-  OLayoutHints *expand   = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y,2,2,2,2);
-  OLayoutHints *lefty    = new OLayoutHints(LHINTS_NORMAL,2,2,2,2);
-  OLayoutHints *leftcent = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,2,2,2,2);
-  OLayoutHints *cent     = new OLayoutHints(LHINTS_CENTER_X,3,3,3,3);
+    OLayoutHints *butlay = new OLayoutHints(LHINTS_EXPAND_X, 2, 2, 2, 2);
+    OLayoutHints *expand = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y,
+                                            2, 2, 2, 2);
+    OLayoutHints *lefty = new OLayoutHints(LHINTS_NORMAL, 2, 2, 2, 2);
+    OLayoutHints *leftcent = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,
+                                              2, 2, 2, 2);
+    OLayoutHints *cent = new OLayoutHints(LHINTS_CENTER_X, 3, 3, 3, 3);
 
     _irc = main;
 
@@ -63,7 +74,6 @@ OXChannelDialog::OXChannelDialog(const OXWindow *p, OXIrc *main,
     _join = new OXTextButton(_v2, new OHotString("&Join"), CHN_ID_JOIN);
     _v2->AddFrame(_join, butlay);
     _join->Disable();
-    _join->SetDefault();
     _join->Associate(this);
     width = _join->GetDefaultWidth();
 
@@ -105,21 +115,8 @@ OXChannelDialog::OXChannelDialog(const OXWindow *p, OXIrc *main,
     height = GetDefaultHeight() *2;
     Resize(width, height);
 
-    if (main) {
-      XTranslateCoordinates(GetDisplay(),
-                            main->GetId(), GetParent()->GetId(),
-                            (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                            (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                            &ax, &ay, &wdummy);
-    } else {
-      XGetGeometry(GetDisplay(), _client->GetRoot()->GetId(), &wdummy,
-                   &ax, &ay, &root_w, &root_h, &dummy, &dummy);
-      ax = (root_w - _w) >> 1;
-      ay = (root_h - _h) >> 1;
-    }
+    CenterOnParent();
 
-    Move(ax, ay);
-    SetWMPosition(ax, ay);
     SetWMSize(width, height);
     SetWMSizeHints(width, height, width, height, 0, 0);
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
@@ -131,6 +128,10 @@ OXChannelDialog::OXChannelDialog(const OXWindow *p, OXIrc *main,
     SetWindowName("Join Channel...");
     SetIconName("Channel Dialog");
     SetClassHints("MsgBox", "MsgBox");
+
+    SetDefaultAcceptButton(_join);
+    SetDefaultCancelButton(_ok);
+    SetFocusOwner(_te);
 
     MapSubwindows();
     Layout();
@@ -146,7 +147,7 @@ int OXChannelDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
   OTextEntryMessage *tmsg = (OTextEntryMessage *) msg;
   
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_LISTBOX:
       switch (msg->action) {
          case MSG_CLICK:
@@ -167,7 +168,7 @@ int OXChannelDialog::ProcessMessage(OMessage *msg) {
     case MSG_BUTTON:
       switch (msg->action) {
         case MSG_CLICK:
-        switch(wmsg->id) {
+        switch (wmsg->id) {
 	  case CHN_ID_LIST:
 //	  case CHN_ID_EDIT:
 	  case CHN_ID_NAMES:
@@ -191,12 +192,13 @@ int OXChannelDialog::ProcessMessage(OMessage *msg) {
       break;
 
     case MSG_TEXTENTRY:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_TEXTCHANGED:
-          switch(tmsg->keysym) {
+          switch (tmsg->keysym) {
             case XK_Return:
-	    	_DoJoin();
+	      _DoJoin();
               break;
+
             default:
               if (_te->GetTextLength() > 0) {
                 _add->Enable();
@@ -211,15 +213,14 @@ int OXChannelDialog::ProcessMessage(OMessage *msg) {
           break;
       }
       break;
-      }
+  }
+
+  return True;
 }
 
 void OXChannelDialog::_DoJoin() {
-  if (_te->GetTextLength() > 0) {
-    OIrcMessage message(OUTGOING_IRC_MSG, JOIN, 0, 0, 0, 0,
-                        (char*)_te->GetString());
-    SendMessage(_irc, &message);
-  }
+  if (_te->GetTextLength() > 0)
+    _irc->JoinChannel(_te->GetString());
 }
 
 void OXChannelDialog::_DoAdd() {
@@ -233,7 +234,7 @@ void OXChannelDialog::_DoAdd() {
 }
 
 void OXChannelDialog::_DoRemove() {
-  OXTextLBEntry *te = (OXTextLBEntry *)_lb->GetSelectedEntry();
+  OXTextLBEntry *te = (OXTextLBEntry *) _lb->GetSelectedEntry();
   if (!te) return;
   OXSNode *e = foxircSettings->GetChannelList()->GetNode(te->ID());
   foxircSettings->GetChannelList()->Remove(te->ID());

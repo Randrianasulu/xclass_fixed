@@ -1,0 +1,36 @@
+Intro
+-----
+
+This the version 0.4.1 of fOXIrc, an irc client with a nice graphical user
+interface.
+
+
+Installation
+------------
+
+This version of fOXIrc requires xclass 0.7.3 or newer. To build the
+executable, cd to the directory where you unpacked the sources and type
+'make'. Copy the resulting 'foxirc' executable to a directory somewhere in
+your $PATH.
+
+foxircrc
+
+Usage
+-----
+
+The fOXIrc user interface is very intuitive (I hope!). When you first start
+the program, the "info" window will appear. Connection messages, server
+notices, the MOTD and some other info are shown by default in that window.
+
+Use the "IRC/Connect to..." menu option (or click on the "connect" toolbar
+icon) to connect to a remote server. In the dialog box that appears fill in
+the hostname, change the nick and/or irc name, then click "Connect". You
+should see the connection details in the info window,
+
+
+...
+
+
+
+Enjoy it!
+Hector.

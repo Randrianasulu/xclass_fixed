@@ -4,34 +4,35 @@ prefix=/usr/local
 exec_prefix=${prefix}
 
 CXX=c++
-CXXFLAGS=`xc-config --cflags` -g 
+CXXFLAGS=`xc-config --cflags` -g
 LIBS=`xc-config --libs`
 EXTRALIBS=
 LDFLAGS= 
 MAKEDEPEND=@MAKEDEPEND@
 
-SRCS = main.cc \
-	OGC.cc \
-	OIrc.cc \
+SRCS = OIrc.cc \
 	OLineDoc.cc \
 	OTcp.cc \
 	OTextDoc.cc \
 	OViewDoc.cc \
-	OXIrc.cc \
 	OXChannel.cc \
-	OXChatChannel.cc \
-	OXMsgChannel.cc \
-	OXDCCChannel.cc \
 	OXChannelDialog.cc \
 	OXChannelEditor.cc \
-	OXNameList.cc \
+	OXChannelList.cc \
+	OXChatChannel.cc \
 	OXConfirmDlg.cc \
-	OXServerDlg.cc \
-	OXPreferences.cc \
+	OXDCCChannel.cc \
 	OXDCCFile.cc \
-	OXTextView.cc \
+	OXIrc.cc \
+	OXMsgChannel.cc \
+	OXNameList.cc \
+	OXPasswdDlg.cc \
+	OXPreferences.cc \
+	OXServerDlg.cc \
+	OXServerTree.cc \
 	OXViewDoc.cc \
-	OXSDList.cc
+	OXViewLogFile.cc \
+	main.cc
 
 OBJS = $(SRCS:.cc=.o)
 

@@ -5,17 +5,13 @@
 #include <stdio.h>
 
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXMsgBox.h>
-#include <xclass/OXSlider.h>
-#include <xclass/OX3dLines.h>
+#include <xclass/OXStatusBar.h>
+#include <xclass/OXMenu.h>
 #include <xclass/OString.h>
 
-#include "OXTextView.h"
-#include "OXNameList.h"
 #include "OXIrc.h"
-#include "TDList.h"
 #include "OXChannel.h"
 
 
@@ -25,14 +21,17 @@ class OXMsgChannel : public OXChannel {
 public:
   OXMsgChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
                const char *ch);
-  virtual ~OXMsgChannel() {};
+  virtual ~OXMsgChannel();
+
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
-//  OXPopupMenu *_menuchannel, *_menulog;
-//  OXMenuBar *_menubar;
-//  OXTextEntry *_User, *_Server, *_Info;
-//  OXLabel *_UserLabel, *_ServerLabel, *_InfoLabel;
-//  OXCheckBox *_dcc, *_chat;
+  OXMenuBar *_menubar;
+  OXPopupMenu *_menuchannel, *_menumode, *_menulog, *_menuedit,
+              *_menuview, *_menuhelp, *_nick_ctcp, *_nick_dcc,
+              *_nick_ignore, *_nick_actions;
+
+  OXStatusBar *_statusBar;
 };
 
 

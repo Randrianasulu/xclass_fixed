@@ -13,15 +13,8 @@
 #include "OTcp.h"
 #include "OIrcMessage.h"
 
-#define CHN_ID_TEXT		1001
-#define CHN_ID_LIST		1002
-#define CHN_ID_ADD		1003
-#define CHN_ID_EDIT		1004
-#define CHN_ID_DELETE		1005
-#define CHN_ID_JOIN		1006
-#define CHN_ID_NAMES		1007
-#define CHN_ID_OK		1008
-#define CHN_ID_CHECK		1009
+
+//----------------------------------------------------------------------
 
 class OXChannelDialog : public OXTransientFrame {
 public:
@@ -44,7 +37,6 @@ protected:
   OXTextEntry *_te;
   OXCompositeFrame *_v1, *_v2;
   int active;
-  char char1[TCP_BUFFER_LENGTH];
 };
 
 #endif  // __OXCHANNELDIALOG_H

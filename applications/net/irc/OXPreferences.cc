@@ -40,6 +40,7 @@
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
 #include <xclass/OIniFile.h>
+#include <xclass/OResourcePool.h>
 #include <xclass/utils.h>
 
 #include "OXPreferences.h"
@@ -48,33 +49,60 @@
 
 #define SETTINGS_CHANGED 	(MSG_USERMSG+100)
 
-extern OXClient *clientX;
 extern unsigned long IRCcolors[];
 
-struct OColorsPref cpref[]={
-{"Action",	13,	1},
-{"CTCP",	4,	2},
-{"Highlight",	11,	3},
-{"Server 1",	0,	4},
-{"Server 2",	0,	5},
-{"Invite",	7,	6},
-{"Join",	10,	7},
-{"Kick",	4,	8},
-{"Mode",	4,	9},
-{"Nick",	12,	10},
-{"Normal",	0,	11},
-{"Notice",	5,	12},
-{"Notify",	8,	13},
-{"Other",	11,	14},
-{"Own",		0,	15},
-{"Part",	12,	16},
-{"Quit",	6,	17},
-{"Topic",	3,	18},
-{"Wallops",	4,	19},
-{"Background",	1,	20},
-{ NULL,         -1,	-1}};
+struct SColors {
+  const char *name;
+  int r, g, b;
+};
 
-//-------------------------------------------------------------------
+SColors cpref[] = {
+  { "Background",  0x00, 0x00, 0x00 },
+  { "Action",      0xff, 0x00, 0xff },
+  { "CTCP",        0xff, 0xff, 0x00 },
+  { "Highlight",   0x00, 0xff, 0xff },
+  { "Server 1",    0xff, 0xff, 0xff },
+  { "Server 2",    0xff, 0xff, 0xff },
+  { "Invite",      0xff, 0x80, 0x00 },
+  { "Join",        0x00, 0x80, 0x80 },
+  { "Kick",        0xff, 0x00, 0x00 },
+  { "Mode",        0xff, 0x00, 0x00 },
+  { "Nick",        0x00, 0x00, 0xff },
+  { "Normal text", 0xff, 0xff, 0xff },
+  { "Notice",      0x80, 0x00, 0x00 },
+  { "Notify",      0xff, 0xff, 0x00 },
+  { "Other",       0x00, 0xff, 0xff },
+  { "Own text",    0xff, 0xff, 0xff },
+  { "Part",        0x00, 0x00, 0xff },
+  { "Quit",        0x80, 0x00, 0x80 },
+  { "Topic",       0x00, 0x80, 0x00 },
+  { "Wallops",     0xff, 0x00, 0x00 }
+};
+
+#define NUM_COLORS  (sizeof(cpref)/sizeof(cpref[0]))
+
+// color table, similar to the one used by mIRC and cIRCus
+
+SColors mircColors[16] = {
+  { "white",         0xff, 0xff, 0xff },
+  { "black",         0x00, 0x00, 0x00 },
+  { "royalblue",     0x00, 0x00, 0x80 },
+  { "darkgreen",     0x00, 0x80, 0x00 },
+  { "red3",          0xff, 0x00, 0x00 },
+  { "brown",         0x80, 0x00, 0x00 },
+  { "mediumpurple",  0x80, 0x00, 0x80 },
+  { "orange",        0xff, 0x80, 0x00 },
+  { "yellow",        0xff, 0xff, 0x00 },
+  { "lightgreen",    0x00, 0xff, 0x00 },
+  { "cyan",          0x00, 0x80, 0x80 },
+  { "lightcyan",     0x00, 0xff, 0xff },
+  { "lightblue",     0x00, 0x00, 0xff },
+  { "pink",          0xff, 0x00, 0xff },
+  { "darkslategray", 0x80, 0x80, 0x80 },
+  { "lightgray",     0xcf, 0xcf, 0xcf }
+};
+
+//----------------------------------------------------------------------
 
 OServerInfo::~OServerInfo() {
   if (name)     delete[] name;
@@ -87,46 +115,76 @@ OServerInfo::~OServerInfo() {
 }
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
-OSettings::OSettings() {
+OColorsPref::OColorsPref(const char *n, int r, int g, int b) {
+  if (n) name = StrDup(n); else n = NULL;
+  color = OColor(r, g, b);
+}
+
+OColorsPref::~OColorsPref() {
+  if (name) delete[] name;
+}
+
+
+//----------------------------------------------------------------------
+
+OSettings::OSettings(OXClient *c) {
+  int i;
+
+  _client = c;
+
   _confirm    = P_CONFIRM_QUIT | P_CONFIRM_LEAVE | P_CONFIRM_SQUIT;
   _sendToInfo = P_LOG_WHO  | P_LOG_WHOIS | P_LOG_WHOWAS | P_LOG_ERROR |
                 P_LOG_INFO | P_LOG_CLOSE;
-  _misc = P_MISC_ENABLE_CMD | P_MISC_SHOW_OPS | P_MISC_MIRC_COLORS |
-          P_MISC_AUTO_JOIN;
+  _misc = P_MISC_ENABLE_CMD | P_MISC_SHOW_OPS | P_MISC_AUTO_REJOIN;
 
-  _filename = NULL;
   _changed = False;
 
-  _servers  = new OXSDList(clientX->GetDisplay(), "Servers");
-  _nicks    = new OXSDList(clientX->GetDisplay(), "Nicks");
-  _names    = new OXSDList(clientX->GetDisplay(), "Names");
-  _channels = new OXSDList(clientX->GetDisplay(), "Channels");
-  _colors   = new OXSDList(clientX->GetDisplay(), "Colors");
-  _font     = strdup("-*-lucidatypewriter-medium-r-*-*-12-*-*-*-*-*-*-*");
+  _servers  = new OXSList(_client->GetDisplay(), "Servers");
+  _nicks    = new OXSList(_client->GetDisplay(), "Nicks");
+  _names    = new OXSList(_client->GetDisplay(), "Names");
+  _channels = new OXSList(_client->GetDisplay(), "Channels");
+
+  _font = _client->GetFont("lucidatypewriter -12");
+
+  for (i = 0; i < NUM_COLORS; ++i) {
+    _colors[i] = new OColorsPref(cpref[i].name,
+                                 cpref[i].r,
+                                 cpref[i].g,
+                                 cpref[i].b);
+    _colors[i]->pixel = _client->GetColor(_colors[i]->color);
+  }
+
+  for (i = 0; i < 16; ++i) {
+    _ircColors[i] = new OColorsPref(mircColors[i].name,
+                                    mircColors[i].r,
+                                    mircColors[i].g,
+                                    mircColors[i].b);
+    _ircColors[i]->pixel = _client->GetColor(_ircColors[i]->color);
+  }
 }
 
 OSettings::~OSettings() {
-  if (_filename) delete[] _filename;
   delete _servers;
   delete _nicks;
   delete _names;
   delete _channels;
-  delete _colors;
-  if (_font) delete[] _font;
+  for (int i = 0; i < NUM_COLORS; ++i) delete _colors[i];
+  for (int i = 0; i < 16; ++i) delete _ircColors[i];
+  _client->FreeFont(_font);
 }
 
-int OSettings::Load(char *fname) {
-  char line[1024], arg[256];
-  int  sc = 1, cc = 1, clc = 1;
+int OSettings::Load() {
+  char *inipath, line[1024], arg[256];
+  int  sc = 1, cc = 1;
 
-  if (_filename) delete[] _filename;
-  _filename = new char[strlen(fname)+1];
-  strcpy(_filename, fname);
-  OIniFile ini(_filename, INI_READ);
+  inipath = _client->GetResourcePool()->FindIniFile("foxircrc", INI_READ);
+  if (!inipath) return False;
 
-  while(ini.GetNext(line)) {
+  OIniFile ini(inipath, INI_READ);
+
+  while (ini.GetNext(line)) {
     if (strcasecmp(line, "foxirc") == 0) {
 
       if (ini.GetItem("Confirm", arg))
@@ -137,14 +195,17 @@ int OSettings::Load(char *fname) {
 
       if (ini.GetItem("Misc", arg))
         _misc = atoi(arg);
-      if (ini.GetItem("Font", arg)){
-//        printf("Font found [%s]\n",arg);
-//      	exit(1);
-	if(_font) delete _font;
-	_font = new char[strlen(arg)+1];
-	strcpy(_font,arg);
+
+      if (ini.GetItem("Font", arg)) {
+        OXFont *f = _client->GetFont(arg);
+        if (f) {
+          _client->FreeFont(_font);
+          _font = f;
+        }
       }
+
     } else if (strcasecmp(line, "server") == 0) {
+
       // Loading a server...
       OServerInfo *e = new OServerInfo();
 
@@ -160,6 +221,7 @@ int OSettings::Load(char *fname) {
       _servers->Add(sc++, (XPointer) e);
 
     } else if (strcasecmp(line, "channel") == 0) {
+
       // Loading a channel...
       OChannelInfo *e = new OChannelInfo();
 
@@ -168,16 +230,25 @@ int OSettings::Load(char *fname) {
       if (ini.GetItem("background", arg)) e->background = StrDup(arg);
       if (ini.GetItem("flags", arg))   e->flags   = atoi(arg);
       _channels->Add(cc++, (XPointer) e);
-    } else if (strcasecmp(line, "color") == 0) {
-      // Loading a Color
-      OColorsPref *e = new OColorsPref();
 
-      if (ini.GetItem("name", arg))    e->name    = StrDup(arg);
-      if (ini.GetItem("color", arg))   e->defColor   = atoi(arg);
-      if (ini.GetItem("id", arg))      e->id      = atoi(arg);
-//      printf("Adding Color {\"%s\",%d,%d} \n",e->name,e->defColor,e->id);
-	if(e->id)
-	      _colors->Add(e->id, (XPointer) e);
+    } else if (strcasecmp(line, "colors") == 0) {
+
+      int i, r, g, b;
+
+      for (i = 0; i < NUM_COLORS; ++i) {
+        if (ini.GetItem(_colors[i]->name, arg)) {
+          if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+            if (r >= 0 && r <= 255 &&
+                g >= 0 && g <= 255 &&
+                b >= 0 && b <= 255) {
+              _colors[i]->color.SetRGB(r, g, b);
+              _client->FreeColor(_colors[i]->pixel);
+              _colors[i]->pixel = _client->GetColor(_colors[i]->color);
+            }
+          }
+        }
+      }
+
     }
   }
 
@@ -186,21 +257,25 @@ int OSettings::Load(char *fname) {
 
 int OSettings::CheckChannelFlags(const char *name, int what) {
   OChannelInfo *ptr = FindChannel(name);
-  if(!ptr) return false;
+  if (!ptr) return false;
   return (ptr->flags & what);
 }
 
 int OSettings::Save() {
-  char  arg[256], port[40];
+  char  *inipath, arg[256], port[40];
   const OXSNode *ptr;
   int   i;
-  OIniFile ini(_filename, INI_WRITE);
+
+  inipath = _client->GetResourcePool()->FindIniFile("foxircrc", INI_WRITE);
+  if (!inipath) return False;
+
+  OIniFile ini(inipath, INI_WRITE);
 
   ini.PutNext("foxirc");
   sprintf(arg, "%d", _confirm);    ini.PutItem("Confirm", arg);
   sprintf(arg, "%d", _sendToInfo); ini.PutItem("SendToInfo", arg);
   sprintf(arg, "%d", _misc);       ini.PutItem("Misc", arg);
-  ini.PutItem("Font",_font);
+  ini.PutItem("Font", _font->NameOfFont());
   ini.PutNewLine();
 
   for (ptr = _servers->GetHead(), i = 1;
@@ -228,59 +303,45 @@ int OSettings::Save() {
        ptr = ptr->next, ++i) {
     ini.PutNext("channel");
     OChannelInfo *e = (OChannelInfo *) ptr->data;
-    if(e->name   ) ini.PutItem("name",    e->name);
-    if(e->logfile) ini.PutItem("logfile", e->logfile);
-    if(e->background) ini.PutItem("background", e->background);
+    if (e->name)       ini.PutItem("name", e->name);
+    if (e->logfile)    ini.PutItem("logfile", e->logfile);
+    if (e->background) ini.PutItem("background", e->background);
     if (e->flags) {
       sprintf(arg, "%d", e->flags);
       ini.PutItem("flags", arg);
     }
     ini.PutNewLine();
   }
-  for (ptr = _colors->GetHead(), i = 1;
-       ptr != NULL;
-       ptr = ptr->next, ++i) {
-    ini.PutNext("color");
-    OColorsPref *e = (OColorsPref *) ptr->data;
-    if(e->name   ) ini.PutItem("name",    e->name);
-    if (e->defColor) {
-      sprintf(arg, "%d", e->defColor);
-      ini.PutItem("color", arg);
-    }
-    if (e->id) {
-      sprintf(arg, "%d", e->id);
-      ini.PutItem("id", arg);
-    }
 
-    ini.PutNewLine();    
+  ini.PutNext("colors");
+  for (i = 0; i < NUM_COLORS; ++i) {
+    sprintf(arg, "%d,%d,%d",
+                 _colors[i]->color.GetR(),
+                 _colors[i]->color.GetG(),
+                 _colors[i]->color.GetB());
+    ini.PutItem(_colors[i]->name, arg);
   }
+  ini.PutNewLine();    
 
   _changed = False;
 
   return True;
 }
 
-int OSettings::GetColorID(int id){
- OXSNode *tmp = _colors->GetNode(id);
- if(tmp){
-	OColorsPref *cp = (OColorsPref *)tmp->data;
-	return cp->defColor;
- }
- return cpref[id].defColor;
+void OSettings::SetColor(int id, OColor color) {
+  _colors[id]->color.SetRGB(color.GetR(), color.GetG(), color.GetB());
+  _client->FreeColor(_colors[id]->pixel);
+  _colors[id]->pixel = _client->GetColor(_colors[id]->color);
+  _changed = True;
 }
 
-int OSettings::SetColor(int id,int color){
- OXSNode *tmp = _colors->GetNode(id);
- if(tmp){
-	OColorsPref *cp = (OColorsPref *)tmp->data;
-	cp->defColor = color;
-	_changed = True;
-//	printf("SetColor [%d:%d]\n",id,color);
-	return true;
- }
- return false;
+void OSettings::SetFont(const char *name) {
+  OXFont *f = _client->GetFont(name);
+  if (f) {
+    _client->FreeFont(_font);
+    _font = f;
+  }
 }
-
 
 OServerInfo *OSettings::FindServer(const char *name) {
   int i;
@@ -312,7 +373,7 @@ OChannelInfo *OSettings::FindChannel(const char *name) {
   return (OChannelInfo *) 0;
 }
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 OXPreferencesDialog::OXPreferencesDialog(const OXWindow *p,
                                          const OXWindow *main,
@@ -320,10 +381,7 @@ OXPreferencesDialog::OXPreferencesDialog(const OXWindow *p,
                                          unsigned long options) :
   OXTransientFrame(p, main, 400, 200, options) {
     OXCompositeFrame *tf;
-    int ax, ay, width, height;
-    Window wdummy;
-    OHotString *str;
-    const OPicture *pic;
+    int width, height;
 
     _settings = settings;
 
@@ -352,7 +410,9 @@ OXPreferencesDialog::OXPreferencesDialog(const OXWindow *p,
 
     tf = tab->AddTab(new OString("People"));
     tf = tab->AddTab(new OString("Ignores"));
+
     tf = tab->AddTab(new OString("Info"));
+    tf->AddFrame(new OXInfoTab(tf, _settings), Ltab);
 
     AddFrame(tab, Ltab);
 
@@ -367,7 +427,6 @@ OXPreferencesDialog::OXPreferencesDialog(const OXWindow *p,
 
     //--- Apply is initially disabled, OK is the default
     Apply->Disable();
-    Ok->SetDefault();
 
     //--- send button messages to this dialog
     Ok->Associate(this);
@@ -393,19 +452,16 @@ OXPreferencesDialog::OXPreferencesDialog(const OXWindow *p,
 
     //-----------------------------
 
+    SetDefaultAcceptButton(Ok);
+    SetDefaultCancelButton(Cancel);
+
     MapSubwindows();
 
     width  = 500; // GetDefaultWidth();
     height = 350; // GetDefaultHeight();
     Resize(width, height);
 
-    //---- position relative to the parent's window (the default was root 0,0!)
- 
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          50, 50, &ax, &ay, &wdummy);
-
-    Move(ax, ay);
+    CenterOnParent();
 
     //---- make dialog non-resizable
 
@@ -435,15 +491,15 @@ OXPreferencesDialog::~OXPreferencesDialog() {
 int OXPreferencesDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case SETTINGS_CHANGED:
-          Apply->Enable();
-	  break;
+      Apply->Enable();
+      break;
    
     case MSG_BUTTON:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case ID_OK:
               _settings->Save();
               CloseWindow();
@@ -458,7 +514,6 @@ int OXPreferencesDialog::ProcessMessage(OMessage *msg) {
               _settings->Save();
               Apply->Disable();
               break;
-
           }
           break;
       }
@@ -466,10 +521,10 @@ int OXPreferencesDialog::ProcessMessage(OMessage *msg) {
 
     case MSG_CHECKBUTTON:
     case MSG_RADIOBUTTON:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-//          switch(msg->id) {
-//          }
+          //switch (msg->id) {
+          //}
           Apply->Enable();
           break;
       }
@@ -482,7 +537,7 @@ int OXPreferencesDialog::ProcessMessage(OMessage *msg) {
   return True;
 }
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 struct _ButtonDef confirm[] = {
   { "Quit",       1001, P_CONFIRM_QUIT,  NULL },
@@ -494,33 +549,32 @@ struct _ButtonDef confirm[] = {
 };
 
 struct _ButtonDef stinfo[] = {
-  { "CTCP",       1101, P_LOG_CTCP,    NULL },
-  { "Signoff",    1102, P_LOG_SIGNOFF, NULL },
-  { "Who",        1103, P_LOG_WHO,     NULL },
-  { "Whois",      1104, P_LOG_WHOIS,   NULL },
-  { "Whowas",     1105, P_LOG_WHOWAS,  NULL },
-  { "Error",      1106, P_LOG_ERROR,   NULL },
-  { "Ison",       1107, P_LOG_ISON,    NULL },
-  { "Info",       1108, P_LOG_INFO,    NULL },
-  { "Kill",       1109, P_LOG_KILL,    NULL },
-  { "Close",      1110, P_LOG_CLOSE,   NULL },
-  { NULL,         -1,   -1,            NULL }
+  { "CTCP",       1101, P_LOG_CTCP,      NULL },
+  { "Signoff",    1102, P_LOG_SIGNOFF,   NULL },
+  { "Who",        1103, P_LOG_WHO,       NULL },
+  { "Whois",      1104, P_LOG_WHOIS,     NULL },
+  { "Whowas",     1105, P_LOG_WHOWAS,    NULL },
+  { "List",       1106, P_LOG_CHAN_LIST, NULL },
+  { "Error",      1107, P_LOG_ERROR,     NULL },
+  { "Ison",       1108, P_LOG_ISON,      NULL },
+  { "Info",       1109, P_LOG_INFO,      NULL },
+  { "Kill",       1110, P_LOG_KILL,      NULL },
+  { "Close",      1111, P_LOG_CLOSE,     NULL },
+  { NULL,         -1,   -1,              NULL }
 };
 
 struct _ButtonDef misc[] = {
-  { "Enable commands",    1201, P_MISC_ENABLE_CMD,   NULL },
-  { "Re-join after kick", 1202, P_MISC_AUTO_JOIN,    NULL },
-  { "Notify all friends", 1203, P_MISC_NOTIFY_ALL,   NULL },
-  { "Show ops",           1204, P_MISC_SHOW_OPS,     NULL },
-  { "Show friends",       1205, P_MISC_SHOW_FRIENDS, NULL },
-  { "Show voiced",        1206, P_MISC_SHOW_VOICED,  NULL },
-  { "mIRC colors",        1207, P_MISC_MIRC_COLORS,  NULL },
-  { "ANSI colors",        1208, P_MISC_ANSI_COLORS,  NULL },
-  { "AutoRaise Windows",         1209, P_MISC_POPUP_WINDOW, NULL },
-  { "Connect on Start",    1210, P_MISC_POPUP_SERV_CN, NULL },
-  { "Channel on Connect",  1211, P_MISC_POPUP_CHAN_CN, NULL },
-  { "Transient Windows", 1212, P_MISC_TRANSIENT_CHW, NULL },
-  { NULL,                 -1,   -1,                  NULL }
+  { "Enable ircII commands",      1201, P_MISC_ENABLE_CMD,    NULL },
+  { "Re-join after kick",         1202, P_MISC_AUTO_REJOIN,   NULL },
+  { "Notify all friends",         1203, P_MISC_NOTIFY_ALL,    NULL },
+  { "Show ops",                   1204, P_MISC_SHOW_OPS,      NULL },
+  { "Show friends",               1205, P_MISC_SHOW_FRIENDS,  NULL },
+  { "Show voiced",                1206, P_MISC_SHOW_VOICED,   NULL },
+  { "Auto-raise windows",         1207, P_MISC_POPUP_WINDOW,  NULL },
+  { "Connect on Start",           1208, P_MISC_POPUP_SERV_CN, NULL },
+  { "Channel on Connect",         1209, P_MISC_POPUP_CHAN_CN, NULL },
+  { "Transient channel windows",  1210, P_MISC_TRANSIENT_CHW, NULL },
+  { NULL,                         -1,   -1,                   NULL }
 };
 
 OXIrcTab::OXIrcTab(const OXWindow *p, OSettings *settings) :
@@ -528,11 +582,11 @@ OXIrcTab::OXIrcTab(const OXWindow *p, OSettings *settings) :
 
   _settings = settings;
 
-  _lcb = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 2, 2, 2, 2);
+  _lcb = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 15, 2, 2, 2);
   _lgf = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y, 5, 5, 5, 5);
 
   AddFrame(InitButtons("Confirm", _settings->_confirm, confirm), _lgf);
-  AddFrame(InitButtons("Send to Info", _settings->_sendToInfo, stinfo), _lgf);
+//  AddFrame(InitButtons("Send to Info", _settings->_sendToInfo, stinfo), _lgf);
   AddFrame(InitButtons("Misc", _settings->_misc, misc), _lgf);
 }
 
@@ -547,7 +601,8 @@ OXFrame *OXIrcTab::InitButtons(char *gname, int ctlvar,
   OXButton *button;
 
   OXGroupFrame *gf = new OXGroupFrame(this, new OString(gname));
-  for (i=0; b[i].name != NULL; ++i) {
+  gf->OldInsets(False);
+  for (i = 0; b[i].name != NULL; ++i) {
     button = new OXCheckButton(gf, new OHotString(b[i].name), b[i].id);
     if (ctlvar & b[i].mask) button->SetState(BUTTON_DOWN);
     b[i].button = button;
@@ -562,12 +617,12 @@ int OXIrcTab::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
   int n;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_CHECKBUTTON:
 
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-	 {
+          {
           n = wmsg->id;
 
           if (n > 1200) {
@@ -591,10 +646,10 @@ int OXIrcTab::ProcessMessage(OMessage *msg) {
               _settings->_confirm &= ~confirm[n-1001].mask;
             _settings->_changed = True;
           }
-		OMessage msg(SETTINGS_CHANGED);
-		SendMessage(GetTopLevel(), &msg);
-	 }
-         break;
+          OMessage msg(SETTINGS_CHANGED);
+          SendMessage(GetTopLevel(), &msg);
+          }
+          break;
 
         default:
           break;
@@ -609,7 +664,7 @@ int OXIrcTab::ProcessMessage(OMessage *msg) {
 }
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 OXNamesTab::OXNamesTab(const OXWindow *p, OSettings *settings) :
     OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {
@@ -623,10 +678,11 @@ OXNamesTab::OXNamesTab(const OXWindow *p, OSettings *settings) :
 
   _lgf = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y, 5, 5, 5, 5);
   _lbt = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP, 0, 0, 0, 2);
-  _llb = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y, 0, 0, 7, 0);
-  _lvf = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 7, 0, 7, 0);
+  _llb = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y, 7, 0, 7, 7);
+  _lvf = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 7, 10, 7, 0);
 
   gf = new OXGroupFrame(this, new OString("Nick names"));
+  gf->OldInsets(False);
   gf->SetLayoutManager(new OHorizontalLayout(gf));
   lb = new OXListBox(gf, 1000);
   lb->AddEntry(new OString("foxirc"), 1);
@@ -651,6 +707,7 @@ OXNamesTab::OXNamesTab(const OXWindow *p, OSettings *settings) :
   AddFrame(gf, _lgf);
 
   gf = new OXGroupFrame(this, new OString("IRC names"));
+  gf->OldInsets(False);
   gf->SetLayoutManager(new OHorizontalLayout(gf));
   lb = new OXListBox(gf, 1100);
   lb->AddEntry(new OString("fOX IRC user"), 1);
@@ -687,7 +744,7 @@ int OXNamesTab::ProcessMessage(OMessage *msg) {
 }
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 OXServersTab::OXServersTab(const OXWindow *p, OSettings *settings) :
     OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {
@@ -759,7 +816,6 @@ void OXServersTab::_ReadList() {
 void OXServersTab::_doAdd() {
   int retc;
 
-  OString *msg = new OString("");
   OString *title = new OString("Add Server");
   OServerInfo *info = new OServerInfo();
 
@@ -770,8 +826,9 @@ void OXServersTab::_doAdd() {
     int i = _settings->_servers->NoOfItems();
     _settings->_servers->Add(i+1, (XPointer) info);
     lb->AddEntry(new OString(info->name), i+1);
-	OMessage msg(SETTINGS_CHANGED);
-	SendMessage(GetTopLevel(), &msg);
+
+    OMessage msg(SETTINGS_CHANGED);
+    SendMessage(GetTopLevel(), &msg);
 
   } else {
     delete info;
@@ -799,7 +856,6 @@ void OXServersTab::_doEdit() {
   if (o2->logfile)  info->logfile  = StrDup(o2->logfile);
   if (o2->port)     info->port     = o2->port;
 
-  OString *msg = new OString("");
   OString *title = new OString("Edit Server");
   new OXServerDlg(_client->GetRoot(), GetTopLevel(), title, info, &retc, False);
   if (retc == ID_OK) {
@@ -825,8 +881,8 @@ void OXServersTab::_doEdit() {
     if (info->logfile)  o2->logfile  = StrDup(info->logfile);
     if (info->port)     o2->port     = info->port;
 
-	OMessage msg(SETTINGS_CHANGED);
-	SendMessage(GetTopLevel(), &msg);
+    OMessage msg(SETTINGS_CHANGED);
+    SendMessage(GetTopLevel(), &msg);
 
   } 
 
@@ -836,10 +892,10 @@ void OXServersTab::_doEdit() {
 int OXServersTab::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch(msg->action) {
+  switch (msg->action) {
     case MSG_CLICK:
 
-      switch(msg->type) {
+      switch (msg->type) {
         case MSG_LISTBOX:
           _edit->Enable();
           _delete->Enable();
@@ -848,9 +904,7 @@ int OXServersTab::ProcessMessage(OMessage *msg) {
           break;
 
         case MSG_BUTTON:
-
           switch (wmsg->id) {
-
             case 1001:      // Add...
               _doAdd();
               break;
@@ -885,9 +939,9 @@ int OXServersTab::ProcessMessage(OMessage *msg) {
               item = lb->GetSelectedEntry()->ID();
               if (_settings->GetServerList()->Remove(item)){
                 lb->RemoveEntry(item);
-        	OMessage msg(SETTINGS_CHANGED);
-        	SendMessage(GetTopLevel(), &msg);
-		}
+                OMessage msg(SETTINGS_CHANGED);
+                SendMessage(GetTopLevel(), &msg);
+                }
               }
               break;
 
@@ -911,76 +965,68 @@ int OXServersTab::ProcessMessage(OMessage *msg) {
 }
 
 
-//============================================================================
+//----------------------------------------------------------------------
+
 OXColorsTab::OXColorsTab(const OXWindow *p, OSettings *settings) :
-    OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {
-_settings = settings;
+  OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {
 
-OXCompositeFrame *x1=new OXCompositeFrame(this,10,10);
-x1->SetLayoutManager(new O2ColumnsLayout(x1, 5, 5));
-OXCompositeFrame *x2=new OXCompositeFrame(this,10,10);
-x2->SetLayoutManager(new O2ColumnsLayout(x2, 5, 5));
+    _settings = settings;
 
-AddFrame(x1,new OLayoutHints(LHINTS_EXPAND_X|LHINTS_EXPAND_Y,10,5,10,5));
-AddFrame(x2,new OLayoutHints(LHINTS_EXPAND_X|LHINTS_EXPAND_Y,10,5,10,5));
+    OXCompositeFrame *x1 = new OXCompositeFrame(this, 10, 10);
+    x1->SetLayoutManager(new O2ColumnsLayout(x1, 5, 5));
+    OXCompositeFrame *x2 = new OXCompositeFrame(this, 10, 10);
+    x2->SetLayoutManager(new O2ColumnsLayout(x2, 5, 5));
 
-int i=0;
-const OXSNode *ptr;
-OColorsPref *cp;
-OString *st;
-OXColorSelect *tr;
-OColor color;
+    AddFrame(x1, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y,
+                                  10, 5, 10, 5));
+    AddFrame(x2, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y,
+                                  10, 5, 10, 5));
 
-ptr = _settings->GetColorsList()->GetHead();
-//printf("Adding List\n");
-while( ptr!= NULL ){
-cp=(OColorsPref *)ptr->data;
- st=new OString(cp->name);
- color.SetColor(_client, IRCcolors[cp->defColor]);
- tr = new OXColorSelect(x1, color, cp->id+4100);
-//printf("Adding Item :%s\n",cp->name);
+    int i = 0;
+    OColorsPref **cp;
+    OString *st;
+    OXColorSelect *tr;
 
- x1->AddFrame(new OXLabel(x1,st),NULL);
- x1->AddFrame(tr,NULL);
- tr->Associate(this);
-if(ptr->next!=NULL){
-	ptr=ptr->next;
-	cp=(OColorsPref *)ptr->data;
-	st=new OString(cp->name);
-        color.SetColor(_client, IRCcolors[cp->defColor]);
-	tr = new OXColorSelect(x2,color,cp->id+4100);
-	x2->AddFrame(new OXLabel(x2,st),NULL);
-	x2->AddFrame(tr,NULL);
-	tr->Associate(this);
-	i++;
-	}
-ptr=ptr->next;
-}
+    cp = _settings->GetColorsList();
+    OXCompositeFrame *xf;
 
-MapSubwindows();
-MapWindow();
-Layout();
+    for (i = 0, xf = x1; i < NUM_COLORS; ++i) {
+      st = new OString(cp[i]->name);
+      tr = new OXColorSelect(xf, cp[i]->color, i + 4100, False);
+
+      xf->AddFrame(new OXLabel(xf, st), NULL);
+      xf->AddFrame(tr, NULL);
+      tr->Associate(this);
+
+      xf = (xf == x1) ? x2 : x1;
+    }
+
+    MapSubwindows();
+    Layout();
+    MapWindow();
 
 }
+
 int OXColorsTab::ProcessMessage(OMessage *msg) {
-  OContainerMessage *cmsg = (OContainerMessage *) msg;
+  OColorSelMessage *cmsg = (OColorSelMessage *) msg;
 
-  switch(msg->type) {
-    case MSG_CONTAINER:  // change to MSG_COLORSEL!
-      switch(msg->action) {
-	      case MSG_SELCHANGED:
-	      	{
-//		printf("ColorSelection [%d:%d]\n",cmsg->id,cmsg->button);
-		_settings->SetColor(cmsg->id-4100,cmsg->button);
-        	OMessage msg(SETTINGS_CHANGED);
-        	SendMessage(GetTopLevel(), &msg);
-		return true;
-		}
-	}
+  switch (msg->type) {
+    case MSG_COLORSEL:
+      switch (msg->action) {
+        case MSG_CLICK:
+          {
+          _settings->SetColor(cmsg->id-4100, cmsg->color);
+          OMessage msg(SETTINGS_CHANGED);
+          SendMessage(GetTopLevel(), &msg);
+          }
+          break;
+      }
   }
-return false;
+
+  return True;
 }
-//-------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 
 OXChannelTab::OXChannelTab(const OXWindow *p, OSettings *settings) :
     OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {
@@ -1045,33 +1091,28 @@ void OXChannelTab::_ReadList() {
        ptr != NULL;
        ptr = ptr->next, ++i) {
     OChannelInfo *e = (OChannelInfo *) ptr->data;
-//    printf("Adding \"%s\" at %d\n",e->name,i);
     lb->AddEntry(new OString(e->name), i);
   }
 }
 
-
 int OXChannelTab::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch(msg->action) {
+  switch (msg->action) {
     case MSG_CLICK:
-
-      switch(msg->type) {
+      switch (msg->type) {
         case MSG_LISTBOX:
           _edit->Enable();
           _delete->Enable();
           break;
 
         case MSG_BUTTON:
-
           switch (wmsg->id) {
-
             case 1001:      // Add...
-		_DoAdd();
+              _DoAdd();
               break;
             case 1002:      // Edit...
-		_DoEdit();
+              _DoEdit();
               break;
 
             case 1003:      // Delete
@@ -1080,9 +1121,9 @@ int OXChannelTab::ProcessMessage(OMessage *msg) {
               item = lb->GetSelectedEntry()->ID();
               if (_settings->GetChannelList()->Remove(item)){
                 lb->RemoveEntry(item);
-        	OMessage msg(SETTINGS_CHANGED);
-        	SendMessage(GetTopLevel(), &msg);
-		}
+                OMessage msg(SETTINGS_CHANGED);
+                SendMessage(GetTopLevel(), &msg);
+                }
               }
               break;
 
@@ -1105,22 +1146,19 @@ int OXChannelTab::ProcessMessage(OMessage *msg) {
   return False;
 }
 
-void OXChannelTab::_DoAdd(){
+void OXChannelTab::_DoAdd() {
+  int r;
+  OChannelInfo *ct = new OChannelInfo();
 
-int r;
-OChannelInfo *ct = new OChannelInfo();
-OXChannelEditor *ce = new OXChannelEditor(_client->GetRoot(),
-				GetTopLevel(),ct,&r);
-if(r==true){
+  new OXChannelEditor(_client->GetRoot(), GetTopLevel(), ct, &r);
+  if (r == true) {
     int i = _settings->_channels->NoOfItems();
     _settings->_channels->Add(i+1, (XPointer) ct);
-//    printf("Channel List Adding \"%s\" at %d\n",ct->name,i+1);
     lb->AddEntry(new OString(ct->name), i+1);
     OMessage msg(SETTINGS_CHANGED);
     SendMessage(GetTopLevel(), &msg);
-
   } else {
-    delete ct;	
+    delete ct;        
   }
 }
 
@@ -1135,43 +1173,129 @@ void OXChannelTab::_DoEdit(){
 
   OChannelInfo *info = new OChannelInfo();
 
-  if (o2->name)       info->name        = StrDup(o2->name);
-  if (o2->logfile)    info->logfile     = StrDup(o2->logfile);
-  if (o2->background) info->background  = StrDup(o2->background);
+  if (o2->name)       info->name       = StrDup(o2->name);
+  if (o2->logfile)    info->logfile    = StrDup(o2->logfile);
+  if (o2->background) info->background = StrDup(o2->background);
   info->flags  = o2->flags;
 
   new OXChannelEditor(_client->GetRoot(),
-			GetTopLevel(),info,&retc);
+                      GetTopLevel(),info,&retc);
   if (retc) {
-//  	printf("OK\n");
-  if (o2->name)
-  	delete [] o2->name;
-  if(info->name)
-        o2->name = StrDup(info->name);
-  else
-  	o2->name = 0;
+    if (o2->name) delete[] o2->name;
+    if (info->name)
+      o2->name = StrDup(info->name);
+    else
+      o2->name = 0;
 
-  if (o2->logfile)
-  	delete [] o2->logfile;
-  if (info->logfile)
-       o2->logfile = StrDup(info->logfile);
-  else
-  	o2->logfile = 0;
+    if (o2->logfile) delete[] o2->logfile;
+    if (info->logfile)
+      o2->logfile = StrDup(info->logfile);
+    else
+      o2->logfile = 0;
 
-  if (o2->background)
-  	delete [] o2->background;
-  if(info->background)
-      	o2->background  = StrDup(info->background);
-  else
-  	o2->background = 0;
+    if (o2->background) delete[] o2->background;
+    if (info->background)
+      o2->background = StrDup(info->background);
+    else
+      o2->background = 0;
   
-    o2->flags  = info->flags;
+    o2->flags = info->flags;
 
-	OMessage msg(SETTINGS_CHANGED);
-	SendMessage(GetTopLevel(), &msg);
+    OMessage msg(SETTINGS_CHANGED);
+    SendMessage(GetTopLevel(), &msg);
 
-    }
+  }
 
   delete info;
+}
 
+
+//----------------------------------------------------------------------
+
+#if 0
+struct _ButtonDef stinfo[] = {
+  { "CTCP",       1101, P_LOG_CTCP,      NULL },
+  { "Signoff",    1102, P_LOG_SIGNOFF,   NULL },
+  { "Who",        1103, P_LOG_WHO,       NULL },
+  { "Whois",      1104, P_LOG_WHOIS,     NULL },
+  { "Whowas",     1105, P_LOG_WHOWAS,    NULL },
+  { "List",       1106, P_LOG_CHAN_LIST, NULL },
+  { "Error",      1107, P_LOG_ERROR,     NULL },
+  { "Ison",       1108, P_LOG_ISON,      NULL },
+  { "Info",       1109, P_LOG_INFO,      NULL },
+  { "Kill",       1110, P_LOG_KILL,      NULL },
+  { "Close",      1111, P_LOG_CLOSE,     NULL },
+  { NULL,         -1,   -1,              NULL }
+};
+#endif
+
+OXInfoTab::OXInfoTab(const OXWindow *p, OSettings *settings) :
+  OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {
+
+  _settings = settings;
+
+  _lcb = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 15, 2, 2, 2);
+  _lgf = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y, 5, 5, 5, 5);
+
+  AddFrame(InitButtons("Send to Info", _settings->_sendToInfo, stinfo), _lgf);
+}
+
+OXInfoTab::~OXInfoTab() {
+  delete _lcb;
+  delete _lgf;
+}
+
+OXFrame *OXInfoTab::InitButtons(char *gname, int ctlvar,
+                                struct _ButtonDef b[]) {
+  int i;
+  OXButton *button;
+
+  OXGroupFrame *gf = new OXGroupFrame(this, new OString(gname));
+  gf->OldInsets(False);
+  for (i = 0; b[i].name != NULL; ++i) {
+    button = new OXCheckButton(gf, new OHotString(b[i].name), b[i].id);
+    if (ctlvar & b[i].mask) button->SetState(BUTTON_DOWN);
+    b[i].button = button;
+    button->Associate(this);
+    gf->AddFrame(button, _lcb);
+  }
+
+  return gf;
+}
+
+int OXInfoTab::ProcessMessage(OMessage *msg) {
+  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
+  int n;
+
+  switch (msg->type) {
+    case MSG_CHECKBUTTON:
+
+      switch (msg->action) {
+        case MSG_CLICK:
+          {
+          n = wmsg->id;
+
+          if (n > 1100) {
+            if (stinfo[n-1101].button->GetState() == BUTTON_DOWN)
+              _settings->_sendToInfo |= stinfo[n-1101].mask;
+            else
+              _settings->_sendToInfo &= ~stinfo[n-1101].mask;
+            _settings->_changed = True;
+          }
+
+          OMessage msg(SETTINGS_CHANGED);
+          SendMessage(GetTopLevel(), &msg);
+          }
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  return False;
 }

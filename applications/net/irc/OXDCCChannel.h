@@ -5,17 +5,15 @@
 #include <stdio.h>
 
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXMsgBox.h>
-#include <xclass/OXSlider.h>
-#include <xclass/OX3dLines.h>
+#include <xclass/OXMenu.h>
+#include <xclass/OXStatusBar.h>
 #include <xclass/OString.h>
 
-#include "OXTextView.h"
+#include "OXViewDoc.h"
 #include "OXNameList.h"
 #include "OXIrc.h"
-#include "TDList.h"
 #include "OXChannel.h"
 
 
@@ -27,23 +25,30 @@ public:
                const char *ch);
   virtual ~OXDCCChannel();
 
-  int  Connect(char *server, int port);
-  int  Listen(unsigned long *host, unsigned short *port);
-  void CloseUp();
-
   virtual int ProcessMessage(OMessage *msg);
   virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
-          int ProcessDCCCommand(char *cmd);
+
+  int  Connect(const char *server, int port);
+  int  Listen(unsigned long *host, unsigned short *port);
+  void Disconnect(int log = True);
+  int  ProcessDCCCommand(char *cmd);
 
 protected:
-//  OXPopupMenu *_menuchannel, *_menulog;
-//  OXMenuBar *_menubar;
-//  OXTextEntry *_User, *_Server, *_Info;
-//  OXLabel *_UserLabel, *_ServerLabel, *_InfoLabel;
-//  OXCheckBox *_dcc, *_chat;
+  void _UpdateStatusBar();
+
+  OXMenuBar *_menubar;
+  OXPopupMenu *_menuchannel, *_menumode, *_menulog, *_menuedit,
+              *_menuview, *_menuhelp, *_nick_ctcp, *_nick_dcc,
+              *_nick_actions, *_nick_ignore;
+
+  OXStatusBar *_statusBar;
+
   OTcp *_dccServer;
   OFileHandler *_fl;
-  bool _coned, _serverSocket;
+  char *_serverName;
+  int _port;
+  bool _connected, _serverSocket;
 };
+
 
 #endif  // __OXDCCCHANNEL_H

@@ -8,8 +8,6 @@
 #include <xclass/OXButton.h>
 #include <xclass/OXLabel.h>
 
-//#include <fOX/OXFavorFileDialog.h>
-
 #include "OTcp.h"
 
 #define ID_DCC_SAVE		2001
@@ -26,7 +24,7 @@ class OFileHandler;
 
 class DCCFileConfirm : public OXTransientFrame {
 public:
-  DCCFileConfirm(const OXWindow *p, const OXWindow *main, char *nick, 
+  DCCFileConfirm(const OXWindow *p, const OXWindow *main, const char *nick, 
                  char *filename, char *size, OFileInfo *retn, int *reti);
   virtual ~DCCFileConfirm();
 
@@ -36,17 +34,18 @@ protected:
   OFileInfo *fi;
   int *iret;
   char *name;
-  OLayoutHints *L1,*L2;
+  OLayoutHints *L1, *L2;
   OXButton *_ok, *_saveas, *_reject, *_ignore;
 };
+
 
 //----------------------------------------------------------------------
 
 class OXDCCFile : public OXMainFrame {
 public:
-  OXDCCFile(const OXWindow *p, char *nick, char *filename, char *ip,
-            char *port, char *size = 0);
-  OXDCCFile(const OXWindow *p, char *nick, char *filename)
+  OXDCCFile(const OXWindow *p, const char *nick, char *filename, char *ip,
+            char *port, char *size = 0, int *retc = 0);
+  OXDCCFile(const OXWindow *p, const char *nick, char *filename)
     :OXMainFrame(p, 10, 10) {};
   virtual ~OXDCCFile();
   
@@ -65,7 +64,7 @@ protected:
   OXLabel *_t1, *_t2, *_t3;
   OLayoutHints *L1, *L2;
 
-  int _file;
+  int _file, *_retc;
   bool _coned;
   bool _serverSocket;
   unsigned long bytesread;
@@ -73,5 +72,6 @@ protected:
   char *_filename;
   char _dir[PATH_MAX];
 };
+
 
 #endif  // __OXDCCFILE_H

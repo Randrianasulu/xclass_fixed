@@ -3,15 +3,15 @@
 
 #include <X11/Xlib.h>
 
+#include <xclass/OBaseObject.h>
+
 class OXViewDocFrame;
 class OXViewDoc;
 
-class OViewDoc {
 
-protected:
-  OXViewDocFrame *_canvas;
-  int _h, _w;
+//----------------------------------------------------------------------
 
+class OViewDoc : public OBaseObject {
 public:
   OViewDoc() {}
   virtual ~OViewDoc() {}
@@ -20,7 +20,7 @@ public:
   virtual void SetCanvas(OXViewDocFrame *c);
   OXViewDocFrame *GetCanvas() { return _canvas; }
 
-  virtual int  LoadFile(FILE *file) {}
+  virtual int  LoadFile(FILE *file) { return false; }
   virtual void Clear() {}
   int GetHeight() const { return _h; }
   int GetWidth() const { return _w; }
@@ -31,6 +31,11 @@ public:
 
   virtual void DrawRegion(Display *dpy, Drawable d,
                           int x, int y, XRectangle *rect) {}
+
+protected:
+  OXViewDocFrame *_canvas;
+  int _h, _w;
 };
 
-#endif
+
+#endif  // __OVIEWDOC_H

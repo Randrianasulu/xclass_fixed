@@ -1,7 +1,7 @@
 /*----------------------------------------------------------------------
 
     Simple filter program to convert IRC video attributes and
-    mIRC color codes to ANSI sequences. Version 0.01 (H)
+    mIRC color codes to ANSI sequences. Version 0.01 (Hector Peraza)
     
     Compilation:
     
@@ -9,11 +9,11 @@
       
     Usage(s):
 
-      mirc2ansi mylogfile
+      mirc2ansi logfile
       
     or
     
-      cat mylogfile | mirc2ansi
+      cat logfile | mirc2ansi
       
     etc...
 
@@ -58,7 +58,7 @@
 
 int mirc2ansi[16] = { 7, 0, 4, 2, 1, 3, 5, 11, 13, 12, 6, 16, 14, 15, 10, 7 };
 
-int setattrib(int ca, int fg, int bg) {
+int set_attrib(int ca, int fg, int bg) {
   char a[20];
   
   a[0] = '\0';
@@ -103,24 +103,24 @@ int main(int argc, char *argv[]) {
         ca &= ~ATTRIB_BOLD;
       else
         ca |= ATTRIB_BOLD;
-      setattrib(ca, fg, bg);
+      set_attrib(ca, fg, bg);
     } else if (c == 0x16) { 	/* toggle reverse video */
       if (ca & ATTRIB_REVERSE)
         ca &= ~ATTRIB_REVERSE;
       else
         ca |= ATTRIB_REVERSE;
-      setattrib(ca, fg, bg);
+      set_attrib(ca, fg, bg);
     } else if (c == 0x1F) {	/* toggle underline */
       if (ca & ATTRIB_UNDERLINE)
         ca &= ~ATTRIB_UNDERLINE;
       else
         ca |= ATTRIB_UNDERLINE;
-      setattrib(ca, fg, bg);
+      set_attrib(ca, fg, bg);
     } else if (c == 0x03) {	/* change color attrib */
       c = fgetc(f);
       if (!isdigit(c)) {
         ca &= ~(ATTRIB_FGCOLOR | ATTRIB_BGCOLOR);
-        setattrib(ca, fg, bg);
+        set_attrib(ca, fg, bg);
         continue;
       } else {
         fg = c - '0';
@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
           c = fgetc(f);
         }
         ca |= ATTRIB_FGCOLOR;
-        setattrib(ca, fg, bg);
+        set_attrib(ca, fg, bg);
         if (c == ',') {
           c = fgetc(f);
           if (isdigit(c)) {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
               c = fgetc(f);
             }
             ca |= ATTRIB_BGCOLOR;
-            setattrib(ca, fg, bg);
+            set_attrib(ca, fg, bg);
           }
         }
         continue;
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     } else {
       if (c == '\n') {
         ca = ATTRIB_NORMAL;
-        setattrib(ca, fg, bg);
+        set_attrib(ca, fg, bg);
       }
       putchar(c);
     }

@@ -8,7 +8,14 @@
 
 #include "pixmaps/nl-chanop.xpm"
 #include "pixmaps/nl-voice.xpm"
+#include "pixmaps/nl-friend.xpm"
+#include "pixmaps/nl-ignored.xpm"
 
+
+const OPicture *OXName::_opPic = NULL;
+const OPicture *OXName::_voicedPic = NULL;
+const OPicture *OXName::_ignoredPic = NULL;
+const OPicture *OXName::_friendPic = NULL;
 
 //-----------------------------------------------------------------
 
@@ -18,9 +25,6 @@ OXNameList::OXNameList(const OXWindow *p, OXPopupMenu *popup, int w, int h,
                        unsigned int options) :
   OXVerticalFrame(p, w, h, options | VERTICAL_FRAME) {
 
-    _pchanop = _client->GetPicture("nl-chanop.xpm", nl_chanop);
-    _pvoice  = _client->GetPicture("nl-voice.xpm",  nl_voice);
-
     _popup = popup;
     _stick = True;
     _current = NULL;
@@ -29,7 +33,6 @@ OXNameList::OXNameList(const OXWindow *p, OXPopupMenu *popup, int w, int h,
 		ButtonPressMask | ButtonReleaseMask |
 		EnterWindowMask,
 		GrabModeAsync, GrabModeAsync, None, None);
- _total = _voiced = _oped = 0;
 }
 
 OXNameList::~OXNameList() {
@@ -38,69 +41,63 @@ OXNameList::~OXNameList() {
 
   for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     t = (OXName *) ptr->frame;
+    // ...
   }
-
-  _client->FreePicture(_pchanop);
-  _client->FreePicture(_pvoice);
 }
 
-int OXNameList::HandleMotion(XMotionEvent *event) {
-  SListFrameElt *ptr;
-  OXName *target;
+void OXNameList::OpNick(const char *nick, int onoff) {
+  OXName *n = GetName(nick);
+  if (n) {
+    if (onoff && !n->IsOp()) {
+      n->SetFlags(NICK_OPED);
+    } else if (!onoff && n->IsOp()) {
+      n->ClearFlags(NICK_OPED);
+    }
+  }	
+}
 
-  _stick = False; // use some threshold!
-
-  target = (OXName*)_client->GetWindowById(event->subwindow);
-
-  if (target != NULL && target != _current) {
-  // Deactivate all others :
-    for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-      ((OXMenuTitle*)ptr->frame)->SetState(False);
-
-    target->SetState(True);
-    _stick = True;
-    _current = target;
+void OXNameList::VoiceNick(const char *nick, int onoff) {
+  OXName *n = GetName(nick);
+  if (n) {
+    if (onoff && !n->IsVoiced()) {
+      n->SetFlags(NICK_VOICED);
+    } else if (!onoff && n->IsVoiced()) {
+      n->ClearFlags(NICK_VOICED);
+    }
   }
-
-  return True;
 }
 
-void OXNameList::OpNick(const char *nick) {
-OXName *n = GetName(nick);
-if(n){
-     n->SetPicture(_pchanop);
-     n->SetFlags(NICK_OPED);
-     _oped++;
-     }
-	
+void OXNameList::IgnoreNick(const char *nick, int onoff) {
+  OXName *n = GetName(nick);
+  if (n) {
+    if (onoff && !n->IsIgnored()) {
+      n->SetFlags(NICK_IGNORED);
+    } else if (!onoff && n->IsIgnored()) {
+      n->ClearFlags(NICK_IGNORED);
+    }
+  }
 }
 
-void OXNameList::VoiceNick(const char *nick) {
-OXName *n = GetName(nick);
-if(n){
-     n->SetPicture(_pvoice);
-     n->SetFlags(NICK_VOICED);
-     _voiced++;
-     }
+void OXNameList::FriendNick(const char *nick, int onoff) {
+  OXName *n = GetName(nick);
+  if (n) {
+    if (onoff && !n->IsFriend()) {
+      n->SetFlags(NICK_FRIEND);
+    } else if (!onoff && n->IsFriend()) {
+      n->ClearFlags(NICK_FRIEND);
+    }
+  }
 }
-  
+
 void OXNameList::NormalNick(const char *nick) {
-OXName *n = GetName(nick);
-if(n){
-     n->SetPicture(NULL);
-     if(n->IsOp())
-     	_oped--;
-     if(n->IsVoiced())
-     	_voiced--;
-     n->ClearFlags(NICK_VOICED|NICK_OPED);
-     }
+  OXName *n = GetName(nick);
+  if (n) {
+    n->ClearFlags(NICK_VOICED | NICK_OPED | NICK_IGNORED | NICK_FRIEND);
+  }
 }
 
 int OXNameList::HandleButton(XButtonEvent *event) {
   SListFrameElt *ptr;
-
-  // Here we are looking for a _child_ of a menu bar, so it can _ONLY_ be
-  // a MenuTitle : BEWARE !
 
   OXName *target;
 
@@ -109,15 +106,15 @@ int OXNameList::HandleButton(XButtonEvent *event) {
 
   if (event->type == ButtonPress) {
 
-    target = (OXName*)_client->GetWindowById(event->subwindow);
+    target = (OXName *) _client->GetWindowById(event->subwindow);
 
     if (target != NULL) {
       _stick = True;
 
       if (target != _current) {
-        // Deactivate all others :
+        // Deactivate all others
         for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-          ((OXName*)ptr->frame)->SetState(False);
+          ((OXName *)ptr->frame)->SetState(False);
 
         target->SetState(True);
         _stick = True;
@@ -138,7 +135,7 @@ int OXNameList::HandleButton(XButtonEvent *event) {
     XUngrabPointer(GetDisplay(), CurrentTime);
 
     for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-      ((OXName*)ptr->frame)->SetState(False);
+      ((OXName *)ptr->frame)->SetState(False);
 
     if (_current != NULL) {
       target = _current; /* tricky, because WaitFor */
@@ -150,11 +147,34 @@ int OXNameList::HandleButton(XButtonEvent *event) {
   return True;
 }
 
-void OXNameList::AddPopup(OHotString *s, const OPicture *p,
-                          OXPopupMenu *menu, OLayoutHints *l) {
+int OXNameList::HandleMotion(XMotionEvent *event) {
+  SListFrameElt *ptr;
+  OXName *target;
+
+  _stick = False; // use some threshold!
+
+  if (_current && _current->HandleMotion(event)) return True;
+
+  target = (OXName *) _client->GetWindowById(event->subwindow);
+
+  if (target != NULL && target != _current) {
+    // Deactivate all others
+    for (ptr = _flist; ptr != NULL; ptr = ptr->next)
+      ((OXMenuTitle *)ptr->frame)->SetState(False);
+
+    target->SetState(True);
+    _stick = True;
+    _current = target;
+  }
+
+  return True;
+}
+
+void OXNameList::AddPopup(OHotString *s, OXPopupMenu *menu,
+                          OLayoutHints *l) {
   OXName *name;
 
-  AddFrame(name = new OXName(this, s, p, menu), l);
+  AddFrame(name = new OXName(this, s, menu), l);
   name->Associate(_msgObject);
 }
 
@@ -164,100 +184,79 @@ OXName *OXNameList::GetName(const char *s) {
 
   for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     t = (OXName *) ptr->frame;
-    if (!strcasecmp(s, t->_label->GetString()))
-      return t;
+    if (!strcasecmp(s, t->_label->GetString())) return t;
   }
   return NULL;
 }
 
-bool OXNameList::HaveNick(const char *s) {
-  SListFrameElt *ptr;
-  OXName *t;
-
-  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
-    t = (OXName *) ptr->frame;
-    if (!strcasecmp(s, t->_label->GetString()))
-      return true;
-  }
-  return false;
-}
-
 void OXNameList::AddName(const char *s) {
-  const OPicture *pic = NULL;
+  int flags = 0;
   const char *nick = s;
   OXName *name;
 
-  if (*nick == '@') { pic = _pchanop; ++nick; }
-  else if (*nick == '+') { pic = _pvoice; ++nick; }
+  while (1) {
+    if (*nick == '@') {
+      flags |= NICK_OPED;
+      ++nick;
+    } else if (*nick == '+') {
+      flags |= NICK_VOICED;
+      ++nick;
+    } else {
+      break;
+    }
+  }
 
   name = GetName(nick);
   if (!name) {
-    AddPopup(new OHotString(nick), pic, _popup, topexpandxlayout0);
+    AddPopup(new OHotString(nick), _popup, topexpandxlayout0);
     MapSubwindows();
     Layout();
-    _total++;
     name = GetName(nick);
-    if(pic==_pchanop)
-    	{
-    	 name->SetFlags(NICK_OPED);
-	 _oped++;
-	 }
-    if(pic==_pvoice)
-    	{
-    	name->SetFlags(NICK_VOICED);
-	_voiced++;
-	}
-
-  } else {
-    name->SetPicture(pic);
   }
+  name->ClearFlags(NICK_OPED | NICK_VOICED);
+  name->SetFlags(flags);
 }
 
 void OXNameList::RemoveName(const char *s) {
   OXName *t = GetName(s);
 
   if (t) {
-     if(t->IsOp())
-     	_oped--;
-     if(t->IsVoiced())
-     	_voiced--;
-    _total--;
     RemoveFrame(t);
-    XClearWindow(_client->GetDisplay(), t->_id); // ???
+    XDestroyWindow(GetDisplay(), t->GetId());
     delete t;
-    MapSubwindows();
     Layout();
   }
 }
 
 void OXNameList::ChangeName(const char *o, const char *n) {
   const char *nick = n;
-  const OPicture *pic = NULL;
   OXName *t = GetName(o);
 
-// assume that the modes are the same
-
-//  if (*nick == '@') { ++nick; }
-//  else if (*nick == '+') { ++nick; }
+  // assume that the modes are the same, so don't check for '@' and '+'
 
   if (t) {
-    delete (t->_label);
+    delete t->_label;
     t->_label = new OHotString(nick);
-//    t->SetPicture(pic);
     t->_DoRedraw();
   }
 }
 
 //-----------------------------------------------------------------
 
-OXName::OXName(const OXWindow *p, OHotString *s, const OPicture *pic,
-               OXPopupMenu *menu, unsigned int options) :
+OXName::OXName(const OXWindow *p, OHotString *s, OXPopupMenu *menu,
+               unsigned int options) :
   OXMenuTitle(p, s, menu, options) {
+
+  if (!_opPic) {
+    _opPic = _client->GetPicture("nl-chanop.xpm", nl_chanop_xpm);
+    _voicedPic = _client->GetPicture("nl-voice.xpm",  nl_voice_xpm);
+    _ignoredPic = _client->GetPicture("nl-ignored.xpm", nl_ignored_xpm);
+    _friendPic = _client->GetPicture("nl-friend.xpm",  nl_friend_xpm);
+  }
 
   _tw = _font->TextWidth(_label->GetString(), _label->GetLength());
   _th = _font->TextHeight();
 
-  _pic = pic;
   _flags = 0;
 } 
 
@@ -269,17 +268,45 @@ void OXName::SetState(int state) {
       Window wdummy;
 
       XTranslateCoordinates(GetDisplay(), _id, (_menu->GetParent())->GetId(),
-			0, 0, &ax, &ay, &wdummy);
+                            _w, 2, &ax, &ay, &wdummy);
 
-      // Place the menu just under the window :
-      _menu->PlaceMenu(ax+_w, ay+2, True, False); //True);
+      ODimension ps = _menu->GetDefaultSize();
+
+      int dpyw = _client->GetDisplayWidth();
+      int dpyh = _client->GetDisplayHeight();
+
+      if (ax + ps.w > dpyw) ax -= ps.w + _w;
+      if (ax + ps.w > dpyw) ax = dpyw - ps.w - 1;  // if still off-screen
+      if (ay + ps.h > dpyh) ay -= ps.h - _h;
+
+      if (IsVoiced())
+        _menu->CheckEntry(C_SPEAK);
+      else
+        _menu->UnCheckEntry(C_SPEAK);
+
+      if (IsOp())
+        _menu->CheckEntry(C_CHAN_OP);
+      else
+        _menu->UnCheckEntry(C_CHAN_OP);
+
+      _menu->PlaceMenu(ax, ay, True, False); //True);
     }
   } else {
     if (_menu != NULL) {
       _ID = _menu->EndMenu();
     }
   }
-  _client->NeedRedraw(this);
+  NeedRedraw();
+}
+
+void OXName::SetFlags(int flags) {
+  _flags |= flags;
+  NeedRedraw();
+}
+
+void OXName::ClearFlags(int flags) {
+  _flags &= ~flags;
+  NeedRedraw();
 }
 
 void OXName::_DoRedraw() {
@@ -290,7 +317,7 @@ void OXName::_DoRedraw() {
   _font->GetFontMetrics(&fm);
 
   x = (_w - _font->TextWidth(name, strlen(name))) >> 1;
-  xp = 3 + _bw;
+  xp = 3 + _insets.l;
   y = 2;
   if (_state) {
     _options |= SUNKEN_FRAME;
@@ -303,12 +330,22 @@ void OXName::_DoRedraw() {
   OXFrame::_DoRedraw();
   if (_state) _DrawTrianglePattern(_normGC->GetGC(), _w-10, y+3, _w-6, y+11);
   _label->Draw(GetDisplay(), _id, _normGC->GetGC(), x, y + fm.ascent);
-  if (_pic) _pic->Draw(GetDisplay(), _id, _normGC->GetGC(), xp, y+1);
-}
 
-void OXName::SetPicture(const OPicture *p) {
-  _pic = p;
-  _client->NeedRedraw(this);
+  if (IsOp()) {
+    _opPic->Draw(GetDisplay(), _id, _normGC->GetGC(), xp, y+1);
+    xp += _opPic->GetWidth() + 1;
+  }
+  if (IsVoiced()) {
+    _voicedPic->Draw(GetDisplay(), _id, _normGC->GetGC(), xp, y+1);
+    xp += _voicedPic->GetWidth() + 1;
+  }
+  if (IsIgnored()) {
+    _ignoredPic->Draw(GetDisplay(), _id, _normGC->GetGC(), xp, y+1);
+    xp += _ignoredPic->GetWidth() + 1;
+  }
+  if (IsFriend()) {
+    _friendPic->Draw(GetDisplay(), _id, _normGC->GetGC(), xp, y+1);
+  }
 }
 
 void OXName::_DrawTrianglePattern(GC gc, int l, int t, int r, int b) {
@@ -328,8 +365,8 @@ void OXName::_DrawTrianglePattern(GC gc, int l, int t, int r, int b) {
 
 void OXName::DoSendMessage() {
   if (_ID != -1) {
-    OIrcMessage message(IRC_NICKLIST, MSG_CLICK, _ID, 0L, 0L, 0L,
-                        (char *)_label->GetString());
+    ONickListMessage message(IRC_NICKLIST, MSG_CLICK, _ID, 
+                             _label->GetString());
     SendMessage(_msgObject, &message);
   }
 }

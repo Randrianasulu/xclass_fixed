@@ -1,10 +1,9 @@
 #ifndef __OXIRC_H
 #define __OXIRC_H
 
-#define FOXIRCVERSION "fOXIrc v0.03-020619 http://www.foxproject.org/"
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 #include <xclass/OXClient.h>
 #include <xclass/OXWindow.h>
@@ -23,9 +22,9 @@
 #include <xclass/OFileHandler.h>
 
 #include "OIrc.h"
-#include "OXTextView.h"
+#include "OTextDoc.h"
+#include "OXViewDoc.h"
 #include "OXPreferences.h"
-#include "TDList.h"
 
 
 #define MENU_DISABLED     (1<<0)
@@ -41,19 +40,14 @@ struct SPopupData {
   } popup[20];
 };
 
-//---------------------------------------------------------------------
-
+class OIrcMessage;
+class OXChannelList;
+class OXServerTree;
+class OXViewLogFile;
 class OXChannel;
 
-struct Linkstrut {
-  char *servername;
-  char *connectedto;
-  char *servermsg;
-  int hop;
-};
 
-typedef TDDLList<Linkstrut *> LinkList;
-
+//----------------------------------------------------------------------
 
 class OXIrc : public OXMainFrame {
 public:
@@ -65,69 +59,107 @@ public:
   virtual int ProcessMessage(OMessage *msg);
   virtual int HandleMapNotify(XMapEvent *event);
   virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
+  virtual int HandleTimer(OTimer *t);
 
   int Connect(char *server, int port = 6667);
   int Disconnect();
+  int Connected() const { return _connected; }
 
   void Log(const char *message);
-  void Log(const char *message, char *color);
   void Log(const char *message, int color);
+
+  OIrc *GetOIrc() const { return _irc; }
+  const char *GetNick() const { return _nick; }
+
+  unsigned long ModeBits(char *mode_str);
 
   OXChannel *GetChannel(const char *channel);
   OXChannel *FindChannel(const char *channel);
   void RemoveChannel(OXChannel *channel);
 
-  void ProcessWhois(int cmd, const char *arg);
-  void CTCPSend(char *nick, char *command, int mode);
-  void SendRawCommand(const char *command);
-  void ChangeNick(const char *nick);
-  void SendWallops(const char *mess);
-  void SendUMode(const char *mod);
-  void SendMode(const char *chan,const char *mod);
-  void ProcessLink(char *string);
-  int  Connected() const { return _connected; }
+  OXChannelList *GetChannelList();
+  void ChannelListClosed();
 
-  unsigned long ModeBits(char *mode_str);
+  OXServerTree *GetServerTree();
+  void ServerTreeClosed();
 
-  OXPopupMenu *MakePopup(SPopupData *p);
+  OXViewLogFile *GetViewLogFile();
+  void ViewLogFileClosed();
 
   void DoConnect();
+
+  void DoAway();
+  void DoNick();
+  void DoWho();
+  void DoWhois();
+  void DoWhowas();
+  void DoWallops();
+  void DoMotd();
+  void DoVersion();
+  void DoLinks();
+  void DoLusers();
+  void DoAdmin();
+  void DoTime();
+  void DoInfo();
+  void DoList();
+  void DoTrace();
+  void DoOper();
+  void DoRaw();
+
   void DoOpenLog();
   void DoCloseLog();
-  void DoFlushLog();
   void DoEmptyLog();
   void DoPrintLog();
+  void DoViewLog();
+  void DoChangeFont();
   void DoToggleToolBar();
   void DoToggleStatusBar();
   void DoHelpAbout();
-  void DoRaw();
-  void DoNick();
-  void DoWallops();
-  void DoMotd();
 
-  char _nick[15];
-  char _ircname[256];
-  char _username[100];
-  char _hostname[100];
-  OIrc *GetOIrc() { return _irc; }
+  void ProcessWho(int cmd, OIrcMessage *msg);
+  void ProcessWhois(int cmd, OIrcMessage *msg);
+  void ProcessAdmin(int cmd, OIrcMessage *msg);
+  void ProcessIrcError(int cmd, OIrcMessage *msg);
+  void ProcessUMode(const char *modestr);
+  void ProcessLink(int cmd, OIrcMessage *msg);
+  void CTCPSend(const char *nick, char *command, int mode);
+  void ChangeNick(const char *nick);
+  void JoinChannel(const char *channel);
+  void ToggleUMode(int which);
+  void SendWallops(const char *mess);
+  void SendUMode(const char *mod);
+  void SendMode(const char *chan, const char *mod);
+  void SendRawCommand(const char *command);
+
+  char *BuildSecondTime(time_t tm);
+  char *DateString(time_t tm);
+  char *DateString(const char *tmstr);
 
 protected:
-  char *BuildSecondTime(time_t tm);
+  OXPopupMenu *MakePopup(SPopupData *p);
+  void UpdateStatusBar(int field = -1);
+  int  PromptServer(OString *cmd, OString *arg);
 
   OIrc *_irc;
 
   OFileHandler *_fh;
-  OTimer *_timer;
+  OTimer *_pingTimer;
+  
+  time_t _lag;
 
   OXTextEntry *_channelentry;
 
   OTextDoc *_log;
   OXViewDoc *_logw;
 
-  char _server[80];
+  char *_nick, *_passwd, *_ircname, *_username;
+  char *_server, *_realserver, *_hostname;
   int _init, _port, _fd, _connected;
 
-  OXChannel *channels;
+  OXChannel *_channels;
+  OXChannelList *_channelList;
+  OXViewLogFile *_viewLogFile;
+  OXServerTree *_serverTree;
 
   OXMenuBar *_menubar;
   OXPopupMenu *_mirc, *_medit, *_mview, *_mhelp;
@@ -137,11 +169,12 @@ protected:
   OXHorizontal3dLine *_toolBarSep;
   OXStatusBar *_statusBar;
 
-  unsigned long _avcmode, _avumode;
+  unsigned long _avcmode, _avumode;   // available channel and user modes
+  unsigned long _umode;               // current user mode
   
   char *_logfilename;
   FILE *_logfile;
-  LinkList Links;
 };
+
 
 #endif  // __OXIRC_H

@@ -2,28 +2,26 @@
 #define __OTEXTDOC_H
 
 #include <stdio.h>
+
 #include <X11/Xlib.h>
 
 #include "OLineDoc.h"
 
 #define MAXLINES    50000
 
-class OXTextFrame;
+class OXViewDocFrame;
 class OXViewDoc;
 
+
+//----------------------------------------------------------------------
+
 class OTextDoc : public OViewDoc {
-friend class OXTextFrame;
-
-protected:
-  OXViewDoc *_main_widget;
-  OGC *_gc;
-
 public:
   OTextDoc();
-  ~OTextDoc();
+  virtual ~OTextDoc();
 
   void CreateCanvas(OXViewDoc *p);
-  void SetCanvas(OXTextFrame *c);
+  void SetCanvas(OXViewDocFrame *c);
 
   int SetWidth(int w) { _w = w; return True; }
 
@@ -32,14 +30,15 @@ public:
   int LoadFile(FILE *file);
 
   void Layout();
-
   void DrawRegion(Display *dpy, Drawable d, int x, int y, XRectangle *rect);
 
-  OXTextFrame *_style_server;
+  OXViewDocFrame *GetTextFrame() const { return _textFrame; }
 
 protected:
-
-  OLineDoc *_lines;   // lines of text
+  OLineDoc *_lines;          // lines of text
+  OXViewDoc *_mainWidget;
+  OXViewDocFrame *_textFrame;
 };
 
-#endif
+
+#endif  // __OTEXTDOC_H

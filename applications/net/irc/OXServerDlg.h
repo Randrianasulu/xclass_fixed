@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of foxirc, a cool irc client.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    Copyright (C) 1996, 1997 R. Suescun, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,6 @@
 #define __OXSERVERDLG_H
 
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
 #include <xclass/O2ColumnsLayout.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXTextButton.h>
@@ -33,7 +32,6 @@
 #include <xclass/OX3dLines.h>
 #include <xclass/OXMsgBox.h>
 #include <xclass/OString.h>
-#include <xclass/OTimer.h>
 #include <xclass/utils.h>
 
 #include "OXPreferences.h"
@@ -49,7 +47,6 @@ public:
               unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXServerDlg();
 
-  virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
 protected:

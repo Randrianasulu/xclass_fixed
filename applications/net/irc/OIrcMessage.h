@@ -27,6 +27,9 @@
 
 #include "OTcpMessage.h"
 
+#define IRC_MSG_LENGTH	512	// as per RFC1459
+#define IRC_MAX_ARGS	16	// 15 according to RFC1459
+
 
 #define IRC_NICKLIST		(MSG_USERMSG+10)
 
@@ -35,56 +38,27 @@
 #define INCOMING_CTCP_MSG	(MSG_USERMSG+24)
 #define OUTGOING_CTCP_MSG	(MSG_USERMSG+25)
 
-#define PRIVMSG			0
-#define NOTICE			1
-#define AUTH			2
-#define ERROR			3
-#define JOIN			4
-#define LEAVE			5
-#define MODE			6
-#define TOPIC			7
-#define TOPIC_SET		8
-#define TOPIC_SETBY		9
-#define NICK			10
-#define NICKLIST		11
-#define USER			12
-#define KICK			13
-#define QUIT			14
-#define NAMES			15
-#define WHO			16
-#define SPECIAL			17
-#define UNKNOWN			18
-#define DCC			19
-#define WALLOPS			20
-#define INVITE			21
+#define PRIVMSG		0
+#define NOTICE		1
+#define DCC		2
+#define CTCP            3
 
 
-class OIrcMessage : public OTcpMessage {
+//----------------------------------------------------------------------
+
+class OIrcMessage : public OMessage {
 public:
-  OIrcMessage(int typ, int act,
-              long p1, long p2, long p3, long p4,
-              char *str1 = "", char *str2 = "",
-              char *str3 = "", char *str4 = "") :
-    OTcpMessage(typ, act, p1, p2, p3, p4, str1) {
-      string2 = new OString(str2);
-      string3 = new OString(str3);
-      string4 = new OString(str4);
-      printf("new OIrcMessage: %i, %i, %i, %i, %i, %i\n", 
-             typ, act, p1, p2, p3, p4);
-      printf("str1: \"%s\"\n", str1);
-      printf("str2: \"%s\"\n", str2);
-      printf("str3: \"%s\"\n", str3);
-      printf("str4: \"%s\"\n", str4);
-  }
-  ~OIrcMessage() {
-    delete string2;
-    delete string3;
-    delete string4;
-  }
+  OIrcMessage(int typ, int act, const char *raw_msg);
 
-  OString *string2;
-  OString *string3;
-  OString *string4;
+public:
+  int  argc;
+  char *prefix, *command, *argv[IRC_MAX_ARGS];
+  const char *rawmsg;
+  //char *nick, *ircname;
+
+protected:
+  char msg[IRC_MSG_LENGTH];
 };
+
 
 #endif  // __OIRCMESSAGE_H

@@ -8,14 +8,16 @@
 
 #include "OXPreferences.h"
 
+
+//----------------------------------------------------------------------
+
 class OXChannelEditor : public OXTransientFrame {
 public:
   OXChannelEditor(const OXWindow *p, const OXWindow *p, OChannelInfo *ci,
-                  int *rt);
+                  int *retc);
   virtual ~OXChannelEditor();
 
   virtual int ProcessMessage(OMessage *msg);
-  virtual int CloseWindow();
 
 protected:
   void _LoadInfo();
@@ -27,9 +29,10 @@ protected:
   OXCheckButton *_autoCB, *_transCB, *_raiseCB, *_beepCB;
   OXTextButton *_ok,*_cancel;
   OXButton *_fileBT, *_logfileBT;
-  int *ret;
+  int *_ret;
   OChannelInfo *_ci;
-  OLayoutHints *_l1, *_l2, *_l3, *_l4, *_l5, *_l6;
+  OLayoutHints *_l1, *_l2, *_l3, *_l4, *_l5, *_l6, *_l7;
 };
 
-#endif
+
+#endif  // __OXCHANNELEDITOR_H

@@ -5,7 +5,9 @@
 #include <stdio.h>
 
 #include <xclass/OFileHandler.h>
+
 #include "OTcp.h"
+
 
 //---------------------------------------------------------------------
 
@@ -14,13 +16,14 @@ public:
   OIrc();
   virtual ~OIrc();
 
+  virtual int ProcessMessage(OMessage *msg);
+
   int  Connect(char *server, int port) 
        const { return _tcp->Connect(server, port, True); }
   void Close() const { _tcp->Close(); }
   int  GetFD() const { return _tcp->GetFD(); }
 
   int Receive() { return _tcp->Receive(); }
-  virtual int ProcessMessage(OMessage *msg);
   OTcp *GetOTcp() { return _tcp; }
 
 protected:

@@ -4,7 +4,7 @@
 /*
  * I've (mike) made some changes to this class so that it can be included
  * in the libfOX. I've bumped the OIrcMessage up a level and created a
- * OTcpMessage. It contains the extra parm's and the string1 of OIrcMessage.
+ * OTcpMessage. It contains the string1 of OIrcMessage.
  * I've also added a bind command to begin coding the server side in.
  * To accomodate these changes I moved the host and hp structs to the
  * class scope. They are now setup using the BuildAddress function,
@@ -21,7 +21,10 @@
 #include <unistd.h>
 #include <xclass/OComponent.h>
 
-#define TCP_BUFFER_LENGTH 65535
+//#define TCP_BUFFER_LENGTH 65535
+#define TCP_BUFFER_LENGTH 16383
+
+//----------------------------------------------------------------------
 
 class OTcp : public OComponent {
 public:
@@ -29,12 +32,12 @@ public:
   virtual ~OTcp();
 
   int  Bind(int port);
-  int  Connect(char *server, int port, int async);
+  int  Connect(const char *server, int port, int async);
   int  Connect(unsigned long server, int port, int async);
   int  Listen(unsigned long *hostr, unsigned short *portr, OTcp *serv = NULL);
   int  Accept(int sockfd);
   void Close() { if (_fd > 0) { close(_fd); _fd = -1; } }
-  int  Send(char *message);
+  int  Send(const char *message);
   int  Receive();
   int  GetLocalAddress(unsigned long *hostr, unsigned short *portr);
   int  GetFD() { return _fd; }
@@ -42,12 +45,14 @@ public:
   char *GetAddress() const { return inet_ntoa(host.sin_addr); }
   int  GetPort() const { return ntohs(host.sin_port); }
 
-  int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
-  int BuildAddress(char *server,int port); // builds a sockaddr_in and hostent
-                                           // Also creates a socket and
-                                           // returns the file desc.
+
+  // Builds a sockaddr_in and hostent.
+  // Also creates a socket and returns the file descriptor.
+  int BuildAddress(const char *server, int port);
+
   int _Connect(int fd, int async);
 
   char *_server;
@@ -59,5 +64,6 @@ protected:
   char _buffer[TCP_BUFFER_LENGTH+1];
   int _blength, _rem_bytes;
 };
+
 
 #endif  // __OTCP_H

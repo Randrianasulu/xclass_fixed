@@ -14,14 +14,14 @@
 #include <xclass/OX3dLines.h>
 #include <xclass/OString.h>
 
-#include "OXTextView.h"
+#include <vector.h>
+
+#include "OXViewDoc.h"
 #include "OXNameList.h"
 #include "OXIrc.h"
-#include "TDList.h"
 
 #define M_POPUP      100
 #define M_POPDOWN    101
-#define M_DRAW       102
 #define M_QUIET      103
 #define M_ACTIONS    104
 #define M_NOCASE     105
@@ -38,15 +38,14 @@
 #define CH_WHO       201
 #define CH_INVITE    202
 #define CH_NOTICE    203
-#define CH_DRAW      204
 #define CH_HISTORY   205
 #define CH_EXEC      206
-#define CH_LEAVE     207
+#define CH_CRYPT     207
+#define CH_LEAVE     208
 
 #define L_OPEN       301
 #define L_CLOSE      302
-#define L_FLUSH      303
-#define L_EMPTY      304
+#define L_EMPTY      303
 
 #define CTCP_CLIENTINFO 401
 #define CTCP_FINGER     402
@@ -63,14 +62,16 @@
 #define T_SAY        101
 #define T_TOPIC      102
 
-//--- Mode bits are: 0000 00zy xwvu tsrq ponm lkji hgfe dcba
+//--- Mode bits are: ...O ..zy xwvu tsrq ponm lkji hgfe dcba
 
 //--- User modes
 
 #define UMODE_INVISIBLE  (1<<8)
 #define UMODE_CHANOP     (1<<14)
 #define UMODE_SNOTICES   (1<<18)
-#define UMODE_WALLOPS    (1<<22)  
+#define UMODE_VOICED     (1<<21)
+#define UMODE_WALLOPS    (1<<22)
+#define UMODE_IRCOP      (1<<28)
 
 //--- Channel modes
 
@@ -90,12 +91,6 @@
 //---------------------------------------------------------------------
 
 class OXChannel : public OXTransientFrame {
-
-  friend class OXIrc;
-
-protected:
-  OXIrc *_server;
-
 public:
   OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
             const char *ch, int init = True);
@@ -104,26 +99,35 @@ public:
   virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
-  virtual void Say(char *nick, char *message, int mode);
-  virtual void Log(char *message);
-  virtual void Log(char *message, char *color);
-  virtual void Log(char *message, int color);
-  char *_name;
+  virtual void Say(const char *nick, char *message, int mode);
+  virtual void Log(const char *message);
+  virtual void Log(const char *message, int color);
+
+  const char *GetName() const { return _name; }
+
+  friend class OXIrc;
 
 protected:
   void _AddView();
-  void ProcessDCCRequest(char *nick, char *string);
-  void AcceptDCCChat(char *nick, char *server, int port);
-  void StartDCCChat(char *nick);
+  void _InitHistory();
+  void _AddToHistory(const char *str);
+  void _ClearHistory();
+
+  void ProcessDCCRequest(const char *nick, const char *string);
+  void AcceptDCCChat(const char *nick, const char *server, int port);
+  void StartDCCChat(const char *nick);
+
+  OXIrc *_server;
 
   OTextDoc *_log;
   OXViewDoc *_logw;
-  TDDLList<char *> _history;
-  int historyCurrent;
+  vector<char *> _history;
+  int _historyCurrent;
 
   OXCompositeFrame *_hf, *_vf;
   OXTextEntry *_sayentry;
 
+  char *_name;
   OXChannel *_next, *_prev;
   OChannelInfo *_cinfo;
 };

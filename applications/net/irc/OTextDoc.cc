@@ -1,7 +1,13 @@
 #include <unistd.h>
 
+#include <xclass/OXFont.h>
+
 #include "OTextDoc.h"
-#include "OXTextView.h"
+#include "OXViewDoc.h"
+#include "OXPreferences.h"
+
+extern OSettings *foxircSettings;
+
 
 //----------------------------------------------------------------------
 
@@ -15,15 +21,14 @@ OTextDoc::~OTextDoc() {
 }
 
 void OTextDoc::CreateCanvas(OXViewDoc *p) {
-  _style_server = new OXTextFrame(p, 1, 1, CHILD_FRAME);
-  _style_server->SetDocument(this);
-  _canvas = _style_server;
-  _main_widget = p;
-  _gc = _style_server->GetGC("white");
+  _textFrame = new OXViewDocFrame(p, 1, 1, CHILD_FRAME);
+  _textFrame->SetDocument(this);
+  _canvas = _textFrame;
+  _mainWidget = p;
 }
 
-void OTextDoc::SetCanvas(OXTextFrame *c) {
-  _style_server = c;
+void OTextDoc::SetCanvas(OXViewDocFrame *c) {
+  _textFrame = c;
   _canvas = c;
 }
 
@@ -39,7 +44,9 @@ int OTextDoc::AddLine(OLineDoc *line) {
     _lines = line;
   line->Layout();
   _h += line->GetHeight();
-  _main_widget->AdjustScrollbars();
+  _mainWidget->AdjustScrollbars();
+
+  return True;
 }
 
 int OTextDoc::LoadFile(FILE *fp) {
@@ -52,12 +59,12 @@ int OTextDoc::LoadFile(FILE *fp) {
   // Read each line of the file into the buffer.
 
   line = new OLineDoc();
-  line->SetCanvas(_style_server);
+  line->SetCanvas(_textFrame);
   while (line->LoadFile(fp)) {
     AddLine(line);
 
     line = new OLineDoc();
-    line->SetCanvas(_style_server);
+    line->SetCanvas(_textFrame);
   }
 
   // Remember the number of lines, and initialize the current line
@@ -68,7 +75,6 @@ int OTextDoc::LoadFile(FILE *fp) {
 
 void OTextDoc::Layout() {
   OLineDoc *i;
-  int _tmp_h = _h;
 
   _h = 0;
   i = _lines;
@@ -84,8 +90,11 @@ void OTextDoc::Layout() {
 void OTextDoc::DrawRegion(Display *dpy, Drawable d,
                           int x, int y, XRectangle *rect) {
   OLineDoc *i;
-  //GC gc = _gc->_gc;
-  int lh = _gc->_font->ascent + _gc->_font->descent;
+  OFontMetrics fm;
+
+  foxircSettings->GetFont()->GetFontMetrics(&fm);
+
+  int lh = fm.ascent + fm.descent;
   int yloc = y;
 
   i = _lines;

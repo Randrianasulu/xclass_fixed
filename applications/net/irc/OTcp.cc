@@ -10,6 +10,7 @@
 #include "OTcp.h"
 #include "OTcpMessage.h"
 
+
 //----------------------------------------------------------------------
 
 OTcp::OTcp() : OComponent() {
@@ -22,7 +23,7 @@ OTcp::~OTcp() {
   Close();
 }
 
-int OTcp::BuildAddress(char *server, int port) {
+int OTcp::BuildAddress(const char *server, int port) {
   char buf[1024];
  
   _fd = 0;
@@ -76,7 +77,7 @@ int OTcp::Bind(int port) {
   return _fd;
 }
 
-int OTcp::Connect(char *server, int port, int async) {
+int OTcp::Connect(const char *server, int port, int async) {
   return _Connect(BuildAddress(server, port), async);
 }
 
@@ -127,6 +128,7 @@ int OTcp::_Connect(int fd, int async) {
     } else {
       status = 0;
     }
+
     if (status > -1) {
       status = connect(_fd, (struct sockaddr *) &host, sizeof(host));
       if (status < 0) {
@@ -152,6 +154,7 @@ int OTcp::GetLocalAddress(unsigned long *hostr, unsigned short *portr) {
 
   if (getsockname(_fd, (struct sockaddr *) &host, (socklen_t *) &length))
     return False;
+
   *hostr = host.sin_addr.s_addr;
   *portr = host.sin_port;
 
@@ -183,7 +186,7 @@ int OTcp::Accept(int sockfd) {
   return _fd;
 }
 
-int OTcp::Send(char *message) {
+int OTcp::Send(const char *message) {
   return(send(_fd, message, strlen(message), 0));
 }
 
@@ -197,14 +200,14 @@ int OTcp::Receive() {
   char * msg;
 
   _blength = recv(_fd, &_buffer[_rem_bytes],
-                  TCP_BUFFER_LENGTH-_rem_bytes, 0);
+                  TCP_BUFFER_LENGTH - _rem_bytes, 0);
   if (_blength > 0) {
-    for (i = 0, msg = _buffer; i<_blength+_rem_bytes; i++) {
+    for (i = 0, msg = _buffer; i < _blength + _rem_bytes; i++) {
       if (_buffer[i] == '\n' || _buffer[i] == '\r') {
         _buffer[i] = 0;
 	if (_msgObject && *msg) {
-          printf("%s\n", msg);
-	  OTcpMessage message(INCOMING_TCP_MSG, 0, 0, 0, 0, 0, msg);
+          //printf("%s\n", msg);
+	  OTcpMessage message(INCOMING_TCP_MSG, 0, msg);
           SendMessage(_msgObject, &message);
 	}
         msg = _buffer + i + 1;
@@ -212,7 +215,7 @@ int OTcp::Receive() {
     }
 
     _rem_bytes += _buffer + _blength - msg;
-    for(i = 0; i < _rem_bytes; i++)
+    for (i = 0; i < _rem_bytes; i++)
       _buffer[i] = msg[i];
 
     _buffer[_rem_bytes] = 0;
@@ -223,7 +226,7 @@ int OTcp::Receive() {
     return 1;
   } else {
     if (_blength == 0) {
-      OTcpMessage message(BROKEN_PIPE, 0, 0, 0, 0, 0);
+      OTcpMessage message(BROKEN_PIPE, 0);
       SendMessage(_msgObject, &message);
     }
     return 0;
@@ -232,17 +235,17 @@ int OTcp::Receive() {
 
 int OTcp::ProcessMessage(OMessage *msg) {
   if (msg->type == OUTGOING_TCP_MSG) {
-    OTcpMessage *tcpmsg = (OTcpMessage*) msg;
-    printf("%s\n", tcpmsg->string1->GetString());
-    if (Send((char *) tcpmsg->string1->GetString()) < 0) {
+    OTcpMessage *tcpmsg = (OTcpMessage *) msg;
+    //printf("%s\n", tcpmsg->string->GetString());
+    if (Send((char *) tcpmsg->string->GetString()) < 0) {
       if (errno == EPIPE) {
         // hmmm... a message back
-        OTcpMessage message(BROKEN_PIPE, 0, 0, 0, 0, 0);
+        OTcpMessage message(BROKEN_PIPE, 0);
         SendMessage(_msgObject, &message);
       }
     }
     return True;
   }
-  printf("Bad message received (OTcp)\n");
+  fprintf(stderr, "Bad message received (OTcp)\n");
   return False;
 }

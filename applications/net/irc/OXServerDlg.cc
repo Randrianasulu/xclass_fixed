@@ -25,6 +25,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <xclass/utils.h>
+
 #include "OXServerDlg.h"
 
 extern OSettings  *foxircSettings;
@@ -36,13 +38,13 @@ OXServerDlg::OXServerDlg(const OXWindow *p, const OXWindow *main,
                          int *ret_code, int connect, unsigned long options) :
   OXTransientFrame(p, main, 10, 10, options) {
 
-    int ax, ay, width = 0, height = 0;
-    unsigned int root_w, root_h, dummy;
-    Window wdummy;
+    int width = 0, height = 0;
 
     _ret_code = ret_code;
     _info = info;
     _connect = connect;
+
+    if (_ret_code) *_ret_code = ID_NO;
 
     L1 = new OLayoutHints(LHINTS_CENTER_Y | LHINTS_EXPAND_X, 3, 3, 0, 0);
 
@@ -68,10 +70,7 @@ OXServerDlg::OXServerDlg(const OXWindow *p, const OXWindow *main,
            ptr != NULL;
            ptr = ptr->next, i++) {
         OServerInfo *e = (OServerInfo *) ptr->data;
-        if (e->name) {
-           _name->AddEntry(new OString(e->name), i);
-           printf("Adding [%d]\"%s\"\n",i,e->name);
-        }
+        if (e->name) _name->AddEntry(new OString(e->name), i);
       }
       _name->Associate(this);
       _name->Resize(200, _name->GetDefaultHeight());
@@ -142,7 +141,6 @@ OXServerDlg::OXServerDlg(const OXWindow *p, const OXWindow *main,
     else
       OK = new OXTextButton(ButtonFrame, new OHotString("&OK"), ID_OK);
 
-    OK->SetDefault();
     OK->Associate(this);
     ButtonFrame->AddFrame(OK, L1);
     width = max(width, OK->GetDefaultWidth());
@@ -172,7 +170,9 @@ OXServerDlg::OXServerDlg(const OXWindow *p, const OXWindow *main,
       if (_info->port > 0) {
         char tmp[20]; sprintf(tmp, "%d", _info->port);
         _port->AddText(0, tmp);
-      } else _port->AddText(0, "6667");
+      } else {
+        _port->AddText(0, "6667");
+      }
       if (_info->passwd)   _psw->AddText(0, _info->passwd);
       if (_info->nick)     _nick->AddText(0, _info->nick);
       if (_info->ircname)  _uname->AddText(0, _info->ircname);
@@ -197,21 +197,7 @@ OXServerDlg::OXServerDlg(const OXWindow *p, const OXWindow *main,
 
     //--- position relative to the parent's window
 
-    if (main) {
-      XTranslateCoordinates(GetDisplay(),
-                            main->GetId(), GetParent()->GetId(),
-                            (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                            (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                            &ax, &ay, &wdummy);
-    } else {
-      XGetGeometry(GetDisplay(), _client->GetRoot()->GetId(), &wdummy,
-                   &ax, &ay, &root_w, &root_h, &dummy, &dummy);
-      ax = (root_w - _w) >> 1;
-      ay = (root_h - _h) >> 1;
-    }
-
-    Move(ax, ay);
-    SetWMPosition(ax, ay);
+    CenterOnParent();
 
     //---- make the dialog box non-resizable
 
@@ -222,7 +208,7 @@ OXServerDlg::OXServerDlg(const OXWindow *p, const OXWindow *main,
 
     SetWindowName((char *) title->GetString());
     SetIconName((char *) title->GetString());
-    SetClassHints("MsgBox", "MsgBox");
+    SetClassHints("fOXirc", "Dialog");
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
                                 MWM_DECOR_MINIMIZE | MWM_DECOR_MENU,
@@ -242,18 +228,14 @@ OXServerDlg::~OXServerDlg() {
   delete L5;
 }
 
-int OXServerDlg::CloseWindow() {
-  if (_ret_code) *_ret_code = ID_NO;
-  return OXTransientFrame::CloseWindow();
-}
-
 int OXServerDlg::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
   switch (msg->action) {
   case MSG_CLICK:
     switch (msg->type) {
-    case MSG_DDLISTBOX:
+    case MSG_LISTBOX:
+    case MSG_COMBOBOX:
       {
       OListBoxMessage *lbmsg = (OListBoxMessage *) msg;
       //OXLBEntry *
@@ -271,7 +253,8 @@ int OXServerDlg::ProcessMessage(OMessage *msg) {
         char tmp[20]; 
         _port->Clear();
         sprintf(tmp, "%d", ptr->port);
-        _port->AddText(0, tmp); }
+        _port->AddText(0, tmp);
+      }
       }
       break;
 
@@ -281,40 +264,32 @@ int OXServerDlg::ProcessMessage(OMessage *msg) {
 
         if (_info->name) delete[] _info->name;
         if (_connect) {
-          _info->name = new char[_name->GetTextEntry()->GetTextLength()+1];
-          strcpy(_info->name, _name->GetText());
+          _info->name = StrDup(_name->GetText());
         } else {
-          _info->name = new char[_nameedit->GetTextLength()+1];
-          strcpy(_info->name, _nameedit->GetString());
+          _info->name = StrDup(_nameedit->GetString());
         }
 
         if (_info->hostname) delete[] _info->hostname;
-        _info->hostname = new char[_hname->GetTextLength()+1];
-        strcpy(_info->hostname, _hname->GetString());
+        _info->hostname = StrDup(_hname->GetString());
 
         _info->port = atoi(_port->GetString());
 
         if (_info->passwd) delete[] _info->passwd;
-        _info->passwd = new char[_psw->GetTextLength()+1];
-        strcpy(_info->passwd, _psw->GetString());
+        _info->passwd = StrDup(_psw->GetString());
 
         if (_info->nick) delete[] _info->nick;
-        _info->nick = new char[_nick->GetTextLength()+1];
-        strcpy(_info->nick, _nick->GetString());
+        _info->nick = StrDup(_nick->GetString());
 
         if (_info->ircname) delete[] _info->ircname;
-        _info->ircname = new char[_uname->GetTextLength()+1];
-        strcpy(_info->ircname, _uname->GetString());
+        _info->ircname = StrDup(_uname->GetString());
 
         if (_info->opnick) delete[] _info->opnick;
-        _info->opnick = new char[_opnick->GetTextLength()+1];
-        strcpy(_info->opnick, _opnick->GetString());
+        _info->opnick = StrDup(_opnick->GetString());
 
         if (_info->oppasswd) delete[] _info->oppasswd;
-        _info->oppasswd = new char[_oppsw->GetTextLength()+1];
-        strcpy(_info->oppasswd, _oppsw->GetString());
+        _info->oppasswd = StrDup(_oppsw->GetString());
       }
-      delete this;
+      CloseWindow();
       break;
 
     default:

@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of foxirc, a cool irc client.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    Copyright (C) 1996, 1997 R. Suescun, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,11 +32,12 @@
 #include <xclass/OXListBox.h>
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
+#include <xclass/OColor.h>
+#include <xclass/OXFont.h>
+#include <xclass/OXSList.h>
 
-#include "OXSDList.h"
-#include "TDList.h"
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 // This class contains all the user-changeable settings in fOXIrc
 // Perhaps most of this settings should be implemented as member
@@ -59,19 +60,18 @@
 #define P_LOG_INFO            (1<<7)
 #define P_LOG_KILL            (1<<8)
 #define P_LOG_CLOSE           (1<<9)
+#define P_LOG_CHAN_LIST       (1<<10)
 
 #define P_MISC_ENABLE_CMD     (1<<0)
 #define P_MISC_NOTIFY_ALL     (1<<1)
-#define P_MISC_AUTO_JOIN      (1<<2)
+#define P_MISC_AUTO_REJOIN    (1<<2)
 #define P_MISC_SHOW_OPS       (1<<3)
 #define P_MISC_SHOW_FRIENDS   (1<<4)
 #define P_MISC_SHOW_VOICED    (1<<5)
-#define P_MISC_MIRC_COLORS    (1<<6)
-#define P_MISC_ANSI_COLORS    (1<<7)
-#define P_MISC_POPUP_WINDOW   (1<<8)
-#define P_MISC_POPUP_SERV_CN  (1<<9)
-#define P_MISC_POPUP_CHAN_CN  (1<<10)
-#define P_MISC_TRANSIENT_CHW  (1<<11)
+#define P_MISC_POPUP_WINDOW   (1<<6)
+#define P_MISC_POPUP_SERV_CN  (1<<7)
+#define P_MISC_POPUP_CHAN_CN  (1<<8)
+#define P_MISC_TRANSIENT_CHW  (1<<9)
 
 #define P_CHAN_AUTO_RAISE     (1<<0)
 #define P_CHAN_AUTO_LOG       (1<<1)
@@ -94,8 +94,40 @@ class ONameInfo {
   char *name;
 };
 
-//typedef TDDLList<ONameInfo *> ONamePtrList;
-//typedef TIDLList<ONameInfo> ONameList;
+#define P_COLOR_BACKGROUND   0
+#define P_COLOR_ACTION       1
+#define P_COLOR_CTCP         2
+#define P_COLOR_HIGHLIGHT    3
+#define P_COLOR_SERVER_1     4
+#define P_COLOR_SERVER_2     5
+#define P_COLOR_INVITE       6
+#define P_COLOR_JOIN         7
+#define P_COLOR_KICK         8
+#define P_COLOR_MODE         9
+#define P_COLOR_NICK        10
+#define P_COLOR_TEXT        11
+#define P_COLOR_NOTICE      12
+#define P_COLOR_NOTIFY      13
+#define P_COLOR_OTHER       14
+#define P_COLOR_OWN_TEXT    15
+#define P_COLOR_PART        16
+#define P_COLOR_QUIT        17
+#define P_COLOR_TOPIC       18
+#define P_COLOR_WALLOPS     19
+
+class OColorsPref {
+public:
+  OColorsPref(const char *n, int r, int g, int b);
+  ~OColorsPref();
+
+public:
+  char *name;
+  OColor color;
+  unsigned long pixel;
+};
+
+
+//typedef vector<ONameInfo *> ONameList;
 
 #define TRANSIENT_WINDOW 	(1<<0)
 #define USES_BACKGROUND_PIX 	(1<<1)
@@ -106,7 +138,7 @@ class ONameInfo {
 
 class OChannelInfo {
 public:
-  OChannelInfo() : name(0), logfile(0),background(0), flags(0) {};
+  OChannelInfo() : name(0), logfile(0), background(0), flags(0) {};
   ~OChannelInfo() { if (name) delete[] name;
                     if (logfile) delete[] logfile;
 		    if (background) delete[] background; }
@@ -117,15 +149,14 @@ public:
   int   flags;
 };
 
-//typedef TDDLList<OChannelInfo *> OChannelPtrList;
-//typedef TIDLList<OChannelInfo> OChannelList;
+//typedef vector<OChannelInfo *> OChannelList;
 
 class OSettings : public OBaseObject {
 public:
-  OSettings();
-  ~OSettings();
+  OSettings(OXClient *c);
+  virtual ~OSettings();
 
-  int Load(char *fname);
+  int Load();
   int Save();
 
 //  void AddServer(char *server, int port, char *psw, char *oppsw,
@@ -141,17 +172,21 @@ public:
   OChannelInfo *FindChannel(const char *name);
   int CheckChannelFlags(const char *name, int what);
 
-  OXSDList   *GetServerList()  { return _servers; }
-  OXSDList   *GetChannelList() { return _channels; }
-  OXSDList   *GetNamesList()   { return _names; }
-  OXSDList   *GetNickList()    { return _nicks; }
-  OXSDList   *GetColorsList()  { return _colors; }
-  const char *GetFont()        { return _font; }
-// returns a index into the IRCcolors[] array
-// given a color preference index
-  int GetColorID(int id);
-  int SetColor(int id,int color);
+  OXSList *GetServerList()  { return _servers; }
+  OXSList *GetChannelList() { return _channels; }
+  OXSList *GetNamesList()   { return _names; }
+  OXSList *GetNickList()    { return _nicks; }
+  OColorsPref **GetColorsList() { return _colors; }
 
+  void SetFont(const char *name);
+  const OXFont *GetFont() { return _font; }
+
+  OColor GetColorID(int id) const { return _colors[id]->color; }
+  unsigned long GetPixelID(int id) const { return _colors[id]->pixel; }
+  void SetColor(int id, OColor color);
+
+  OColor GetIrcColor(int num) const { return _ircColors[num]->color; }
+  unsigned long GetIrcPixel(int num) const { return _ircColors[num]->pixel; }
 
   int Confirm(int what) const { return (_confirm & what); }
   int SendToInfo(int what) const { return (_sendToInfo & what); }
@@ -164,26 +199,29 @@ public:
   friend class OXNamesTab;
   friend class OXServersTab;
   friend class OXChannelTab;
+  friend class OXInfoTab;
 
 protected:
-  OXSDList *_servers;
-  OXSDList *_nicks;
-  OXSDList *_names;
-  OXSDList *_channels;
-  OXSDList *_colors;
+  OXSList *_servers;
+  OXSList *_nicks;
+  OXSList *_names;
+  OXSList *_channels;
 
-  char *_font;
+  OColorsPref *_colors[20];
+  OColorsPref *_ircColors[16];
+
+  OXFont *_font;
+
   int _confirm;
   int _sendToInfo;
   int _misc;
   int _changed;
-
-private:
-  char *_filename;
+  
+  OXClient *_client;
 };
 
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXPreferencesDialog : public OXTransientFrame {
 public:
@@ -197,14 +235,10 @@ public:
 protected:
   void UpdateListBox();
 
-  //=== dialog widgets and frames:
-
-  //--- "OK Cancel Apply" buttons:
   OXButton *Ok, *Cancel, *Apply;
   OXHorizontalFrame *bframe;
   OLayoutHints *bly, *bfly;
 
-  //--- Tab widget:
   OXTab *tab;
   OLayoutHints *Ltab;
 
@@ -212,7 +246,7 @@ protected:
 };
 
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 struct _ButtonDef {
   char *name;
@@ -234,7 +268,7 @@ protected:
 };
 
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXNamesTab : public OXHorizontalFrame {
 public:
@@ -249,7 +283,7 @@ protected:
 };
 
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXServersTab : public OXHorizontalFrame {
 public:
@@ -269,13 +303,7 @@ protected:
   OSettings *_settings;
 };
 
-//---------------------------------------------------------------------
-
-struct OColorsPref {
-  char *name;
-  long defColor;
-  long id;
-};
+//----------------------------------------------------------------------
 
 class OXColorsTab : public OXHorizontalFrame {
 public:
@@ -289,7 +317,7 @@ protected:
   OSettings *_settings;
 };
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXChannelTab : public OXHorizontalFrame {
 public:
@@ -308,5 +336,21 @@ protected:
   OLayoutHints *_lbt, *_llb, *_lvf;
   OSettings *_settings;
 };
+
+//----------------------------------------------------------------------
+
+class OXInfoTab : public OXHorizontalFrame {
+public:
+  OXInfoTab(const OXWindow *p, OSettings *settings);
+  virtual ~OXInfoTab();
+
+  OXFrame *InitButtons(char *gname, int ctlvar, struct _ButtonDef b[]);
+  virtual int ProcessMessage(OMessage *msg);
+
+protected:
+  OLayoutHints *_lcb, *_lgf;
+  OSettings *_settings;
+};
+
 
 #endif   // __OXPREFERENCES_H
