@@ -154,7 +154,7 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
   _dndTypeList = new Atom[2];
 
   _dndTypeList[0] = XInternAtom(GetDisplay(), "text/uri-list", False);
-  _dndTypeList[1] = NULL;
+  _dndTypeList[1] = None;
 
   _dndManager = new ODNDmanager(_client, this, _dndTypeList);
 
@@ -721,7 +721,7 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
             case M_FILE_OPEN:
               if (_fileWindow->NumSelected() == 1) {
                 const OFileItem *f;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
 
                 items = _fileWindow->GetSelectedItems();
                 f = (OFileItem *) items[0];
@@ -732,7 +732,7 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
             case M_FILE_OPENWITH:
               if (_fileWindow->NumSelected() == 1) {
                 const OFileItem *f;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
 
                 items = _fileWindow->GetSelectedItems();
                 f = (OFileItem *) items[0];
@@ -743,7 +743,7 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
             case M_FILE_EXPLORE:
               if (_fileWindow->NumSelected() == 1) {
                 const OFileItem *f;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
 
                 items = _fileWindow->GetSelectedItems();
                 f = (OFileItem *) items[0];
@@ -754,7 +754,7 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
             case M_FILE_PROPS:
               if (_fileWindow->NumSelected() == 1) {
                 const OFileItem *f;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
 
                 items = _fileWindow->GetSelectedItems();
                 f = (OFileItem *) items[0];
@@ -853,7 +853,7 @@ UpdateTree();
         case MSG_CLICK:
           if (_fileWindow->NumSelected() == 1) {
             const OFileItem *f;
-            vector<OItem *> items;
+            std::vector<OItem *> items;
 
             items = _fileWindow->GetSelectedItems();
             f = (OFileItem *) items[0];
@@ -871,7 +871,7 @@ UpdateTree();
           if (vmsg->button == Button1) {
             if (_fileWindow->NumSelected() == 1) {
               const OFileItem *f;
-              vector<OItem *> items;
+              std::vector<OItem *> items;
 
               items = _fileWindow->GetSelectedItems();
               f = (OFileItem *) items[0];
@@ -1344,7 +1344,7 @@ void OXExplorer::DeleteFiles() {
   int    sel, retval;
   const  OPicture *pic;
   char  *title, prompt[256];
-  vector<OItem *> items;
+  std::vector<OItem *> items;
 
   if ((sel = _fileWindow->NumSelected()) == 0) return;
 

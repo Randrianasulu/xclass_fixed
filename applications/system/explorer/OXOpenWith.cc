@@ -19,8 +19,9 @@
 
 **************************************************************************/
 
-#include <vector.h>
-#include <algo.h>
+#include <vector>
+#include <algorithm>
+#include <functional>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -175,7 +176,7 @@ OXOpenWithDialog::~OXOpenWithDialog() {
   delete ly3;
 }
 
-struct LBSortAscending : public binary_function<OString*, OString*, bool> {
+struct LBSortAscending : public std::binary_function<OString*, OString*, bool> {
 public:
   bool operator()(const OString* item1, const OString* item2) const {
     return (strcmp(item1->GetString(), item2->GetString()) < 0);
@@ -184,7 +185,7 @@ public:
 
 void OXOpenWithDialog::UpdateListBox() {
   OMime *MimeRunner;
-  vector<OString *> progs;
+  std::vector<OString *> progs;
 
 #if 0
   lbf->RemoveAllEntries();

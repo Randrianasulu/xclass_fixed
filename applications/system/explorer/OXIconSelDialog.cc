@@ -117,7 +117,7 @@ OXIconSelDialog::~OXIconSelDialog() {
 int OXIconSelDialog::ProcessMessage(OMessage *msg) {
   OItemViewMessage *cmsg;
   OFileItem *f;
-  vector<OItem *> items;
+  std::vector<OItem *> items;
 
   switch (msg->type) {
   case MSG_LISTVIEW:
