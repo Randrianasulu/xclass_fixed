@@ -403,15 +403,16 @@ void OXDiffMainFrame::ErrorMsg(int icon_type, char *msg) {
 void OXDiffMainFrame::DoDiff() {
   int i, num;
   char buf1[128], buf2[128];
+
   if (_diffView->DoDiff() == 1) {
     num = _diffView->GetNumDiffs();
     _diffBox->RemoveAllEntries();
-    for (i=1; i<=num; i++)
+    for (i = 1; i <= num; i++)
       _diffBox->AddEntry(new OString(_diffView->GetDiffStr(i)), i);
 
     if (num) {
       sprintf(buf1, "Difference 1 of %d", num);
-      sprintf(buf2, "XC Diff found %d differences", num);
+      sprintf(buf2, "XC Diff found %d difference%s", num, (num == 1) ? "" : "s");
     } else {
       sprintf(buf1, "Difference 0 of 0");
       sprintf(buf2, "XC Diff found no differences");

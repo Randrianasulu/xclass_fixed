@@ -147,6 +147,8 @@ ODifference::ODifference(char *line) {
 
   } else
     type = DIFF_NOTREL;
+
+  if (str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0';
 }
 
 //------------------------------------------------------------------
