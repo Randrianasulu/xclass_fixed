@@ -1,0 +1,23 @@
+/* XPM */
+static char * tbu_refresh_xpm[] = {
+"16 16 4 1",
+" 	s None	c None",
+".	c #808080",
+"X	c #c0c0c0",
+"o	c white",
+"                ",
+"       ...      ",
+"     ...XX..    ",
+"    .Xoooooo.   ",
+"   .Xoo     oo  ",
+"  .XXo      .   ",
+"..XXXXX    .XX  ",
+" XXXXXoo  .XXXX ",
+"  XXXoo  .XXXXXX",
+"   Xoo     .XXoo",
+"    o      .Xoo ",
+"   .      .Xoo  ",
+"    ......Xoo   ",
+"     oXXXooo    ",
+"       ooo      ",
+"                "};
