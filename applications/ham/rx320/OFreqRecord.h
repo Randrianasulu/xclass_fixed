@@ -25,8 +25,8 @@
 #include <xclass/OBaseObject.h>
 
 
-#define FORMAT_CLIF320  1
-#define FORMAT_N4PYCDF  2
+#define FORMAT_CLIFTON_320  1
+#define FORMAT_TENTEC_CDF   2
 
 
 
@@ -34,9 +34,10 @@
 
 class OFreqRecord : public OBaseObject {
 public:
-  OFreqRecord(char *str, int fmt = FORMAT_CLIF320);
+  OFreqRecord(OFreqRecord *frec);
+  OFreqRecord(char *str, int fmt = FORMAT_CLIFTON_320);
 
-  char *RecordString(char *dst = NULL, int fmt = FORMAT_CLIF320);
+  char *RecordString(char *dst = NULL, int fmt = FORMAT_CLIFTON_320);
 
 public:
   char name[21];

@@ -49,6 +49,104 @@ char *filetypes[] = { "All files",       "*",
 
 //----------------------------------------------------------------------
 
+OFDBitem::OFDBitem(const OXListView *p, int id, OFreqRecord *fr,
+                   vector<OString *> names) :
+  OListViewItem(p, id, NULL, NULL, names, 0) {
+
+    _freqRec = NULL;
+    ChangeFreqRecord(fr);
+}
+
+OFDBitem::~OFDBitem() {
+  if (_freqRec) delete _freqRec;
+}
+
+void OFDBitem::ChangeFreqRecord(OFreqRecord *fr) {
+  char string[256];
+
+  if (_freqRec) delete _freqRec;
+  _freqRec = fr;
+
+  _names.clear();
+
+  // 0: name
+  if (strlen(_freqRec->name) == 0)
+    strcpy(string, "        ");
+  else
+    strcpy(string, _freqRec->name);
+  _names.push_back(new OString(string));
+
+  // 1: frequency
+  sprintf(string, "%10.6f", _freqRec->freq);
+  _names.push_back(new OString(string));
+
+  // 2: mode
+  if (_freqRec->mode == RX320_USB)
+    strcpy(string, "USB");
+  else if (_freqRec->mode == RX320_LSB)
+    strcpy(string, "LSB");
+  else if (_freqRec->mode == RX320_CW)
+    strcpy(string, "CW");
+  else
+    strcpy(string, "AM");
+  _names.push_back(new OString(string));
+
+  // 3: bandwitdth
+  sprintf(string, "%5d", _freqRec->filter_bw);
+  _names.push_back(new OString(string));
+
+  // 4: AGC
+  if (_freqRec->agc == RX320_AGC_SLOW)
+    strcpy(string, "slow");
+  else if (_freqRec->agc == RX320_AGC_FAST)
+    strcpy(string, "fast");
+  else
+    strcpy(string, "medium");
+  _names.push_back(new OString(string));
+
+  // 5: tuning step
+  sprintf(string, "%5d", _freqRec->tuning_step);
+  _names.push_back(new OString(string));
+
+  // 6: PBT offset
+  sprintf(string, "%5d", _freqRec->pbt_offset);
+  _names.push_back(new OString(string));
+
+  // 7: location
+  _names.push_back(new OString(_freqRec->location));
+
+  // 8: language
+  _names.push_back(new OString(_freqRec->language));
+
+  // 9: start time
+  _names.push_back(new OString(_freqRec->start_time));
+
+  // 10: end time
+  _names.push_back(new OString(_freqRec->end_time));
+
+  // 11: notes
+  _names.push_back(new OString(_freqRec->notes));
+
+  // 12: offset
+  sprintf(string, "%d", _freqRec->offset);
+  _names.push_back(new OString(string));
+
+  // 13: lockout
+  sprintf(string, "%d", _freqRec->lockout);
+  _names.push_back(new OString(string));
+
+  Resize(GetDefaultSize());
+  int vm = _viewMode; ++_viewMode;
+  SetViewMode(vm);  // hmmm... we need to do this to update _tw 
+#if 0
+  _parent->NeedRedraw(ORectangle(GetPosition(), GetSize()));
+#else
+  ((OXListView *)_parent)->Layout();
+#endif
+}
+
+//----------------------------------------------------------------------
+
 OXFreqDB::OXFreqDB(const OXWindow *p, OXMain *m, int w, int h) :
   OXMainFrame(p, w, h) {
 
@@ -94,7 +192,7 @@ OXFreqDB::OXFreqDB(const OXWindow *p, OXMain *m, int w, int h) :
 
   _listView = new OXListView(this, 10, 10, 1);
 
-  _listView->AddColumn(new OString("Name"), 0, TEXT_LEFT);
+  _listView->AddColumn(new OString("Station name"), 0, TEXT_LEFT);
   _listView->AddColumn(new OString("Frequency"), 1);
   _listView->AddColumn(new OString("Mode"), 2);
   _listView->AddColumn(new OString("Bandwidth"), 3);
@@ -245,26 +343,29 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
 
             //--------------------------------------- Edit
 
-            case M_EDIT_CUT:
-              break;
-
-            case M_EDIT_COPY:
-              break;
-
-            case M_EDIT_PASTE:
+            case M_EDIT_DELETE:
+              _listView->DeleteSelection();
               break;
 
             case M_EDIT_CHANGE:
               if (_listView->NumSelected() == 1) {
-                const OItem *f;
+                OFDBitem *f;
                 vector<OItem *> items;
-                OFreqRecord frec("");
+                OFreqRecord *frec;
+                int retc;
 
                 items = _listView->GetSelectedItems();
-                f = items[0];
+                f = (OFDBitem *) items[0];
 
-                frec = *_freqList[f->GetId()];
-                new OXEditStation(_client->GetRoot(), this, &frec);
+                frec = new OFreqRecord(f->GetFreqRecord());
+                new OXEditStation(_client->GetRoot(), this, frec, &retc);
+                if (retc == ID_OK) {
+                  f->ChangeFreqRecord(frec);
+                  //_listView->Layout();
+                  SetChanged(True);
+                } else {
+                  delete frec;
+                }
               }
               break;
 
@@ -330,13 +431,13 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
         case MSG_DBLCLICK:
           if (vmsg->button == Button1) {
             if (_listView->NumSelected() == 1) {
-              const OItem *f;
+              const OFDBitem *f;
               vector<OItem *> items;
 
               items = _listView->GetSelectedItems();
-              f = items[0];
+              f = (OFDBitem *) items[0];
 
-              _rxmain->TuneTo(_freqList[f->GetId()]);
+              _rxmain->TuneTo(f->GetFreqRecord());
             }
           }
           break;
@@ -346,6 +447,11 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
             _menuEdit->EnableEntry(M_EDIT_CHANGE);
           } else {
             _menuEdit->DisableEntry(M_EDIT_CHANGE);
+          }
+          if (_listView->NumSelected() > 0) {
+            _menuEdit->EnableEntry(M_EDIT_DELETE);
+          } else {
+            _menuEdit->DisableEntry(M_EDIT_DELETE);
           }
           break;
       }
@@ -377,7 +483,7 @@ void OXFreqDB::SetWindowTitle(char *title) {
 void OXFreqDB::UpdateStatus() {
   char tmp[256];
 
-  int nrec = _freqList.size();
+  int nrec = _listView->GetNumberOfItems();
   if (nrec == 0)
     strcpy(tmp, "Ready");
   else
@@ -489,7 +595,7 @@ void OXFreqDB::SetChanged(int onoff) {
    _changed = True;
   } else {
    _menuFile->DisableEntry(M_FILE_SAVE);
-   if (_freqList.size() == 0)
+   if (_listView->GetNumberOfItems() == 0)
      _menuFile->DisableEntry(M_FILE_SAVEAS);
    else
      _menuFile->EnableEntry(M_FILE_SAVEAS);
@@ -519,8 +625,6 @@ int OXFreqDB::IsSaved() {
 }
 
 void OXFreqDB::ClearFreqList() {
-  for (int i = 0; i < _freqList.size(); ++i) delete _freqList[i];
-  _freqList.clear();
   _listView->Clear();
 }
 
@@ -546,9 +650,9 @@ void OXFreqDB::ReadFile(char *fname) {
 
   p = strrchr(fname, '.');
   if (p && (strcmp(p, ".cdf") == 0))
-    format = FORMAT_N4PYCDF;
+    format = FORMAT_TENTEC_CDF;
   else
-    format = FORMAT_CLIF320;
+    format = FORMAT_CLIFTON_320;
 
   while (1) {
     if (!fgets(str, 256, f)) break;
@@ -580,93 +684,20 @@ void OXFreqDB::WriteFile(char *fname) {
     return;
   }
 
-  for (int i = 0; i < _freqList.size(); ++i)
-    fprintf(f, "%s\n", _freqList[i]->RecordString());
+  for (int i = 0; i < _listView->GetNumberOfItems(); ++i) {
+    OFDBitem *fi = (OFDBitem *) _listView->GetItem(i);
+    fprintf(f, "%s\n", fi->GetFreqRecord()->RecordString());
+  }
 
   fclose(f);
 }
 
 void OXFreqDB::AddStation(OFreqRecord *frec, int recno) {
-  OListViewItem *item;
-  vector<OString *> names;
-  char string[256];
+  OFDBitem *item;
+  vector<OString *> dummy;
 
-  _freqList.push_back(frec);
-
-  // 0: name
-  if (strlen(frec->name) == 0)
-    strcpy(string, "        ");
-  else
-    strcpy(string, frec->name);
-  names.push_back(new OString(string));
-
-  // 1: frequency
-  sprintf(string, "%10.6f", frec->freq);
-  names.push_back(new OString(string));
-
-  // 2: mode
-  if (frec->mode == RX320_USB)
-    strcpy(string, "USB");
-  else if (frec->mode == RX320_LSB)
-    strcpy(string, "LSB");
-  else if (frec->mode == RX320_CW)
-    strcpy(string, "CW");
-  else
-    strcpy(string, "AM");
-  names.push_back(new OString(string));
-
-  // 3: bandwitdth
-  sprintf(string, "%5d", frec->filter_bw);
-  names.push_back(new OString(string));
-
-  // 4: AGC
-  if (frec->agc == RX320_AGC_SLOW)
-    strcpy(string, "slow");
-  else if (frec->agc == RX320_AGC_FAST)
-    strcpy(string, "fast");
-  else
-    strcpy(string, "medium");
-  names.push_back(new OString(string));
-
-  // 5: tuning step
-  sprintf(string, "%5d", frec->tuning_step);
-  names.push_back(new OString(string));
-
-  // 6: PBT offset
-  sprintf(string, "%5d", frec->pbt_offset);
-  names.push_back(new OString(string));
-
-  // 7: location
-  names.push_back(new OString(frec->location));
-
-  // 8: language
-  names.push_back(new OString(frec->language));
-
-  // 9: start time
-  names.push_back(new OString(frec->start_time));
-
-  // 10: end time
-  names.push_back(new OString(frec->end_time));
-
-  // 11: notes
-  names.push_back(new OString(frec->notes));
-
-  // 12: offset
-  sprintf(string, "%d", frec->offset);
-  names.push_back(new OString(string));
-
-  // 13: lockout
-  sprintf(string, "%d", frec->lockout);
-  names.push_back(new OString(string));
-
-  if (recno < 0) recno = _freqList.size() - 1;
-#if 0
-  item = new OListViewItem(_listView, recno, bpic, spic, names, 
-                           _listView->GetViewMode());
-#else
-  item = new OListViewItem(_listView, recno, NULL, NULL, names, 
-                           _listView->GetViewMode());
-#endif
+  dummy.clear();
+  dummy.push_back(new OString(frec->name));
+  item = new OFDBitem(_listView, recno, frec, dummy);
   _listView->AddItem(item);
-  //names.clear();
 }

@@ -92,7 +92,7 @@ OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
                                         5, 5, 5, 5);
 
     OXCompositeFrame *hf = new OXCompositeFrame(this, 10, 10);
-    hf->SetLayoutManager(new O2ColumnsLayout(hf, 20, 0));
+    hf->SetLayoutManager(new O2ColumnsLayout(hf, 10, 0));
 
     hf->AddFrame(new OXLabel(hf, new OHotString("Station name:")), NULL);
     _name = new OXTextEntry(hf, NULL, 101);

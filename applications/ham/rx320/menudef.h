@@ -39,11 +39,9 @@
 #define M_FILE_PRINTSETUP  105
 #define M_FILE_EXIT        106
 
-#define M_EDIT_CUT         201
-#define M_EDIT_COPY        202
-#define M_EDIT_PASTE       203
-#define M_EDIT_ADD         204
-#define M_EDIT_CHANGE      205
+#define M_EDIT_ADD         201
+#define M_EDIT_CHANGE      202
+#define M_EDIT_DELETE      203
 
 #define M_VIEW_TOOLBAR     301
 #define M_VIEW_STATUSBAR   302
@@ -79,12 +77,10 @@ struct _popup file_popup = {
 
 struct _popup edit_popup = {
   { NULL }, {
-  { "Cu&t",              M_EDIT_CUT,        MENU_DISABLED, NULL },
-  { "&Copy",             M_EDIT_COPY,       MENU_DISABLED, NULL },
-  { "&Paste",            M_EDIT_PASTE,      MENU_DISABLED, NULL },
-  { "",                  -1,                0,             NULL },
-  { "&Edit entry...",    M_EDIT_CHANGE,     MENU_DISABLED, NULL },
+  { "&Change entry...",  M_EDIT_CHANGE,     MENU_DISABLED, NULL },
   { "Add &new entry...", M_EDIT_ADD,        0,             NULL },
+  { "",                  -1,                0,             NULL },
+  { "&Delete selection", M_EDIT_DELETE,     MENU_DISABLED, NULL },
   { NULL,                -1,                0,             NULL } } };
 
 struct _popup view_popup = {

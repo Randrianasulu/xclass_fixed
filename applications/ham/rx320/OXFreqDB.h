@@ -38,6 +38,19 @@
 
 //----------------------------------------------------------------------
 
+class OFDBitem : public OListViewItem {
+public:
+  OFDBitem(const OXListView *p, int id, OFreqRecord *fr,
+           vector<OString *> names);
+  virtual ~OFDBitem();
+  
+  OFreqRecord *GetFreqRecord() const { return _freqRec; }
+  void ChangeFreqRecord(OFreqRecord *fr);
+  
+protected:
+  OFreqRecord *_freqRec;
+};
+
 class OXFreqDB : public OXMainFrame {
 public:
   OXFreqDB(const OXWindow *p, OXMain *m, int w, int h);
@@ -86,7 +99,6 @@ protected:
 
   char *_filename;
   int _changed;
-  vector<OFreqRecord *> _freqList;
 };
 
 

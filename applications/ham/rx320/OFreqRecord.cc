@@ -75,12 +75,12 @@ You may leave any of the string fields blank. If you do, however, make sure
 that you leave the empty quotes.
 
 
-                 N4PY *.cdf (exported) Frequency File Format
-                 -------------------------------------------
+               Ten-Tec *.cdf (exported) Frequency File Format
+               ----------------------------------------------
 
 The record structure is as follows: 
 
-BBC World Service, 9.915000,AM,6000,UK,English
+BBC World Service, 9.915000,AM,6 KHz,UK,English
 
 1. Name            String, up to ?? chars in length.
 
@@ -90,7 +90,7 @@ BBC World Service, 9.915000,AM,6000,UK,English
 3. Mode            String: AM, USB, LSB, or CW.
 
 4. Filter          Numeric, integer or float. Filter bandwidth in Hz,
-                   if integer; KHz if float.
+                   if integer (unless followed by "kHz"); KHz if float.
 
 5. Location        String, up to ?? char in length.
 
@@ -109,7 +109,7 @@ OFreqRecord::OFreqRecord(char *str, int fmt) {
 
   _p = str;
 
-  if (fmt == FORMAT_CLIF320) {
+  if (fmt == FORMAT_CLIFTON_320) {
 
     strcpy(name, GetQuotedString(20));
 
@@ -143,7 +143,7 @@ OFreqRecord::OFreqRecord(char *str, int fmt) {
     offset = GetInteger();
     lockout = GetInteger();
 
-  } else if (fmt == FORMAT_N4PYCDF) {
+  } else if (fmt == FORMAT_TENTEC_CDF) {
 
     strcpy(name, *_p == '"' ? GetQuotedString(20) : GetString(20));
 
@@ -203,6 +203,25 @@ OFreqRecord::OFreqRecord(char *str, int fmt) {
     lockout = 0;
 
   }
+}
+
+OFreqRecord::OFreqRecord(OFreqRecord *frec) {
+
+  strcpy(name, frec->name);
+  freq = frec->freq;;
+  mode = frec->mode;
+  filter_bw = frec->filter_bw;
+  agc = frec->agc;
+  tuning_step = frec->tuning_step;
+  pbt_offset = frec->pbt_offset;
+  strcpy(location, frec->location);
+  strcpy(language, frec->language);
+  strcpy(start_time, frec->start_time);
+  strcpy(end_time, frec->end_time);
+  strcpy(notes, frec->notes);
+  offset = frec->offset;
+  lockout = frec->lockout;
+
 }
 
 int OFreqRecord::GetInteger() {
@@ -284,7 +303,7 @@ char *OFreqRecord::RecordString(char *dst, int fmt) {
     case RX320_CW:  cmode = "CW";  break;
   }
 
-  if (fmt == FORMAT_N4PYCDF) {
+  if (fmt == FORMAT_TENTEC_CDF) {
     sprintf(dst, "%s,%9.6f,%s,%d,%s,%s",
             name, freq, cmode, filter_bw, location, language);
   } else {
