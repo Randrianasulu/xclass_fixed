@@ -63,6 +63,7 @@ HEADERS = O2ColumnsLayout.h \
 	OXHelpWindow.h \
 	OXHtml.h \
 	OXIcon.h \
+	OXImageView.h \
 	OXItemView.h \
 	OXLabel.h \
 	OXListBox.h \
