@@ -83,6 +83,8 @@ public:
   virtual int HandleSelectionRequest(XSelectionRequestEvent *event);
   virtual int HandleSelectionClear(XSelectionClearEvent *event);
   virtual void CloseWindow();
+  
+  virtual void Reconfig();
 
   void SetWindowName(char *Name);
   void SetIconName(char *Name);

@@ -47,6 +47,13 @@ class OPicturePool;
 class OPicture;
 class OMimeTypes;
 
+
+#define COLORS_CHANGED    (1<<0)
+#define FONTS_CHANGED     (1<<1)
+#define PIXMAPS_CHANGED   (1<<2)
+#define CURSORS_CHANGED   (1<<3)
+
+
 //---------------------------------------------------------------------
 // OResourcePool is a class implementing a pool for all the default
 // resource set, like GCs, colors, fonts, etc. neccessary to frames
@@ -82,6 +89,7 @@ private:
   
     char mime_type[256];
   };
+  int _colorServer, _changeMask;
 
 public:
   OResourcePool(const OXClient *client, OIniFile *ini = NULL);
@@ -94,8 +102,10 @@ public:
   int  SetDefaults(Sconfig *);
   int  LoadFromServer(Sconfig *);
   int  LoadFromIni(OIniFile *ini, Sconfig*);
+  
+  int  Reload();
 
-  // This should be for loading a applications inifile.
+  // This should be for loading applications inifile.
   // the idea being that the system default $OX_SYSTEM_ROOT/etc is for
   // the system defaults. and $OX_USER_ROOT/etc for the users own
   // settings.
@@ -111,8 +121,9 @@ public:
   virtual int ProcessMessage(OMessage *msg);
 
 protected:
-  void _GetValue(char *res_name, char *default_val, char *val);
   OXFont *_LoadFont(char *font_name);
+  int _SetValue(Sconfig *conf, const char *resource, const char *value,
+                int update = False);
 
 public:
   //--- inline functions:
@@ -221,11 +232,11 @@ protected:
 
   OGCPool *_gcPool;
 
-  const OXGC *_whiteGC, *_blackGC;
-  const OXGC *_frameGC, *_bckgndGC, *_hiliteGC, *_shadowGC, *_focusGC;
-  const OXGC *_docGC,   *_docbgndGC;
-  const OXGC *_selGC,   *_selbgndGC;
-  const OXGC *_tipGC;
+  OXGC *_whiteGC, *_blackGC;
+  OXGC *_frameGC, *_bckgndGC, *_hiliteGC, *_shadowGC, *_focusGC;
+  OXGC *_docGC,   *_docbgndGC;
+  OXGC *_selGC,   *_selbgndGC;
+  OXGC *_tipGC;
 
   Cursor _defaultCursor, _grabCursor, _textCursor, _waitCursor;
 

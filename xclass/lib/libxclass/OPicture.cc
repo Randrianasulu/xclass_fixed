@@ -459,7 +459,7 @@ int OPicturePool::LocatePicture(const char *name, char *path, char *bfr) {
 
   // if name contains path
   if (strchr(name, '/' )) {
-    // consider as file referece
+    // consider it as absolute file referece
     strcpy(bfr, name);
     if (access(bfr, R_OK) == 0) {
       // file found

@@ -627,7 +627,7 @@ void OXLBContainer::ShowFocusHilite(int onoff) {
 
 OXListBox::OXListBox(const OXWindow *p, int ID,
                      unsigned int options, unsigned long back) :
-  OXCompositeFrame(p, 10, 10, options, back) {
+  OXCompositeFrame(p, 200, 10, options, back) {
 
     _vport = new OXViewPort(this, 6, 6, CHILD_FRAME|OWN_BKGND, GetResourcePool()->GetDocumentBgndColor());
     _vscrollbar = new OXVScrollBar(this, SB_WIDTH, 6);

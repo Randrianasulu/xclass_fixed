@@ -30,8 +30,10 @@
 #include <xclass/OXClient.h>
 #include <xclass/OXMainFrame.h>
 #include <xclass/OFocusManager.h>
+#include <xclass/OResourcePool.h>
 #include <xclass/ODNDmanager.h>
 #include <xclass/OXButton.h>
+#include <xclass/OGC.h>
 
 
 //----------------------------------------------------------------
@@ -411,4 +413,28 @@ void OXMainFrame::SetWMState(int state) {
 
 void OXMainFrame::_GotFocus() {
   if (_focusMgr) _focusMgr->FocusCurrent();
+}
+
+void OXMainFrame::Reconfig() {
+  const OResourcePool *res = GetResourcePool();
+
+  _whitePixel = res->GetWhiteColor();
+  _blackPixel = res->GetBlackColor();
+  _defaultFrameBackground = res->GetFrameBgndColor();
+  _defaultFrameHilite = res->GetFrameHiliteColor();
+  _defaultFrameShadow = res->GetFrameShadowColor();
+  _defaultSelectedBackground = res->GetSelectedBgndColor();
+  _defaultDocumentBackground = res->GetDocumentBgndColor();
+  _defaultSelectedForeground = res->GetSelectedFgndColor();
+  _defaultDocumentForeground = res->GetDocumentFgndColor();
+
+  _defaultBackgroundPicture = res->GetFrameBckgndPicture();
+
+  _blackGC = res->GetBlackGC()->GetGC();
+  _whiteGC = res->GetWhiteGC()->GetGC();
+  _hilightGC = res->GetFrameHiliteGC()->GetGC();
+  _shadowGC = res->GetFrameShadowGC()->GetGC();
+  _bckgndGC = res->GetFrameBckgndGC()->GetGC();
+
+  OXCompositeFrame::Reconfig();
 }

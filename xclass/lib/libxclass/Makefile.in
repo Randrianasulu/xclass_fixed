@@ -76,6 +76,7 @@ SRCS = O2ColumnsLayout.cc \
 	OXPropertiesDialog.cc \
 	OXRadioButton.cc \
 	OXResizer.cc \
+	OXRootWindow.cc \
 	OXSList.cc \
 	OXScrollBar.cc \
 	OXSecretTextEntry.cc \

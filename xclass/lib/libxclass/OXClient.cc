@@ -29,6 +29,7 @@
 
 #include <xclass/utils.h>
 #include <xclass/OXClient.h>
+#include <xclass/OXRootWindow.h>
 #include <xclass/OXFrame.h>
 #include <xclass/OGC.h>
 #include <xclass/OPicture.h>
@@ -42,6 +43,8 @@
 Atom WM_DELETE_WINDOW;
 Atom _MOTIF_WM_HINTS;
 Atom _XCLASS_MESSAGE;
+Atom _XCLASS_COLORS;
+Atom _XCLASS_RESOURCES;
 Atom _XA_INCR;
 
 
@@ -99,12 +102,14 @@ void OXClient::_Init(const char *DpyName) {
   WM_DELETE_WINDOW = RegisterXAtom("WM_DELETE_WINDOW");
   _MOTIF_WM_HINTS = RegisterXAtom("_MOTIF_WM_HINTS");
   _XCLASS_MESSAGE = RegisterXAtom("_XCLASS_MESSAGE");
+  _XCLASS_COLORS = RegisterXAtom("_XCLASS_COLORS");
+  _XCLASS_RESOURCES = RegisterXAtom("_XCLASS_RESOURCES");
   _XA_INCR = RegisterXAtom("INCR");
 
 
   //--- Create an object for the root window, create picture pool, etc...
 
-  _Root = new OXWindow(this, XDefaultRootWindow(_dpy), NULL);
+  _Root = new OXRootWindow(this, XDefaultRootWindow(_dpy), NULL);
   XGetWindowAttributes(_dpy, _Root->GetId(), &root_attr);
   _defaultColormap = root_attr.colormap;
 
@@ -129,6 +134,8 @@ OXClient::~OXClient() {
   delete _siglist;
 
   delete _resourcePool;
+
+  XSync(GetDisplay(), False);
 
   XCloseDisplay(_dpy); // this should do a cleanup of the remaining
                        // X allocated objects...
@@ -624,23 +631,31 @@ int OXClient::HandleMaskEvent(XEvent *Event, Window wid) {
 
   if ((w = GetWindowById(Event->xany.window)) == NULL) return False;
 
-  // This breaks class member protection, but OXClient is a friend of all
-  // classes and _should_ know what to do and what *not* to do...
-
-  for (ptr = w; ptr->_parent != NULL; ptr = (OXWindow *) ptr->_parent)
-    if ((ptr->_id == wid) ||
-        ((Event->type != ButtonPress) &&
-         (Event->type != ButtonRelease) &&
-         (Event->type != KeyPress) &&
-         (Event->type != KeyRelease) &&
+  if ((Event->type != ButtonPress) &&
+      (Event->type != ButtonRelease) &&
+      (Event->type != KeyPress) &&
+      (Event->type != KeyRelease) &&
 #if 0
-         (Event->type != EnterNotify) &&
-         (Event->type != LeaveNotify) &&
+      (Event->type != EnterNotify) &&
+      (Event->type != LeaveNotify) &&
 #endif
-         (Event->type != MotionNotify))) {
-      w->HandleEvent(Event);
-      return True;
+      (Event->type != MotionNotify)) {
+
+    w->HandleEvent(Event);
+    return True;
+
+  } else {
+
+    // This breaks class member protection, but OXClient is a friend of all
+    // classes and _should_ know what to do and what *not* to do...
+
+    for (ptr = w; ptr->_parent != NULL; ptr = (OXWindow *) ptr->_parent) {
+      if (ptr->_id == wid) {
+        w->HandleEvent(Event);
+        return True;
+      }
     }
+  }
 
   if (Event->type == ButtonPress ||
       Event->type == KeyPress)
@@ -678,5 +693,19 @@ void OXClient::StopTip(OXFrame * w) {
   } else if (_tip_timer) {
     delete _tip_timer;
     _tip_timer = NULL;
+  }
+}
+
+void OXClient::ReloadResources() {
+
+  _resourcePool->Reload();
+
+  const OXSNode *e = _mlist->GetHead();
+  OXWindow *w;
+
+  while (e) {
+    w = (OXWindow *) e->data;
+    w->Reconfig();
+    e = e->next;
   }
 }

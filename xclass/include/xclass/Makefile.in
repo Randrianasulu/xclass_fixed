@@ -64,6 +64,7 @@ HEADERS = O2ColumnsLayout.h \
 	OXPropertiesDialog.h \
 	OXRadioButton.h \
 	OXResizer.h \
+	OXRootWindow.h \
 	OXSList.h \
 	OXScrollBar.h \
 	OXSecretTextEntry.h \
@@ -86,6 +87,10 @@ HEADERS = O2ColumnsLayout.h \
 	version.h
 
 all:
+
+shared:
+
+install_shared: install
 
 install:
 	mkdir -p ${header_dir}

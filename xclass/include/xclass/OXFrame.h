@@ -144,6 +144,7 @@ public:
                                    // Redefine this in OXCompositeFrame!
 
   virtual void DrawBorder();
+  virtual void Reconfig();
 
   int GetWidth() const { return _w; }
   int GetHeight() const { return _h; }

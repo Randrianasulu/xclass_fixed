@@ -1958,3 +1958,34 @@ OPicture.cc
 
 - Corrected a bug in OXFileList::HandleDNDposition() - needed to convert
   to virtual coordinates.
+
+
+08/11/01
+
+- Modified OXFileDialog class so it could be easily extended by subclasing
+  and adding extra controls, like a document preview window and such.
+
+
+10/11/01
+
+- OResourcePool now parses tip colors and monospaced font settings from
+  xclassrc file.
+
+- Added preliminary support for dynamic look changes to OXClient and
+  OResourcePool.
+
+
+12/11/01
+
+- OXListBox, OXDDListBox: the default width is now 200 pixels, and not 10.
+
+
+13/11/01
+
+- More work on OResourcePool's support for dynamic look changes.
+
+
+14/11/01
+
+- Corrected Makefiles.in in test, include and example_app for shared and 
+  install_shared targets.

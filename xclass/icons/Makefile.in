@@ -115,7 +115,10 @@ ICONS = app.s.xpm \
 
 all:
 
+shared:
+
 install_shared: install
+
 install:
 	mkdir -p ${icon_dir}
 	for i in ${ICONS} ; do \

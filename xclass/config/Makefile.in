@@ -9,7 +9,10 @@ INSTALL_DATA=@INSTALL_DATA@
 
 all:
 
+shared:
+
 install_shared: install
+
 install:
 	${INSTALL} xc-config ${config_dir}
 

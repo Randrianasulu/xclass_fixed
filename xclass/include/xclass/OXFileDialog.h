@@ -62,6 +62,8 @@ public:
   virtual int  HandleKey(XKeyEvent *event);
 
 protected:
+  OXFileDialog(const OXWindow *p, const OXWindow *main);
+  void _FileDialog(int dlg_type, OFileInfo *file_info);
   void _ChangeDirectory(const char *path);
   void _GrabAltKey(int keysym);
 
@@ -82,6 +84,7 @@ protected:
   char *_favorDir;  // Favourites directory
   char *_defName;   // Save dialog should not change to 
   	            // a directory name when double clicked..
+  char *_windowNameString;
 };
 
 

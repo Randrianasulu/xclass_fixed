@@ -72,241 +72,10 @@ OFileInfo::~OFileInfo() {
 OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
                            int dlg_type, OFileInfo *file_info) :
   OXTransientFrame(p, main, 10, 10, MAIN_FRAME | VERTICAL_FRAME) {
-    int  i, ax, ay;
+    int ax, ay;
     Window wdummy;
-    const  OPicture *pcdup, *pnewf, *plist, *pdetails, *paddfavor, *pfavor;
-    char *lookinString;
-    char *okButtonString;
-    char *windowNameString;
 
-    _init = False;
-    _file_info = file_info;
-    _favorDir = NULL;
-
-    if (!_file_info->file_types)
-      _file_info->file_types = defaultFiletypes;
-
-    _htop = new OXHorizontalFrame(this, 10, 10);
-
-    _lmain = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 4, 4, 3, 1);
-
-    //--- top toolbar elements
-    _dlg_type = dlg_type;
-
-    switch (_dlg_type & TYPE_MASK) {
-      default:
-      case FDLG_OPEN:
-        lookinString     = "Look &in";
-        okButtonString   = "&Open";
-        windowNameString = "Open";
-        break;
-
-      case FDLG_SAVE:
-        lookinString     = "Save &in";
-        okButtonString   = "&Save";
-        windowNameString = "Save as...";
-        break;
-
-      case FDLG_BROWSE:
-        lookinString     = "Look &in";
-        okButtonString   = "&Ok";
-        windowNameString = "Browse";
-        break;
-     }
-
-    _lookin = new OXLabel(_htop, new OHotString(lookinString));
-    _tree_lb = new OXFileSystemDDListBox(_htop, IDF_FSLB);
-    _tree_lb->Associate(this);
-
-    pcdup = _client->GetPicture("tb-uplevel.xpm");
-    pnewf = _client->GetPicture("tb-newfolder.xpm");
-    plist = _client->GetPicture("tb-list.xpm");
-    pdetails = _client->GetPicture("tb-details.xpm");
-
-    if (!(plist && pnewf && plist && pdetails))
-      FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
-
-    _cdup = new OXPictureButton(_htop, pcdup, IDF_CDUP);
-    _newf = new OXPictureButton(_htop, pnewf, IDF_NEW_FOLDER);
-    _list = new OXPictureButton(_htop, plist, IDF_LIST);
-    _details = new OXPictureButton(_htop, pdetails, IDF_DETAILS);
-
-    _cdup->SetTip("Up one level");
-    _newf->SetTip("Create new folder");
-    _list->SetTip("List");
-    _details->SetTip("Details");
-
-    _cdup->Associate(this);
-    _newf->Associate(this);
-    _list->Associate(this);
-    _details->Associate(this);
-
-    _cdup->TakeFocus(False);
-    _newf->TakeFocus(False);
-    _list->TakeFocus(False);
-    _details->TakeFocus(False);
-
-    if (_dlg_type & FDLG_FAVOURITES) {
-      paddfavor = _client->GetPicture("tb-addfavor.xpm");
-      pfavor = _client->GetPicture("tb-favor.xpm");
-
-      if (!(paddfavor && pfavor))
-        FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
-
-      const char *userRoot = _client->GetResourcePool()->GetUserRoot();
-      _favorDir = new char[strlen(userRoot) + 12];
-
-      sprintf(_favorDir, "%s/favourites", userRoot);
-
-      if (access(_favorDir, R_OK | W_OK | X_OK) != 0) {
-        if (MakePath(_favorDir, 0777) != 0) {
-          char tmp[256];
-          sprintf(tmp, "Error creating favourites folder \"%s\":\n%s.",
-                  _favorDir, strerror(errno));
-          new OXMsgBox(_client->GetRoot(), _toplevel,
-                       new OString("Error"), new OString(tmp),
-                       MB_ICONSTOP, ID_OK);
-          // shall we default to normal file dialog?
-        }
-      }
-      _addFavor = new OXPictureButton(_htop, paddfavor, IDF_ADDFAVOR);
-      _favor = new OXPictureButton(_htop, pfavor,IDF_FAVOR);
-
-      _addFavor->SetTip("Add to favourites");
-      _favor->SetTip("Go to favourites folder");
-
-      _addFavor->Associate(this);
-      _favor->Associate(this);
-
-      _addFavor->TakeFocus(False);
-      _favor->TakeFocus(False);
-    }
-
-    _list->SetType(BUTTON_STAYDOWN);
-    _details->SetType(BUTTON_STAYDOWN);
-
-    _lhl = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  5,  5, 2, 2); 
-    _lht = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y, 10,  0, 2, 2); 
-    _lb1 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  8,  0, 2, 2); 
-    _lb2 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  0, 15, 2, 2);
-    _lb3 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  0,  0, 2, 2);
-
-    _tree_lb->Resize(200, _tree_lb->GetDefaultHeight());
-
-    _htop->AddFrame(_lookin, _lhl);
-    _htop->AddFrame(_tree_lb, _lht); 
-    _htop->AddFrame(_cdup, _lb1);
-    if (_dlg_type & FDLG_FAVOURITES) {
-      _htop->AddFrame(_favor, _lb1);
-      _htop->AddFrame(_addFavor, _lb3);
-    }
-    _htop->AddFrame(_newf, _lb1);
-    _htop->AddFrame(_list, _lb1);
-    _htop->AddFrame(_details, _lb2);
-
-    AddFrame(_htop, _lmain);
-
-    //--- file view
-
-    _fv = new OXFileList(this, -1, GetResourcePool()->GetMimeTypes(),
-                         NULL, 400, 161);
-    _fv->Associate(this);
-
-    // The initialization of OXFileList and OXFileSystemDDlistBox
-    // contents is done in HandleMapNotify()
-
-    _fv->SetViewMode(LV_LIST);
-    _fv->Sort(SORT_BY_TYPE);
-
-    _list->SetState(BUTTON_ENGAGED);
-
-    AddFrame(_fv, _lmain);
-
-    //--- file name and types
-
-    int fw = (_dlg_type & FDLG_FAVOURITES) ? 260 : 220;
-
-    _hf = new OXHorizontalFrame(this, 10, 10);
-
-    _vf = new OXVerticalFrame(_hf, 10, 10);
-    _lvf = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y |
-                            LHINTS_EXPAND_X);
-
-    _hfname = new OXHorizontalFrame(_vf, 10, 10);
-
-    _lfname = new OXLabel(_hfname, new OHotString("File &name:"));
-    _fname = new OXTextEntry(_hfname, new OTextBuffer(PATH_MAX+10));
-    _fname->Resize(fw, _fname->GetDefaultHeight());
-
-    _lht1 = new OLayoutHints(LHINTS_RIGHT | LHINTS_EXPAND_Y, 0, 20, 2, 2); 
-
-    _hfname->AddFrame(_lfname, _lhl);
-    _hfname->AddFrame(_fname, _lht1);
-
-    _vf->AddFrame(_hfname, _lvf);
-
-    _hftype = new OXHorizontalFrame(_vf, 10, 10);
-
-    _lftypes = new OXLabel(_hftype, new OHotString("Files of &type:"));
-    _ftypes = new OXDDListBox(_hftype, IDF_FTYPESLB);
-    _ftypes->Associate(this);
-    _ftypes->Resize(fw, /*_fname*/_ftypes->GetDefaultHeight());
-
-    if (_file_info->file_types) {
-      for (i = 0; _file_info->file_types[i] != NULL; i += 2)
-        _ftypes->AddEntry(new OString(_file_info->file_types[i]), i);
-      _ftypes->Select(0);
-
-      _fname->Clear();
-      switch (_dlg_type & TYPE_MASK) {
-        case FDLG_OPEN:
-        case FDLG_BROWSE:
-          _fname->AddText(0, _file_info->file_types[1]);
-          break;
-
-        case FDLG_SAVE:
-      	  if (_file_info->filename) {
-            _fname->AddText(0, _file_info->filename);
-            _defName = StrDup(_file_info->filename);
-          }
-          break;
-      }
-      _fv->SetFileFilter(_file_info->file_types[1], False);
-    }
-
-    _hftype->AddFrame(_lftypes, _lhl);
-    _hftype->AddFrame(_ftypes, _lht1);
-
-    _vf->AddFrame(_hftype, _lvf);
-
-    _hf->AddFrame(_vf, _lvf);
-
-    //--- Open/Save and Cancel buttons
-
-    _vbf = new OXVerticalFrame(_hf, 10, 10, FIXED_WIDTH);
-    _lvbf = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y);
-
-    _lb = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 2, 2);
-
-    _ok = new OXTextButton(_vbf, new OHotString(okButtonString), ID_OK);
-    _cancel = new OXTextButton(_vbf, new OHotString("Cancel"), ID_CANCEL);
-
-    _ok->Associate(this);
-    _cancel->Associate(this);
-
-    SetDefaultAcceptButton(_ok);
-    SetDefaultCancelButton(_cancel);
-    SetFocusOwner(_fname);
-
-    _vbf->AddFrame(_ok, _lb);
-    _vbf->AddFrame(_cancel, _lb);
-
-    int width = max(_ok->GetDefaultWidth(), _cancel->GetDefaultWidth()) + 20;
-    _vbf->Resize(width, _vbf->GetDefaultHeight());
-
-    _hf->AddFrame(_vbf, _lvbf);
-
-    AddFrame(_hf, _lmain);
+    _FileDialog(dlg_type, file_info);
 
     MapSubwindows();
     Resize(GetDefaultSize());
@@ -335,8 +104,8 @@ OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
     SetWMSize(_w, _h);
     SetWMSizeHints(_w, _h, _w, _h, 0, 0);
 
-    SetWindowName(windowNameString);
-    SetIconName(windowNameString);
+    SetWindowName(_windowNameString);
+    SetIconName(_windowNameString);
     SetClassHints("FileDialog", "FileDialog");
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
@@ -345,14 +114,12 @@ OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
                                MWM_FUNC_MINIMIZE,
                 MWM_INPUT_MODELESS);
 
-    //---- grab accelerators
-
-    _GrabAltKey(XK_i);
-    _GrabAltKey(XK_n);
-    _GrabAltKey(XK_t);
-
     MapWindow();
     _client->WaitFor(this);
+}
+
+OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main) :
+  OXTransientFrame(p, main, 10, 10, MAIN_FRAME | VERTICAL_FRAME) {
 }
 
 OXFileDialog::~OXFileDialog() {
@@ -361,6 +128,248 @@ OXFileDialog::~OXFileDialog() {
   delete _lhl; delete _lht; delete _lht1;
   delete _lvf; delete _lmain;
   if (_favorDir) delete[] _favorDir;
+}
+
+void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
+  int i;
+  const OPicture *pcdup, *pnewf, *plist, *pdetails, *paddfavor, *pfavor;
+  char *lookinString;
+  char *okButtonString;
+
+  _init = False;
+  _file_info = file_info;
+  _favorDir = NULL;
+
+  if (!_file_info->file_types)
+    _file_info->file_types = defaultFiletypes;
+
+  _htop = new OXHorizontalFrame(this, 10, 10);
+
+  _lmain = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 4, 4, 3, 1);
+
+  //--- top toolbar elements
+  _dlg_type = dlg_type;
+
+  switch (_dlg_type & TYPE_MASK) {
+    default:
+    case FDLG_OPEN:
+      lookinString      = "Look &in";
+      okButtonString    = "&Open";
+      _windowNameString = "Open";
+      break;
+
+    case FDLG_SAVE:
+      lookinString      = "Save &in";
+      okButtonString    = "&Save";
+      _windowNameString = "Save as...";
+      break;
+
+    case FDLG_BROWSE:
+      lookinString      = "Look &in";
+      okButtonString    = "&Ok";
+      _windowNameString = "Browse";
+      break;
+   }
+
+  _lookin = new OXLabel(_htop, new OHotString(lookinString));
+  _tree_lb = new OXFileSystemDDListBox(_htop, IDF_FSLB);
+  _tree_lb->Associate(this);
+
+  pcdup = _client->GetPicture("tb-uplevel.xpm");
+  pnewf = _client->GetPicture("tb-newfolder.xpm");
+  plist = _client->GetPicture("tb-list.xpm");
+  pdetails = _client->GetPicture("tb-details.xpm");
+
+  if (!(plist && pnewf && plist && pdetails))
+    FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
+
+  _cdup = new OXPictureButton(_htop, pcdup, IDF_CDUP);
+  _newf = new OXPictureButton(_htop, pnewf, IDF_NEW_FOLDER);
+  _list = new OXPictureButton(_htop, plist, IDF_LIST);
+  _details = new OXPictureButton(_htop, pdetails, IDF_DETAILS);
+
+  _cdup->SetTip("Up one level");
+  _newf->SetTip("Create new folder");
+  _list->SetTip("List");
+  _details->SetTip("Details");
+
+  _cdup->Associate(this);
+  _newf->Associate(this);
+  _list->Associate(this);
+  _details->Associate(this);
+
+  _cdup->TakeFocus(False);
+  _newf->TakeFocus(False);
+  _list->TakeFocus(False);
+  _details->TakeFocus(False);
+
+  if (_dlg_type & FDLG_FAVOURITES) {
+    paddfavor = _client->GetPicture("tb-addfavor.xpm");
+    pfavor = _client->GetPicture("tb-favor.xpm");
+
+    if (!(paddfavor && pfavor))
+      FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
+
+    const char *userRoot = _client->GetResourcePool()->GetUserRoot();
+    _favorDir = new char[strlen(userRoot) + 12];
+
+    sprintf(_favorDir, "%s/favourites", userRoot);
+
+    if (access(_favorDir, R_OK | W_OK | X_OK) != 0) {
+      if (MakePath(_favorDir, 0777) != 0) {
+        char tmp[256];
+        sprintf(tmp, "Error creating favourites folder \"%s\":\n%s.",
+                _favorDir, strerror(errno));
+        new OXMsgBox(_client->GetRoot(), _toplevel,
+                     new OString("Error"), new OString(tmp),
+                     MB_ICONSTOP, ID_OK);
+        // shall we default to normal file dialog?
+      }
+    }
+    _addFavor = new OXPictureButton(_htop, paddfavor, IDF_ADDFAVOR);
+    _favor = new OXPictureButton(_htop, pfavor,IDF_FAVOR);
+
+    _addFavor->SetTip("Add to favourites");
+    _favor->SetTip("Go to favourites folder");
+
+    _addFavor->Associate(this);
+    _favor->Associate(this);
+
+    _addFavor->TakeFocus(False);
+    _favor->TakeFocus(False);
+  }
+
+  _list->SetType(BUTTON_STAYDOWN);
+  _details->SetType(BUTTON_STAYDOWN);
+
+  _lhl = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  5,  5, 2, 2); 
+  _lht = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y, 10,  0, 2, 2); 
+  _lb1 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  8,  0, 2, 2); 
+  _lb2 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  0, 15, 2, 2);
+  _lb3 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  0,  0, 2, 2);
+
+  _tree_lb->Resize(200, _tree_lb->GetDefaultHeight());
+
+  _htop->AddFrame(_lookin, _lhl);
+  _htop->AddFrame(_tree_lb, _lht); 
+  _htop->AddFrame(_cdup, _lb1);
+  if (_dlg_type & FDLG_FAVOURITES) {
+    _htop->AddFrame(_favor, _lb1);
+    _htop->AddFrame(_addFavor, _lb3);
+  }
+  _htop->AddFrame(_newf, _lb1);
+  _htop->AddFrame(_list, _lb1);
+  _htop->AddFrame(_details, _lb2);
+
+  AddFrame(_htop, _lmain);
+
+  //--- file view
+
+  _fv = new OXFileList(this, -1, GetResourcePool()->GetMimeTypes(),
+                       NULL, 400, 161);
+  _fv->Associate(this);
+
+  // The initialization of OXFileList and OXFileSystemDDlistBox
+  // contents is done in HandleMapNotify()
+
+  _fv->SetViewMode(LV_LIST);
+  _fv->Sort(SORT_BY_TYPE);
+
+  _list->SetState(BUTTON_ENGAGED);
+
+  AddFrame(_fv, _lmain);
+
+  //--- file name and types
+
+  int fw = (_dlg_type & FDLG_FAVOURITES) ? 260 : 220;
+
+  _hf = new OXHorizontalFrame(this, 10, 10);
+
+  _vf = new OXVerticalFrame(_hf, 10, 10);
+  _lvf = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y |
+                          LHINTS_EXPAND_X);
+
+  _hfname = new OXHorizontalFrame(_vf, 10, 10);
+
+  _lfname = new OXLabel(_hfname, new OHotString("File &name:"));
+  _fname = new OXTextEntry(_hfname, new OTextBuffer(PATH_MAX+10));
+  _fname->Resize(fw, _fname->GetDefaultHeight());
+
+  _lht1 = new OLayoutHints(LHINTS_RIGHT | LHINTS_EXPAND_Y, 0, 20, 2, 2); 
+
+  _hfname->AddFrame(_lfname, _lhl);
+  _hfname->AddFrame(_fname, _lht1);
+
+  _vf->AddFrame(_hfname, _lvf);
+
+  _hftype = new OXHorizontalFrame(_vf, 10, 10);
+
+  _lftypes = new OXLabel(_hftype, new OHotString("Files of &type:"));
+  _ftypes = new OXDDListBox(_hftype, IDF_FTYPESLB);
+  _ftypes->Associate(this);
+  _ftypes->Resize(fw, /*_fname*/_ftypes->GetDefaultHeight());
+
+  if (_file_info->file_types) {
+    for (i = 0; _file_info->file_types[i] != NULL; i += 2)
+      _ftypes->AddEntry(new OString(_file_info->file_types[i]), i);
+    _ftypes->Select(0);
+
+    _fname->Clear();
+    switch (_dlg_type & TYPE_MASK) {
+      case FDLG_OPEN:
+      case FDLG_BROWSE:
+        _fname->AddText(0, _file_info->file_types[1]);
+        break;
+
+      case FDLG_SAVE:
+        if (_file_info->filename) {
+          _fname->AddText(0, _file_info->filename);
+          _defName = StrDup(_file_info->filename);
+        }
+        break;
+    }
+    _fv->SetFileFilter(_file_info->file_types[1], False);
+  }
+
+  _hftype->AddFrame(_lftypes, _lhl);
+  _hftype->AddFrame(_ftypes, _lht1);
+
+  _vf->AddFrame(_hftype, _lvf);
+
+  _hf->AddFrame(_vf, _lvf);
+
+  //--- Open/Save and Cancel buttons
+
+  _vbf = new OXVerticalFrame(_hf, 10, 10, FIXED_WIDTH);
+  _lvbf = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y);
+
+  _lb = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 2, 2);
+
+  _ok = new OXTextButton(_vbf, new OHotString(okButtonString), ID_OK);
+  _cancel = new OXTextButton(_vbf, new OHotString("Cancel"), ID_CANCEL);
+
+  _ok->Associate(this);
+  _cancel->Associate(this);
+
+  SetDefaultAcceptButton(_ok);
+  SetDefaultCancelButton(_cancel);
+  SetFocusOwner(_fname);
+
+  _vbf->AddFrame(_ok, _lb);
+  _vbf->AddFrame(_cancel, _lb);
+
+  int width = max(_ok->GetDefaultWidth(), _cancel->GetDefaultWidth()) + 20;
+  _vbf->Resize(width, _vbf->GetDefaultHeight());
+
+  _hf->AddFrame(_vbf, _lvbf);
+
+  AddFrame(_hf, _lmain);
+
+  //---- grab accelerators
+
+  _GrabAltKey(XK_i);
+  _GrabAltKey(XK_n);
+  _GrabAltKey(XK_t);
 }
 
 void OXFileDialog::CloseWindow() {

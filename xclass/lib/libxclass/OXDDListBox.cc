@@ -38,7 +38,7 @@ const OPicture *OXDDListBox::_bpic = NULL;
 
 OXDDPopup::OXDDPopup(const OXWindow *p, int w, int h,
                      unsigned int options, unsigned long back) :
-  OXCompositeFrame (p, w, h, options, back) {
+  OXCompositeFrame(p, w, h, options, back) {
     XSetWindowAttributes wattr;
     unsigned long mask;
 
@@ -163,7 +163,7 @@ void OXDDPopup::PlacePopup(int x, int y, int w, int h) {
 
 OXDDListBox::OXDDListBox(const OXWindow *p, int ID,
                          unsigned int options, unsigned long back) :
-  OXCompositeFrame (p, 10, 10, options | OWN_BKGND, back) {
+  OXCompositeFrame(p, 200, 10, options | OWN_BKGND, back) {
 
     _widgetID = ID;
     _widgetType = "OXDDListBox";

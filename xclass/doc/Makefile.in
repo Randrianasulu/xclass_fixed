@@ -25,7 +25,10 @@ DOCS = GPL \
 
 all:
 
+shared:
+
 install_shared: install
+
 install:
 	mkdir -p ${etc_dir}
 	${INSTALL_DATA} ${XCLASSRC} ${etc_dir}

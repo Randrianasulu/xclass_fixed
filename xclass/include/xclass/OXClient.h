@@ -49,6 +49,8 @@
 extern Atom WM_DELETE_WINDOW;
 extern Atom _MOTIF_WM_HINTS;
 extern Atom _XCLASS_MESSAGE;
+extern Atom _XCLASS_COLORS;
+extern Atom _XCLASS_RESOURCES;
 
 
 // Forward declarations to avoid include files headaches :-(
@@ -67,11 +69,10 @@ class OFileHandler;
 class OIdleHandler;
 class OXSTimerList;
 
-// An OXClient is an exception in that is not a real
-// OX object (no XID member)
 
-// --------------------------------------------------------
-// X-Window client
+//----------------------------------------------------------------------
+// X-Window client. An OXClient is an exception in that is not a real OX
+// object (no XID member)
 
 class OXClient : public OBaseObject {
 public:
@@ -114,6 +115,8 @@ public:
   void WaitForUnmap(OXWindow *w);
 
   const OResourcePool *GetResourcePool() const { return _resourcePool; }
+
+  void ReloadResources();
 
   const OPicture *GetPicture(const char *name);
   const OPicture *GetPicture(const char *name, char **data);

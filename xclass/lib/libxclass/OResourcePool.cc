@@ -28,6 +28,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 
 #include <xclass/OXClient.h>
@@ -70,6 +71,9 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
   _dpy = _client->GetDisplay();
   _defaultColormap = _client->GetDefaultColormap();
 
+  _colorServer = False;
+
+#if 0
   //--- Fall into the defaults if nothing is defined...
 
   SetDefaults(&config);
@@ -103,15 +107,54 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
     LoadFromIni(xcini, &config);
     if (ini_ours) delete xcini;
   }
+#else
+  //--- Fall into the defaults if nothing is defined...
+
+  SetDefaults(&config);
+  sb_width = SB_WIDTH;
+
+  //--- Then try to load values from the xclass root property, if it exists...
+
+  retc = LoadFromServer(&config);
+
+  //--- Get resource values from the .xclassrc file...
+
+  char inirc[PATH_MAX];
+
+  sprintf(inirc, "%s/.xclassrc", _homeDir);
+  if (access(inirc, R_OK) != 0) {
+    sprintf(inirc, "%s/etc/xclassrc", _homeDir);
+  } else if (access(inirc, R_OK) != 0) {
+    sprintf(inirc, "%s/etc/xclassrc", OX_DEFAULT_ROOT);
+  }
+
+  OIniFile *xcini;
+  int ini_ours = False;
+
+  if (ini) {
+    xcini = ini;
+  } else {
+    xcini = new OIniFile(inirc, INI_READ);
+    ini_ours = True;
+  }
+  LoadFromIni(xcini, &config);
+  if (ini_ours) delete xcini;
+
+  //--- Load values from the xclass root property, if it exists, overriding
+  //    what we have so far...
+
+  retc = LoadFromServer(&config);
+
+#endif
 
   //--- If everything failed, then we're here with just the defaults...
 
   //--- Setup colors...
 
-  _white     = _client->GetColorByName("#ffffff");
-  _black     = _client->GetColorByName("#000000");
+  _white = _client->GetColorByName("#ffffff");
+  _black = _client->GetColorByName("#000000");
 
-  if (!retc) {
+  if (!_colorServer) {
     _frameFgnd = _client->GetColorByName(config.frame_fg_color);
     _frameBgnd = _client->GetColorByName(config.frame_bg_color);
     _hilite    = _client->GetHilite(_frameBgnd);
@@ -184,42 +227,42 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
   gval.font = _defaultFont->GetId();
   gval.background = _frameBgnd;
   gval.foreground = _black;
-  _blackGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _blackGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _white;
-  _whiteGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _whiteGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _hilite;
-  _hiliteGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _hiliteGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _shadow;
-  _shadowGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _shadowGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _frameBgnd;
-  _bckgndGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _bckgndGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _frameFgnd;
-  _frameGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _frameGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _selBgnd;
-  _selbgndGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _selbgndGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _selFgnd;
   gval.background = _selBgnd;
-  _selGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _selGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.font = _docPropFont->GetId();
   gval.foreground = _docFgnd;
   gval.background = _docBgnd;
-  _docGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _docGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.foreground = _docBgnd;
-  _docbgndGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _docbgndGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gval.font = _statusFont->GetId();
   gval.foreground = _tipFgnd;
   gval.background = _tipBgnd;
-  _tipGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval);
+  _tipGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 
   gmask = GCForeground | GCBackground | GCFillStyle |
           GCLineWidth  | /*GCLineStyle  |*/
@@ -235,7 +278,7 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
   gval.fill_style = FillStippled; //FillSolid;
   gval.subwindow_mode = IncludeInferiors;
   gval.graphics_exposures = False;
-  _focusGC = _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
+  _focusGC = (OXGC *) _gcPool->GetGC(_Root->GetId(), gmask, &gval, True);
 //  XSetDashes(_dpy, _focusGC->GetGC(), 0, "\x1\x1", 2);
 
   //--- Setup cursors...
@@ -329,16 +372,44 @@ int OResourcePool::LoadFromServer(Sconfig *conf) {
   unsigned long nret, nafter, retc = False;
   unsigned char *data;
   Atom ret_atom;
+  Window Root = _client->GetRoot()->GetId();
 
-//  Atom _XCLASS_RESOURCES = XInternAtom(_dpy, "_XCLASS_RESOURCES", False);
-  Atom _XCLASS_RESOURCES = XInternAtom(_dpy, "_XCLASS_COLORS", False);
+  if (XGetWindowProperty(_dpy, Root, _XCLASS_RESOURCES, 0, 8192,
+                         False, XA_STRING, &ret_atom, &fmt, &nret, &nafter,
+                         (unsigned char **) &data) == Success) {
 
-  if (XGetWindowProperty(_dpy, _client->GetRoot()->GetId(), _XCLASS_RESOURCES,
-           0, 6, False, _XCLASS_RESOURCES, &ret_atom, &fmt, &nret, &nafter,
-           (unsigned char **) &data) == Success) {
+    if ((ret_atom == XA_STRING) && (fmt == 8) && (nret > 0)) {
+      char *str = strtok((char *) data, "\n");
+      _changeMask = 0;
+
+      while (str) {
+        char *p = strchr(str, '=');
+
+        if (p) {
+          char *arg = p+1;
+          while (*arg && (*arg == ' ')) ++arg;
+          --p;
+          while (p >= str && (*p == ' ')) *p-- = '\0';
+
+          _SetValue(conf, str, arg);
+        }
+
+        str = strtok(NULL, "\n");
+      }
+    }
+
+    retc = True;
+
+    XFree(data);
+
+  } else if (XGetWindowProperty(_dpy, Root, _XCLASS_COLORS, 0, 6,
+                    False, _XCLASS_COLORS, &ret_atom, &fmt, &nret, &nafter,
+                    (unsigned char **) &data) == Success) {
 
     if ((ret_atom != None) && (fmt == 32) && (nret == 6)) {
       unsigned long *d = (unsigned long *) data;
+
+      _colorServer = True;
 
       _frameBgnd = d[0];
       _frameFgnd = d[1];
@@ -378,6 +449,9 @@ int OResourcePool::LoadFromIni(OIniFile *xcini, Sconfig *conf) {
       if (xcini->GetItem("proportional font", arg))
         strcpy(conf->doc_prop_font, arg);
 
+      if (xcini->GetItem("monospaced font", arg))
+        strcpy(conf->doc_fixed_font, arg);
+
       if (xcini->GetItem("fore color", arg))
         strcpy(conf->frame_fg_color, arg);
 
@@ -395,6 +469,12 @@ int OResourcePool::LoadFromIni(OIniFile *xcini, Sconfig *conf) {
 
       if (xcini->GetItem("doc fore color", arg))	
 	strcpy(conf->doc_fg_color, arg);
+
+      if (xcini->GetItem("tip back color", arg))	
+	strcpy(conf->tip_bg_color, arg);
+
+      if (xcini->GetItem("tip fore color", arg))	
+	strcpy(conf->tip_fg_color, arg);
 
       //if (xcini->GetItem("scrollbar width", arg)) sb_width = atoi(arg);
       //if (xcini->GetItem("scrollbar delay", arg)) {
@@ -424,6 +504,150 @@ int OResourcePool::LoadFromIni(OIniFile *xcini, Sconfig *conf) {
   }
 
   return True;
+}
+
+int OResourcePool::_SetValue(Sconfig *conf, const char *resource,
+                             const char *value, int update) {
+
+  if (strcmp(resource, "normal font") == 0) {
+    strcpy(conf->default_font, value);
+    _changeMask |= FONTS_CHANGED;
+
+  } else if (strcmp(resource, "menu font") == 0) {
+    strcpy(conf->menu_font, value);
+    _changeMask |= FONTS_CHANGED;
+
+  } else if (strcmp(resource, "menu highlight font") == 0) {
+    strcpy(conf->menu_hi_font, value);
+    _changeMask |= FONTS_CHANGED;
+
+  } else if (strcmp(resource, "small font") == 0) {
+    strcpy(conf->icon_font, value);
+    strcpy(conf->status_font, value); 
+    _changeMask |= FONTS_CHANGED;
+
+  } else if (strcmp(resource, "proportional font") == 0) {
+    strcpy(conf->doc_prop_font, value);
+    _changeMask |= FONTS_CHANGED;
+
+  } else if (strcmp(resource, "monospaced font") == 0) {
+    strcpy(conf->doc_fixed_font, value);
+    _changeMask |= FONTS_CHANGED;
+
+  } else if (strcmp(resource, "fore color") == 0) {
+    strcpy(conf->frame_fg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "back color") == 0) {
+    strcpy(conf->frame_bg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "hifore color") == 0) {
+    strcpy(conf->sel_fg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "hiback color") == 0) {
+    strcpy(conf->sel_bg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "doc back color") == 0) {	
+    strcpy(conf->doc_bg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "doc fore color") == 0) {	
+    strcpy(conf->doc_fg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "tip back color") == 0) {	
+    strcpy(conf->tip_bg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  } else if (strcmp(resource, "tip fore color") == 0) {	
+    strcpy(conf->tip_fg_color, value);
+    _changeMask |= COLORS_CHANGED;
+
+  //  } else if (strcmp(resource, "scrollbar width") == 0) {
+  //    sb_width = atoi(value);
+  //
+  //  } else if (strcmp(resource, "scrollbar delay") == 0) {
+  //    sscanf(value, "%d,%d", &sb_predly, &sb_rptdly);
+  //    IN_RANGE(sb_predly, 1, 10000);
+  //    IN_RANGE(sb_rptdly, 1, 10000);
+
+  //  } else if (strcmp(resource, "icon dir") == 0) {
+  //    strcpy(conf->icon_pool, value);
+
+  } else if (strcmp(resource, "background pixmap") == 0) {
+    strcpy(conf->frame_bg_pixmap, value);
+    _changeMask |= PIXMAPS_CHANGED;
+
+  } else if (strcmp(resource, "document background pixmap") == 0) {
+    strcpy(conf->doc_bg_pixmap, value);
+    _changeMask |= PIXMAPS_CHANGED;
+
+  }
+
+  return _changeMask;
+}
+
+int OResourcePool::Reload() {
+  Sconfig config;
+
+  SetDefaults(&config);
+
+  int retc = LoadFromServer(&config);
+  if (!retc) return 0;
+
+  if (!_colorServer) {
+    _frameFgnd = _client->GetColorByName(config.frame_fg_color);
+    _frameBgnd = _client->GetColorByName(config.frame_bg_color);
+    _hilite    = _client->GetHilite(_frameBgnd);
+    _shadow    = _client->GetShadow(_frameBgnd);
+    _selFgnd   = _client->GetColorByName(config.sel_fg_color);
+    _selBgnd   = _client->GetColorByName(config.sel_bg_color);
+  }
+
+  _docFgnd   = _client->GetColorByName(config.doc_fg_color);
+  _docBgnd   = _client->GetColorByName(config.doc_bg_color);
+  _tipFgnd   = _client->GetColorByName(config.tip_fg_color);
+  _tipBgnd   = _client->GetColorByName(config.tip_bg_color);
+
+
+  _blackGC->SetBackground(_frameBgnd);
+
+  _whiteGC->SetBackground(_frameBgnd);
+
+  _hiliteGC->SetForeground(_hilite);
+  _hiliteGC->SetBackground(_frameBgnd);
+
+  _shadowGC->SetForeground(_shadow);
+  _shadowGC->SetBackground(_frameBgnd);
+
+  _bckgndGC->SetForeground(_frameBgnd);
+  _bckgndGC->SetBackground(_frameBgnd);
+
+  _frameGC->SetForeground(_frameFgnd);
+  _frameGC->SetBackground(_frameBgnd);
+
+  _selbgndGC->SetForeground(_selBgnd);
+  _selbgndGC->SetBackground(_frameBgnd);
+
+  _selGC->SetForeground(_selFgnd);
+  _selGC->SetBackground(_selBgnd);
+
+  _docGC->SetForeground(_docFgnd);
+  _docGC->SetBackground(_docBgnd);
+
+  _docbgndGC->SetForeground(_docBgnd);
+  _docbgndGC->SetBackground(_docBgnd);
+
+  _tipGC->SetForeground(_tipFgnd);
+  _tipGC->SetBackground(_tipBgnd);
+
+  _focusGC->SetBackground(_selBgnd);
+
+
+  return _changeMask;
 }
 
 OXFont *OResourcePool::_LoadFont(char *font_name) {

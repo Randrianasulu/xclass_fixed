@@ -54,6 +54,8 @@ public:
 
   virtual void MapSubwindows();
   virtual void Layout();
+  
+  virtual void Reconfig();
 
   virtual void ChangeOptions(unsigned int options);
 

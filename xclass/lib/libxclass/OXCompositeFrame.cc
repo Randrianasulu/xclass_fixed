@@ -223,3 +223,14 @@ int OXCompositeFrame::TranslateCoordinates(OXFrame *child, int x, int y,
 
   return False;
 }
+
+void OXCompositeFrame::Reconfig() {
+  SListFrameElt *ptr;
+
+  OXFrame::Reconfig();
+
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next)
+    ptr->frame->Reconfig();
+
+//  Layout();  OXMainFrame would do a Resize(GetDefaultSize());
+}

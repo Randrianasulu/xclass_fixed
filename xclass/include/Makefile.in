@@ -12,7 +12,10 @@ all:
 		(cd $$i; ${MAKE} all); \
 	done
 
+shared: all
+
 install_shared: install
+
 install:
 	@for i in ${subdirs}; do \
 		echo Installing in $$i ; \

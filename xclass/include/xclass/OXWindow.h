@@ -66,6 +66,8 @@ public:
   virtual void MoveResize(int x, int y, int w, int h);
   virtual int  IsMapped();
 
+  virtual void Reconfig() {}
+
   void NeedRedraw(int clr = True)
 //       { _clearBgnd = clr; _client->NeedRedraw(this); }
        { _clearBgnd = clr || (_clearBgnd && _needRedraw);

@@ -111,17 +111,17 @@ OXFrame::OXFrame(const OXWindow *p, int w, int h,
       _bw = (_options & DOUBLE_BORDER) ? 2 : 1;
 
     mask = CWBackPixel | CWEventMask;
-    wattr.background_pixel = back;
+    wattr.background_pixel = _backPixel;
     wattr.event_mask = ExposureMask;
     if (_options & MAIN_FRAME) {
       wattr.event_mask |= StructureNotifyMask;
       XChangeWindowAttributes(GetDisplay(), _id, mask, &wattr); 
-/**/      if (_defaultBackgroundPicture)
-/**/        SetBackgroundPixmap(_defaultBackgroundPicture->GetPicture());
+      if (_defaultBackgroundPicture)
+        SetBackgroundPixmap(_defaultBackgroundPicture->GetPicture());
     } else {
       XChangeWindowAttributes(GetDisplay(), _id, mask, &wattr); 
-/**/      if (!(_options & OWN_BKGND))
-/**/        SetBackgroundPixmap(ParentRelative);
+      if (_defaultBackgroundPicture && !(_options & OWN_BKGND))
+        SetBackgroundPixmap(ParentRelative);
     }
 
     _eventMask = wattr.event_mask;
@@ -511,4 +511,32 @@ int OXFrame::IsVisible() const {
   if (p && (p != _toplevel) && (p != _client->GetRoot()))
     return ((OXFrame *)p)->IsVisible();
   return True;
+}
+
+void OXFrame::Reconfig() {
+
+  if (!(_options & OWN_BKGND))
+    _backPixel = _defaultFrameBackground;
+
+  if (_options & MAIN_FRAME) {
+    SetBackgroundColor(_backPixel);
+    if (_defaultBackgroundPicture) {
+      SetBackgroundPixmap(_defaultBackgroundPicture->GetPicture());
+    } else {
+      SetBackgroundPixmap(None);
+      SetBackgroundColor(_backPixel);
+    }
+  } else {
+    SetBackgroundColor(_backPixel);
+    if (!(_options & OWN_BKGND)) {
+      if (_defaultBackgroundPicture) {
+        SetBackgroundPixmap(ParentRelative);
+      } else {
+        SetBackgroundPixmap(None);
+        SetBackgroundColor(_backPixel);
+      }
+    }
+  }
+
+  NeedRedraw(True);
 }

@@ -29,8 +29,12 @@ include ${top_srcdir}/config/C++.rules.in
 
 all: ${PROG}
 
+shared: all
+
 depend:
 	${MAKEDEPEND} ${CXXFLAGS} ${SRCS}
+
+install_shared: install
 
 install: 
 
