@@ -375,7 +375,7 @@ void OXMain::DoAbout() {
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"
-              "http://www.xclass.org";
+              "http://xclass.sourceforge.net";
 
   new OXAboutDialog(_client->GetRoot(), this, &info);
 }
