@@ -36,8 +36,10 @@
 #include <xclass/OXTab.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXMsgBox.h>
+#include <xclass/OXFileDialog.h>
 #include <xclass/OXAboutDialog.h>
 #include <xclass/OListViewLayout.h>
+#include <xclass/OResourcePool.h>
 #include <xclass/OString.h>
 #include <xclass/OXSlider.h>
 #include <xclass/utils.h>
@@ -333,8 +335,17 @@ int OXTestMainFrame::ProcessMessage(OMessage *msg) {
           }
           switch(wmsg->id) {
 
-            case M_TEST_DLG:
             case M_FILE_OPEN:
+              {
+              OFileInfo fi;
+
+              fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
+              fi.file_types = NULL;
+              new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
+              }
+              break;
+
+            case M_TEST_DLG:
               Debug(DBG_INFO, "\nM_FILE_OPEN\n");
               Dialog = new OXTestDialog(clientX->GetRoot(), this, 400, 200);
               Dialog->MapWindow();
@@ -378,10 +389,10 @@ int OXTestMainFrame::ProcessMessage(OMessage *msg) {
               OAboutInfo info;
 
               info.wname = "About wintest";
-              info.title = "wintest\nA test application for xclass\n"
+              info.title = "wintest\nA test application for xclass.\n"
                            "Compiled with xclass version "
                            XCLASS_VERSION
-                           ", release date "
+                           ",\nrelease date "
                            XCLASS_RELEASE_DATE;
               info.copyright = "Copyleft © 1998-1999 by H. Peraza";
               info.text = "This program is free software; you can "
@@ -434,6 +445,9 @@ OXTestDialog::OXTestDialog(const OXWindow *p, const OXWindow *main,
     OkButton->Associate(this);
     CancelButton = new OXTextButton(Frame1, new OHotString("&Cancel"), 2);
     CancelButton->Associate(this);
+
+    SetDefaultAcceptButton(OkButton);
+    SetDefaultCancelButton(CancelButton);
 
     L1 = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT | LHINTS_EXPAND_X,
                           200, 2, 2, 2);
@@ -595,6 +609,9 @@ OXTestMsgBox::OXTestMsgBox(const OXWindow *p, const OXWindow *main,
 
     TestButton->Associate(this);
     CloseButton->Associate(this);
+
+    SetDefaultAcceptButton(TestButton);
+    SetDefaultCancelButton(CloseButton);
 
     L1 = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 
                           2, 2, 3, 0);
@@ -928,4 +945,3 @@ int OXTestSliders::ProcessMessage(OMessage *msg) {
   }
   return rtc;
 }
-
