@@ -56,7 +56,6 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
   XGCValues gval;
   unsigned long gmask;
   char *picturePoolDir;
-//  char *mimeTypeFile;
   int  retc;
   char *sroot, *uroot;
 
@@ -86,12 +85,23 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
     char inirc[PATH_MAX];
 
     sprintf(inirc, "%s/.xclassrc", _homeDir);
+    if (access(inirc, R_OK) != 0) {
+      sprintf(inirc, "%s/etc/xclassrc", _homeDir);
+    } else if (access(inirc, R_OK) != 0) {
+      sprintf(inirc, "%s/etc/xclassrc", OX_DEFAULT_ROOT);
+    }
 
-    OIniFile *xcini; int d=0;
+    OIniFile *xcini;
+    int ini_ours = False;
 
-    if (ini) xcini = ini; else { xcini = new OIniFile(inirc, INI_READ); d=1; }
+    if (ini) {
+      xcini = ini;
+    } else {
+      xcini = new OIniFile(inirc, INI_READ);
+      ini_ours = True;
+    }
     LoadFromIni(xcini, &config);
-    if (d) delete xcini;
+    if (ini_ours) delete xcini;
   }
 
   //--- If everything failed, then we're here with just the defaults...
