@@ -45,8 +45,6 @@ OXBandScope::OXBandScope(const OXWindow *p, int scanwidth,
                          unsigned int options) :
   OXFrame(p, 10, 10, options | OWN_BKGND) {
 
-  int i;
-
   _sfont = _client->GetFont("Helvetica -8");
   _nfont = _client->GetFont("Helvetica -10");
 
@@ -174,7 +172,7 @@ static char *lin_label[6] = { "0", ".2", ".4", ".6", ".8", "1" };
 
 void OXBandScope::DrawGrid() {
   int  i, w, h, x, y;
-  long f, freq;
+  long freq;
   char *str;
 
   OFontMetrics fm;
@@ -206,7 +204,7 @@ void OXBandScope::DrawGrid() {
               _margins.l + x, _margins.t,
               _margins.l + x, _margins.t + h);
 
-    int mhz, khz, hz;
+    int  mhz, khz;
     char str[12];
 
     mhz = freq / 1000000L;
@@ -387,7 +385,7 @@ void OXBandScope::DrawCursor() {
               _margins.l + _curX, _margins.t + 1,
               _margins.l + _curX, _margins.t + h - 1);
 
-    int mhz, khz, hz;
+    int  mhz, khz, hz;
     char str[12];
     long freq = _sfreq + _curX * _freqstep;
 
@@ -419,7 +417,7 @@ void OXBandScope::DrawStatus() {
   XDrawString(GetDisplay(), _pix, _ngc->GetGC(),
               5, y, str, strlen(str));
 
-  sprintf(str, "%d kHz", _freqstep * _dataLen / 1000);
+  sprintf(str, "%ld kHz", _freqstep * _dataLen / 1000);
   XDrawString(GetDisplay(), _pix, _ngc->GetGC(),
               _pixw - _nfont->XTextWidth(str) - 5, y, str, strlen(str));
 }

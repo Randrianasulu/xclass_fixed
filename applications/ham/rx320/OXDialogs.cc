@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <vector>
+
 #include <xclass/OXCheckButton.h>
 #include <xclass/OXTextEntry.h>
 #include <xclass/OX3dLines.h>

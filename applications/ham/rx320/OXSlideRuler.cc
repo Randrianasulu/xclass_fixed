@@ -38,8 +38,6 @@ OXSlideRuler::OXSlideRuler(const OXWindow *p, OXMain *m, int w, int h,
                            unsigned int options) :
   OXFrame(p, w, h, options | OWN_BKGND) {
 
-  int i;
-
   _rxmain = m;
   _sfont = _client->GetFont("Helvetica -10");
 
@@ -108,7 +106,6 @@ void OXSlideRuler::ClearPixmap() {
 void OXSlideRuler::DrawTicks() {
   int  i, tsize;
   long f, freq;
-  char *str;
 
   // round to nearest _tickval
   freq = ((_freq + (_tickval / 2)) / _tickval) * _tickval;

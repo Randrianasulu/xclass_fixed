@@ -1121,7 +1121,7 @@ int OXMain::HandleKey(XKeyEvent *event) {
           step *= 10;
         else if (step == 1000)
           step = 5000;
-        else if (step = 5000)
+        else if (step == 5000)
           step = 10000;
         SetStep(step);
         break;
@@ -1384,8 +1384,8 @@ void OXMain::ShowAbout(const OXWindow *t) {
 
 //---------------------------------------------------------------------
 
-main() {
-  OXClient *clientX = new OXClient;
+int main(int argc, char *argv[]) {
+  OXClient *clientX = new OXClient(argc, argv);
 
   OXMain *mainWindow = new OXMain(clientX->GetRoot(), 500, 200);
   mainWindow->MapWindow();

@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <vector>
+
+#include <xclass/utils.h>
+
 #include "OXDisplayPanel.h"
 #include "ORX320.h"
 

@@ -498,6 +498,7 @@ int ORX320::SendCommand(char *cmd, int len, int now) {
     memcpy(q.cmd, cmd, len);
     _queue.push_back(q);
     if (!_tqueue) _tqueue = new OTimer(this, len * 10);
+    return 0;
   }
 }
 
