@@ -22,36 +22,37 @@
 #ifndef __OFOCUSMANAGER_H
 #define __OFOCUSMANAGER_H
 
+#include <X11/Xlib.h>
 
 #include <xclass/OBaseObject.h>
+#include <xclass/OXFrame.h>
 
 class OXFrame;
+class OXClient;
 class OXCompositeFrame;
 
 
 //----------------------------------------------------------------------
 
 class OFocusManager : public OBaseObject {
-protected:
-  OXFrame *_focusRoot, *_focusOwner;
-    
 public:
-  OFocusManager(OXFrame *focusRoot) {
-    _focusRoot = focusRoot;
-    _focusOwner = NULL;
-  }
-  ~OFocusManager() {}
+  OFocusManager(OXClient *client, OXFrame *focusRoot);
 
-  OXFrame *GetFocusOwner() const { return _focusOwner; }
-  void SetFocusOwner(OXFrame *f) { _focusOwner = f; }
+  OXFrame *GetFocusOwner();
+  void SetFocusOwner(OXFrame *f);
   int  FocusNext(OXFrame *f);
-  int  FocusNext() { return FocusNext(_focusOwner); }
+  int  FocusNext() { return FocusNext(GetFocusOwner()); }
   int  FocusPrevious(OXFrame *f);
-  int  FocusPrevious() { return FocusPrevious(_focusOwner); }
+  int  FocusPrevious() { return FocusPrevious(GetFocusOwner()); }
   int  AssignFocus(OXFrame *f);
   int  FocusForward(OXCompositeFrame *f);
   int  FocusBackward(OXCompositeFrame *f);
-  int  FocusCurrent() { return AssignFocus(_focusOwner); }
+  int  FocusCurrent() { return AssignFocus(GetFocusOwner()); }
+
+protected:
+  OXFrame *_focusRoot, *_focusOwner;
+  OXClient *_client;
+  XID _focusOwnerId;
 };
 
 

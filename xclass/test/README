@@ -43,3 +43,5 @@ favordlg - used to test the file dialog in normal and favourites mode.
 exec     - used to test the OExec class.
 
 colorsel - used to test the color select button and color selection dialog.
+
+mditest  - a simple MDI application, used to test the OXMdi set of classes.

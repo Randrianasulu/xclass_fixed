@@ -99,7 +99,9 @@ void OXProgressBar::SetColor(unsigned int color) {
 }
 
 void OXProgressBar::_Redraw() {
-  int stop = ((_w - 3) * _pos)/(_max - _min);
+  if (_max == _min) return;
+
+  int stop = ((_w - 3) * _pos) / (_max - _min);
 
   // do we really need a Redraw ?
   if (_laststop == stop) return;
@@ -112,7 +114,7 @@ void OXProgressBar::_DoRedraw() {
 
   if (_max == _min) return;
 
-  int stop = ((_w - 3) * _pos)/(_max - _min);
+  int stop = ((_w - 3) * _pos) / (_max - _min);
   _laststop = stop;
 
   OXFrame::_DoRedraw();

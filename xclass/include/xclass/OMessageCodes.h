@@ -90,8 +90,10 @@
 
 #define MSG_SHUTTER        23
 
+#define MSG_MDI            24
 
-#define MSG_MSGMAX         23
+
+#define MSG_MSGMAX         24
 #define MSG_USERMSG       100
 
 

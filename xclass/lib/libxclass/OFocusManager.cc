@@ -23,11 +23,18 @@
 #include <X11/Xlib.h>
 
 #include <xclass/utils.h>
+#include <xclass/OXClient.h>
 #include <xclass/OFocusManager.h>
 #include <xclass/OXCompositeFrame.h>
 
 
-//----------------------------------------------------------------
+//----------------------------------------------------------------------
+
+OFocusManager::OFocusManager(OXClient *client, OXFrame *focusRoot) {
+  _client = client;
+  _focusRoot = focusRoot;                                      
+  _focusOwner = NULL;                                          
+}
 
 int OFocusManager::FocusNext(OXFrame *f) {
   OXFrame *target = f;
@@ -151,4 +158,17 @@ int OFocusManager::FocusBackward(OXCompositeFrame *f) {
   }
    
   return False;
+}
+
+OXFrame *OFocusManager::GetFocusOwner() {
+  if (_focusOwner) {
+    if (_client->GetWindowById(_focusOwnerId) != _focusOwner)
+      _focusOwner = NULL;
+  }
+  return _focusOwner;
+}
+
+void OFocusManager::SetFocusOwner(OXFrame *f) {
+  _focusOwner = f;
+  if (f) _focusOwnerId = f->GetId();
 }

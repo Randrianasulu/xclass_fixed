@@ -2119,4 +2119,47 @@ OPicture.cc
 04/07/02 (0.6.5)
 
 - All the library classes have now OBaseObject as the common root.
- 
+
+
+06/07/02
+
+- OXCanvas::GetViewPort() must return an OXViewPort object and not an
+  OXFrame.
+
+- Added OXFrame::GetPosition() (why wasn't this already there???).
+
+
+07/07/02
+
+- OXMainFrame::HandleKey(): if a frame has established a bind on the Tab key
+  and explicitely states HANDLES_TAB, give it the priority over the current
+  focus owner.
+
+
+08/07/02
+
+- OXFrame's compression of motion and configure events can be now
+  enabled/disabled.
+
+
+09/07/02
+
+- OFocusManager: do not assume that _focusOwner is always valid.
+
+- OXTextButton::~OXTextButton(): unregister button from OXMainFrame list.
+
+
+10/07/02
+
+- OXClient::WaitFor(): added a safety check against infinite loops.
+
+
+11/07/02
+
+- Added the OXMdi set of classes from H. Radke. These classes have been
+  around for a while (available from old fOX ftp sites), but I wanted to
+  correct most of the bugs and to make the behaviour consistent before
+  adding them to xclass. MDI is useable and stable now, but there are some
+  things that still need to be done and bugs to correct, specially
+  concerning focus management. The doc/MDI.notes file contains the
+  ChangeLog and TODO lists.

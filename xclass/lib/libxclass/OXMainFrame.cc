@@ -54,7 +54,7 @@ OXMainFrame::OXMainFrame(const OXWindow *p, int w, int h,
     _currentAccept = _defaultAccept = _defaultCancel = NULL;
 
     _client->RegisterTopLevel(this);
-    _focusMgr = new OFocusManager(this);
+    _focusMgr = new OFocusManager(_client, this);
     _dndManager = NULL;
 
     int keycode = XKeysymToKeycode(GetDisplay(), XK_Tab);
@@ -97,8 +97,14 @@ OXMainFrame::~OXMainFrame() {
 }
 
 int OXMainFrame::HandleKey(XKeyEvent *event) {
-  OXSNode *e;
-  OXFrame *f;
+  OXSNode *e = NULL;
+  OXFrame *f, *bindf = NULL;
+  int retc;
+
+  if (_bindlist) {
+    e = _bindlist->GetNode(event->keycode);
+    if (e) bindf = (OXFrame *) e->data;
+  }
 
 //  if (event->type == KeyPress)
 //    XAutoRepeatOff(GetDisplay());
@@ -112,7 +118,7 @@ int OXMainFrame::HandleKey(XKeyEvent *event) {
       int takesFocus = _currentAccept->TakesFocus();
       _currentAccept->TakeFocus(False);
       _currentAccept->HandleKey(event);
-      _currentAccept->TakeFocus(takesFocus);
+      if (_currentAccept) _currentAccept->TakeFocus(takesFocus);
       return True;
     }
   }
@@ -123,7 +129,7 @@ int OXMainFrame::HandleKey(XKeyEvent *event) {
       int takesFocus = _defaultCancel->TakesFocus();
       _defaultCancel->TakeFocus(False);
       _defaultCancel->HandleKey(event);
-      _defaultCancel->TakeFocus(takesFocus);
+      if (_defaultCancel) _defaultCancel->TakeFocus(takesFocus);
       return True;
     }
   }
@@ -134,23 +140,24 @@ int OXMainFrame::HandleKey(XKeyEvent *event) {
         if (!_focusMgr->FocusPrevious())
           _focusMgr->FocusBackward(this);
       } else {
-        f = _focusMgr->GetFocusOwner();
-        if (f && f->HandlesTab()) {
-          f->HandleKey(event);
-        } else {
-          if (!_focusMgr->FocusNext())
-            _focusMgr->FocusForward(this);
+        if (bindf && bindf->HandlesTab())
+          retc = bindf->HandleKey(event);
+        if (!bindf || !retc) {
+          f = _focusMgr->GetFocusOwner();
+          if (f && f->HandlesTab()) {
+            f->HandleKey(event);
+          } else {
+            if (!_focusMgr->FocusNext())
+              _focusMgr->FocusForward(this);
+          }
         }
       }
       return True;
     }
   }
 
-  if (!_bindlist) return False;
-  e = _bindlist->GetNode(event->keycode);
-  if (!e) return False;
-  f = (OXFrame *) e->data;
-  if (f && f->IsVisible() && f->IsEnabled()) return f->HandleKey(event);
+  if (bindf && bindf->IsVisible() && bindf->IsEnabled())
+    return bindf->HandleKey(event);
 
   return False;
 }
@@ -168,7 +175,10 @@ int OXMainFrame::RegisterButton(OXButton *b) {
 }
 
 int OXMainFrame::UnregisterButton(OXButton *b) {
-  return (_buttonlist->Remove(b->GetId()));
+  if (_currentAccept == b) _currentAccept = NULL;
+  if (_defaultAccept == b) _defaultAccept = NULL;
+  if (_defaultCancel == b) _defaultCancel = NULL;
+  return (_buttonlist ? _buttonlist->Remove(b->GetId()) : False);
 }
 
 void OXMainFrame::SetDefaultAcceptButton(OXButton *b) {

@@ -39,9 +39,10 @@
 #define IS_ENABLED        (1<<2)
 #define TAKES_FOCUS       (1<<3)
 #define HAS_FOCUS         (1<<4)
-#define HANDLES_TAB       (1<<5)
-#define IS_DND_SOURCE     (1<<6)
-#define IS_DND_TARGET     (1<<7)
+#define MDI_HAS_FOCUS     (1<<5)
+#define HANDLES_TAB       (1<<6)
+#define IS_DND_SOURCE     (1<<7)
+#define IS_DND_TARGET     (1<<8)
 
 //---- types of frames (and borders)
 
@@ -58,6 +59,9 @@
 #define FIXED_HEIGHT      (1<<9)
 #define FIXED_SIZE        (FIXED_WIDTH | FIXED_HEIGHT)
 #define OWN_BKGND         (1<<10)
+#define MDI_MAIN_FRAME    (1<<11)
+#define MDI_FRAME         (1<<12)
+#define MDI_CHILD_FRAME   (MDI_FRAME)
 
 
 //----------------------------------------------------------------------
@@ -151,6 +155,7 @@ public:
   ODimension GetSize() const { return ODimension(_w, _h); }
   int GetX() const { return _x; }
   int GetY() const { return _y; }
+  OPosition GetPosition() const { return OPosition(_x, _y); }
   int GetBorderWidth() const { return _bw; }
 
   int Contains(int x, int y) const { return ((x >= 0) && (x < _w) &&
@@ -217,6 +222,7 @@ protected:
   int _x, _y, _w, _h, _bw;
   unsigned int _options, _flags;
   unsigned long _eventMask, _backPixel, _hilitePixel, _shadowPixel;
+  int _compressConfigureEvents, _compressMotionEvents;
 
   OXTip *_tip;
 };

@@ -85,12 +85,20 @@ OXTextButton::OXTextButton(const OXWindow *p, OString *s, int ID,
 OXTextButton::~OXTextButton() {
   if (_hkeycode) {
     const OXMainFrame *main = (OXMainFrame *) _toplevel;
-    if (main) main->RemoveBind(this, _hkeycode, Mod1Mask);
+    if (main) {
+      main->RemoveBind(this, _hkeycode, Mod1Mask);
+      main->RemoveBind(this, _hkeycode, Mod1Mask | Mod2Mask);
+      main->RemoveBind(this, _hkeycode, Mod1Mask | LockMask);
+      main->RemoveBind(this, _hkeycode, Mod1Mask | Mod2Mask | LockMask);
+    }
   }
   if (_text) delete _text;
   delete _tl;
   if (_normGC != _defaultGC) delete _normGC;
   if (_font != _defaultFont) _client->FreeFont((OXFont *) _font);
+
+  OXMainFrame *main = (OXMainFrame *) _toplevel;
+  if (main) main->UnregisterButton(this);
 }
 
 void OXTextButton::SetText(OString *new_text) {

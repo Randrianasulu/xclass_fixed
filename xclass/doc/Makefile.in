@@ -21,7 +21,9 @@ DOCS = GPL \
 	INSTALL \
 	Programming.notes \
 	Layout.notes \
-	MimeTypes.README
+	MimeTypes.README \
+	Drag-and-Drop \
+	MDI.notes
 
 all:
 

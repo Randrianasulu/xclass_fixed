@@ -59,6 +59,11 @@ HEADERS = O2ColumnsLayout.h \
 	OXListTree.h \
 	OXListView.h \
 	OXMainFrame.h \
+	OXMdi.h \
+	OXMdiDecorFrame.h \
+	OXMdiFrame.h \
+	OXMdiMainFrame.h \
+	OXMdiMenu.h \
 	OXMenu.h \
 	OXMsgBox.h \
 	OXObject.h \

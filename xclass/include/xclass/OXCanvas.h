@@ -99,7 +99,7 @@ public:
 
   virtual void AddFrame(OXFrame *f, OLayoutHints *l);
   OXFrame *GetContainer() const { return _vport->GetContainer(); }
-  OXFrame *GetViewPort()  const { return ((OXFrame *) _vport); }
+  OXViewPort *GetViewPort()  const { return _vport; }
   virtual void SetContainer(OXFrame *f) { _vport->SetContainer(f); }
   virtual void Layout();
   virtual ODimension GetDefaultSize() const { return ODimension(_w, _h); }

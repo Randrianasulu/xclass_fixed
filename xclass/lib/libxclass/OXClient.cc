@@ -421,7 +421,11 @@ void OXClient::WaitFor(OXWindow *w) {
     _tip_timer = NULL;
   }
   wid = w->GetId();
-  while (ProcessOneEvent(DestroyNotify, wid));
+  while (ProcessOneEvent(DestroyNotify, wid)) {
+    // safety check!
+    const OXWindow *w1 = GetWindowById(wid);
+    if (!w1 || (w1 != w)) break;
+  }
   _tip_status = 0;
 }
 
@@ -434,7 +438,11 @@ void OXClient::WaitForUnmap(OXWindow *w) {
   //  _tip_timer = NULL;
   //  }
   wid = w->GetId();
-  while (ProcessOneEvent(UnmapNotify, wid));
+  while (ProcessOneEvent(UnmapNotify, wid)) {
+    // safety check!
+    const OXWindow *w1 = GetWindowById(wid);
+    if (!w1 || (w1 != w)) break;
+  }
   //_tip_status = 0;
 }
 

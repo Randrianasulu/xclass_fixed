@@ -129,6 +129,9 @@ OXFrame::OXFrame(const OXWindow *p, int w, int h,
     }
 
     _eventMask = wattr.event_mask;
+    _compressConfigureEvents = True;
+    _compressMotionEvents = True;
+
     _tip = NULL;
 }
 
@@ -179,6 +182,7 @@ void OXFrame::AddInput(unsigned long emask) {
   //if (_eventMask & emask) return; // avoid unnecessary calls to XSelectInput
   _eventMask |= emask;
   if (_eventMask & FocusChangeMask) _flags |= TAKES_FOCUS;
+  if (_eventMask & SubstructureNotifyMask) _compressConfigureEvents = False;
   SelectInput(_eventMask);
 }
 
@@ -275,8 +279,8 @@ int OXFrame::HandleEvent(XEvent *event) {
     break;
   
   case ConfigureNotify:
-    //if (_compressConfigureEvents)
-    while (XCheckTypedWindowEvent(GetDisplay(), _id, ConfigureNotify, event));
+    if (_compressConfigureEvents)
+      while (XCheckTypedWindowEvent(GetDisplay(), _id, ConfigureNotify, event));
     HandleConfigureNotify((XConfigureEvent *) event);
     break;
 
@@ -345,8 +349,8 @@ int OXFrame::HandleEvent(XEvent *event) {
     break;
 
   case MotionNotify:
-    //if (_compressMotionEvents)
-    while (XCheckTypedWindowEvent(GetDisplay(), _id, MotionNotify, event));
+    if (_compressMotionEvents)
+      while (XCheckTypedWindowEvent(GetDisplay(), _id, MotionNotify, event));
     HandleMotion((XMotionEvent *) event);
     break;
 
@@ -401,8 +405,11 @@ void OXFrame::Resize(ODimension size) {
 void OXFrame::MoveResize(int x, int y, int w, int h) {
   // we do it anyway as we don't know if it's only a move or only a resize
   OXWindow::MoveResize(x, y, w, h);
-  _x = x; _y = y; _w = w; _h = h;
-  Layout();
+  _x = x; _y = y;
+//  if (w != _w || h != _h) {
+    _w = w; _h = h;
+    Layout();
+//  }
 }
 
 int OXFrame::HandleClientMessage(XClientMessageEvent *event) {

@@ -72,6 +72,10 @@ SRCS = O2ColumnsLayout.cc \
 	OXListTree.cc \
 	OXListView.cc \
 	OXMainFrame.cc \
+	OXMdiDecorFrame.cc \
+	OXMdiFrame.cc \
+	OXMdiMainFrame.cc \
+	OXMdiMenu.cc \
 	OXMenu.cc \
 	OXMsgBox.cc \
 	OXPictureButton.cc \
