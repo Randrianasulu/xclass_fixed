@@ -74,6 +74,8 @@ ORX320::ORX320(OXClient *c, const char *dev) : OComponent() {
   _agc = RX320_AGC_MEDIUM;
   _freq = 930000;  // Hz
 
+  strcpy(_errmsg, "");
+
   if (dev) {
     OpenSerial(dev);
     Mute(True);
@@ -139,7 +141,7 @@ int ORX320::HandleFileEvent(OFileHandler *f, unsigned int evmask) {
       _count = 0;
     } else {
       //must be some RS232 noise...
-      //fprintf(stderr, "ORX320: %02x (%c)\n", (unsigned) c, c);
+      //sprintf(_errmsg, "ORX320: unexpected response %02x (%c)\n", (unsigned) c, c);
     }
   } else {
     _inbuf[_ix++] = c;
@@ -439,6 +441,9 @@ int ORX320::GetResponse(char *buf, int n, char term) {
   return i;
 }
 
+// open serial port, return 0 on success or -1 on error;
+// use GetLastError() to get a descriptive error message string
+
 int ORX320::OpenSerial(const char *dev) {
   struct termios ts;
   int off = 0;
@@ -446,19 +451,17 @@ int ORX320::OpenSerial(const char *dev) {
 
   _fd = open(dev, O_RDWR | O_NOCTTY | O_NONBLOCK, 0);
   if (_fd < 0) {
-    perror(dev);
+    sprintf(_errmsg, "Can't open %s: %s", dev, strerror(errno));
     return -1;
   }
   if (!isatty(_fd)) {
-    // oops, need to connect to a tty
-    fprintf(stderr, "%s: not a tty\n", dev);
+    sprintf(_errmsg, "%s is not a tty", dev);
     close(_fd);
     _fd = -1;
     return -1;
   }
   if (tcgetattr(_fd, &ts) == -1) {
-    // oops, didn't get tty settings
-    fprintf(stderr, "%s: failed to get tty settings\n", dev);
+    sprintf(_errmsg, "failed to read tty settings from %s", dev);
     close(_fd);
     _fd = -1;
     return -1;
@@ -471,39 +474,39 @@ int ORX320::OpenSerial(const char *dev) {
   ts.c_cc[VMIN] = 1;
   ts.c_cc[VTIME] = 0;
   if (cfsetospeed(&ts, B1200) == -1) {
-    // can't set output speed, see ERRNO
-    perror(dev);
+    sprintf(_errmsg, "failed to set output speed on %s: %s",
+            dev, strerror(errno));
     close(_fd);
     _fd = -1;
     return -1;
   }
   if (cfsetispeed(&ts, B1200) == -1) {
-    // can't set input speed, see ERRNO
-    perror(dev);
+    sprintf(_errmsg, "failed to set input speed on %s: %s",
+            dev, strerror(errno));
     close(_fd);
     _fd = -1;
     return -1;
   }
   if (tcsetattr(_fd, TCSAFLUSH, &ts) == -1) {
-    // can't setup serial port parms, see ERRNO
-    perror(dev);
+    sprintf(_errmsg, "failed to set line attributes on %s: %s",
+            dev, strerror(errno));
     close(_fd);
     _fd = -1;
     return -1;
   }
 
-  // Set the line back to blocking mode after setting CLOCAL.
+  // set the line back to blocking mode after setting CLOCAL.
   if (ioctl(_fd, FIONBIO, &off) < 0) {
-    // error setting blocking mode, see ERRNO
-    perror(dev);
+    sprintf(_errmsg, "failed to set blocking mode on %s: %s",
+            dev, strerror(errno));
     close(_fd);
     _fd = -1;
     return -1;
   }
   modemlines = TIOCM_RTS;
   if (ioctl(_fd, TIOCMBIC, &modemlines)) {
-    // can't clear RTS line, see ERRNO
-    perror(dev);
+    sprintf(_errmsg, "failed to clear RTS line on %s: %s",
+            dev, strerror(errno));
     close(_fd);
     _fd = -1;
     return -1;
@@ -511,6 +514,7 @@ int ORX320::OpenSerial(const char *dev) {
 
   _fh = new OFileHandler(this, _fd, XCM_READABLE);
 
+  strcpy(_errmsg, "");
   return 0;
 }
 

@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <xclass/OXTextButton.h>
+#include <xclass/OXCheckButton.h>
 #include <xclass/OXTextEntry.h>
 #include <xclass/OX3dLines.h>
 #include <xclass/OXMsgBox.h>
@@ -39,12 +39,145 @@ extern SFilter Filters[];
 
 //-------------------------------------------------------------------
 
+OXSetupDialog::OXSetupDialog(const OXWindow *p, const OXWindow *main,
+                             OString *sdev, int *mute, int *retc) :
+  OXTransientFrame(p, main, 400, 200) {
+    int  width;
+    char name[1024];
+
+    _sdev = sdev;
+    _mute = mute;
+    _retc = retc;
+    if (_retc) *_retc = ID_CANCEL;
+
+    //--- OK and Cancel buttons
+    OXHorizontalFrame *bf = new OXHorizontalFrame(this, 60, 20, FIXED_WIDTH);
+
+    OXTextButton *Ok, *Cancel;
+    Ok = new OXTextButton(bf, new OHotString("OK"), ID_OK);
+    Cancel = new OXTextButton(bf, new OHotString("Cancel"), ID_CANCEL);
+
+    Ok->Associate(this);
+    Cancel->Associate(this);
+
+    SetDefaultAcceptButton(Ok);
+    SetDefaultCancelButton(Cancel);
+
+    //--- layout for buttons: top align, equally expand horizontally
+    bly = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 5, 0, 0, 0);
+
+    //--- layout for the frame: place at bottom, right-aligned
+    bfly = new OLayoutHints(LHINTS_BOTTOM | LHINTS_RIGHT, 0, 5, 5, 4);
+
+    bf->AddFrame(Ok, bly);
+    bf->AddFrame(Cancel, bly);
+
+    width = Ok->GetDefaultWidth();
+    width = max(width, Cancel->GetDefaultWidth());
+    bf->Resize((width + 20) * 2, bf->GetDefaultHeight());
+
+    AddFrame(bf, bfly);
+
+    //--- text entry for serial device name
+
+    OXHorizontalFrame *hf = new OXHorizontalFrame(this, 60, 20, FIXED_WIDTH);
+
+    _te = new OXTextEntry(hf, NULL, -1);
+    if (_sdev) _te->AddText(0, _sdev->GetString());
+    _te->Resize(150, _te->GetDefaultHeight());
+
+    OXLabel *lb = new OXLabel(hf, new OString("Serial device:"));
+    hf->AddFrame(lb, new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 0, 5, 0, 0));
+    hf->AddFrame(_te, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_CENTER_Y));
+
+    hf->Resize(lb->GetDefaultWidth() + 155, hf->GetDefaultHeight());
+
+    AddFrame(hf, new OLayoutHints(LHINTS_NORMAL, 5, 5, 5, 5));
+
+    //--- "mute on exit" check button
+
+    _mb = new OXCheckButton(this, new OHotString("&Mute receiver on exit"), -1);
+    AddFrame(_mb, new OLayoutHints(LHINTS_NORMAL, 5, 5, 5, 5));
+
+    if (_mute && *_mute) _mb->SetState(BUTTON_DOWN);
+
+    //--- setup toplevel: non-resizable, modal, etc.
+
+    MapSubwindows();
+    ODimension size = GetDefaultSize();
+    Resize(size);
+
+    CenterOnParent();
+
+    SetWMSize(size.w, size.h);
+    SetWMSizeHints(size.w, size.h, size.w, size.h, 0, 0);
+
+    sprintf(name, "Configure rx320");
+    SetWindowName(name);
+    SetIconName(name);
+    SetClassHints("XCLASS", "RX320");
+
+    SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
+                                MWM_DECOR_MINIMIZE | MWM_DECOR_MENU,
+                MWM_FUNC_ALL | MWM_FUNC_RESIZE | MWM_FUNC_MAXIMIZE | 
+                               MWM_FUNC_MINIMIZE,
+                MWM_INPUT_MODELESS);
+
+    SetFocusOwner(_te);
+
+    MapWindow();
+    _client->WaitFor(this);
+}
+
+OXSetupDialog::~OXSetupDialog() {
+  delete bly;
+  delete bfly;
+}
+
+int OXSetupDialog::ProcessMessage(OMessage *msg) {
+  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
+
+  switch (msg->action) {
+    case MSG_CLICK:
+
+      switch (msg->type) {
+        case MSG_BUTTON:
+          switch (wmsg->id) {
+            case ID_OK:
+              if (_sdev) {
+                _sdev->Clear();
+                _sdev->Append(_te->GetString());
+              }
+              if (_mute) {
+                *_mute = (_mb->GetState() != BUTTON_UP);
+              }
+              if (_retc) *_retc = ID_OK;
+            case ID_CANCEL:
+              CloseWindow();
+              break;
+
+          }
+          break;
+
+        default:
+          break;
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  return True;
+}
+
+//-------------------------------------------------------------------
+
 OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
                              OFreqRecord *frec, int *retc, int new_station,
                              unsigned long options) :
   OXTransientFrame(p, main, 400, 200, options) {
-    int ax, ay, width;
-    Window wdummy;
+    int  width;
     char name[1024], tmp[1024];
 
     _freqRec = frec;
@@ -52,7 +185,7 @@ OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
     _retc = retc;
     if (_retc) *_retc = ID_CANCEL;
 
-    //--- OK / Cancel buttons
+    //--- OK and Cancel buttons
     OXHorizontalFrame *bf = new OXHorizontalFrame(this, 60, 20, FIXED_WIDTH);
 
     OXTextButton *Ok, *Cancel;
@@ -162,6 +295,7 @@ OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
 
     InitControls();
 
+    //--- setup toplevel: non-resizable, modal, etc.
 
     MapSubwindows();
     ODimension size = GetDefaultSize();
@@ -200,10 +334,6 @@ OXEditStation::~OXEditStation() {
   delete lyr;
 
   //delete lv;
-}
-
-void OXEditStation::CloseWindow() {
-  OXTransientFrame::CloseWindow();
 }
 
 void OXEditStation::InitControls() {

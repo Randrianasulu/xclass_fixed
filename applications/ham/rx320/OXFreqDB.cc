@@ -546,7 +546,7 @@ void OXFreqDB::DoAbout() {
                "A control program for the Ten-Tec RX320\n"
                "Shortwave Receiver\n";
                "Compiled with xclass version "XCLASS_VERSION;
-  info.copyright = "Copyright © 2000, 2001, Hector Peraza.";
+  info.copyright = "Copyright © 2000-2002, Hector Peraza.";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"

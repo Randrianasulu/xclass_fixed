@@ -81,7 +81,7 @@ protected:
   OXTuningKnob *_knob;
 
   ORX320 *_rx;
-  int _muted, _typing, _spoll;
+  int _muted, _typing, _spoll, _mute_on_exit;
   long _tfreq;
   Svfo _vfoA, _vfoB;
   char *_device;

@@ -94,6 +94,8 @@ public:
   void RequestSignal(int rate);
   char *GetFirmwareVersion();
   
+  const char *GetLastError() const { return _errmsg; }
+  
 protected:
   int OpenSerial(const char *dev);
   int CloseSerial();
@@ -107,7 +109,7 @@ protected:
   int Mcor, Cbfo;
   float Fcor;
   OFileHandler *_fh;
-  char _inbuf[20];
+  char _inbuf[20], _errmsg[1024];
   OTimer *_t;
 };
 

@@ -29,6 +29,27 @@
 
 class OXTextEntry;
 class OXDDListBox;
+class OXCheckButton;
+
+
+//---------------------------------------------------------------------
+
+class OXSetupDialog : public OXTransientFrame {
+public:
+  OXSetupDialog(const OXWindow *p, const OXWindow *main,
+                OString *sdev = NULL, int *mute = NULL,
+                int *retc = NULL);
+  virtual ~OXSetupDialog();
+  
+  virtual int ProcessMessage(OMessage *msg);
+
+protected:
+  OXTextEntry *_te;
+  OXCheckButton *_mb;
+  OLayoutHints *bly, *bfly;
+  int *_retc, *_mute;
+  OString *_sdev;
+};
 
 
 //---------------------------------------------------------------------
@@ -40,8 +61,7 @@ public:
                 unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXEditStation();
   
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   void InitControls();
@@ -55,5 +75,6 @@ protected:
   int *_retc;
   OFreqRecord *_freqRec;
 };
+
 
 #endif  // __OXDIALOGS_H

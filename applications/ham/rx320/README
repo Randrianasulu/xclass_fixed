@@ -1,8 +1,8 @@
 Intro
 -----
 
-This is the alpha version 0.3 of rx320, a Linux control program for the
-Ten-Tec RX320 receiver with a graphical interface.
+This is the alpha version 0.4 of rx320, a Linux control program for the
+Ten-Tec RX320 receiver with a graphical user interface.
 
 Currently the program is capable of communicating with the receiver using
 one of the available serial ports. There is also support for managing
@@ -16,23 +16,26 @@ The program saves the whole receiver state on exit, including the two VFO
 frequencies, and restores them on startup. The receiver is also reinitialized
 every time a power-on is detected.
 
-Right-clicking on an empty space between buttons popups a menu which lets
-you to open the frequency database window. Note that you can have several of
-these windows open simultaneously. From the File menu of the database window
-you can then open a *.320 file. Double-click on station names to tune the
+Right-clicking on an empty space between buttons pops-up a menu which lets
+you to open a new frequency database window, access the configuration dialog
+or exit the program.
+
+You can have any given number of database windows open simultaneously. To
+load a frequency file (*.320 or *.cdf) use the Open option from the File
+menu of the database window. Double-click on station names to tune the
 receiver into that station. Select "Edit/Add new station" to enter a new
-station into the database. Select "Edit/Change entry" to edit the currently
+station into the database, "Edit/Change entry" lets you edit the currently
 selected database entry.
 
 The main tuning knob works more like a real one (i.e. you click on the small
 hole and move the mouse around in circles), and not like the knob in the
 Ten-Tec's Windows program.
 
-You can also use the Right and Left arrow keys to tune up and down in
-frequency with the currently selected tuning step, or PgUp and PgDn to tune
-by 10 times the current step. Use the number keys to enter directly a
-frequency (in Hertz), finish with Enter to tune to that frequency or with
-Escape to abort the operation.
+You can also use the Right and Left arrow keys on your keyboard to tune up
+and down in frequency with the currently selected tuning step, or PgUp and
+PgDn to tune by 10 times the current step. Use the number keys to enter
+directly a frequency (in Hertz), finish with Enter to tune to that
+frequency or with Escape to abort the operation.
 
 
 Installation
@@ -46,11 +49,10 @@ the sources and type 'make'. Then copy the resulting rx320 to somewhere
 in your $PATH.
 
 To run the program, just type rx320 and the main window should appear. The
-serial port device defaults to /dev/ttyS1, and if you're using another port
-you'll have to modify the startup file manually. Just exit the program, edit
-the startup file (usually saved as $HOME/.xclassrc/etc/rx320rx), modify
-accordingly the "device" option under "[defaults]" and restart the program.
-Make sure you have the correct permissions to access the serial port.
+serial port device initially defaults to /dev/ttyS1, and if you're using
+another port you'll have to use the configuration dialog (accessible from
+the popup menu as described above) to enter the new device name. Make sure
+you have the correct permissions to access the serial port.
 
 
 Have fun,

@@ -42,3 +42,16 @@
 - Added Station edit dialog.
 
 - Added support (experimental) for reading *.cdf files.
+
+
+28/11/01 (0.3)
+
+- Added toolbar buttons for add, edit and delete stations.
+
+
+3/06/02 (0.4)
+
+- Added (preliminary) setup dialog, the serial port now can be changed by
+  this dialog.
+
+- Serial port connection error messages are now shown in message boxes.

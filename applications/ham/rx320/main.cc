@@ -48,6 +48,7 @@
 #include "OXFreqDB.h"
 #include "OXDisplayPanel.h"
 #include "OXTuningKnob.h"
+#include "OXDialogs.h"
 
 #include "main.h"
 
@@ -103,8 +104,6 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     _menu->AddSeparator();
     _menu->AddEntry(new OHotString("E&xit"), M_EXIT);
     _menu->Associate(this);
-
-    _menu->DisableEntry(M_CONFIG);
 
     //----------------- Display panel
 
@@ -189,6 +188,8 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     _mute->TakeFocus(False);
     _mute->Associate(this);
     _muted = False;
+
+    _mute_on_exit = False;
 
     vef->Resize(ww + 10, vef->GetDefaultHeight());
 
@@ -301,6 +302,8 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
 
     _device = StrDup("/dev/ttyS1");
 
+    _mute_on_exit = False;
+
     _rx = new ORX320(_client);
     _rx->Mute(True);
     _rx->Associate(this);
@@ -317,7 +320,15 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
 
     ReadIniFile();
 
-    _rx->SetSerial(_device);
+    i = _rx->SetSerial(_device);
+    if (i < 0) {
+      char tmp[1024];
+
+      OString stitle("Error");
+      sprintf(tmp, "Serial port error:\n%s", _rx->GetLastError());
+      new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(tmp),
+                   MB_ICONSTOP, ID_OK);
+    }
 
     _rx->SetFrequency(_vfoA.freq);
     _rx->SetMode(_vfoA.mode);
@@ -377,6 +388,7 @@ OXMain::~OXMain() {
 void OXMain::CloseWindow() {
   SaveIniFile();
   while (_freqWindow) _freqWindow->CloseWindow();
+  if (_mute_on_exit) _rx->Mute(True);
   OXMainFrame::CloseWindow();
 }
 
@@ -403,6 +415,7 @@ void OXMain::ReadIniFile() {
       if (ini.GetItem("line out volume", arg)) {
         _rx->SetVolume(RX320_LINE, 63 - atoi(arg));
       }
+      _mute_on_exit = ini.GetBool("mute on exit", false);
 
     } else if (strcasecmp(line, "vfo A") == 0) {
       if (ini.GetItem("frequency", arg)) {
@@ -506,6 +519,7 @@ void OXMain::SaveIniFile() {
   ini.PutItem("speaker volume", tmp);
   sprintf(tmp, "%d", 63 - _rx->GetVolume(RX320_LINE));
   ini.PutItem("line out volume", tmp);
+  ini.PutBool("mute on exit", _mute_on_exit);
   ini.PutNewLine();
 
   ini.PutNext("vfo A");
@@ -942,7 +956,9 @@ int OXMain::HandleKey(XKeyEvent *event) {
 
 int OXMain::HandleButton(XButtonEvent *event) {
   if (event->type == ButtonRelease && event->button == Button3) {
+    int retc, mute = _mute_on_exit;
     int menu_id = _menu->PopupMenu(event->x_root, event->y_root);
+    OString sdev(_device);
     OXFreqDB *fdb;
 
     switch (menu_id) {
@@ -953,6 +969,21 @@ int OXMain::HandleButton(XButtonEvent *event) {
         break;
 
       case M_CONFIG:
+        new OXSetupDialog(_client->GetRoot(), this, &sdev, &mute, &retc);
+        if (retc == ID_OK) {
+          _mute_on_exit = mute;
+          delete[] _device;
+          _device = StrDup(sdev.GetString());
+          retc = _rx->SetSerial(_device);
+          if (retc < 0) {
+            char tmp[1024];
+
+            OString stitle("Error");
+            sprintf(tmp, "Serial port error:\n%s", _rx->GetLastError());
+            new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(tmp),
+                   MB_ICONSTOP, ID_OK);
+          }
+        }
         break;
 
       case M_EXIT:
