@@ -693,7 +693,24 @@ void OXHtml::RedrawArea(int left, int top, int right, int bottom) {
 int OXHtml::DrawRegion(OPosition coord, ODimension size, int clear) {
   OXView::DrawRegion(coord, size, clear);
   OPosition p = ToPhysical(coord);
+#if 0
   RedrawArea(p.x, p.y, p.x + size.w + 1, p.y + size.h + 1);
+#else
+  int left = p.x;
+  int top = p.y;
+  int right = p.x + size.w + 1;
+  int bottom = p.y + size.h + 1;
+  if (bottom < 0) return 0;
+  if (top > _canvas->GetHeight()) return 0;
+  if (right < 0) return 0;
+  if (left > _canvas->GetWidth()) return 0;
+  if (dirtyTop > top) dirtyTop = top;
+  if (dirtyLeft > left) dirtyLeft = left;
+  if (dirtyBottom < bottom) dirtyBottom = bottom;
+  if (dirtyRight < right) dirtyRight = right;
+  flags |= REDRAW_PENDING;
+  Redraw();
+#endif
   return True;
 }
 

@@ -43,8 +43,13 @@ OXDoubleScroller :: OXDoubleScroller(const OXWindow *p, int w, int h) :
     _up = new OXScrollBarElt(this, _picu, SB_WIDTH, _h/2, RAISED_FRAME);
     _down = new OXScrollBarElt(this, _picd, SB_WIDTH, _h/2, RAISED_FRAME);
 
+#if 0
     AddFrame(_up, _l1 = new OLayoutHints(LHINTS_TOP));
     AddFrame(_down, _l2 = new OLayoutHints(LHINTS_BOTTOM));
+#else
+    AddFrame(_up, _l1 = new OLayoutHints(LHINTS_EXPAND_Y));
+    AddFrame(_down, _l2 = new OLayoutHints(LHINTS_EXPAND_Y));
+#endif
 
     XGrabButton(GetDisplay(), AnyButton, AnyModifier, _id, False,
                 ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
@@ -84,7 +89,7 @@ int OXDoubleScroller::HandleButton(XButtonEvent *event) {
 OXSpinner::OXSpinner(const OXWindow *p, char *name, int id) :
   OXCompositeFrame(p, 150, 100,
                    HORIZONTAL_FRAME | SUNKEN_FRAME | DOUBLE_BORDER | OWN_BKGND,
-		   _whitePixel), OXWidget(id, "OXSpinner") {
+		   _defaultDocumentBackground), OXWidget(id, "OXSpinner") {
 
   _te = new OXTextEntry(this, new OTextBuffer(255), 100);
   _te->Resize(_te->GetDefaultWidth() * 2, _te->GetDefaultHeight());
@@ -104,7 +109,7 @@ OXSpinner::OXSpinner(const OXWindow *p, char *name, int id) :
   _min = _value = 0.0;
   _max = 100.0;
   _step = 1.0;
-  _perc = 0;
+  _prec = 0;
   _editable = _rollOver = true;
   _SetValue();
   _percent = true;
@@ -139,17 +144,24 @@ float OXSpinner::GetValue() {
   return _value;
 }
 
-void OXSpinner::_SetValue() {
+void OXSpinner::_SetValue(bool sendmsg) {
   // Cute hack but it works :)
   static char temp1[256];
   static char temp2[256];
+
   if (_percent)
-    sprintf(temp1, "%%.%df %%%%", _perc);
+    sprintf(temp1, "%%.%df %%%%", _prec);
   else
-    sprintf(temp1, "%%.%df", _perc);
+    sprintf(temp1, "%%.%df", _prec);
   sprintf(temp2, temp1, _value);
+
   _te->Clear();
   _te->AddText(0, temp2);
+
+  if (sendmsg) {
+    OWidgetMessage msg(MSG_SPINNER, MSG_VALUECHANGED, _widgetID);
+    SendMessage(_msgObject, &msg);
+  }
 }
 
 int OXSpinner::HandleTimer(OTimer *timer) {
@@ -188,7 +200,7 @@ void OXSpinner::_Up() {
   } else {
     _value += _step;
   }
-  _SetValue();
+  _SetValue(True);
   if (_editable) _te->SelectAll();
 }
 
@@ -207,7 +219,7 @@ void OXSpinner::_Down() {
   } else {
     _value -= _step;
   }
-  _SetValue();
+  _SetValue(True);
   if (_editable) _te->SelectAll();
 }
 
@@ -249,6 +261,22 @@ int OXSpinner::ProcessMessage(OMessage *msg) {
 
       }
     }
+    break;
+
+  case MSG_TEXTENTRY:
+    switch (msg->action) {
+    case MSG_TEXTCHANGED: {
+#if 0
+      _SetValue(True);
+#else
+      OWidgetMessage msg(MSG_SPINNER, MSG_VALUECHANGED, _widgetID);
+      SendMessage(_msgObject, &msg);
+#endif
+    } break;
+
+    }
+    break;
+
   }
 
   return True;

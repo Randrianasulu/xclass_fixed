@@ -57,8 +57,8 @@ static SToolBarDataEx buttons[] = {
 //----------------------------------------------------------------------
 
 OXHelpWindow::OXHelpWindow(const OXWindow *p, const OXWindow *t,
-                           int w, int h, char *rootfile, char *curfile,
-                           char *appname) :
+                           int w, int h, const char *rootfile,
+                           const char *curfile, const char *appname) :
   OXTransientFrame(p, t, 100, 100) {
 
   _filename = NULL;
@@ -129,6 +129,7 @@ OXHelpWindow::~OXHelpWindow() {
   delete _viewLayout;
   if (_filename) delete[] _filename;
   if (_rootfile) delete[] _rootfile;
+  if (_loadDoc) delete[] _loadDoc;
   delete[] _appName;
   for (int i = 0; i < prev.size(); ++i) delete[] prev[i];
   for (int i = 0; i < next.size(); ++i) delete[] next[i];
@@ -311,8 +312,12 @@ int OXHelpWindow::ProcessMessage(OMessage *msg) {
 
 void OXHelpWindow::DoContents() {
   if (_rootfile) {
-    OHtmlUri uri(_loadDoc);
-    LoadDoc(&uri, _hview);
+    if (_loadDoc) delete[] _loadDoc;
+    _loadDoc = _client->GetResourcePool()->FindHelpFile(_rootfile, _appName);
+    if (_loadDoc) {
+      OHtmlUri uri(_loadDoc);
+      LoadDoc(&uri, _hview);
+    }
   } else {
     XBell(GetDisplay(), 0);
   }
@@ -347,6 +352,20 @@ void OXHelpWindow::DoNextPage() {
     delete[] url;
   } else {
     XBell(GetDisplay(), 0);
+  }
+  UpdateButtons();
+}
+
+void OXHelpWindow::DoSetCurrent(const char *file) {
+  if (file) {
+    if (_loadDoc) delete[] _loadDoc;
+    _loadDoc = _client->GetResourcePool()->FindHelpFile(file, _appName);
+    if (_loadDoc) {
+      OHtmlUri uri(_loadDoc);
+      LoadDoc(&uri, _hview);
+    }
+  } else {
+    DoContents();
   }
   UpdateButtons();
 }

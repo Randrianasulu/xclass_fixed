@@ -323,10 +323,10 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
       _ftypes->AddEntry(new OString(_file_info->file_types[i]), i);
 
     int index = _file_info->file_types_index;
+    if (index >= i / 2)
+      index = (i / 2) - 1;
     if (index < 0)
       index = 0;
-    else if (index >= i / 2)
-      index = i / 2;
 
     _ftypes->Select(index);
 

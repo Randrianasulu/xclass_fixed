@@ -52,7 +52,7 @@ public:
   void SetValue(float value) { _value = value; _SetValue(); }
   float GetValue();
   void SetRange(float min, float max, float step);
-  void SetPrec(unsigned short per) { _perc = per; _SetValue(); }
+  void SetPrec(unsigned short per) { _prec = per; _SetValue(); }
   void SetRollOver(bool roll) { _rollOver = roll; }
   virtual int ProcessMessage(OMessage *msg);
   virtual int HandleTimer(OTimer *timer);
@@ -60,7 +60,7 @@ public:
   void SetPercent(bool perc);
 
 protected:
-  void _SetValue();
+  void _SetValue(bool sendmsg = False);
   void _GetValue();
   void _Up();
   void _Down();
@@ -73,7 +73,7 @@ protected:
   bool _rollOver, _editable, _percent;
 
   float _min, _max, _step, _value;
-  unsigned short _perc;
+  unsigned short _prec;
   int _dir;
 };
 

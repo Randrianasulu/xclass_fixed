@@ -41,7 +41,8 @@ class OXHelpDoc;
 class OXHelpWindow : public OXTransientFrame {
 public:
   OXHelpWindow(const OXWindow *p, const OXWindow *t,
-               int w, int h, char *rootfile, char *curfile, char *appname);
+               int w, int h, const char *rootfile, const char *curfile,
+               const char *appname);
   ~OXHelpWindow();
 
   virtual int CloseWindow();
@@ -51,6 +52,7 @@ public:
   void DoContents();
   void DoPrevPage();
   void DoNextPage();
+  void DoSetCurrent(const char *curfile);
 
 protected:
   void LoadDoc(OHtmlUri *uri, OXHelpDoc *dst);

@@ -27,6 +27,8 @@
 #include <xclass/OXView.h>
 
 
+//#define FLUSH_EXPOSE
+
 //----------------------------------------------------------------------
 
 OXViewCanvas::OXViewCanvas(const OXView *p, int w, int h,
@@ -179,11 +181,14 @@ int OXView::HandleButton(XButtonEvent *event) {
 
 int OXView::HandleExpose(XExposeEvent *event) {
   if (event->window == _canvas->GetId())
+#ifndef FLUSH_EXPOSE
     NeedRedraw(ORectangle(ToVirtual(OPosition(event->x, event->y)),
                ODimension(event->width, event->height)));
-//    DrawRegion(ToVirtual(OPosition(event->x, event->y)),
-//               ODimension(event->width, event->height),
-//               _clearExposedArea);
+#else
+    DrawRegion(ToVirtual(OPosition(event->x, event->y)),
+               ODimension(event->width, event->height),
+               _clearExposedArea);
+#endif
   else
     OXFrame::HandleExpose(event);
 
@@ -192,11 +197,14 @@ int OXView::HandleExpose(XExposeEvent *event) {
 
 int OXView::HandleGraphicsExpose(XGraphicsExposeEvent *event) {
   if (event->drawable == _canvas->GetId())
+#ifndef FLUSH_EXPOSE
     NeedRedraw(ORectangle(ToVirtual(OPosition(event->x, event->y)),
                ODimension(event->width, event->height)));
-//    DrawRegion(ToVirtual(OPosition(event->x, event->y)),
-//               ODimension(event->width, event->height),
-//               _clearExposedArea);
+#else
+    DrawRegion(ToVirtual(OPosition(event->x, event->y)),
+               ODimension(event->width, event->height),
+               _clearExposedArea);
+#endif
   else
     OXFrame::HandleGraphicsExpose(event);
 
@@ -495,4 +503,15 @@ void OXView::Scroll(OPosition newTop) {
 
   if (vNeedsRedraw) DrawRegion(vRedrawStart, vRedrawSize, _clearExposedArea);
   if (hNeedsRedraw) DrawRegion(hRedrawStart, hRedrawSize, _clearExposedArea);
+
+#ifdef FLUSH_EXPOSE
+  XEvent event;
+
+  XSync(GetDisplay(), False);
+  while (XCheckTypedWindowEvent(GetDisplay(), _id,
+                                GraphicsExpose, &event)) {
+    HandleGraphicsExpose((XGraphicsExposeEvent *) &event);
+    if (event.xgraphicsexpose.count == 0) break;
+  }
+#endif
 }

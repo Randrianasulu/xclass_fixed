@@ -2521,4 +2521,24 @@ OPicture.cc
 
 - OXWindow::SetBackgroundColor(), OXFrame::SetBackgroundColor() type of
   'color' must be unsigned long.
- 
+
+
+18/09/04  (0.9.2)
+
+- OXFileDialog: upper bound checking of file_type_index was incorrect.
+
+- OXSpinner now sends messages when the value changes.
+
+
+20/09/04
+
+- OXHtml::DrawRegion() - must draw immediately and not to schedule for a
+  redraw. Otherwise scrolling on slow machines may leave unpainted areas.
+
+
+22/09/04
+
+- Corrected a bug in OXHelpWindow::DoContents(): the help root document
+  must be loaded and not the initial specified document.
+
+- Added DoSetCurrent() method to OXHelpWindow.

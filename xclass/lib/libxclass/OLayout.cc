@@ -102,10 +102,10 @@ void OVerticalLayout::Layout() {
       }
 
       if (hints & LHINTS_EXPAND_Y) {
-	if (size_expand >= exp_max)
-	  size.h = (size_expand) - pad_top - pad_bottom;
-	else
-          size.h = csize.h + esize_expand;
+//	if (size_expand >= exp_max)
+	  size.h = size_expand - pad_top - pad_bottom;
+//	else
+//	  size.h = csize.h + esize_expand;
 	tmp_expand += rem_expand;
 	if (tmp_expand >= nb_expand) {
 	  size.h++;
@@ -239,10 +239,10 @@ void OHorizontalLayout::Layout() {
       }
 
       if (hints & LHINTS_EXPAND_X) {
-	if (size_expand >= exp_max)
+//	if (size_expand >= exp_max)
 	  size.w = size_expand - pad_left - pad_right;
-	else
-	  size.w = csize.w + esize_expand;
+//	else
+//	  size.w = csize.w + esize_expand;
 	tmp_expand += rem_expand;
 	if (tmp_expand >= nb_expand) {
 	  size.w++;

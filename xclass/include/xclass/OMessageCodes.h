@@ -75,36 +75,39 @@
 #define MSG_DIRCHANGED                5
 #define MSG_DROP                     11
 
-#define MSG_HSLIDER        17
-#define MSG_VSLIDER        18
+#define MSG_SPINNER        17
+#define MSG_VALUECHANGED              1
 
-#define MSG_HRESIZER       19
-#define MSG_VRESIZER       20
+#define MSG_HSLIDER        18
+#define MSG_VSLIDER        19
 
-#define MSG_EXEC           21
+#define MSG_HRESIZER       20
+#define MSG_VRESIZER       21
+
+#define MSG_EXEC           22
 #define MSG_APPSTOPPED               10
 #define MSG_APPEXITED                11
 #define MSG_APPFAILED                12
 
-#define MSG_COLORSEL       22
+#define MSG_COLORSEL       23
 
-#define MSG_SHUTTER        23
+#define MSG_SHUTTER        24
 
-#define MSG_MDI            24
+#define MSG_MDI            25
 
-#define MSG_DOCKABLE       25
+#define MSG_DOCKABLE       26
 #define MSG_SHOW                     10
 #define MSG_HIDE                     11
 #define MSG_DOCK                     12
 #define MSG_UNDOCK                   13
 #define MSG_CLOSE                    14
 
-#define MSG_HTML           26
+#define MSG_HTML           27
 
-#define MSG_HELP           27
+#define MSG_HELP           28
 
 
-#define MSG_MSGMAX         27
+#define MSG_MSGMAX         28
 #define MSG_USERMSG       100
 
 
