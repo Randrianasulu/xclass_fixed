@@ -52,7 +52,7 @@ higher installed in your system (xclass is currently available from
 http://xclass.sourceforge.net and ftp://mitac11.uia.ac.be/pub/xclass).
 In order to build the executable go to the directory where you unpacked
 the sources and type 'make'. Then copy the resulting rx320 to somewhere
-in your $PATH.
+in your $PATH (or use 'make install' as superuser).
 
 To run the program, just type rx320 and the main window should appear. The
 serial port device initially defaults to /dev/ttyS1, and if you're using

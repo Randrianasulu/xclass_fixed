@@ -98,7 +98,6 @@ public:
   virtual int HandleKey(XKeyEvent * event);
 
   void UpdateStatus();
-  void Quit();
 
   void MoveNorth();
   void MoveSouth();
@@ -224,7 +223,7 @@ int OXAppMainFrame::ProcessMessage(OMessage *msg) {
           switch(wmsg->id) {
 
             case M_FILE_EXIT:
-              Quit();
+              CloseWindow();
               break;
 
             case M_VIEW_GRID:
@@ -262,13 +261,6 @@ int OXAppMainFrame::ProcessMessage(OMessage *msg) {
   return True;
 }
 
-void OXAppMainFrame::Quit() {
-  XAutoRepeatOn(GetDisplay());
-  delete this; // mainWindow;
-  delete clientX;
-  exit(0);
-}
-
 int OXAppMainFrame::HandleKey(XKeyEvent *event) {
   char tmp[10];
   KeySym keysym;
@@ -291,7 +283,7 @@ int OXAppMainFrame::HandleKey(XKeyEvent *event) {
         else if (tmp[0] == 'g' || tmp[0] == 'G')
           ToggleGrid();
         else if (tmp[0] == 'q' || tmp[0] == 'Q')
-          Quit();
+          CloseWindow();
         break;        
     }
   }

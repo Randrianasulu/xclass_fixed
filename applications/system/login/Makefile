@@ -28,3 +28,7 @@ install:
 
 clean:
 	rm -f ${OBJS} $(PROG) *~ core *.bak
+
+test: ${PROG}
+	@echo Testing ${PROG}...
+	${PROG}

@@ -6,6 +6,8 @@ CXX=c++
 CXXFLAGS=`xc-config --cflags` -g -g ${fvwm_includes}
 LIBS=`xc-config --libs`
 LDFLAGS=
+INSTALL=install -c
+BINDIR=`xc-config --exec-prefix`/bin
 
 # Rules for compiling .cc sources
 .SUFFIX: .cc .o
@@ -28,7 +30,15 @@ ${PROG}: ${OBJS}
 	$(CXX) -o $@ ${OBJS} $(LDFLAGS) $(LIBS) $(EXTRALIBS)
 	strip $@
 
-install: 
+install: ${PROG}
+	mkdir -p ${BINDIR}
+	${INSTALL} ${PROG} ${BINDIR}
 
 clean:
 	rm -f ${OBJS} $(PROG) *~ core *.bak
+
+distclean: clean
+
+test: ${PROG}
+	@echo Run ${PROG} as an fvwm95 module for best results!
+	${PROG}

@@ -99,7 +99,7 @@ http://sourceforge.net/projects/xclass. Once you have xclass installed, all
 you need to do is to cd to the desktop's source directory and type 'make'.
 
 After the compilation, copy the 'desktop' executable to somewhere in your
-$PATH.
+$PATH (or use 'make install' as superuser).
 
 If you are using fvwm95, make sure you add the following line to your
 .fvwm95rc file:

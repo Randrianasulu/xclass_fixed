@@ -24,7 +24,8 @@ Changes to the last release
 Install
 -------
 
-Just type "make" and copy the binary to a dir somewhere in your path.
+Just type "make" and copy the binary to a dir somewhere in your path (or
+use 'make install' if you are a superuser).
 
 A pixmap is also provided for using with xclass explorer, just modify your
 ~/.xclass/etc/mime.types file accordingly:

@@ -215,6 +215,7 @@ OXComposer::OXComposer(const OXWindow *p, const OXWindow *main, int w,
 #else
     {
       int ln;
+      te->AutoUpdate(False);
       for (ln = 0; ln < _body->RowCount(); ++ln) {
         const char *str = _body->GetLine(OPosition(0, ln));
         if (str) {
@@ -222,6 +223,7 @@ OXComposer::OXComposer(const OXWindow *p, const OXWindow *main, int w,
           te->InsertText("\n");
         }
       }
+      te->AutoUpdate(True);
     }
 #endif
 

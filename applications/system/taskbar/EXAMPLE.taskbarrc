@@ -17,8 +17,8 @@ start_fvwm_menu = StartMenu
 showtips = true
 highlight_focus = false
 icon_dir = /usr/include/X11/pixmaps/:/usr/local/icons:/usr/local/mini-icons/
-;plugins_dir = $HOME/bin/taskbar/plugins
-plugins_dir = /usr/local/xclass/taskbar/plugins
+;plugins_dir = $HOME/.xclass/apps/taskbar
+plugins_dir = /usr/local/xclass/apps/taskbar
 
 
 [swallow]

@@ -44,7 +44,8 @@ Compilation
 -----------
 
 You must have xclass version 0.7.4 or higher installed. To complie the
-application just do a "make".
+application just do a "make". To install it, do a 'make install' as
+superuser.
 
 
 Enjoy!

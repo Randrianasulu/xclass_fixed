@@ -105,7 +105,7 @@ OXTaskBar::OXTaskBar(const OXWindow *p, char *modname, int inp, int outp) :
   OXMainFrame(p, 10, 10) {
     OFontMetrics fm;
     int win_width, win_height;
-    char *homeDir, rcfile[PATH_MAX];
+    char *rcfile;
 
     delete _focusMgr;
     _focusMgr = NULL;
@@ -157,11 +157,9 @@ OXTaskBar::OXTaskBar(const OXWindow *p, char *modname, int inp, int outp) :
 
     // Read in the rc file
 
-    homeDir = getenv("HOME");
-    if (!homeDir) homeDir = "/";
-    sprintf(rcfile, "%s/.taskbarrc", homeDir);
+    rcfile = _client->GetResourcePool()->FindIniFile("taskbarrc", INI_READ);
 
-    ReadIniFile(rcfile);
+    if (rcfile) ReadIniFile(rcfile);
 
     _scrWidth  = _client->GetDisplayWidth();
     _scrHeight = _client->GetDisplayHeight();
@@ -249,10 +247,10 @@ OXTaskBar::OXTaskBar(const OXWindow *p, char *modname, int inp, int outp) :
 
     _pl = new OLayoutHints(LHINTS_RIGHT | LHINTS_CENTER_Y, 1, 1, 0, 0);
 
-    LoadPlugins(rcfile);
+    if (rcfile) LoadPlugins(rcfile);
     if (_plugins->NoOfItems() == 0) HideFrame(_tray);
 
-    LaunchSwallow(rcfile);
+    if (rcfile) LaunchSwallow(rcfile);
 
     SetWindowName(_moduleName);
     SetIconName(_moduleName);
@@ -293,6 +291,8 @@ OXTaskBar::OXTaskBar(const OXWindow *p, char *modname, int inp, int outp) :
     MapSubwindows();
     if (_plugins->NoOfItems() == 0) HideFrame(_tray);
     MapWindow();
+
+    if (rcfile) delete[] rcfile;
 }
 
 OXTaskBar::~OXTaskBar() {

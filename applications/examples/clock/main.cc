@@ -53,7 +53,7 @@ protected:
 OXMain::OXMain(const OXWindow *p, int w, int h) :
   OXMainFrame(p, w, h) {
 
-  TimeLabel = new OXLabel(this, new OString(" --:--:-- AM "));
+  TimeLabel = new OXLabel(this, new OString(" 00:00:00 AM "));
 
   lhints = new OLayoutHints(LHINTS_EXPAND_Y | LHINTS_EXPAND_X, 5, 5, 5, 5);
 

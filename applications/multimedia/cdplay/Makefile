@@ -5,6 +5,8 @@ CXXFLAGS=`xc-config --cflags` -g
 LIBS=`xc-config --libs`
 LDFLAGS=
 MAKEDEPEND=@MAKEDEPEND@
+INSTALL=install -c
+BINDIR=`xc-config --exec-prefix`/bin
 
 # Rules for compiling .cc sources
 .SUFFIX: .cc .o
@@ -30,7 +32,15 @@ ${PROG}: ${OBJS}
 	$(CXX) -o $@ ${OBJS} $(LDFLAGS) $(LIBS) $(EXTRALIBS)
 	strip $@
 
-install: 
+install: ${PROG}
+	mkdir -p ${BINDIR}
+	${INSTALL} ${PROG} ${BINDIR}
 
 clean:
 	rm -f ${OBJS} $(PROG) *~ core *.bak
+
+distclean: clean
+
+test: ${PROG}
+	@echo Testing ${PROG}...
+	${PROG}

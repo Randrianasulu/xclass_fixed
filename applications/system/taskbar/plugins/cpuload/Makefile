@@ -6,7 +6,7 @@ LIBS=`xc-config --libs`
 EXTRALIBS=-ldl
 LDFLAGS=-rdynamic -shared
 INSTALL=install -c
-BINDIR=`xc-config --prefix`/xclass/taskbar/plugins
+BINDIR=`xc-config --prefix`/xclass/apps/taskbar
 
 # Rules for compiling .cc sources
 .SUFFIX: .cc .o

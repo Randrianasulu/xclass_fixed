@@ -13,7 +13,7 @@ Installation
 This version of foxftp uses a MDI interface, so it requires xclass 0.7.4
 or later. To build the executable, cd to the directory where you unpacked
 the sources and type 'make'. Copy the resulting 'foxftp' executable to a
-directory somewhere in your $PATH.
+directory somewhere in your $PATH (or use 'make install' as superuser).
 
 
 Usage
@@ -37,8 +37,8 @@ responses.
 
 The "Connect" option, in the other hand, opens a Bookmark manager dialog
 window. Originally there will be no bookmarks, so you can start first by
-creating a folder (and maybe subfolders), and then putting some bookmarks
-into them. Bookmarks are organized in a tree fashion, quite like Netscape's
+creating a folder (and maybe subfolders), and then adding some bookmarks
+to them. Bookmarks are organized in a tree fashion, quite like Netscape's
 bookmark manager: you can have an arbitrary number of folders (each one
 representing an internet domain, organization, or whatever you like) with an
 arbitrary number of bookmarks (each one representing a single host machine).

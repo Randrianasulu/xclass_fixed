@@ -106,7 +106,7 @@ OSession::OSession(char *inidir) {
   _initfile = new char[strlen(_folderpath) + strlen("/nrxmail.ini") + 1];
   sprintf(_initfile, "%s%s", _folderpath, "/nrxmail.ini");
 
-  char line[MAX_LINE_LEN];
+  char line[INI_MAX_LINE_LEN];
   OIniFile *ini = new OIniFile(_initfile, INI_READ);
 
   do {

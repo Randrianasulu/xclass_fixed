@@ -53,6 +53,7 @@ OXViewSrc::OXViewSrc(const OXWindow *p, const OXWindow *main, int w,
 #else
   {
     int ln;
+    tv->AutoUpdate(False);
     for (ln = 0; ln < text->RowCount(); ++ln) {
       const char *str = text->GetLine(OPosition(0, ln));
       if (str) {
@@ -60,6 +61,8 @@ OXViewSrc::OXViewSrc(const OXWindow *p, const OXWindow *main, int w,
         tv->InsertText("\n");
       }
     }
+    tv->SetCursorPosition(OPosition(0, 0), True);
+    tv->AutoUpdate(True);
   }
 #endif
 

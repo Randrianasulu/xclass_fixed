@@ -54,3 +54,9 @@ distclean: clean
 ${PROG}: ${OBJS}
 	$(CXX) -o $@ $@.o $(LDFLAGS) $(LIBS) $(EXTRALIBS)
 	strip $@
+
+test: ${PROG}
+	@for i in ${PROG} ; do \
+		echo Testing $$i ; \
+		$$i ; \
+	done

@@ -1,14 +1,14 @@
 SHELL=/bin/sh
 
-prefix=/usr/local
-exec_prefix=${prefix}
-
 CXX=c++
 CXXFLAGS=`xc-config --cflags` -g
 LIBS=`xc-config --libs`
 EXTRALIBS=
 LDFLAGS= 
 MAKEDEPEND=@MAKEDEPEND@
+INSTALL=install -c
+BINDIR=`xc-config --exec-prefix`/bin
+RM=rm -f
 
 SRCS = OIrc.cc \
 	OLineDoc.cc \
@@ -48,7 +48,9 @@ all: ${PROG} mirc2ansi
 depend:
 	${MAKEDEPEND} ${CXXFLAGS} ${SRCS}
 
-install:
+install: ${PROG}
+	mkdir -p ${BINDIR}
+	${INSTALL} ${PROG} ${BINDIR}
 
 clean:
 	${RM} ${OBJS} $(PROG) mirc2ansi *~ core *.bak
@@ -61,3 +63,7 @@ ${PROG}: ${OBJS}
 
 mirc2ansi: mirc2ansi.c
 	$(CC) -o $@ $<
+
+test: ${PROG}
+	@echo Testing ${PROG}...
+	${PROG}

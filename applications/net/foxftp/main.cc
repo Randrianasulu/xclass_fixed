@@ -210,9 +210,6 @@ static _tb_data ftp_tb[] = {
   { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, NULL }
 };
 
-// TODO:
-// - correct delayed redraw problems (see clientX->Redraw() calls)
-
 
 //----------------------------------------------------------------------
 
@@ -346,7 +343,7 @@ int OXFtpMain::HandleTimer(OTimer *t) {
   delete _clean_timer;
   _clean_timer = NULL;
   _statusBar->SetText(0, new OString(""));
-// ==!==  clientX->Redraw();
+  _client->FlushRedraw();
   return true;
 }
 
@@ -819,7 +816,7 @@ int OXFtpMain::ProcessMessage(OMessage *msg) {
         case STATUS_CHANGED:
           OStatusMessage *m = (OStatusMessage *) msg;
           _statusBar->SetText(0, new OString(m->str));
-// ==!==          clientX->Redraw();
+          _client->FlushRedraw();
           if (_clean_timer) delete _clean_timer;
           _clean_timer = new OTimer(this, 5000);
           break;

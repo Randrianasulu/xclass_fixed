@@ -158,6 +158,7 @@ void OXBodyView::ShowMessage(OMail *newmail) {
 #else
   {
     int ln;
+    body->AutoUpdate(False);
     for (ln = 0; ln < temptext->RowCount(); ++ln) {
       const char *str = temptext->GetLine(OPosition(0, ln));
       if (str) {
@@ -166,6 +167,7 @@ void OXBodyView::ShowMessage(OMail *newmail) {
       }
     }
     body->SetCursorPosition(OPosition(0, 0), True);
+    body->AutoUpdate(True);
   }
 #endif
   if (mail->IsMultipart()) {

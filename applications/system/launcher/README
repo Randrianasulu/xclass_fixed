@@ -17,7 +17,7 @@ Installation
 This version of xclauncher requires xclass 0.6.4 or later. To build the
 executable, cd to the directory where you unpacked the sources and type
 'make'. Copy the resulting 'xclauncher' executable to a directory in your
-$PATH.
+$PATH (or use 'make install' as superuser).
 
 Optionally, copy the supplied xclauncher.rc file to the directory where
 the xclass ini files reside (usually ~/.xclass/etc).

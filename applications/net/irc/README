@@ -11,7 +11,7 @@ Installation
 This version of fOXIrc requires xclass 0.7.4 or newer. To build the
 executable, cd to the directory where you unpacked the sources and type
 'make'. Copy the resulting 'foxirc' executable to a directory somewhere in
-your $PATH.
+your $PATH (or use 'make install' as superuser).
 
 
 Quick usage guide

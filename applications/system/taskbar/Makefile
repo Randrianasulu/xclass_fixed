@@ -9,6 +9,7 @@ EXTRALIBS=-ldl
 LDFLAGS=-rdynamic
 INSTALL=install -c
 BINDIR=`xc-config --exec-prefix`/bin
+RCDIR=`xc-config --prefix`/xclass/etc
 
 # Rules for compiling .cc sources
 .SUFFIX: .cc .o
@@ -46,7 +47,10 @@ ${PROG}: ${OBJS}
 	strip $@
 
 install: 
+	mkdir -p ${BINDIR}
 	${INSTALL} ${PROG} ${BINDIR}
+	mkdir -p ${RCDIR}
+	${INSTALL} -m 644 EXAMPLE.taskbarrc ${RCDIR}/taskbarrc
 	@for i in ${SUBDIRS}; do \
 		echo Installing in $$i ; \
 		(cd $$i; ${MAKE} install) ; \
