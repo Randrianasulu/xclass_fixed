@@ -60,7 +60,7 @@ public:
   ~OListTreeItem();
 
   void Rename(const char *new_name);
-
+  
   OListTreeItem	*parent, *firstchild, *prevsibling, *nextsibling;
   int  open, active;
   char *text;
@@ -92,6 +92,9 @@ public:
   int  DeleteChildren(OListTreeItem *item);
   int  Reparent(OListTreeItem *item, OListTreeItem *newparent);
   int  ReparentChildren(OListTreeItem *item, OListTreeItem *newparent);
+
+  void OpenNode(OListTreeItem *node);
+  void CloseNode(OListTreeItem *node);
 
   int  Sort(OListTreeItem *item);
   int  SortSiblings(OListTreeItem *item);

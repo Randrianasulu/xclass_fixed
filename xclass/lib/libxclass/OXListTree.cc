@@ -922,7 +922,18 @@ void OXListTree::AddItem(OListTreeItem *parent, OListTreeItem *item) {
 
   _InsertChild(parent, item);
 
-  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+  int affects_display = True;
+
+  while (parent) {
+    if (!parent->open) {
+      affects_display = False;
+      break;
+    }
+    parent = parent->parent;
+  }
+
+  if (affects_display)
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 }
 
 OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, const char *string,
@@ -936,7 +947,18 @@ OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, const char *string,
   item = new OListTreeItem(_client, string, open, closed);
   _InsertChild(parent, item);
 
-  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+  int affects_display = True;
+
+  while (parent) {
+    if (!parent->open) {
+      affects_display = False;
+      break;
+    }
+    parent = parent->parent;
+  }
+
+  if (affects_display)
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return item;
 }
@@ -948,6 +970,7 @@ void OXListTree::RenameItem(OListTreeItem *item, const char *string) {
 
 int OXListTree::DeleteItem(OListTreeItem *item) {
   int y = item->y;
+  OListTreeItem *parent = item->parent;
 
   if (item->firstchild)
     _DeleteChildren(item->firstchild);
@@ -956,7 +979,18 @@ int OXListTree::DeleteItem(OListTreeItem *item) {
   _RemoveReference(item);
   delete item;
 
-  NeedRedraw(ORectangle(0, y, _virtualSize.w, _canvas->GetHeight()));
+  int affects_display = True;
+
+  while (parent) {
+    if (!parent->open) {
+      affects_display = False;
+      break;
+    }
+    parent = parent->parent;
+  }
+
+  if (affects_display)
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return 1;
 }
@@ -969,7 +1003,17 @@ int OXListTree::DeleteChildren(OListTreeItem *item) {
 
   item->firstchild = NULL;
 
-  NeedRedraw(ORectangle(0, y, _virtualSize.w, _canvas->GetHeight()));
+  int affects_display = True;
+
+  for (item = item->parent; item; item = item->parent) {
+    if (!item->open) {
+      affects_display = False;
+      break;
+    }
+  }
+
+  if (affects_display)
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return 1;
 }
@@ -1003,11 +1047,29 @@ int OXListTree::ReparentChildren(OListTreeItem *item,
   return 0;
 }
 
+void OXListTree::OpenNode(OListTreeItem *item) {
+  if (!item->open) {
+    item->open = True;
+    NeedRedraw(ORectangle(0, item->y,
+               _virtualSize.w, _canvas->GetHeight()));
+  }
+}
+
+void OXListTree::CloseNode(OListTreeItem *item) {
+  if (item->open) {
+    item->open = False;
+    NeedRedraw(ORectangle(0, item->y,
+               _virtualSize.w, _canvas->GetHeight()));
+  }
+}
+
 //static int OXListTree::_compare(const void *item1, const void *item2) {
 int _compare(const void *item1, const void *item2) {
   return strcmp((*((OListTreeItem **) item1))->text,
 		(*((OListTreeItem **) item2))->text);
 }
+
+// Sort siblings
 
 int OXListTree::Sort(OListTreeItem *item) {
   OListTreeItem *first, *parent, **list;
@@ -1034,12 +1096,12 @@ int OXListTree::Sort(OListTreeItem *item) {
   if (count <= 1) return 1;
 
   list = new OListTreeItem* [count];
-  list[0] = first;
+  list[0] = item = first;
   count = 1;
-  while (first->nextsibling) {
-    list[count] = first->nextsibling;
+  while (item->nextsibling) {
+    list[count] = item->nextsibling;
     count++;
-    first = first->nextsibling;
+    item = item->nextsibling;
   }
 
   qsort(list, count, sizeof(OListTreeItem*), _compare);
@@ -1059,7 +1121,17 @@ int OXListTree::Sort(OListTreeItem *item) {
 
   delete[] list;
 
-  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+  int affects_display = True;
+
+  for (item = first->parent; item; item = item->parent) {
+    if (!item->open) {
+      affects_display = False;
+      break;
+    }
+  }
+
+  if (affects_display)
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return 1;
 }

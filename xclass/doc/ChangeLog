@@ -2287,3 +2287,6 @@ OPicture.cc
   loops.
 
 - OXComboBox: improved focus handling.
+
+- OXListTree: added OpenNode() and CloseNode(). These should be used instead
+  of directly manipulating the 'open' property of OListTreeItem.
