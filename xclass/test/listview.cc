@@ -175,7 +175,7 @@ int OXTestFrame::ProcessMessage(OMessage *msg) {
 	break;
 
       case 4:
-	listview->SetViewMode(LV_DETAILS);
+	listview->SetViewMode(LV_DETAILS/*, True*/);
 	bbig->SetState(BUTTON_UP);
 	bsmall->SetState(BUTTON_UP);
 	blist->SetState(BUTTON_UP);

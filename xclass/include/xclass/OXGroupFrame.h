@@ -53,10 +53,12 @@ public:
 
 protected:
   virtual void _Enable(int onoff);
+  virtual void _ComputeInsets();
 
   OString *_text;
   const OXFont *_font;
   OXGC *_normGC;
+  int _old_insets;
 };
 
 

@@ -145,9 +145,14 @@ public:
 
   virtual unsigned int GetOptions() const { return _options; }
   virtual void ChangeOptions(unsigned int options);
+  virtual void SetOptions(unsigned int options);
+  virtual void ClearOptions(unsigned int options);
+      
   virtual void Layout() {}
   virtual void MapSubwindows() {}  // Simple frames do not have subwindows 
                                    // Redefine this in OXCompositeFrame!
+
+  virtual void SetBorderStyle(unsigned int border_bits);
 
   virtual void DrawBorder();
   virtual void Reconfig();
@@ -220,6 +225,9 @@ protected:
   virtual void _LostFocus() {}
   virtual void _Moved() {}
   virtual void _Resized() {}
+  virtual void _OptionsChanged();
+  
+  virtual void _ComputeInsets();
 
   void _Draw3dRectangle(int type, int x, int y, int w, int h);
 

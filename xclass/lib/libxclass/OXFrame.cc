@@ -105,10 +105,10 @@ OXFrame::OXFrame(const OXWindow *p, int w, int h,
     _hilitePixel = _defaultFrameHilite;
     _shadowPixel = _defaultFrameShadow;
     _flags = IS_ENABLED | IS_VISIBLE;
-    _w = w; _h = h; _x = _y = _bw = 0;
 
-    if (_options & (SUNKEN_FRAME | RAISED_FRAME))
-      _bw = (_options & DOUBLE_BORDER) ? 2 : 1;
+    _w = w; _h = h; _x = _y = 0;
+
+    _ComputeInsets();
 
     mask = CWBackPixel | CWEventMask;
     wattr.background_pixel = _backPixel;
@@ -155,14 +155,12 @@ OXFrame::OXFrame(OXClient *c, Window id, OXWindow *parent) :
     _backPixel = 0;
   }
 
-  _bw = 0;
-
   _flags = IS_VISIBLE;
   _options = 0;
   _tip = NULL;
   _eventMask = 0;
 
-  _insets = OInsets(_bw, _bw, _bw, _bw);
+  _ComputeInsets();
 }
 
 OXFrame::~OXFrame() {
@@ -170,19 +168,31 @@ OXFrame::~OXFrame() {
 }
 
 void OXFrame::ChangeOptions(unsigned int options) {
-
-  if ((options & (DOUBLE_BORDER | SUNKEN_FRAME | RAISED_FRAME)) !=
-      (_options & (DOUBLE_BORDER | SUNKEN_FRAME | RAISED_FRAME))) {
-    if (options & (SUNKEN_FRAME | RAISED_FRAME))
-      _bw = (options & DOUBLE_BORDER) ? 2 : 1;
-    else
-      _bw = 0;
-    _insets = OInsets(_bw, _bw, _bw, _bw);
-  }
-
   _options = options;
+  _OptionsChanged(); 
 }
-
+ 
+void OXFrame::SetOptions(unsigned int options) {
+  _options |= options;
+  _OptionsChanged();  
+}
+ 
+void OXFrame::ClearOptions(unsigned int options) {
+  _options &= ~options;
+  _OptionsChanged();   
+}
+ 
+void OXFrame::_OptionsChanged() {
+  _ComputeInsets();
+}
+ 
+void OXFrame::SetBorderStyle(unsigned int border_bits) {
+  _options &= ~(DOUBLE_BORDER | SUNKEN_FRAME | RAISED_FRAME);
+  _options |= (border_bits & (DOUBLE_BORDER | SUNKEN_FRAME | RAISED_FRAME));
+  _OptionsChanged();
+  NeedRedraw();
+}
+ 
 void OXFrame::AddInput(unsigned long emask) {
   //if (_eventMask & emask) return; // avoid unnecessary calls to XSelectInput
   _eventMask |= emask;
@@ -244,6 +254,14 @@ void OXFrame::_Draw3dRectangle(int type, int x, int y, int w, int h) {
 
   default: break;
   }
+}
+
+void OXFrame::_ComputeInsets() {
+  if (_options & (SUNKEN_FRAME | RAISED_FRAME))
+    _bw = (_options & DOUBLE_BORDER) ? 2 : 1;
+  else
+    _bw = 0;
+  _insets = OInsets(_bw, _bw, _bw, _bw);
 }
 
 void OXFrame::_DoRedraw() {

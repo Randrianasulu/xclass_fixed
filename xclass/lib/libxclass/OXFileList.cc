@@ -72,8 +72,8 @@ OFileItem::OFileItem(const OXListView *p, int id,
       const OPicture *bpic, const OPicture *blpic,
       const OPicture *spic, const OPicture *slpic,
       std::vector <OString *>names, int type, int is_link,
-      unsigned long fsize, time_t mtime, int ViewMode) :
-  OListViewItem(p, id, bpic, spic, names, ViewMode) {
+      unsigned long fsize, time_t mtime, int ViewMode, int FullLine) :
+  OListViewItem(p, id, bpic, spic, names, ViewMode, FullLine) {
 
     _lcurrent =
     _blpic = blpic;
@@ -90,8 +90,8 @@ OFileItem::OFileItem(const OXListView *p, int id,
     _prev_state = _isSelected;
 }
 
-void OFileItem::SetViewMode(int ViewMode) {
-  OListViewItem::SetViewMode(ViewMode);
+void OFileItem::SetViewMode(int ViewMode, int FullLine) {
+  OListViewItem::SetViewMode(ViewMode, FullLine);
 
   if (ViewMode == LV_LARGE_ICONS)
     _lcurrent = _blpic;

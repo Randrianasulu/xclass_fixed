@@ -52,15 +52,19 @@ Atom _XA_INCR;
 //----------------------------------------------------------------------
 
 OXClient::OXClient(int argc, char *argv[]) {
-  int i;
+  int  i, sync = False;
+  char *dpname = "";
 
   for (i = 0; i < argc - 1; ++i) {
     if (strcmp(argv[i], "-display") == 0) {
-      _Init(argv[i+1]);
-      return;
+      dpname = argv[i+1];
+      ++i;
+    } else if (strcmp(argv[i], "-synchronize") == 0) {
+      sync = True;
     }
   }
-  _Init("");
+  _Init(dpname);
+  if (sync) XSynchronize(_dpy, True);
 }
 
 void OXClient::_Init(const char *DpyName) {
@@ -419,6 +423,14 @@ void OXClient::MainLoop() {
   while (_mlist->NoOfItems() > 0) {
     ProcessOneEvent(0, None);
   }
+}
+
+int OXClient::ProcessOneEvent() {
+  if (_mlist->NoOfItems() > 0) {
+    ProcessOneEvent(0, None);
+    return True;
+  }
+  return False;
 }
 
 void OXClient::WaitFor(OXWindow *w) {

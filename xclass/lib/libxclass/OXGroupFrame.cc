@@ -50,7 +50,8 @@ OXGroupFrame::OXGroupFrame(const OXWindow *p, OString *title,
 
     _bw = _font->TextHeight() + 1;
 
-    _insets = OInsets(_bw, _bw, _bw, _bw);
+    _old_insets = True;
+    _ComputeInsets();
 }
 
 OXGroupFrame::~OXGroupFrame() {
@@ -60,10 +61,9 @@ OXGroupFrame::~OXGroupFrame() {
 }
 
 void OXGroupFrame::OldInsets(int onoff) {
-  if (onoff) {
-    _insets = OInsets(_bw, _bw, _bw, _bw);
-  } else {
-    _insets = OInsets(2, 2, _font->TextHeight() + 1, 2);
+  if (_old_insets != onoff) {
+    _old_insets = onoff;
+    _ComputeInsets();
   }
 }
 
@@ -116,4 +116,12 @@ void OXGroupFrame::DrawBorder() {
 void OXGroupFrame::_Enable(int onoff) {
   OXFrame::_Enable(onoff);
   NeedRedraw();
+}
+
+void OXGroupFrame::_ComputeInsets() {
+  if (_old_insets) {
+    _insets = OInsets(_bw, _bw, _bw, _bw);
+  } else {
+    _insets = OInsets(2, 2, _font->TextHeight() + 1, 2);
+  }
 }

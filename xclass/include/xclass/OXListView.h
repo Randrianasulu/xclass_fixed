@@ -57,10 +57,10 @@ class OListViewItem : public OItem {
 public:
   OListViewItem(const OXListView *p, int id, const OPicture *bigpic,
                 const OPicture *smallpic, std::vector <OString *>names,
-                int viewMode);
+                int viewMode, int fullLine = False);
   virtual ~OListViewItem();
 
-  virtual void SetViewMode(int viewMode);
+  virtual void SetViewMode(int viewMode, int fullLine = False);
 
   void SetFont(const OXFont *font);
 
@@ -88,7 +88,7 @@ public:
 
 protected:
   OPosition _iconPos, _textPos;  // relative positions
-  int _viewMode, _tw, _th, _ta;
+  int _viewMode, _fullLine, _tw, _th, _ta;
 
   std::vector<OString *> _names;
 
@@ -116,7 +116,7 @@ public:
 
   virtual int ProcessMessage(OMessage *msg);
 
-  virtual void SetViewMode(int ViewMode);
+  virtual void SetViewMode(int ViewMode, int FullLine = False);
 
   virtual void AddItem(OListViewItem *item);
   virtual void AddItem(OItem *item) {}
@@ -163,7 +163,7 @@ protected:
   OXGC *_selGC;
   OXGC *_hilightGC;
 
-  int _viewMode;
+  int _viewMode, _fullLine;
   std::vector<SColumnData *> _columnData;
   int _columnMargin, _sortColumn, _autoSort, _rows, _cols;
 

@@ -115,13 +115,16 @@ void OXItemView::_LostFocus() {
 void OXItemView::ShowFocusHilite(int onoff) {
   if (_anchorItem) {
     _anchorItem->ShowFocusHilite(onoff);
-    NeedRedraw(ORectangle(_anchorItem->GetPosition(), _anchorItem->GetSize()));
+    //NeedRedraw(ORectangle(_anchorItem->GetPosition(), _anchorItem->GetSize()));
+    //DrawRegion(_anchorItem->GetPosition(), _maxItemSize, False);
+    DrawRegion(_anchorItem->GetPosition(), _anchorItem->GetSize(), False);
   }
 #if 1
   else if (onoff && (_items.size() > 0)) {
     _anchorItem = _items[0];
     _anchorItem->ShowFocusHilite(onoff);
-    NeedRedraw(ORectangle(_anchorItem->GetPosition(), _anchorItem->GetSize()));
+    //NeedRedraw(ORectangle(_anchorItem->GetPosition(), _anchorItem->GetSize()));
+    DrawRegion(_anchorItem->GetPosition(), _anchorItem->GetSize(), False);
   }
 #endif
 }

@@ -40,7 +40,7 @@ const OXGC *OListViewItem::_dfnormGC;
 
 OListViewItem::OListViewItem(const OXListView *p, int id,
          const OPicture *bigpic, const OPicture *smallpic,
-         std::vector<OString *> names, int viewMode) :
+         std::vector<OString *> names, int viewMode, int fullLine) :
   OItem(p, id) {
 
   if (!_defaultFont) {
@@ -88,7 +88,7 @@ OListViewItem::OListViewItem(const OXListView *p, int id,
   _hilightGC = (OXGC *) _dfhilightGC;
   _normGC = (OXGC *) _dfnormGC;
 
-  SetViewMode(viewMode);
+  SetViewMode(viewMode, fullLine);
 }
 
 OListViewItem::~OListViewItem() {
@@ -120,7 +120,9 @@ void OListViewItem::SetFont(const OXFont *f) {
   }
 }
 
-void OListViewItem::SetViewMode(int viewMode) {
+void OListViewItem::SetViewMode(int viewMode, int fullLine) {
+
+  _fullLine = fullLine;
 
   if (_viewMode == viewMode) return;
   _viewMode = viewMode;
@@ -165,6 +167,7 @@ ODimension OListViewItem::GetDefaultSize() const {
     case LV_DETAILS:
       size.w = isize.w + lsize.w + 4;
       size.h = max(isize.h, lsize.h);
+      if (_fullLine && (_viewMode == LV_DETAILS)) size.w = _parent->GetVirtualSize().w;
       break;
   }
 
@@ -201,25 +204,32 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
 
   std::vector<SColumnData *> columnData = ((OXListView *)_parent)->GetColumns();
 
-  // displaying icon and name
-
-  if (pic)
-    pic->Draw(_client->GetDisplay(), w->GetId(), drawGC,
-              pos.x + _iconPos.x, pos.y + _iconPos.y);
-
+  // display icon and name
 
   if ((_viewMode == LV_DETAILS) && (columnData.size() > 0)) {
+    ODimension size = GetSize();
 
-    w->FillRectangle(rectGC, pos.x + _textPos.x, pos.y + _textPos.y,
-                     min(_tw, columnData[0]->width - _textPos.x - 2), _th + 1);
+    if (_fullLine) {
+      w->FillRectangle(rectGC, -_parent->GetScrollPosition().x, pos.y, size.w, size.h);
+    } else {
+      w->FillRectangle(rectGC, pos.x + _textPos.x, pos.y + _textPos.y,
+                       min(_tw, columnData[0]->width - _textPos.x - 2), _th + 1);
+    }
 
     if (_focused && (_tw > 0)) {
-      w->DrawRectangle(_client->GetResourcePool()->GetDocumentBckgndGC()->GetGC(),
-                       pos.x + _textPos.x, pos.y + _textPos.y,
-                       min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
-      w->DrawRectangle(_client->GetResourcePool()->GetFocusHiliteGC()->GetGC(),
-                       pos.x + _textPos.x, pos.y + _textPos.y,
-                       min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
+      if (_fullLine) {
+        w->DrawRectangle(_client->GetResourcePool()->GetDocumentBckgndGC()->GetGC(),
+                         -_parent->GetScrollPosition().x, pos.y, size.w-1, size.h-1);
+        w->DrawRectangle(_client->GetResourcePool()->GetFocusHiliteGC()->GetGC(),
+                         -_parent->GetScrollPosition().x, pos.y, size.w-1, size.h-1);
+      } else {
+        w->DrawRectangle(_client->GetResourcePool()->GetDocumentBckgndGC()->GetGC(),
+                         pos.x + _textPos.x, pos.y + _textPos.y,
+                         min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
+        w->DrawRectangle(_client->GetResourcePool()->GetFocusHiliteGC()->GetGC(),
+                         pos.x + _textPos.x, pos.y + _textPos.y,
+                         min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
+      }
     }
 
     DrawTruncated(w, drawGC, OPosition(pos.x + _textPos.x,
@@ -243,6 +253,10 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
                     pos.x + _textPos.x, pos.y + _textPos.y + _ta);
   }
 
+  if (pic)
+    pic->Draw(_client->GetDisplay(), w->GetId(), drawGC,
+              pos.x + _iconPos.x, pos.y + _iconPos.y);
+
   // as usual, DETAILS requires some more effort...
 
   if ((_viewMode == LV_DETAILS) && (columnData.size() > 0)) {
@@ -262,8 +276,8 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
         }
         if (tx < 2) tx = 2;
 
-        DrawTruncated(w, _normGC->GetGC(), OPosition(pos.x + tx,
-                                            pos.y + _textPos.y + _ta),
+        DrawTruncated(w, _fullLine ? drawGC : _normGC->GetGC(),
+                      OPosition(pos.x + tx, pos.y + _textPos.y + _ta),
                      _names[j], columnData[i]->width - tx - 2);
       }
 
@@ -649,7 +663,9 @@ void OXListView::SetItemFont(const OXFont *f) {
   }
 }
 
-void OXListView::SetViewMode(int viewMode) {
+void OXListView::SetViewMode(int viewMode, int fullLine) {
+
+  _fullLine = fullLine;
 
   if (_viewMode == viewMode) return;
 
@@ -663,7 +679,7 @@ void OXListView::SetViewMode(int viewMode) {
     _itemSep = ODimension(2, 3);
 
   for (unsigned int i = 0; i < _items.size(); i++)
-    ((OListViewItem *) _items[i])->SetViewMode(_viewMode);
+    ((OListViewItem *) _items[i])->SetViewMode(_viewMode, _fullLine);
 
   CalcMaxItemSize();
 
@@ -858,7 +874,7 @@ void OXListView::AddItem(OListViewItem *newItem) {
     }
   }
 
-  newItem->SetViewMode(_viewMode);
+  newItem->SetViewMode(_viewMode, _fullLine);
   CalcMaxItemSize();
 
 //  Layout();
@@ -1051,10 +1067,16 @@ bool OXListView::ItemLayout() {
         currentPos.x = _itemSep.w;
         currentPos.y = _virtualSize.h;
         _items[i]->Move(currentPos);
+        _items[i]->Resize(_items[i]->GetDefaultSize());
         _virtualSize.h += _items[i]->GetDefaultSize().h + _itemSep.h;
       }
-      needRedraw = True;
       _virtualSize.w = GetMaxItemSize().w;
+      if (_fullLine) {
+        for (i = 0; i < _items.size(); i++) {
+          _items[i]->Resize(_items[i]->GetDefaultSize());
+        }
+      }
+      needRedraw = True;
       break;
 
     default:

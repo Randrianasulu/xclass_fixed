@@ -2542,3 +2542,23 @@ OPicture.cc
   must be loaded and not the initial specified document.
 
 - Added DoSetCurrent() method to OXHelpWindow.
+
+
+05/10/04
+
+- Added public version of the ProcessOneEvent() method to OXClient (needed
+  by OnyX Script).
+
+
+07/10/04
+
+- Added SetOptions(), ClearOptions() and SetBorderStyle() convenience
+  methods to OXFrame.
+
+- OXClient: recognize "-synchronize" option.
+
+
+12/10/04
+
+- OXListView: highlight the full selected line when in detail mode if
+  _fullLine is set to True.

@@ -74,9 +74,10 @@ public:
             const OPicture *bpic, const OPicture *blpic,
             const OPicture *spic, const OPicture *slpic,
             std::vector<OString *> names, int type, int is_link, 
-            unsigned long fsize, time_t mtime, int ViewMode);
+            unsigned long fsize, time_t mtime,
+            int ViewMode, int FullLine = False);
 
-  virtual void SetViewMode(int ViewMode);
+  virtual void SetViewMode(int ViewMode, int fullLine = False);
 
 //  int IsActive() const { return _active; }
   int IsSymLink() const { return _is_link; }

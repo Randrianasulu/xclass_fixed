@@ -117,6 +117,7 @@ public:
   void Run();
   void WaitFor(OXWindow *w);
   void WaitForUnmap(OXWindow *w);
+  int  ProcessOneEvent();
 
   void FlushRedraw();
 
