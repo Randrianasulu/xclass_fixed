@@ -255,7 +255,7 @@ int OXWebHtml::FormAction(OHtmlForm *form, int id) {
 #ifdef DEBUG_FORM
         printf("Submiting form: %s\n", uri);
 #endif
-        OHtmlMessage msg(MSG_HTML, MSG_CLICK, _widgetID, uri);
+        OHtmlMessage msg(MSG_HTML, MSG_CLICK, _widgetID, uri, 0, 0);
         SendMessage(_msgObject, &msg);
         delete[] uri;
       }
