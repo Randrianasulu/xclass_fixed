@@ -188,8 +188,14 @@ int OXMain::ProcessMessage(OMessage *msg) {
 
     case MSG_EXEC:
       if (msg->action == MSG_APPEXITED) {
-        _exited = True;
         _retc = _exec->GetExitCode();
+        if (_exited) {
+          char msg[256];
+          sprintf(msg, "Program exited normally (%d)\n", _retc);
+          _te->InsertText(msg);
+        } else {
+          _exited = True;
+        }
       }
       break;
 
@@ -221,6 +227,8 @@ int OXMain::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
       if (_exited) {
         sprintf(buf, "Program exited normally (%d)\n", _retc);
         _te->InsertText(buf);
+      } else {
+        _exited = True;
       }
       delete _ofh;
       _ofh = NULL;
@@ -300,8 +308,9 @@ void OXMain::DoExec() {
   _te->InsertText(prog);
   _te->InsertText("...\n");
 
-  _exec = new OExec(argv[0], argv);
+  _exec = new OExec(_client, argv[0], argv);
   _exec->Associate(this);
+  _exited = False;
 
   for (int i = 0; i < argc; ++i) delete[] argv[i];
   delete[] argv;
