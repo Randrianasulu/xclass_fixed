@@ -55,3 +55,10 @@
   this dialog.
 
 - Serial port connection error messages are now shown in message boxes.
+
+
+7/06/02 (0.4.1)
+
+- Corrected a bug in the frequency database viewer that caused the
+  application to crash when enter was presed in order to tune to the
+  selected station.

@@ -297,7 +297,7 @@ OXPopupMenu *OXFreqDB::_MakePopup(struct _popup *p) {
 
 int OXFreqDB::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-  OItemViewMessage *vmsg;
+  OItemViewMessage *vmsg = (OItemViewMessage *) msg;
 
   switch (msg->type) {
 
@@ -644,6 +644,7 @@ int OXFreqDB::IsSaved() {
       sprintf(tmp, "The database has been modified.\n"
                    "Do you want to save the changes?");
     }
+    MapRaised();
     new OXMsgBox(_client->GetRoot(), this, new OString("ORX320"),
                  new OString(tmp), MB_ICONEXCLAMATION,
                  ID_YES | ID_NO | ID_CANCEL, &ret);
