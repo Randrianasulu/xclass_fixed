@@ -7,12 +7,16 @@
 #include <xclass/OXMainFrame.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXTextEdit.h>
+#include <xclass/OXComboBox.h>
 #include <xclass/OX3dLines.h>
 #include <xclass/OXToolBar.h>
 #include <xclass/OXStatusBar.h>
+#include <xclass/ORectangle.h>
 
 #include "OXWebHtml.h"
 
+#define APP_NAME          "miniweb"
+#define APP_VERSION       "0.1"
 
 #define M_FILE_OPEN       101
 #define M_FILE_SAVE       102
@@ -36,6 +40,8 @@
 
 #define C_LOCATION        501
 
+#define NUM_RECENT        15
+
 
 //----------------------------------------------------------------------
 
@@ -44,6 +50,7 @@ public:
   OXMain(const OXWindow *p, char *fname);
   ~OXMain();
 
+  virtual int CloseWindow();
   virtual int HandleMapNotify(XMapEvent *event);
   virtual int ProcessMessage(OMessage *msg);
 
@@ -58,6 +65,10 @@ public:
 
 protected:
   void LoadDoc(OHtmlUri *uri);
+  void ReadIniFile();
+  void SaveIniFile();
+  void AddToHistory(const char *url);
+  void UpdateHistory();
 
   OXWebHtml *_htmlview;
   OXMenuBar *_menuBar;
@@ -70,6 +81,9 @@ protected:
                *_viewLayout, *_statusLayout;
 
   char *_loadDoc, *_filename, *_lastUrl;
+  char *_history[NUM_RECENT];
+
+  ORectangle _geom;
 
   vector<char *> prev, next;
 };

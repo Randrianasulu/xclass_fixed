@@ -87,9 +87,11 @@ OXMain::OXMain(const OXWindow *p, char *fname) :
 
   _menuFile = new OXPopupMenu(_client->GetRoot());
   _menuFile->AddEntry(new OHotString("&Open..."), M_FILE_OPEN);
+  _menuFile->AddEntry(new OHotString("Save &as..."), M_FILE_SAVE);
   _menuFile->AddSeparator();
   _menuFile->AddEntry(new OHotString("E&xit"), M_FILE_EXIT);
   _menuFile->Associate(this);
+  _menuFile->DisableEntry(M_FILE_SAVE);
 
   _menuEdit = new OXPopupMenu(_client->GetRoot());
   _menuEdit->AddEntry(new OHotString("&Copy"), M_EDIT_COPY);
@@ -160,16 +162,29 @@ OXMain::OXMain(const OXWindow *p, char *fname) :
 
   _loadDoc = fname;
 
-  SetWindowName("Untitled");
-
   _menuView->CheckEntry(M_VIEW_UNDERLINE);
   _htmlview->UnderlineLinks(1);
 
   prev.clear();
   next.clear();
 
+  for (int i = 0; i < NUM_RECENT; ++i) _history[i] = NULL;
+
+  _geom.w = 600;
+  _geom.h = 450;
+  _geom.x = (_client->GetDisplayWidth() - _geom.w) / 2;
+  _geom.y = (_client->GetDisplayWidth() - _geom.h) / 2;
+
   MapSubwindows();
-  Resize(600, 450);
+
+  ReadIniFile();
+
+  SetWindowName("Untitled");
+
+  SetWMGravity(StaticGravity);
+  Resize(_geom.w, _geom.h);
+  Move(_geom.x, _geom.y);
+  SetWMPosition(_geom.x, _geom.y);
   Layout();
 }
 
@@ -184,6 +199,12 @@ OXMain::~OXMain() {
   for (int i = 0; i < prev.size(); ++i) delete[] prev[i];
   for (int i = 0; i < next.size(); ++i) delete[] next[i];
   if (_lastUrl) delete[] _lastUrl;
+  for (int i = 0; i < NUM_RECENT; ++i) if (_history[i]) delete[] _history[i];
+}
+
+int OXMain::CloseWindow() {
+  SaveIniFile();
+  return OXMainFrame::CloseWindow();
 }
 
 int OXMain::HandleMapNotify(XMapEvent *event) {
@@ -203,6 +224,10 @@ void OXMain::LoadDoc(OHtmlUri *uri) {
   const char *filename;
   int retc;
 
+  char *urlstr = uri->BuildUri();
+  _location->SetText(urlstr);
+  delete[] urlstr;
+
   // first, check whether this URL just points to an anchor inside
   // the currently loaded document
 
@@ -216,7 +241,7 @@ void OXMain::LoadDoc(OHtmlUri *uri) {
     strcpy(content, "text/html");
 
     if (uri->zScheme && strcasecmp(uri->zScheme, "http") == 0) {
-      filename = "/tmp/xcbrowser.html.tmp";
+      filename = "/tmp/"APP_NAME".html.tmp";
 
       char *url = uri->BuildUri();
 
@@ -386,8 +411,11 @@ int OXMain::ProcessMessage(OMessage *msg) {
     case MSG_COMBOBOX:
       switch (msg->action) {
         case MSG_TEXTCHANGED:
-          if (cmsg->keysym == XK_Return) {
-            OHtmlUri uri(_location->GetText());
+          // keysym == 0 happens on drop-down listbox selection
+          if (cmsg->keysym == XK_Return || cmsg->keysym == 0) {
+            const char *urlstr = _location->GetText();
+            AddToHistory(urlstr);
+            OHtmlUri uri(urlstr);
             LoadDoc(&uri);
           }
           break;
@@ -526,14 +554,158 @@ void OXMain::DoNextPage() {
 void OXMain::DoAbout() {
   OAboutInfo info;
   
-  info.wname = "About browser";
-  info.title = "Xclass mini web browser and HTML viewer\n"
+  info.wname = "About "APP_NAME;
+  info.title = APP_NAME" version "APP_VERSION"\n"
+               "A mini web browser and HTML viewer\n"
                "Compiled with xclass version "XCLASS_VERSION;
-  info.copyright = "Copyright © 2002, Héctor Peraza.";
+  info.copyright = "Copyright © 2002-2003, Héctor Peraza.";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"
               "http://xclass.sourceforge.net";
 
   new OXAboutDialog(_client->GetRoot(), this, &info);
+}
+
+//----------------------------------------------------------------------
+
+void OXMain::ReadIniFile() {
+  char *inipath, line[1024], arg[256];
+
+  inipath = GetResourcePool()->FindIniFile(APP_NAME"rc", INI_READ);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_READ);
+
+  while (ini.GetNext(line)) {
+
+    if (strcasecmp(line, "defaults") == 0) {
+      if (ini.GetItem("geometry", arg)) {
+        if (sscanf(arg, "%d %d (%d x %d)",
+                        &_geom.x, &_geom.y,
+                        &_geom.w, &_geom.h) == 4) {
+          if (_geom.w < 10 || _geom.w > 32000 ||
+              _geom.h < 10 || _geom.h > 32000) {
+            _geom.w = 600;
+            _geom.h = 450;
+          }
+        } else {
+          _geom.w = 600;
+          _geom.h = 450;
+          _geom.x = (_client->GetDisplayWidth() - _geom.w) / 2;
+          _geom.y = (_client->GetDisplayWidth() - _geom.h) / 2;
+        }
+      }
+      if (!ini.GetBool("show toolbar", true)) {
+        HideFrame(_toolBar);
+        HideFrame(_toolBarSep);
+        _menuView->UnCheckEntry(M_VIEW_TOOLBAR);
+      }
+      if (!ini.GetBool("show status bar", true)) {
+        HideFrame(_statusBar);
+        _menuView->UnCheckEntry(M_VIEW_STATUSBAR);
+      }
+
+    } else if (strcasecmp(line, "history") == 0) {
+      char tmp[50];
+
+      for (int i = NUM_RECENT-1; i >= 0; --i) {
+        sprintf(tmp, "url%d", i+1);
+        if (ini.GetItem(tmp, arg)) AddToHistory(arg);
+      }
+
+    }
+  }
+
+  delete[] inipath;
+}
+
+void OXMain::SaveIniFile() {
+  char *inipath, tmp[256];
+
+  inipath = GetResourcePool()->FindIniFile(APP_NAME"rc", INI_WRITE);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_WRITE);
+
+  ini.PutNext("defaults");
+  ini.PutBool("show toolbar", _toolBar->IsVisible());
+  ini.PutBool("show status bar", _statusBar->IsVisible());
+#if 0
+  sprintf(tmp, "%d %d (%d x %d)", _x, _y, _w, _h);
+#else
+  int x, y;
+  Window wdummy;
+  XTranslateCoordinates(GetDisplay(), _id, _client->GetRoot()->GetId(),
+                        0, 0, &x, &y, &wdummy);
+  sprintf(tmp, "%d %d (%d x %d)", x, y, _w, _h);
+#endif
+  ini.PutItem("geometry", tmp);
+  ini.PutNewLine();
+
+  ini.PutNext("history");
+  for (int i = 0; i < NUM_RECENT; ++i) {
+    if (_history[i]) {
+      sprintf(tmp, "url%d", i+1);
+      ini.PutItem(tmp, _history[i]);
+    }
+  }
+  ini.PutNewLine();
+
+  delete[] inipath;
+}
+
+//----------------------------------------------------------------------
+
+void OXMain::AddToHistory(const char *url) {
+  int i;
+
+  if (!url) return;
+
+  // first, see if the file is already there
+
+  for (i = 0; i < NUM_RECENT; ++i) {
+    if (_history[i] && (strcmp(url, _history[i]) == 0)) break;
+  }
+
+  if (i == 0) {
+
+    return; // nothing to do, the file already was the most recent
+
+  } else if (i < NUM_RECENT) {
+
+    // the file was there, move it to the top of the list
+
+    char *tmp = _history[i];
+
+    for ( ; i > 0; --i) _history[i] = _history[i-1];
+    _history[0] = tmp;
+
+  } else {
+
+    // new file: shift all the entries down and add the url to the head
+
+    if (_history[NUM_RECENT-1]) delete[] _history[NUM_RECENT-1];
+    for (i = NUM_RECENT-1; i > 0; --i)
+      _history[i] = _history[i-1];
+    _history[0] = StrDup(url);
+
+  }
+
+  UpdateHistory();
+}
+
+void OXMain::UpdateHistory() {
+  int  i;
+  char tmp[PATH_MAX];
+
+  _location->RemoveAllEntries();
+
+  if (!_history[0]) return;
+
+  for (i = 0; i < NUM_RECENT; ++i) {
+    if (_history[i])
+      _location->AddEntry(new OString(_history[i]), i);
+  }
+  _location->Select(0);
 }

@@ -18,6 +18,7 @@
 #include <xclass/OXTextEntry.h>
 
 #include "OXWebHtml.h"
+#include "main.h"
 
 
 //#define DEBUG_FORM
@@ -66,7 +67,7 @@ char *OXWebHtml::HttpGetImage(const char *zUrl) {
   for (p = imageCache; p; p = p->pNext) {
     if (strcmp(p->zUrl, zUrl) == 0) return p->zLocal;
   }
-  sprintf(local, "/tmp/xcbrowser.image%d.tmp", nCachedImages+1);
+  sprintf(local, "/tmp/%s.image%d.tmp", APP_NAME, nCachedImages+1);
   try {
     HttpFetch(zUrl, local, 0, 0, cont);
   } catch (OConnectException &e) {
