@@ -1292,31 +1292,31 @@ int OXFtpManager::ProcessMessage(OMessage *msg) {
       switch (msg->action) {
         case MSG_CLICK: 
           if (_lv->NumSelected() == 1) {
-             vector<OItem *> items;
-             items = _lv->GetSelectedItems();
-             OBookmarkItem *f = (OBookmarkItem *) items[0];
-             OBookmark *tmp = f->GetBookmark();
-             char buf[PATH_MAX];
-             sprintf(buf, "Host: %s", tmp->GetSiteConfig()->_site);
-             _lhost->SetText(new OString(buf));
+            vector<OItem *> items;
+            items = _lv->GetSelectedItems();
+            OBookmarkItem *f = (OBookmarkItem *) items[0];
+            OBookmark *tmp = f->GetBookmark();
+            char buf[PATH_MAX];
+            sprintf(buf, "Host: %s", tmp->GetSiteConfig()->_site);
+            _lhost->SetText(new OString(buf));
 
-             if (tmp->GetDescription()) {
-               OTextBuffer tb(50, 20);
-               tb.Clear();
-               const char *str = tmp->GetDescription()->GetString();
-               char buf[2];
+            if (tmp->GetDescription()) {
+              OTextBuffer tb(50, 20);
+              tb.Clear();
+              const char *str = tmp->GetDescription()->GetString();
+              char buf[2];
 
-               buf[1] = '\0';
-               for ( ; *str && *str != '\n'; ++str) {
-                 buf[0] = *str;
-                 tb.Append(buf);
-               }
-               if (*str++ == '\n')
-                 if (*str) tb.Append("...");
+              buf[1] = '\0';
+              for ( ; *str && *str != '\n'; ++str) {
+                buf[0] = *str;
+                tb.Append(buf);
+              }
+              if (*str++ == '\n')
+                if (*str) tb.Append("...");
 
-               _ldetails->SetText(new OString(tb.GetString()));
-             }
-             _frame2->Layout();
+              _ldetails->SetText(new OString(tb.GetString()));
+            }
+            _frame2->Layout();
           }
           SetControls();
           break;
