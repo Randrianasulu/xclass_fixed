@@ -19,8 +19,9 @@
 
 **************************************************************************/
 
-#include <vector.h>
-#include <algo.h>
+#include <vector>
+#include <algorithm>
+#include <functional>
 
 #include <X11/keysym.h>
 
@@ -39,7 +40,7 @@ const OXGC *OListViewItem::_dfnormGC;
 
 OListViewItem::OListViewItem(const OXListView *p, int id,
          const OPicture *bigpic, const OPicture *smallpic,
-         vector<OString *> names, int viewMode) :
+         std::vector<OString *> names, int viewMode) :
   OItem(p, id) {
 
   if (!_defaultFont) {
@@ -198,7 +199,7 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
     pic = _currentPic;
   }
 
-  vector<SColumnData *> columnData = ((OXListView *)_parent)->GetColumns();
+  std::vector<SColumnData *> columnData = ((OXListView *)_parent)->GetColumns();
 
   // displaying icon and name
 
@@ -1103,7 +1104,7 @@ int OXListView::DrawRegion(OPosition coord, ODimension size, int clear) {
   return True;
 }
 
-struct SLVSortAscending : public binary_function<OItem*, OItem*, bool> {
+struct SLVSortAscending : public std::binary_function<OItem*, OItem*, bool> {
 public:
   bool operator()(const OItem* item1, const OItem* item2) const {
     OListViewItem *i1 = (OListViewItem *) item1;
@@ -1115,7 +1116,7 @@ public:
   }
 };
 
-struct SLVSortDescending : public binary_function<OItem*, OItem*, bool> {
+struct SLVSortDescending : public std::binary_function<OItem*, OItem*, bool> {
 public:
   bool operator()(const OItem* item1, const OItem* item2) const {
     OListViewItem *i1 = (OListViewItem *) item1;

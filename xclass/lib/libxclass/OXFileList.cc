@@ -55,7 +55,7 @@ Atom OXFileList::URI_list = None;
 OFileItem::OFileItem(const OXListView *p, int id,
       const OPicture *bpic, const OPicture *blpic,
       const OPicture *spic, const OPicture *slpic,
-      vector <OString *>names, int type, int is_link,
+      std::vector <OString *>names, int type, int is_link,
       unsigned long fsize, time_t mtime, int ViewMode) :
   OListViewItem(p, id, bpic, spic, names, ViewMode) {
 
@@ -556,7 +556,7 @@ void OXFileList::_CreateFileList() {
   in_userRoot = (strcmp(filename, _client->GetResourcePool()->GetUserRoot()) == 0);
 
   int i = 0;
-  vector<OString *> names;
+  std::vector<OString *> names;
 
   while ((dp = readdir(dirp)) != NULL) {
     name = dp->d_name;

@@ -410,7 +410,7 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
   OXTextLBEntry *te;
   OFileItem *f;
   struct stat sbuf;
-  vector<OItem *> items;
+  std::vector<OItem *> items;
 
   switch (msg->type) {
   case MSG_BUTTON:

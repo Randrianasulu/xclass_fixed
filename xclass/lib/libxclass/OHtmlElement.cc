@@ -31,7 +31,7 @@ extern void ToLower(char *z);
 
 //----------------------------------------------------------------------
 
-OHtmlElement::OHtmlElement(int etype = 0) {
+OHtmlElement::OHtmlElement(int etype) {
   pNext = pPrev = 0;
   style.font = 0;   
   style.color = 0;  

@@ -56,7 +56,7 @@ class OXListView;
 class OListViewItem : public OItem {
 public:
   OListViewItem(const OXListView *p, int id, const OPicture *bigpic,
-                const OPicture *smallpic, vector <OString *>names,
+                const OPicture *smallpic, std::vector <OString *>names,
                 int viewMode);
   virtual ~OListViewItem();
 
@@ -71,7 +71,7 @@ public:
   const OPicture *GetBigPicture() const { return _bigPic; }
   const OPicture *GetSmallPicture() const { return _smallPic; }
 
-  vector<OString *>& GetNames() /*const*/ { return _names; }
+  std::vector<OString *>& GetNames() /*const*/ { return _names; }
   
   virtual ODimension GetDefaultSize() const;
   
@@ -90,7 +90,7 @@ protected:
   OPosition _iconPos, _textPos;  // relative positions
   int _viewMode, _tw, _th, _ta;
 
-  vector<OString *> _names;
+  std::vector<OString *> _names;
 
   static const OXFont *_defaultFont;
   const OXFont *_font;
@@ -126,7 +126,7 @@ public:
   void AddColumn(OString *name, int index, int align = TEXT_CENTER_X);
 
   int GetViewMode() const { return _viewMode; }
-  vector<SColumnData *>& GetColumns() /*const*/ { return _columnData; }
+  std::vector<SColumnData *>& GetColumns() /*const*/ { return _columnData; }
 
   void SortColumn(int column, int mode);
   void SetAutoSort(int mode = True) { _autoSort = mode; }
@@ -164,7 +164,7 @@ protected:
   OXGC *_hilightGC;
 
   int _viewMode;
-  vector<SColumnData *> _columnData;
+  std::vector<SColumnData *> _columnData;
   int _columnMargin, _sortColumn, _autoSort, _rows, _cols;
 
   OXFont *_headerFont, *_itemFont;

@@ -22,7 +22,7 @@
 #ifndef __OXITEMVIEW_H
 #define __OXITEMVIEW_H
 
-#include <vector.h>
+#include <vector>
 
 #include <xclass/utils.h>
 #include <xclass/OGC.h>
@@ -120,7 +120,7 @@ public:
   virtual void DeleteItem(unsigned int num);
   OItem *GetItem(unsigned int num);
   virtual void SelectItem(unsigned int num, bool state);
-  vector <OItem *>GetSelectedItems() const { return _selectedItems; }
+  std::vector <OItem *>GetSelectedItems() const { return _selectedItems; }
   unsigned int GetNumberOfItems() const { return _items.size(); }
   unsigned int NumSelected() const { return _selectedItems.size(); }
   OItem *GetItemByPos(OPosition pos, int *iret = NULL);
@@ -181,8 +181,8 @@ protected:
   // separation between items
   ODimension _itemSep;
 
-  vector<OItem *> _items;
-  vector<OItem *> _selectedItems;
+  std::vector<OItem *> _items;
+  std::vector<OItem *> _selectedItems;
 };
 
 

@@ -2391,3 +2391,10 @@ OPicture.cc
 
 - OXComboBox::SetText() must erase OXTextEntry contents prior to adding
   the text.
+
+
+15/05/03  (0.8.2)
+
+- Corrected 'std::' namespace and C++ standard header problems, xclass
+  should compile now with g++ 3.2.
+

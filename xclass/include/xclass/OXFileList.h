@@ -73,7 +73,7 @@ public:
   OFileItem(const OXListView *p, int id,
             const OPicture *bpic, const OPicture *blpic,
             const OPicture *spic, const OPicture *slpic,
-            vector<OString *> names, int type, int is_link, 
+            std::vector<OString *> names, int type, int is_link, 
             unsigned long fsize, time_t mtime, int ViewMode);
 
   virtual void SetViewMode(int ViewMode);

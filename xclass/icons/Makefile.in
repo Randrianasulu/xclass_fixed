@@ -10,7 +10,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 
 ICONS = Ghostview.s.xpm \
-	Lock screen.s.xpm \
+	"Lock screen.s.xpm" \
 	Make1616.xpm \
 	Make3232.xpm \
 	MakeRun1616.xpm \
