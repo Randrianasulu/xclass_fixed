@@ -23,12 +23,13 @@
 #define __ORECTANGLE_H
 
 #include <xclass/utils.h>
+#include <xclass/OBaseObject.h>
 #include <xclass/ODimension.h>
 
 
-//--------------------------------------------------------------------
+//----------------------------------------------------------------------
 
-class ORectangle {
+class ORectangle : public OBaseObject {
 public:
   // attributes
   int x, y;

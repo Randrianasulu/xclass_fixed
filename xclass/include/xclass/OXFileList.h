@@ -34,6 +34,7 @@
 #include <xclass/OPicture.h>
 #include <xclass/OMimeTypes.h>
 #include <xclass/OXListView.h>
+#include <xclass/OMessage.h>
 
 
 //----- sort types
@@ -44,9 +45,7 @@
 #define SORT_BY_DATE  3
 
 
-//-------------------------------------------------------------------
-
-#include <xclass/OMessage.h>
+//----------------------------------------------------------------------
 
 class ODNDmanager;
 class OFileItem;
@@ -65,6 +64,9 @@ public:
   OFileItem *dragOver;
   OPosition pos;
 };
+
+
+//----------------------------------------------------------------------
 
 class OFileItem : public OListViewItem {
 public:
@@ -100,7 +102,7 @@ protected:
 };
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXFileList : public OXListView {
 public:

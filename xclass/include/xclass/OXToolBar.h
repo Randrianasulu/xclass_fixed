@@ -40,6 +40,7 @@ struct SToolBarData {
   OXButton *button;
 };
 
+
 //----------------------------------------------------------------------
 
 class OXToolBar : public OXHorizontalFrame {

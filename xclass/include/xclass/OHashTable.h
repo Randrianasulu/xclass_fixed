@@ -28,7 +28,7 @@ class OHashSearch;
 typedef void* ClientData;
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 // Class definition for an entry in a hash table.
 
@@ -181,7 +181,7 @@ protected:
 // Structure definition for information used to keep track of searches
 // through hash tables:
 
-class OHashSearch {
+class OHashSearch : public OBaseObject {
 
   friend class OHashTable;
 

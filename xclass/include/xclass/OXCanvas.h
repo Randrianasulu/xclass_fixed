@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #define CANVAS_SCROLL_BOTH        (CANVAS_SCROLL_HORIZONTAL | CANVAS_SCROLL_VERTICAL)
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 // Not used directly by OXCanvas, but by derived classes...
 
 class OContainerMessage : public OWidgetMessage {
@@ -57,7 +57,7 @@ public:
 };
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 // This frame acts as the window through which we look at the
 // contents of the container frame
 
@@ -86,7 +86,8 @@ protected:
   OXFrame *_container;
 };
 
-//-------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // This is the scrollable canvas frame arrangement
 
 class OXCanvas : public OXCompositeFrame {

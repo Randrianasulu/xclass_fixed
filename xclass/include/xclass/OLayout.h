@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -52,18 +52,19 @@ class OXFrame;
 class OXCompositeFrame;
 class OLayoutHints;
 
-//--------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // Temporarily public as we need to share this structure definition
 // with the layout manager class
 
-typedef struct _SListFrameElt {
+struct SListFrameElt {
   class OXFrame *frame;
   class OLayoutHints *layout;
-  struct _SListFrameElt *prev, *next;
-} SListFrameElt;
+  SListFrameElt *prev, *next;
+};
 
 
-//--------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OLayoutHints : public OBaseObject {
 public:
@@ -96,7 +97,8 @@ protected:
   unsigned int  _padtop, _padbottom, _padleft, _padright;
 };
 
-//--------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // Frame layout manager
 // Abstract class
 

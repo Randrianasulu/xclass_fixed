@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@
 #define SB_WIDTH          16
 
 
-//-----------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OScrollBarMessage : public OWidgetMessage {
 public:
@@ -55,7 +55,7 @@ public:
 };
 
 
-//-----------------------------------------------------------------
+//----------------------------------------------------------------------
 // Scrollbar element for heads and thumb
 
 class OXScrollBarElt : public OXFrame {
@@ -76,7 +76,7 @@ protected:
 };
 
 
-//-----------------------------------------------------------------
+//----------------------------------------------------------------------
 // Abstract scrollbar class
 
 class OXScrollBar : public OXFrame, public OXWidget {

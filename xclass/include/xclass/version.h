@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
@@ -25,9 +25,9 @@
 
 #define XCLASS_MAJOR_VERSION  "0"
 #define XCLASS_MINOR_VERSION  "6"
-#define XCLASS_PATCH_LEVEL    "4"
-#define XCLASS_VERSION        "0.6.4"
-#define XCLASS_RELEASE_DATE   "2-Jul-2002"
+#define XCLASS_PATCH_LEVEL    "5"
+#define XCLASS_VERSION        "0.6.5"
+#define XCLASS_RELEASE_DATE   "4-Jul-2002"
 
 
-#endif // __VERSION_H
+#endif  // __VERSION_H

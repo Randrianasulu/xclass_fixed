@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ class OXGC;
 #define OButtonMessage OWidgetMessage
 
 
-//-----------------------------------------------------------------
+//----------------------------------------------------------------------
 // Abstract base class for buttons
 
 class OXButton : public OXFrame, public OXWidget {
@@ -78,5 +78,6 @@ protected:
   int _state, _prevstate, _down, _click, _default;
   OXGC *_normGC;
 };
+
 
 #endif  // __OXBUTTON_H

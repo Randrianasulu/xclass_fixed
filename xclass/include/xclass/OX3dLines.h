@@ -29,7 +29,7 @@
 #include <xclass/OXWindow.h>
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXHorizontal3dLine : public OXFrame {
 public:
@@ -45,7 +45,6 @@ public:
     }
 };
 
-//-------------------------------------------------------------------
 
 class OXVertical3dLine : public OXFrame {
 public:
@@ -61,4 +60,4 @@ public:
     }
 };
 
-#endif
+#endif  // __OX3DLINES_H

@@ -1,7 +1,7 @@
 /**************************************************************************
 
-    This file is part of notepad95, a text editor for fvwm95.
-    Copyright (C) 1997, Harald Radke.
+    This file is part of xclass.
+    Copyright (C) 1997-2002 Harald Radke, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

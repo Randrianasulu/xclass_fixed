@@ -212,4 +212,5 @@ protected:
   int _selStart, _selEnd;
 };
 
+
 #endif  // __OXTEXTEDIT_H

@@ -2114,3 +2114,9 @@ OPicture.cc
 - Added OXMainFrame::HandleConfigureNotify() to properly track window moves.
 
 - Added OXMainFrame::SetWMGravity() method.
+
+
+04/07/02 (0.6.5)
+
+- All the library classes have now OBaseObject as the common root.
+ 

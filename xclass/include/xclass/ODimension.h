@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -22,10 +22,12 @@
 #ifndef __ODIMENSION_H
 #define __ODIMENSION_H
 
+#include <xclass/OBaseObject.h>
+
 
 //--------------------------------------------------------------------
 
-class ODimension {
+class ODimension : public OBaseObject {
 public:
   // attributes
   unsigned int w, h;
@@ -46,7 +48,7 @@ public:
 };
 
 
-class OPosition {
+class OPosition : public OBaseObject {
 public:
   // attributes
   int x, y;

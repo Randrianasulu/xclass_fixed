@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <xclass/OXTextButton.h>
 
 
-//-----------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXCheckButton : public OXTextButton {
 protected:
@@ -51,5 +51,6 @@ protected:
   virtual void _DoRedraw();
   void _SetState(int state);
 };
+
 
 #endif  // __OXCHECKBUTTON_H

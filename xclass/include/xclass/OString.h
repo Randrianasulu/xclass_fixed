@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #define NULL 0
 
 
-//--------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OString : public OBaseObject {
 public:
@@ -86,7 +86,7 @@ protected:
   char _hotchar;
   int _hotpos;
   // some _off1, _off2 caching because OHotString::Draw is slow, 
-  //   specially noticeable in slow machines/connections.
+  // specially noticeable in slow machines/connections.
   GC  _lastGC;
   int _off1, _off2;
 };

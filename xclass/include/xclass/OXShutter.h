@@ -1,6 +1,7 @@
 /**************************************************************************
 
     This file is part of xclass.
+    Copyright (C) 1998-2002 Hector Peraza.
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -34,7 +35,7 @@
 #include <xclass/OTimer.h>
 
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 // Class for shutter messages
 
 class OShutterMessage : public OWidgetMessage {

@@ -31,7 +31,7 @@
 
 //--------------------------------------------------------------------
 
-class OAboutInfo {
+class OAboutInfo : public OBaseObject {
 public:
   OAboutInfo();
 
@@ -40,6 +40,7 @@ public:
   int title_justify, cprt_justify, text_justify;
   OXFont *title_font, *cprt_font, *text_font;
 };
+
 
 //--------------------------------------------------------------------
 

@@ -25,6 +25,7 @@
 #include <xclass/OXCompositeFrame.h>
 #include <xclass/OLayout.h>
 
+
 class O2ColumnsLayout : public OLayoutManager {
 public:
   O2ColumnsLayout(OXCompositeFrame *main, int hsep = 0, int vsep = 0);

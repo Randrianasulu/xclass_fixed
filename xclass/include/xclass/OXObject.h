@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -30,20 +30,20 @@
 #include <xclass/OXClient.h>
 
 
+//----------------------------------------------------------------------
 // X-Window object base class, this class groups all objects
 // having a X Window ID, like Windows, Pixmaps, Fonts, GCs, etc.
-//--------------------------------------------------------------
 
 class OXObject : public OComponent {
-protected:
-  XID _id;                     // X-Window identifier
-
 public:
   OXObject() { _id = None; }
 
   // Access functions:
   const XID GetId() const { return _id; } 
   Display *GetDisplay() const { return _client->GetDisplay(); }
+
+protected:
+  XID _id;                     // X-Window identifier
 };
 
 

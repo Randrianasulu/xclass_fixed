@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ class OTextLayout;
 class OXFont;
 
 
-//-----------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXTextButton : public OXButton {
 protected:
@@ -75,5 +75,6 @@ protected:
   const OXFont *_font;
   OTextLayout *_tl;
 };
+
 
 #endif  // __OXTEXTBUTTON_H

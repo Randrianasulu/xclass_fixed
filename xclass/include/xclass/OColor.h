@@ -26,6 +26,7 @@
 
 class OXClient;
 
+
 class OColor : public OBaseObject {
 public:
   OColor();

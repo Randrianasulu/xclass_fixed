@@ -40,7 +40,7 @@
 #define FDLG_FAVOURITES   256
 
 
-class OFileInfo {
+class OFileInfo : public OBaseObject {
 public:
   char *filename;
   char *ini_dir;

@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of xclass95.
+    This file is part of xclass.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify

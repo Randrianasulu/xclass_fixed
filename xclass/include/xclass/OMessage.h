@@ -26,7 +26,7 @@
 #include <xclass/OMessageCodes.h>
 
 
-//---------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 // This is the message base class, it just implements a null message.
 // All other messages extend this class.

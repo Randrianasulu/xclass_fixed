@@ -34,7 +34,7 @@
 #define OComboBoxMessage OWidgetMessage;
 
 
-//-------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 class OXComboBox : public OXCompositeFrame, public OXWidget {
 protected:
@@ -88,4 +88,4 @@ protected:
 };
 
 
-#endif  // _OXCOMBOBOX_H
+#endif  // __OXCOMBOBOX_H

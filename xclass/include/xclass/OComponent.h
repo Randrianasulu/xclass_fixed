@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -25,15 +25,15 @@
 #include <X11/Xlib.h>
 #include <xclass/OMessage.h>
 
-
-// xclass generic object, objects derivated from this can 
-// communicate with each other.
-//---------------------------------------------------------------
-
 class OTimer;
 class OFileHandler;
 class OIdleHandler;
 class OXClient;
+
+
+//----------------------------------------------------------------------
+// xclass generic object, objects derivated from this can 
+// communicate with each other.
 
 class OComponent : public OBaseObject {
 public:

@@ -66,4 +66,5 @@ protected:
   int _nlabels;
 };
 
+
 #endif   // __OXSTATUSBAR_H

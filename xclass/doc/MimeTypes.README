@@ -37,7 +37,7 @@ pattern = *.e?ps
 icon = ps.xpm
 action = ghostview %s
 
-defines an entry of type "application/postcript" for files with extension
+defines an entry of type "application/postscript" for files with extension
 .eps or .ps, the ps.xpm pixmap is used to represent these files, and the
 ghostview program is executed when a file with any of these extensions is
 double-clicked, the full path to the file is passed to ghostview as

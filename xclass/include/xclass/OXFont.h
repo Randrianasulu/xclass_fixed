@@ -25,13 +25,13 @@ class OString;
 class OTextBuffer;
 
 
-//------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 // The following class keeps track of the attributes of a font. It can
 // be used to keep track of either the desired attributes or the actual
 // attributes gotten when the font was instantiated.
 
-typedef struct OFontAttributes {
+class OFontAttributes : public OBaseObject {
 public:
   OFontAttributes() { Init(); }
 
@@ -76,7 +76,7 @@ public:
 // The following structure keeps track of the metrics for an instantiated
 // font. The metrics are the physical properties of the font itself.
 
-class OFontMetrics {
+class OFontMetrics : public OBaseObject {
 public:
   int ascent;			// From baseline to top of font.
   int descent;			// From baseline to bottom of font.
@@ -120,7 +120,7 @@ public:
 // A OTextLayout is a collection of OLayoutChunks. It can be displayed with
 // respect to any origin.
 
-class OLayoutChunk {
+class OLayoutChunk : public OBaseObject {
 
   friend class OXFont;
   friend class OTextLayout;
@@ -147,7 +147,7 @@ class OLayoutChunk {
 				// absorbed by the end of the chunk.
 };
 
-class OTextLayout {
+class OTextLayout : public OBaseObject {
 public:
   OTextLayout() { numChunks = 0; chunks = NULL; }
   ~OTextLayout();
@@ -260,7 +260,7 @@ protected:
 // The following structure is used to return attributes when parsing an
 // XLFD. The extra information is used to find the closest matching font.
 
-class OXLFDAttributes {
+class OXLFDAttributes : public OBaseObject {
 
   friend class OFontPool;
 

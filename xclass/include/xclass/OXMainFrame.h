@@ -68,7 +68,7 @@ class OXButton;
 #define PROP_MWM_HINTS_ELEMENTS       PROP_MOTIF_WM_HINTS_ELEMENTS
 
 
-//--------------------------------------------------------------------
+//----------------------------------------------------------------------
 // This class is used to create top-level windows:
 
 class OXMainFrame : public OXCompositeFrame {

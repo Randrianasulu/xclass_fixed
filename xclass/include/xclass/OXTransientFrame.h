@@ -25,7 +25,7 @@
 #include <xclass/OXMainFrame.h>
 
 
-//--------------------------------------------------------------------
+//----------------------------------------------------------------------
 // This class is used to create transient (dialog) windows:
 
 class OXTransientFrame : public OXMainFrame {

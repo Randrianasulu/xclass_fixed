@@ -60,7 +60,7 @@
 #define OWN_BKGND         (1<<10)
 
 
-//--------------------------------------------------------------------
+//----------------------------------------------------------------------
 // This class subclasses OXWindow, used as base class for some simple
 // widgets (buttons, labels, etc.).
 // It provides:

@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    This file is part of xclass, a Win95-looking GUI toolkit.
     Copyright (C) 1996, 1997 David Barth, Hector Peraza.
 
     This library is free software; you can redistribute it and/or
@@ -54,6 +54,8 @@
 #define ID_DISMISS      (1<<9)
 
 
+//----------------------------------------------------------------------
+
 class OXMsgBox : public OXTransientFrame {
 protected:
   void _MsgBox(const OXWindow *main,
@@ -85,5 +87,6 @@ protected:
   OLayoutHints *L1, *L2, *L3, *L4, *L5;
   int *_ret_code;
 };
+
 
 #endif  // __OXMSGBOX_H
