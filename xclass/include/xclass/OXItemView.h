@@ -169,6 +169,7 @@ protected:
   // mouse position when selection dragging starts
   OPosition _selAnchor;
   OPosition _lastDragPos;
+  int _anchorItemNo;
   OItem *_anchorItem;
 
   ODimension _maxItemSize;

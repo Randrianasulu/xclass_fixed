@@ -45,16 +45,14 @@ public:
 
   // methods
   bool contains(int px, int py) const
-               { return ((px >= x) && (px < x+w) &&
-                         (py >= y) && (py < y+h)); }
+               { return ((px >= x) && (px < x + (int) w) &&
+                         (py >= y) && (py < y + (int) h)); }
   bool contains(OPosition &p) const
-               { return ((p.x >= x) && (p.x < x+w) &&
-                         (p.y >= y) && (p.y < y+h)); }
-  bool contains(ORectangle &r) const
-               { return (w * h); }
+               { return ((p.x >= x) && (p.x < x + (int) w) &&
+                         (p.y >= y) && (p.y < y + (int) h)); }
   bool intersects(ORectangle &r) const
-               { return ((x <= r.x + r.w - 1) && (x + w - 1 >= r.x) &&
-                         (y <= r.y + r.h - 1) && (y + h - 1 >= r.y)); }
+               { return ((x <= r.x + (int) r.w - 1) && (x + (int) w - 1 >= r.x) &&
+                         (y <= r.y + (int) r.h - 1) && (y + (int) h - 1 >= r.y)); }
   int area() const
                { return (w * h); }
   ODimension size() const
@@ -62,10 +60,10 @@ public:
   OPosition left_top() const
                { return OPosition(x, y); }
   OPosition right_bottom() const
-               { return OPosition(x + w - 1, y + h - 1); }
+               { return OPosition(x + (int) w - 1, y + (int) h - 1); }
   void merge(ORectangle &r)
-               { int max_x = max(x + w, r.x + r.w); x = min(x, r.x);
-                 int max_y = max(y + h, r.y + r.h); y = min(y, r.y);
+               { int max_x = max(x + (int) w, r.x + (int) r.w); x = min(x, r.x);
+                 int max_y = max(y + (int) h, r.y + (int) r.h); y = min(y, r.y);
                  w = max_x - x;
                  h = max_y - y; }
   void empty() { x = y = 0; w = h = 0; }

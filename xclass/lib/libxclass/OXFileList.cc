@@ -45,6 +45,8 @@
 #include <xclass/OResourcePool.h>
 #include <xclass/OXFileList.h>
 
+#define REFRESH_TIME   5000
+
 Atom OXFileList::URI_list = None;
 
 
@@ -312,7 +314,8 @@ OXFileList::OXFileList(const OXWindow *p, int id,
 
     _sortType = SORT_BY_NAME;
     _foldersFirst = False;
-    _refresh = new OTimer(this, 5000);
+    _autoRefresh = True;
+    _refresh = new OTimer(this, REFRESH_TIME);
 
     _folder_s = _client->GetPicture("folder.s.xpm");
     _folder_t = _client->GetPicture("folder.t.xpm");
@@ -342,6 +345,8 @@ OXFileList::OXFileList(const OXWindow *p, int id,
     _bdown = False;
     _dndAction = None;
 
+    _showDotFiles = True;
+
     _dragging = False;
     _dragOver = NULL;
 
@@ -360,9 +365,26 @@ OXFileList::~OXFileList() {
   _client->FreePicture(_slink_t);
 }
 
+void OXFileList::AutoRefresh(int onoff) {
+  _autoRefresh = onoff;
+  if (_autoRefresh) {
+    if (!_refresh) _refresh = new OTimer(this, REFRESH_TIME);
+  } else {
+    if (_refresh) delete _refresh;
+    _refresh = NULL;
+  }
+}
+
 void OXFileList::SetFileFilter(const char *filter, int update) {
   _compileFilter(filter);
   if (update) DisplayDirectory();
+}
+
+void OXFileList::ShowDotFiles(int onoff) {
+  if (_showDotFiles != onoff) {
+    _showDotFiles = onoff;
+    DisplayDirectory();
+  }
 }
 
 int OXFileList::HandleTimer(OTimer *t) {
@@ -374,7 +396,7 @@ int OXFileList::HandleTimer(OTimer *t) {
     if (_st_mtime != sbuf.st_mtime) DisplayDirectory();
 
   delete _refresh;
-  _refresh = new OTimer(this, 5000);
+  _refresh = new OTimer(this, REFRESH_TIME);
 
   return True;
 }
@@ -484,6 +506,7 @@ void OXFileList::_CreateFileList() {
   while ((dp = readdir(dirp)) != NULL) {
     name = dp->d_name;
     if (strcmp(name, ".") && strcmp(name, "..")) {
+      if ((name[0] == '.') && !_showDotFiles) continue;
       strcpy(filename, name);
       type = 0;
       size = 0;
@@ -491,7 +514,7 @@ void OXFileList::_CreateFileList() {
 //      if (lstat(name, &sbuf) == 0) {
       if ((stat(name, &sbuf) == 0) || (lstat(name, &sbuf) == 0)) {
         if (!S_ISDIR(sbuf.st_mode) &&
-          _fileMatch(name) == 0) continue;
+          FileMatch(name) == 0) continue;
         if (lstat(name, &lbuf) != 0) continue;
         is_link = S_ISLNK(lbuf.st_mode);
         type = lbuf.st_mode;
@@ -554,7 +577,7 @@ void OXFileList::_compileFilter(const char *filter) {
   regcomp(&_filter, expression, REG_EXTENDED);
 }
 
-int OXFileList::_fileMatch(const char *filename) {
+int OXFileList::FileMatch(const char *filename) {
   regmatch_t pmatch[1];
   size_t     nmatch = 1;
 

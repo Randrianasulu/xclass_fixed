@@ -1,8 +1,7 @@
-//-*-C++-*-
 /**************************************************************************
 
     This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    Copyright (C) 1996, 1997 David Barth, Kevin Pearson, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,10 +31,14 @@
 
 class OMime : public OBaseObject {
 public:
-  char type[50];
-  char pattern[256];
-  char action[256];
-  char icon[256];
+  OMime();
+  virtual ~OMime();
+
+public:
+  char *type;
+  char *pattern;
+  char *action;
+  char *icon;
   char *description;
   regex_t preg;
   OMime *next;
@@ -60,10 +63,12 @@ public:
   const OPicture *GetIcon(OMime *, int);
 
   // if arg is NULL, go to first
-  OMime *NextMime(OMime *PrevMime);
+  OMime *NextMime(OMime *prev) { return (prev) ? prev->next : list->next; }
 
 protected:
   OMime *_Find(const char *);
+  void _CompilePattern(const char *, regex_t *);
+  
   OMime *list, *listptr;
   OXClient *_clientX;
   char _filename[PATH_MAX];

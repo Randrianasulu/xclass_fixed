@@ -93,6 +93,7 @@ OXItemView::~OXItemView() {
   for (int i = 0; i < _items.size(); ++i) delete _items[i];
   _items.clear();
   _selectedItems.clear();
+  _anchorItem = NULL;
   if (_scrollTimer) delete _scrollTimer;
 }
 
@@ -116,6 +117,13 @@ void OXItemView::ShowFocusHilite(int onoff) {
     _anchorItem->ShowFocusHilite(onoff);
     NeedRedraw(ORectangle(_anchorItem->GetPosition(), _anchorItem->GetSize()));
   }
+#if 1
+  else if (onoff && (_items.size() > 0)) {
+    _anchorItem = _items[0];
+    _anchorItem->ShowFocusHilite(onoff);
+    NeedRedraw(ORectangle(_anchorItem->GetPosition(), _anchorItem->GetSize()));
+  }
+#endif
 }
 
 void OXItemView::Layout() {
@@ -134,6 +142,7 @@ void OXItemView::Clear() {
   _items.clear();
   _selectedItems.clear();
   _hasSelection = False;
+  _anchorItem = NULL;
   OXView::Clear();
 }
 
@@ -215,6 +224,8 @@ void OXItemView::DeleteItem(unsigned int num) {
   for (i = num + 1; i < _items.size(); i++)
     _items[i]->Move(_items[i]->GetPosition() - OPosition(0, pos.y + size.h));
 
+  if (_anchorItem == _items[num]) _anchorItem = NULL;
+
   delete _items[num];
   _items.erase(_items.begin() + num);
   _virtualSize.h -= size.h - _itemSep.h;
@@ -240,7 +251,9 @@ void OXItemView::SelectItem(OItem *item, bool state) {
 
   if (item == NULL) return;
 
-  // there are things that should only be done if it is a change of the item state...
+  // there are things that should be done only when item changes
+  // state...
+
   if (state != item->IsSelected()) {
     if (state) {
       _selectedItems.push_back(item);
@@ -350,7 +363,7 @@ int OXItemView::HandleButton(XButtonEvent *event) {
     }
 
     ShowFocusHilite(False);
-    _anchorItem = selItem;
+    if (selItem) _anchorItem = selItem;
     ShowFocusHilite(HasFocus());
 
     if (selChange) {

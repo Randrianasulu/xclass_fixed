@@ -66,7 +66,7 @@ public:
 
   int GetViewMode() const { return _viewMode; }
   OString *GetName(int column = 0) const
-           { return (column >= _names.size()) ? NULL : _names[column]; }
+           { return (column >= (int) _names.size()) ? NULL : _names[column]; }
   const OPicture *GetCurrentPicture() const { return _currentPic; }
   const OPicture *GetBigPicture() const { return _bigPic; }
   const OPicture *GetSmallPicture() const { return _smallPic; }
@@ -148,6 +148,15 @@ protected:
   
   void ShowHeaderBar();
   void HideHeaderBar();
+  
+  void _KeyLeft();
+  void _KeyRight();
+  void _KeyUp();
+  void _KeyDown();
+  void _KeyHome();
+  void _KeyEnd();
+  void _KeyPageUp();
+  void _KeyPageDown();
 
   OXGC *_normGC;
   OXGC *_selGC;

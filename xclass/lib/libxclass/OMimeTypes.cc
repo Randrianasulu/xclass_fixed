@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    Copyright (C) 1996, 1997 David Barth, Kevin Pearson, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,15 +35,36 @@
 #include <xclass/OMimeTypes.h>
 
 
-OMimeTypes::OMimeTypes(OXClient *client, const char *filename) {
+#define MERGE_PATTERN
 
-  char     line[1024];
-  char     mime[1024];
-  char     pattern[256];
-  char     icon[256];
-  char     action[256];
-  char    *tmppattern;
-  char    *description;
+
+//----------------------------------------------------------------------
+
+OMime::OMime() {
+  type = pattern = action = icon = description = NULL;
+  next = NULL;
+}
+
+OMime::~OMime() {
+  if (type) delete[] type;
+  if (pattern) delete[] pattern;
+  if (action) delete[] action;
+  if (icon) delete[] icon;
+  if (description) delete[] description;
+  regfree(&preg);
+}
+
+
+//----------------------------------------------------------------------
+
+OMimeTypes::OMimeTypes(OXClient *client, const char *filename) {
+  char line[1024];
+  char mime[1024];
+  char pattern[256];
+  char icon[256];
+  char action[256];
+  char *tmppattern;
+  char *description;
   OIniFile myfile(filename, INI_READ);
 
   list = new OMime;
@@ -58,6 +79,15 @@ OMimeTypes::OMimeTypes(OXClient *client, const char *filename) {
     myfile.GetItem("icon", icon);
     myfile.GetItem("action", action);
     description = myfile.GetItem("description", NULL);
+#ifdef MERGE_PATTERN
+    if (strlen(pattern) > 0) {
+      // remove trailing spaces, if any (this should go to _CompilePattern)
+      char *p = pattern + strlen(pattern) - 1;
+      while (*p == ' ') --p;
+      *(++p) = '\0';
+    }
+    AddType(description, mime, pattern, icon, action);
+#else
     if (strchr(pattern, ' ') != NULL) {
       tmppattern = strtok(pattern, " ");
       while (tmppattern && (*tmppattern != ' ')) {
@@ -67,6 +97,7 @@ OMimeTypes::OMimeTypes(OXClient *client, const char *filename) {
     } else {
       AddType(description, mime, pattern, icon, action);
     }
+#endif
     if (description) delete[] description;
   }
   _changed = False;
@@ -79,7 +110,6 @@ OMimeTypes::~OMimeTypes() {
   listptr = list->next;
   while (listptr) {
     nextptr = listptr->next;
-    if (listptr->description) delete[] listptr->description;
     delete listptr;
     listptr = nextptr;
   }
@@ -87,9 +117,8 @@ OMimeTypes::~OMimeTypes() {
 }
 
 OMime *OMimeTypes::_Find(const char *filename) {
-
-  regmatch_t   pmatch[1];
-  size_t       nmatch = 1;
+  regmatch_t pmatch[1];
+  size_t     nmatch = 1;
 
   listptr = list->next;
   if (filename) {
@@ -134,12 +163,12 @@ const OPicture *OMimeTypes::GetIcon(OMime *mime, int small_icon) {
 }
 
 const OPicture *OMimeTypes::GetIcon(const char *filename, int small_icon) {
-  if (_Find(filename)) return GetIcon(listptr, small_icon);
+  if (_Find(filename))
+    return GetIcon(listptr, small_icon);
   return NULL;
 }
 
 int OMimeTypes::GetAction(const char *filename, char *action) {
-
   *action = '\0';
   if (_Find(filename)) {
     strcpy(action, listptr->action);
@@ -149,7 +178,6 @@ int OMimeTypes::GetAction(const char *filename, char *action) {
 }
 
 int OMimeTypes::GetType(const char *filename, char *type) {
-
   *type = '\0';
   if (_Find(filename)) {
     strcpy(type, listptr->type);
@@ -169,7 +197,7 @@ void OMimeTypes::PrintTypes() {
   listptr = list->next;
 
   while (listptr) {
-    printf("Description: %s\n", listptr->description ? "" : listptr->description);
+    printf("Description: %s\n", listptr->description ? listptr->description : "");
     printf("Type: %s\n", listptr->type);
     printf("Pattern: %s\n", listptr->pattern);
     printf("Action: %s\n", listptr->action);
@@ -179,7 +207,6 @@ void OMimeTypes::PrintTypes() {
 }
 
 void OMimeTypes::SaveMimes() {
-
   OMime    *tmpptr;
   OIniFile  myfile(_filename, INI_WRITE);
   
@@ -199,25 +226,36 @@ void OMimeTypes::SaveMimes() {
   _changed = False;
 }
 
-void OMimeTypes::AddType(char *description,
-                   const char *type, 
-		   const char *pattern,
-		   const char *icon,
-		   const char *action) {
-
-  OMime      *tmpmime;
-  char        expression[50];
-  int         pos = 0;
+void OMimeTypes::_CompilePattern(const char *pattern, regex_t *preg) {
+  char *expression;
+  int  pos = 0;
   const char *ptr = NULL;
 
-  tmpmime = new OMime;
-
-  listptr->next = tmpmime;
-  listptr = tmpmime;
-  strcpy(listptr->type, type);
-  strcpy(listptr->pattern, pattern);
+#ifdef MERGE_PATTERN
+  int merge = (strchr(pattern, ' ') != NULL);
   ptr = pattern;
   pos = 0;
+  expression = new char[strlen(pattern)*2 + 10];
+  if (merge) expression[pos++] = '(';
+  while (*ptr != '\0') {
+    if (*ptr == '*')
+      expression[pos++] = '.';
+    else if (*ptr == '.')
+      expression[pos++] = '\\';
+    if (*ptr == ' ')
+      expression[pos++] = '|';
+    else
+      expression[pos++] = *ptr;
+    ptr++;
+  }
+  if (merge) expression[pos++] = ')';
+  expression[pos] = '\0';
+  regcomp(preg, expression, REG_EXTENDED);
+  delete[] expression;
+#else
+  ptr = pattern;
+  pos = 0;
+  expression = new char[strlen(pattern)*2 + 1];
   while (*ptr != '\0') {
     if (*ptr == '*')
       expression[pos++] = '.';
@@ -227,20 +265,30 @@ void OMimeTypes::AddType(char *description,
     ptr++;
   }
   expression[pos] = '\0';
-  regcomp(&listptr->preg, expression, REG_EXTENDED);
-  strcpy(listptr->action, action);
-  strcpy(listptr->icon, icon);
-  listptr->description = NULL;
-  if (description) {
-    listptr->description = new char[strlen(description)+1];
-    strcpy(listptr->description, description);
-  }
-  listptr->next = NULL;
-  _changed = True;
+  regcomp(preg, expression, REG_EXTENDED);
+  delete[] expression;
+#endif
 }
 
-OMime *OMimeTypes::NextMime(OMime *prev) {
-  return (prev) ? prev->next : list->next;
+void OMimeTypes::AddType(char *description,
+                   const char *type, 
+		   const char *pattern,
+		   const char *icon,
+		   const char *action) {
+
+  OMime *tmpmime = new OMime;
+
+  listptr->next = tmpmime;
+  listptr = tmpmime;
+
+  listptr->type = StrDup(type);
+  listptr->pattern = StrDup(pattern);
+  _CompilePattern(pattern, &listptr->preg);
+  listptr->action = StrDup(action);
+  listptr->icon = StrDup(icon);
+  listptr->description = description ? StrDup(description) : NULL;
+  listptr->next = NULL;
+  _changed = True;
 }
 
 void OMimeTypes::Modify(OMime *mime, 
@@ -252,13 +300,30 @@ void OMimeTypes::Modify(OMime *mime,
 
   if (description) {
     if (mime->description) delete[] mime->description;
-    mime->description = description;
+    mime->description = StrDup(description);
   }
 
-  if (type) strcpy(mime->type, type);
-  if (action) strcpy(mime->action, action);
-  if (icon) strcpy(mime->icon, icon);
-  if (pattern) strcpy(mime->pattern, pattern);
+  if (type) {
+    if (mime->type) delete[] mime->type;
+    mime->type = StrDup(type);
+  }
+
+  if (action) {
+    if (mime->action) delete[] mime->action;
+    mime->action = StrDup(action);
+  }
+
+  if (icon) {
+    if (mime->icon) delete[] mime->icon;
+    mime->icon = StrDup(icon);
+  }
+
+  if (pattern) {
+    if (mime->pattern) delete[] mime->pattern;
+    mime->pattern = StrDup(pattern);
+    regfree(&mime->preg);
+    _CompilePattern(pattern, &mime->preg);
+  }
 
   _changed = True;
 }

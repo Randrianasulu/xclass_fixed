@@ -83,9 +83,14 @@ void OXToolBar::AddButtons(SToolBarData *tdata) {
     if (strlen(tdata[i].pixmap_name) == 0) {
       AddSeparator();
     } else {
-      bpic = _client->GetPicture(tdata[i].pixmap_name, tdata[i].pixmap_data);
+      if (tdata[i].pixmap_data)
+        bpic = _client->GetPicture(tdata[i].pixmap_name,
+                                   tdata[i].pixmap_data);
+      else
+        bpic = _client->GetPicture(tdata[i].pixmap_name);
       if (!bpic) {
-        FatalError("OXToolBar: bad or missing inlined pixmap: %s",
+        FatalError("OXToolBar: bad or missing %spixmap: %s",
+                   tdata[i].pixmap_data ? "inlined " : "",
                    tdata[i].pixmap_name);
       }
       tdata[i].button = AddButton(bpic, tdata[i].tip_text, tdata[i].type,

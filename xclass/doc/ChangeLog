@@ -1843,3 +1843,31 @@ OPicture.cc
   listboxes.
 
 - OXFontDialog: added accelerator support for listboxes.
+
+
+04/10/01  (0.5.8)
+
+- OXFileDialog: added FDLG_FAVOURITES option, added tips to the toolbar
+  buttons.
+
+
+06/10/01
+
+- OXFileList: FileMatch() is now public; added AutoRefresh() and
+  ShowDotFiles().
+
+- Corrected an ORectangle bug.
+
+- Added preliminary keyboard support to OXListView.
+
+
+07/10/01
+
+- OXToolBar: allow specification of loadable pixmaps (pixmap data set
+  to NULL).
+
+- Corrected a bug in OMimeTypes::PrintTypes().
+
+- OMime strings are now dynamically allocated.
+
+- OMimeTypes: recompile regular expresion when pattern is changed.

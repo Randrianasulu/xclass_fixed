@@ -22,6 +22,8 @@
 #include <vector.h>
 #include <algo.h>
 
+#include <X11/keysym.h>
+
 #include <xclass/OXListView.h>
 
 const OXFont *OListViewItem::_defaultFont = NULL;
@@ -358,29 +360,245 @@ OXListView::~OXListView() {
   delete _header;
 }
 
-int OXListView::HandleKey(XKeyEvent *event) {
-/*
-  if (_lbc->HandleKey(event)) {
-    OXLBEntry *e = GetSelectedEntry();
-    if (e) {
-      if (e->GetY() < -_lbc->GetY()) {
-        int vpos = e->GetY() / _itemVsize;
-        _vscrollbar->SetPosition(vpos);
-      } else if ((e->GetY() + e->GetHeight()) >
-                 (_vport->GetHeight() - _lbc->GetY())) {
-        int h = ((_vport->GetHeight()) / _itemVsize) * _itemVsize;
-        int vpos = (e->GetY() + e->GetHeight() - h) / _itemVsize;
-        _vscrollbar->SetPosition(vpos);
-      }
-    }
-   
-    return True;
-  }
-*/
 
-  return False;
+//----------------------------------------------------------------------
+
+// Keyboard handling...
+
+int OXListView::HandleKey(XKeyEvent *event) {
+  if (_items.size() == 0) return True;
+
+  if (event->type == KeyPress) {
+
+    if (!_anchorItem) {
+      _anchorItem = _items[0];
+      _anchorItem->ShowFocusHilite(HasFocus());
+      NeedRedraw(ORectangle(_anchorItem->GetPosition(),
+                            _anchorItem->GetSize()));
+      return True;
+    }
+
+    KeySym keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
+    switch (keysym) {
+      case XK_Left:
+        _KeyLeft();
+        break;
+
+      case XK_Right:
+        _KeyRight();
+        break;
+
+      case XK_Up:
+        _KeyUp();
+        break;
+
+      case XK_Down:
+        _KeyDown();
+        break;
+
+      case XK_Page_Up:
+        _KeyPageUp();
+        break;
+
+      case XK_Page_Down:
+        _KeyPageDown();
+        break;
+
+      case XK_Home:
+        _KeyHome();
+        break;
+
+      case XK_End:
+        _KeyEnd();
+        break;
+
+      case XK_KP_Enter:
+      case XK_Return:
+        {
+        // change this into a keypress message!
+        OItemViewMessage message(_msgType, MSG_DBLCLICK, _widgetID, 1,
+                                 OPosition(0, 0));
+        SendMessage(_msgObject, &message);
+        }
+        break;
+
+      case XK_space:
+        {
+        // change this into a keypress message!
+        OItemViewMessage message(_msgType, MSG_CLICK, _widgetID, 1,
+                                 OPosition(0, 0));
+        SendMessage(_msgObject, &message);
+        }
+        break;
+
+      case XK_Delete:
+        break;
+
+      default:
+        {
+        char input[2] = { 0, 0 };
+        int  charcount;
+        KeySym keysym;
+        XComposeStatus compose = { NULL, 0 };
+        charcount = XLookupString(event, input, sizeof(input)-1,
+                                  &keysym, &compose);
+        if (charcount > 0) {
+          int i;
+          OListViewItem *item;
+          for (i = 0; i < _items.size(); ++i) {
+            if (_items[i] == _anchorItem) break;
+          }
+          if (_anchorItem && _anchorItem->IsSelected()) ++i;
+          for (; i < _items.size(); ++i) {
+            item = (OListViewItem *) _items[i];
+            if (item->GetName())
+              if (item->GetName()->GetString()[0] == input[0]) break;
+          }
+          if (i == _items.size()) {
+            for (i = 0; i < _items.size(); ++i) {
+              item = (OListViewItem *) _items[i];
+              if (item->GetName())
+                if (item->GetName()->GetString()[0] == input[0]) break;
+            }
+          }
+          if (i < _items.size()) {
+            if (_anchorItem) SelectItem(_anchorItem, False);
+            if (!item->IsSelected()) SelectItem(item, True);
+            ShowFocusHilite(False);
+            _anchorItem = item;
+            ShowFocusHilite(HasFocus());
+          }
+        }
+        }
+        break;
+    }
+  }
+
+  if (_anchorItem) {
+    OPosition p = _anchorItem->GetPosition();
+
+    if (p.y < _visibleStart.y + _itemSep.h) {
+      ScrollToPosition(OPosition(_visibleStart.x, p.y - _itemSep.h));
+    } else if (p.y > _visibleStart.y + _canvas->GetHeight()
+                     - _maxItemSize.h - _itemSep.h) {
+      ScrollToPosition(OPosition(_visibleStart.x, p.y - _canvas->GetHeight()
+                     + _maxItemSize.h + _itemSep.h));
+    }
+
+    if (p.x < _visibleStart.x + _itemSep.w) {
+      ScrollToPosition(OPosition(p.x - _itemSep.w, _visibleStart.y));
+    } else if (p.x > _visibleStart.x + _canvas->GetWidth()
+                     - _maxItemSize.w - _itemSep.w) {
+      ScrollToPosition(OPosition(p.x - _canvas->GetWidth() + _maxItemSize.w
+                     + _itemSep.w, _visibleStart.y));
+    }
+  }
+
+  return True;
 }
 
+void OXListView::_KeyLeft() {
+  if (_anchorItem) {
+    int i;
+    for (i = 0; i < _items.size(); ++i) if (_items[i] == _anchorItem) break;
+    if (_viewMode == LV_LIST || _viewMode == LV_DETAILS) {
+      if (i >= _rows) i -= _rows;
+    } else {
+      if ((i % _cols) > 0) --i;
+    }
+    OItem *item = _items[i];
+    SelectItem(_anchorItem, False);
+    if (!item->IsSelected()) SelectItem(item, True);
+    ShowFocusHilite(False);
+    _anchorItem = item;
+    ShowFocusHilite(HasFocus());
+  }
+}
+
+void OXListView::_KeyRight() {
+  if (_anchorItem) {
+    int i;
+    for (i = 0; i < _items.size(); ++i) if (_items[i] == _anchorItem) break;
+    if (_viewMode == LV_LIST || _viewMode == LV_DETAILS) {
+      if (i < _items.size() - _rows) i += _rows;
+    } else {
+      if (((i % _cols) < _cols - 1) && (i < _items.size() - 1)) ++i;
+    }
+    OItem *item = _items[i];
+    SelectItem(_anchorItem, False);
+    if (!item->IsSelected()) SelectItem(item, True);
+    ShowFocusHilite(False);
+    _anchorItem = item;
+    ShowFocusHilite(HasFocus());
+  }
+}
+
+void OXListView::_KeyUp() {
+  if (_anchorItem) {
+    int i;
+    for (i = 0; i < _items.size(); ++i) if (_items[i] == _anchorItem) break;
+    if (_viewMode == LV_LIST || _viewMode == LV_DETAILS) {
+      if ((i % _rows) > 0) --i;
+    } else {
+      if (i >= _cols) i -= _cols;
+    }
+    OItem *item = _items[i];
+    SelectItem(_anchorItem, False);
+    if (!item->IsSelected()) SelectItem(item, True);
+    ShowFocusHilite(False);
+    _anchorItem = item;
+    ShowFocusHilite(HasFocus());
+  }
+}
+
+void OXListView::_KeyDown() {
+  if (_anchorItem) {
+    int i;
+    for (i = 0; i < _items.size(); ++i) if (_items[i] == _anchorItem) break;
+    if (_viewMode == LV_LIST || _viewMode == LV_DETAILS) {
+      if (((i % _rows) < _rows - 1) && (i < _items.size() - 1)) ++i;
+    } else {
+      if (i < _items.size() - _cols) i += _cols;
+    }
+    OItem *item = _items[i];
+    SelectItem(_anchorItem, False);
+    if (!item->IsSelected()) SelectItem(item, True);
+    ShowFocusHilite(False);
+    _anchorItem = item;
+    ShowFocusHilite(HasFocus());
+  }
+}
+
+void OXListView::_KeyHome() {
+  if (_items.size() > 0) {
+    SelectItem(_anchorItem, False);
+    OItem *item = _items[0];
+    if (!item->IsSelected()) SelectItem(item, True);
+    ShowFocusHilite(False);
+    if (item) _anchorItem = item;
+    ShowFocusHilite(HasFocus());
+  }
+}
+
+void OXListView::_KeyEnd() {
+  if (_items.size() > 0) {
+    SelectItem(_anchorItem, False);
+    OItem *item = _items[_items.size() - 1];
+    if (!item->IsSelected()) SelectItem(item, True);
+    ShowFocusHilite(False);
+    if (item) _anchorItem = item;
+    ShowFocusHilite(HasFocus());
+  }
+}
+
+void OXListView::_KeyPageUp() {
+}
+
+void OXListView::_KeyPageDown() {
+}
+
+
+//----------------------------------------------------------------------
 
 void OXListView::SetHeaderFont(const OXFont *f) {
   if (f) {
@@ -691,6 +909,7 @@ bool OXListView::ItemLayout() {
       currentPos.x = _itemSep.w;
       currentPos.y = _itemSep.h;
       _virtualSize.w = max(canvasSize.w, maxItemSize.w + _itemSep.w * 2);
+      _rows = 0;
       for (i = 0; i < _items.size(); i++) {
 
         itemSize = _items[i]->GetDefaultSize();
@@ -709,17 +928,22 @@ bool OXListView::ItemLayout() {
         if (currentPos.x + maxItemSize.w > _virtualSize.w) {
           currentPos.x = _itemSep.w;
           currentPos.y += maxItemSize.h + _itemSep.h;
+          ++_rows;
         }
       }
-      if (currentPos.x != _itemSep.w)
+      if (currentPos.x != _itemSep.w) {
         currentPos.y += maxItemSize.h + _itemSep.h;
+        ++_rows;
+      }
       _virtualSize.h = currentPos.y;
+      _cols = _virtualSize.w / (maxItemSize.w + _itemSep.w);
       break;
 
     case LV_SMALL_ICONS:
       currentPos.x = _itemSep.w;
       currentPos.y = _itemSep.h;
       _virtualSize.w = max(canvasSize.w, maxItemSize.w + _itemSep.w * 2);
+      _rows = 0;
       for (i = 0; i < _items.size(); i++) {
 
         itemSize = _items[i]->GetDefaultSize();
@@ -738,17 +962,22 @@ bool OXListView::ItemLayout() {
         if (currentPos.x + maxItemSize.w > _virtualSize.w) {
           currentPos.x = _itemSep.w;
           currentPos.y += maxItemSize.h + _itemSep.h;
+          ++_rows;
         }
       }
-      if (currentPos.x != _itemSep.w)
+      if (currentPos.x != _itemSep.w) {
         currentPos.y += maxItemSize.h + _itemSep.h;
+        ++_rows;
+      }
       _virtualSize.h = currentPos.y;
+      _cols = _virtualSize.w / (maxItemSize.w + _itemSep.w);
       break;
 
     case LV_LIST:
       currentPos.x = _itemSep.w;
       currentPos.y = _itemSep.h;
       _virtualSize.h = max(canvasSize.h, maxItemSize.h + _itemSep.h * 2);
+      _cols = 0;
       for (i = 0; i < _items.size(); i++) {
 
         itemSize = _items[i]->GetDefaultSize();
@@ -767,15 +996,21 @@ bool OXListView::ItemLayout() {
         if (currentPos.y + maxItemSize.h > _virtualSize.h) {
           currentPos.y = _itemSep.h;
           currentPos.x += maxItemSize.w + _itemSep.w;
+          ++_cols;
         }
       }
-      if (currentPos.y != _itemSep.h)
+      if (currentPos.y != _itemSep.h) {
         currentPos.x += maxItemSize.w + _itemSep.w;
+        ++_cols;
+      }
       _virtualSize.w = currentPos.x;
+      _rows = _virtualSize.h / (maxItemSize.h + _itemSep.h);
       break;
 
     case LV_DETAILS:
       _virtualSize.h = _itemSep.h / 2;
+      _rows = _items.size();
+      _cols = 1;
       for (i = 0; i < _items.size(); i++) {
         currentPos.x = _itemSep.w;
         currentPos.y = _virtualSize.h;

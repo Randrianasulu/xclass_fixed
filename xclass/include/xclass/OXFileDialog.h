@@ -34,9 +34,10 @@
 #include <xclass/OXTextEntry.h>
 
 
-#define FDLG_OPEN    0
-#define FDLG_SAVE    1
-#define FDLG_BROWSE  2
+#define FDLG_OPEN         0
+#define FDLG_SAVE         1
+#define FDLG_BROWSE       2
+#define FDLG_FAVOURITES   256
 
 
 class OFileInfo {
@@ -68,15 +69,16 @@ protected:
   OXTextEntry *_fname;
   OXDDListBox *_ftypes;
   OXFileSystemDDListBox *_tree_lb;
-  OXPictureButton *_cdup, *_newf, *_list, *_details;
+  OXPictureButton *_cdup, *_newf, *_list, *_details, *_addFavor, *_favor;
   OXTextButton *_ok, *_cancel;
   OXFileList *_fv;
   OXHorizontalFrame *_htop, *_hf, *_hfname, *_hftype;
   OXVerticalFrame *_vf, *_vbf;
-  OLayoutHints *_lmain, *_lhl, *_lb1, *_lb2, *_lvf, *_lvbf,
+  OLayoutHints *_lmain, *_lhl, *_lb1, *_lb2, *_lb3, *_lvf, *_lvbf,
                *_lb, *_lht, *_lht1;
   OFileInfo *_file_info;
   int _dlg_type;
+  char *_favorDir;  // Favourites directory
   char *_defName;   // Save dialog should not change to 
   	            // a directory name when double clicked..
 };

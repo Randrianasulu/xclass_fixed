@@ -112,10 +112,12 @@ public:
   virtual int HandleTimer(OTimer *t);
 
   void Sort(int sortType);
+  void AutoRefresh(int onoff = True);
 
   int  ChangeDirectory(const char *path);
   void DisplayDirectory(int check = False);
   void SetFileFilter(const char *filter, int update = True);
+  void ShowDotFiles(int onoff = True);
 
   void GetFilePictures(const OPicture **pic, const OPicture **lpic, 
                        int file_type, int is_link, char *ext, int small);
@@ -133,12 +135,13 @@ public:
   char *Group(int gid);
   char *TimeString(time_t tm);
 
+  int FileMatch(const char *filename);
+
 protected:
   void _CreateFileList();
-  int _fileMatch(const char *filename);
   void _compileFilter(const char *filter);
 
-  int _sortType, _foldersFirst, _bdown;
+  int _sortType, _foldersFirst, _showDotFiles, _bdown;
   regex_t _filter;
   OTimer *_refresh;
   unsigned long _st_mtime;
@@ -150,7 +153,7 @@ protected:
   Atom _dndAction;
   ODNDmanager *_dndManager;
 
-  int _dragging, _dragOverPrevState;
+  int _autoRefresh, _dragging, _dragOverPrevState;
   OFileItem *_dragOver;
 };
 
