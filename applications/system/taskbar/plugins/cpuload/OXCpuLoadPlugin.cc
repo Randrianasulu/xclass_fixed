@@ -57,7 +57,7 @@ OXCpuLoadPlugin *CreatePlugin(const OXWindow *p, OComponent *c,
         
 OXCpuLoadPlugin::OXCpuLoadPlugin(const OXWindow *p, OComponent *c,
                                  OIniFile *rcfile, int id) : 
-  OXFrame(p, 16, 32, CHILD_FRAME | SUNKEN_FRAME) {
+  OXFrame(p, 16, 32, CHILD_FRAME | SUNKEN_FRAME | OWN_BKGND) {
     XGCValues gcval;
     unsigned long gcm;
 
