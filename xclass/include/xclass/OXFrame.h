@@ -112,7 +112,7 @@ public:
 
   virtual int IsComposite() const { return False; }
 
-  virtual void SetBackgroundColor(unsigned int color)
+  virtual void SetBackgroundColor(unsigned long color)
        { OXWindow::SetBackgroundColor(_backPixel = color); }
 
   virtual int HandleEvent(XEvent *event);

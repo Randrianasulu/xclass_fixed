@@ -117,6 +117,8 @@ public:
                 unsigned long back = _defaultFrameBackground);
   virtual ~OXLBContainer();
 
+  virtual void SetBackgroundColor(unsigned long color);
+
   virtual void AddEntry(OXLBEntry *lbe, OLayoutHints *lhints);
   virtual void InsertEntry(OXLBEntry *lbe, OLayoutHints *lhints, int afterID);
   virtual void RemoveEntry(int ID);
@@ -154,6 +156,8 @@ public:
             unsigned int options = SUNKEN_FRAME | DOUBLE_BORDER,
             unsigned long back = _defaultDocumentBackground);
   virtual ~OXListBox();
+
+  virtual void SetBackgroundColor(unsigned long color);
 
   virtual void AddEntry(OString *s, int ID);
   virtual void AddEntry(OXLBEntry *lbe, OLayoutHints *lhints);

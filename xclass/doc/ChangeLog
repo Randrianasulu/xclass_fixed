@@ -2512,3 +2512,13 @@ OPicture.cc
 
 - OXFrame::HandleConfigureNotify(): call _Resized() from here too to keep
   OnyX IDE happy.
+
+
+16/09/04
+
+- OXListBox: allow the specification of a background color other than the
+  default document background color.
+
+- OXWindow::SetBackgroundColor(), OXFrame::SetBackgroundColor() type of
+  'color' must be unsigned long.
+ 

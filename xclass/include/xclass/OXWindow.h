@@ -85,7 +85,7 @@ public:
 
   virtual void ReparentWindow(const class OXWindow *p, int x = 0, int y = 0);
 
-  virtual void SetBackgroundColor(unsigned int color)
+  virtual void SetBackgroundColor(unsigned long color)
        { XSetWindowBackground(GetDisplay(), _id, color); }
   virtual void SetBackgroundPixmap(Pixmap pixmap)
        { XSetWindowBackgroundPixmap(GetDisplay(), _id, pixmap); }

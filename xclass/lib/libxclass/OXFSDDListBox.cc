@@ -117,7 +117,7 @@ void OXTreeLBEntry::_DoRedraw() {
     _normGC->SetForeground(_selPixel);
   } else {
     _pic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
-    _normGC->SetForeground(GetResourcePool()->GetDocumentBgndColor());
+    _normGC->SetForeground(_backPixel);
     FillRectangle(_normGC->GetGC(), lx, ly, _tw+1, _th+1);
     _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());  // ==!== doc sel fgnd?
   }
@@ -125,10 +125,12 @@ void OXTreeLBEntry::_DoRedraw() {
   _text->Draw(GetDisplay(), _id, _normGC->GetGC(), lx, ly + _ta);
 
   if (_focused) {
-    DrawRectangle(GetResourcePool()->GetDocumentBckgndGC()->GetGC(),  // ==!== doc back color
+    _normGC->SetForeground(_backPixel);
+    DrawRectangle(_normGC->GetGC(),
                   lx, ly, _tw, _th);
     DrawRectangle(GetResourcePool()->GetFocusHiliteGC()->GetGC(),
                   lx, ly, _tw, _th);
+    _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());  // ==!== doc sel fgnd?
   }
 }
 

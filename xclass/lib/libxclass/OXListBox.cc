@@ -89,18 +89,20 @@ void OXTextLBEntry::_DoRedraw() {
     ClearWindow();
     _normGC->SetForeground(_selPixel);
   } else {
-    SetBackgroundColor(_bkcolor);
+    SetBackgroundColor(_backPixel);
     ClearWindow();
-    _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());  
+    _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
   }
 
   _text->Draw(GetDisplay(), _id, _normGC->GetGC(), x, y + _ta);
 
   if (_focused) {
-    DrawRectangle(GetResourcePool()->GetDocumentBckgndGC()->GetGC(),
+    _normGC->SetForeground(_backPixel);
+    DrawRectangle(_normGC->GetGC(),
                   0, 0, _w-1, _h-1);
     DrawRectangle(GetResourcePool()->GetFocusHiliteGC()->GetGC(),
                   0, 0, _w-1, _h-1);
+    _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
   }
 }
 
@@ -159,8 +161,18 @@ OXLBContainer::~OXLBContainer() {
   _ftail = NULL;
 }
 
+void OXLBContainer::SetBackgroundColor(unsigned long color) {
+  SListFrameElt *ptr;
+
+  OXCompositeFrame::SetBackgroundColor(color);
+
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
+    ptr->frame->SetBackgroundColor(color);
+  }
+}
+
 void OXLBContainer::AddEntry(OXLBEntry *lbe, OLayoutHints *lhints) {
-  lbe->SetBackgroundColor(GetResourcePool()->GetDocumentBgndColor());
+  lbe->SetBackgroundColor(_backPixel);
   AddFrame(lbe, lhints);
   //Layout(); // called from OXListBox
   //lbe->MapWindow();
@@ -250,7 +262,7 @@ void OXLBContainer::InsertEntry(OXLBEntry *lbe, OLayoutHints *lhints, int afterI
   OXLBEntry *e;
   SListFrameElt *nw, *ptr;
 
-  lbe->SetBackgroundColor(GetResourcePool()->GetDocumentBgndColor());
+  lbe->SetBackgroundColor(_backPixel);
 
   for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     e = (OXLBEntry *) ptr->frame;
@@ -654,10 +666,10 @@ OXListBox::OXListBox(const OXWindow *p, int ID,
                      unsigned int options, unsigned long back) :
   OXCompositeFrame(p, 200, 10, options, back) {
 
-    _vport = new OXViewPort(this, 6, 6, CHILD_FRAME|OWN_BKGND, GetResourcePool()->GetDocumentBgndColor());
+    _vport = new OXViewPort(this, 6, 6, CHILD_FRAME|OWN_BKGND, _backPixel);
     _vscrollbar = new OXVScrollBar(this, SB_WIDTH, 6);
 //    _vscrollbar->SetScrollByLine(true);
-    _lbc = new OXLBContainer(_vport, 10, 10, VERTICAL_FRAME, GetResourcePool()->GetDocumentBgndColor());
+    _lbc = new OXLBContainer(_vport, 10, 10, VERTICAL_FRAME, _backPixel);
     _lbc->Associate(this);
     _SetContainer(_lbc);
 
@@ -686,6 +698,11 @@ OXListBox::~OXListBox() {
   // =!= delete _vscrollbar;
   // =!= (deleted by OXViewPort) delete _lbc; // should delete contents...
   // =!= delete _vport;
+}
+
+void OXListBox::SetBackgroundColor(unsigned long color) {
+  OXCompositeFrame::SetBackgroundColor(color);
+  _lbc->SetBackgroundColor(color);
 }
 
 void OXListBox::AddEntry(OString *s, int ID) {
