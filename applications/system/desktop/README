@@ -1,9 +1,9 @@
 Intro
 -----
 
-This is the alpha version 0.2 of desktop, a desktop manager for X11 with the
-windows-95 look and feel. It is intended to be used together with xclass
-explorer (available separatedly).
+This is the alpha version 0.2.1 of desktop, a desktop manager for X11 with
+the windows-95 look and feel. It is intended to be used together with
+xclass explorer (available separatedly).
 
 There are a *lot* of unfinished features, see below for a list of what the
 program does and does not.
