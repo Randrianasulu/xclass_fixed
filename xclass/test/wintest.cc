@@ -880,7 +880,6 @@ OXTestSliders::~OXTestSliders() {
 }
 
 int OXTestSliders::ProcessMessage(OMessage *msg) {
-  int rtc;
   char buf[10];
   OTextEntryMessage *temsg;
   OSliderMessage *slmsg;
@@ -942,5 +941,5 @@ int OXTestSliders::ProcessMessage(OMessage *msg) {
     default:
       break;
   }
-  return rtc;
+  return True;
 }
