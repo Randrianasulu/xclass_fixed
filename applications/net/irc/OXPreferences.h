@@ -268,11 +268,13 @@ protected:
   OLayoutHints *_lbt, *_llb, *_lvf;
   OSettings *_settings;
 };
+
 //---------------------------------------------------------------------
-struct OColorsPref{
-char *name;
-long defColor;
-long id;
+
+struct OColorsPref {
+  char *name;
+  long defColor;
+  long id;
 };
 
 class OXColorsTab : public OXHorizontalFrame {
@@ -286,6 +288,7 @@ protected:
 //  OLayoutHints *_lgf, *_lbt, *_llb, *_lvf;
   OSettings *_settings;
 };
+
 //---------------------------------------------------------------------
 
 class OXChannelTab : public OXHorizontalFrame {
@@ -305,6 +308,5 @@ protected:
   OLayoutHints *_lbt, *_llb, *_lvf;
   OSettings *_settings;
 };
-//---------------------------------------------------------------------
 
 #endif   // __OXPREFERENCES_H

@@ -30,7 +30,6 @@ SRCS = main.cc \
 	OXPreferences.cc \
 	OXDCCFile.cc \
 	OXTextView.cc \
-	OXColorSelect.cc \
 	OXViewDoc.cc \
 	OXSDList.cc
 

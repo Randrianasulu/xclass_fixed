@@ -22,7 +22,6 @@
 #include "OXServerDlg.h"
 #include "OXConfirmDlg.h"
 #include "OXChannelDialog.h"
-#include "OXColorSelect.h"
 
 #include "pixmaps/tb-open.xpm"
 #include "pixmaps/tb-save.xpm"

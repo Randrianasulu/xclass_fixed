@@ -36,6 +36,7 @@
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXGroupFrame.h>
 #include <xclass/OXMsgBox.h>
+#include <xclass/OXColorSelect.h>
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
 #include <xclass/OIniFile.h>
@@ -43,7 +44,6 @@
 
 #include "OXPreferences.h"
 #include "OXServerDlg.h"
-#include "OXColorSelect.h"
 #include "OXChannelEditor.h"
 
 #define SETTINGS_CHANGED 	(MSG_USERMSG+100)
@@ -928,14 +928,16 @@ int i=0;
 const OXSNode *ptr;
 OColorsPref *cp;
 OString *st;
-OXColorTrigger *tr;
+OXColorSelect *tr;
+OColor color;
 
 ptr = _settings->GetColorsList()->GetHead();
 //printf("Adding List\n");
 while( ptr!= NULL ){
 cp=(OColorsPref *)ptr->data;
  st=new OString(cp->name);
- tr = new OXColorTrigger(x1,IRCcolors[cp->defColor],cp->id+4100);
+ color.SetColor(_client, IRCcolors[cp->defColor]);
+ tr = new OXColorSelect(x1, color, cp->id+4100);
 //printf("Adding Item :%s\n",cp->name);
 
  x1->AddFrame(new OXLabel(x1,st),NULL);
@@ -945,7 +947,8 @@ if(ptr->next!=NULL){
 	ptr=ptr->next;
 	cp=(OColorsPref *)ptr->data;
 	st=new OString(cp->name);
-	tr = new OXColorTrigger(x2,IRCcolors[cp->defColor],cp->id+4100);
+        color.SetColor(_client, IRCcolors[cp->defColor]);
+	tr = new OXColorSelect(x2,color,cp->id+4100);
 	x2->AddFrame(new OXLabel(x2,st),NULL);
 	x2->AddFrame(tr,NULL);
 	tr->Associate(this);
@@ -963,7 +966,7 @@ int OXColorsTab::ProcessMessage(OMessage *msg) {
   OContainerMessage *cmsg = (OContainerMessage *) msg;
 
   switch(msg->type) {
-    case MSG_CONTAINER:
+    case MSG_CONTAINER:  // change to MSG_COLORSEL!
       switch(msg->action) {
 	      case MSG_SELCHANGED:
 	      	{
