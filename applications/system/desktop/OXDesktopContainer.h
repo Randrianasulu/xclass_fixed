@@ -30,6 +30,7 @@
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
 #include <xclass/OMimeTypes.h>
+#include <xclass/ORectangle.h>
 
 
 //----- sort types
@@ -48,6 +49,7 @@ extern OXPopupMenu *objectMenu;
 
 class OXDesktopIcon;
 class OXDesktopMain;
+class ORecycledFiles;
 class URL;
 class ODNDmanager;
 
@@ -93,6 +95,10 @@ public:
   virtual int NumItems() const { return _total; }
   virtual int NumSelected() const { return _selected; }
 
+  void SelectInRectangle(ORectangle rect, int add = False);
+  void DeleteSelectedFiles();
+  void DoAction(OXDesktopIcon *f);
+
 private:
   void GetIconPics(const OPicture **pic, const OPicture **lpic,
                    char *fname, int ftype, int is_link);
@@ -115,9 +121,10 @@ protected:
   int _xp, _yp, _x0, _xf, _y0, _yf, _dndx, _dndy;
   int _total, _selected, _dragging, _sortType;
   unsigned long _st_mtime, _rb_mtime;
-  char *_inifile, *_recyclePath;
+  char *_inifile;
 
   const OPicture *_folder, *_app, *_doc, *_slink, *_rbempty, *_rbfull;
+  ORecycledFiles *_recycled;
 };
 
 

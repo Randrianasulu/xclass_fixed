@@ -26,6 +26,9 @@
 #include <dirent.h>
 #include <errno.h>
 #include <string.h>
+#include <limits.h>
+
+#include <vector.h>
 
 #include <X11/Xatom.h>
 
@@ -36,6 +39,7 @@
 #include <xclass/OIniFile.h>
 #include <xclass/OResourcePool.h>
 #include <xclass/OXCanvas.h>
+#include <xclass/OExec.h>
 #include <xclass/OGC.h>
 #include <xclass/OXFont.h>
 #include <xclass/OXMsgBox.h>
@@ -45,6 +49,7 @@
 #include "OXDesktopIcon.h"
 #include "OXDesktopContainer.h"
 #include "ODesktopLayout.h"
+#include "ORecycledFiles.h"
 #include "main.h"
 
 
@@ -67,7 +72,8 @@ extern Atom URI_list;
 // - lots of some other things
 // + exec: use absolute path, do not rely on "." in $PATH
 // - executable icons: add "start in" (directory) property
-// - capture mouse events on the root window
+// + capture mouse events on the root window
+// - process keyboard events
 // - correct small icon moves (currently xdnd interferes)
 // - edit icon labels
 // - wrap/truncate long icon labels
@@ -128,12 +134,15 @@ OXDesktopContainer::OXDesktopContainer(const OXWindow *p,
       FatalError("OXDesktopContainer: Missing required pixmap(s)\n");
 
     const char *uroot = _client->GetResourcePool()->GetUserRoot();
-    if (uroot) {
-      _recyclePath = new char[strlen(uroot)+strlen("/recycle")+1];
-      sprintf(_recyclePath, "%s/recycle", uroot);
-    } else {
-      _recyclePath = NULL;
-    }
+    if (!uroot) uroot = "";
+
+    char recyclerc[PATH_MAX];
+    char recyclebin[PATH_MAX];
+
+    sprintf(recyclerc, "%s/etc/recycle.files", uroot);
+    sprintf(recyclebin, "%s/recycle", uroot);
+
+    _recycled = new ORecycledFiles(recyclebin, recyclerc);
 
     _msgObject = NULL;
 
@@ -180,7 +189,7 @@ OXDesktopContainer::~OXDesktopContainer() {
   _client->FreePicture(_rbempty);
   _client->FreePicture(_rbfull);
   delete _fl;
-  if (_recyclePath) delete _recyclePath;
+  delete _recycled;
 }
 
 //----------------------------------------------------------------------
@@ -193,7 +202,7 @@ int OXDesktopContainer::HandleTimer(OTimer *t) {
   if (stat(".", &sbuf) == 0) {
     if (_st_mtime != sbuf.st_mtime) {
       DisplayDirectory();
-    } else if (_recyclePath && (stat(_recyclePath, &sbuf) == 0)) {
+    } else if (stat(_recycled->GetRecycleBin(), &sbuf) == 0) {
       if (_rb_mtime != sbuf.st_mtime) DisplayDirectory();
     }
   }
@@ -311,95 +320,213 @@ int OXDesktopContainer::HandleMotion(XMotionEvent *event) {
   return True;
 }  
 
+void OXDesktopContainer::SelectInRectangle(ORectangle rect, int add) {
+  SListFrameElt *ptr;
+  OXDesktopIcon *f;
+  int xf0, yf0, xff, yff, total, selected, inv;
+
+  inv = add; //event->state & ControlMask;
+
+  total = selected = 0;
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
+    f = (OXDesktopIcon *) ptr->frame;
+    ++total;
+    xf0 = f->GetX();
+    yf0 = f->GetY();
+    xff = xf0 + f->GetWidth();
+    yff = yf0 + f->GetHeight();
+
+    if ((xf0 < rect.x + rect.w) && (xff > rect.x) &&
+        (yf0 < rect.y + rect.h) && (yff > rect.y)) {
+      f->Activate(True);
+      ++selected;
+    } else {
+      f->Activate(False);
+    }
+  }
+
+  if (_selected > 0)
+    XSetInputFocus(GetDisplay(), _desktopMain->GetId(),
+                   RevertToParent, CurrentTime);
+
+
+  if (_total != total || _selected != selected) {
+    _total = total;
+    _selected = selected;
+    //OContainerMessage message(MSG_CONTAINER, MSG_SELCHANGED, -1, 0,
+    //                          _total, _selected);
+    //SendMessage(_msgObject, &message);
+  }
+}  
+
 int OXDesktopContainer::HandleDoubleClick(XButtonEvent *event) {
   SListFrameElt *ptr;
   OXDesktopIcon *f;
-  int pid, ftype;
-  char  action[PATH_MAX];
-  char  fullaction[PATH_MAX];
-  char  command[PATH_MAX];
-  char  filename[PATH_MAX];   
-  char  path[PATH_MAX];
-  char *argv[PATH_MAX];
-  int   argc = 0;
-  char *argptr;
 
   for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
 
     f = (OXDesktopIcon *) ptr->frame;
+
     if (f->GetId() == event->subwindow) {
-
-      // get file type
-      ftype = f->GetType();
-
-      // is it a directory?
-      if (S_ISDIR(ftype)) {
-        pid = fork();
-        if (pid == 0) {
-          execlp("explorer", "explorer", f->GetName()->GetString(), NULL);
-          // if we are here then execlp failed!
-          fprintf(stderr, "execlp: cannot spawn \"explorer\": %s\n",
-                          strerror(errno));
-          exit(1);
-        }
-
-      // is it an executable file?
-      // *** should take care of the zombies!
-      } else if (S_ISREG(ftype) && (ftype & S_IXUSR)) {
-        pid = fork();
-        if (pid == 0) {
-#if 0
-          execlp(f->GetName()->GetString(), f->GetName()->GetString(),
-                 NULL, NULL);
-          // if we are here then execlp failed!
-          fprintf(stderr, "execlp: cannot spawn \"%s\": %s\n",
-                          f->GetName()->GetString(), strerror(errno));
-#else
-          char progpath[PATH_MAX];
-          sprintf(progpath, "./%s", f->GetName()->GetString());
-          //sprintf(progpah, "%s/%s", getcwd(...), f->GetName()->GetString());
-          execlp(progpath, f->GetName()->GetString(), NULL, NULL);
-          // if we are here then execlp failed!
-          fprintf(stderr, "execlp: cannot spawn \"%s\": %s\n",
-                          progpath, strerror(errno));
-#endif
-          exit(1);
-        }
-
-      // MIME
-      } else if (MimeTypesList->GetAction(f->GetName()->GetString(), action)) {
-        getcwd(path, PATH_MAX);
-        sprintf(filename, "%s/%s", path, f->GetName()->GetString());
-        argptr = strtok(action, " ");
-        while (argptr) {
-          if (strcmp(argptr, "%s") == 0) {
-            argv[argc] = new char[strlen(filename)+1];
-            strcpy(argv[argc], filename);
-            argc++;
-          } else {
-            argv[argc] = new char[strlen(argptr)+1];
-            strcpy(argv[argc], argptr);
-            argc++;
-          }
-          argptr = strtok(NULL, " ");
-        }
-        argv[argc] = NULL;
-        pid = fork();
-        if (pid == 0) {
-          execvp(argv[0], argv);
-          // if we are here then execvp failed!
-          fprintf(stderr, "execvp: cannot spawn \"%s\": %s\n", argv[0],
-                          strerror(errno));
-          exit(1);
-        }
-      }
-
+      DoAction(f);
       break;
     }
   }
 
   return True;  // required if the window processes double-click!
 }
+
+
+//----------------------------------------------------------------------
+
+//--- Delete selected files
+
+void OXDesktopContainer::DeleteSelectedFiles() {
+  const OXDesktopIcon *f;  
+  struct stat  inode;
+  const  char *basename;
+  char         dirname[PATH_MAX];
+  char         newfilename[PATH_MAX];
+  char         filename[PATH_MAX];
+  char         recycle[PATH_MAX];
+  char         recfilename[PATH_MAX];
+  int          index = 0;
+  time_t t;
+  int    i, sel, retval;
+  const  OPicture *pic;
+  char  *title, prompt[256];
+  void  *iterator = NULL;
+  vector<const OXDesktopIcon *> selected;
+
+  if ((sel = NumSelected()) == 0) return;
+
+  // we must collect the selected items before calling OXMsgBox, since
+  // the last causes the selection to be lost when it gets the focus.
+
+  selected.clear();
+  while (1) {
+    f = GetNextSelected(&iterator);
+    if (!f) break;
+    selected.push_back(f);
+  }
+
+  if (sel == 1) {
+    pic = _client->GetPicture("srecycle.xpm");
+    sprintf(prompt, "Are you sure you want to send \"%s\" to the Recycle Bin?",
+            selected[0]->GetName()->GetString());
+    title = "Confirm File Delete";
+  } else {
+    pic = _client->GetPicture("mrecycle.xpm");
+    sprintf(prompt, "Are you sure you want to send these %d items to the Recycle Bin?",
+            sel);
+    title = "Confirm Multiple File Delete";
+  }
+
+  new OXMsgBox(_client->GetRoot(), NULL,
+               new OString(title), new OString(prompt), pic,
+               ID_YES | ID_NO, &retval);
+
+  if (retval != ID_YES) return;
+
+  getcwd(dirname, PATH_MAX);
+  strcpy(recycle, _recycled->GetRecycleBin());
+
+  for (i = 0; i < selected.size(); ++i) {
+    f = selected[i];
+    basename = f->GetName()->GetString();
+    if ((strcmp(basename, ".") != 0) && (strcmp(basename, "..") != 0)) {
+      sprintf(filename, "%s/%s", dirname, basename);
+      sprintf(recfilename, "%s/%s", recycle, basename);
+      sprintf(newfilename, "%s", basename);
+      index = 0;
+      while (stat(recfilename, &inode) == 0) {
+        sprintf(newfilename, "%s.%d", basename, index++);
+        sprintf(recfilename, "%s/%s", recycle, newfilename);
+      }
+      time(&t);
+      _recycled->AddFile(basename, newfilename,
+                         ctime((const time_t *) &t), filename);
+
+      // warning! possible cross-device rename attempt!
+
+      if (rename(filename, recfilename) != 0) {
+        sprintf(prompt, "Cannot delete file \"%s\": %s.",
+                basename, strerror(errno));
+        new OXMsgBox(_client->GetRoot(), this,
+                     new OString("Error"), new OString(prompt),
+                     MB_ICONSTOP, ID_OK);
+        
+      }
+    }
+  }
+
+  selected.clear(); // not really neccessary...
+
+  // this will remove deleted files from the container
+  DisplayDirectory();
+}
+
+//--- Execute action for the specified icon
+
+void OXDesktopContainer::DoAction(OXDesktopIcon *f) {
+  int  ftype;
+  char action[PATH_MAX];
+  char fullaction[PATH_MAX];
+  char command[PATH_MAX];
+  char filename[PATH_MAX];   
+  char path[PATH_MAX];
+  char *argv[PATH_MAX];
+  int  argc = 0;
+  char *argptr;
+
+  if (!f) return;
+
+  // get file type
+  ftype = f->GetType();
+
+  // is it a directory?
+  if (S_ISDIR(ftype)) {
+
+    argv[0] = "explorer";
+    argv[1] = (char *) f->GetName()->GetString();
+    argv[2] = NULL;
+    OExec exec(_client, argv[0], argv, NULL, False, True);
+
+  // is it an executable file?
+  } else if (S_ISREG(ftype) && (ftype & S_IXUSR)) {
+
+    sprintf(path, "./%s", f->GetName()->GetString());
+    //sprintf(path, "%s/%s", getcwd(...), f->GetName()->GetString());
+    argv[0] = (char *) f->GetName()->GetString();
+    argv[1] = NULL;
+    OExec exec(_client, path, argv, NULL, False, True);
+
+  // MIME
+  } else if (MimeTypesList->GetAction(f->GetName()->GetString(), action)) {
+
+    getcwd(path, PATH_MAX);
+    sprintf(filename, "%s/%s", path, f->GetName()->GetString());
+    argptr = strtok(action, " ");
+    while (argptr) {
+      if (strcmp(argptr, "%s") == 0) {
+        argv[argc] = StrDup(filename);
+        argc++;
+      } else {
+        argv[argc] = StrDup(argptr);
+        argc++;
+      }
+      argptr = strtok(NULL, " ");
+    }
+    argv[argc] = NULL;
+    OExec exec(_client, argv[0], argv, NULL, False, True);
+
+    while (argc) delete[] argv[--argc];
+
+  }
+
+}
+
+
 
 
 //----------------------------------------------------------------------
@@ -643,7 +770,7 @@ void OXDesktopContainer::CreateIcons() {
   char *t, *name, filename[PATH_MAX];
   const OPicture *pic, *lpic;
 
-  if (_recyclePath && (stat(_recyclePath, &sbuf) == 0))
+  if (stat(_recycled->GetRecycleBin(), &sbuf) == 0)
     _rb_mtime = sbuf.st_mtime;
 
   if (stat(".", &sbuf) == 0)
@@ -680,12 +807,10 @@ void OXDesktopContainer::CreateIcons() {
 
       pic = NULL;
 
-      if (_recyclePath) {
-        if (S_ISDIR(sbuf.st_mode)) {
-          if (_isRecycleBin(filename))
-            pic = _isEmptyDir(filename) ? _rbempty : _rbfull;
-          lpic  = is_link ? _slink : NULL;
-        }
+      if (S_ISDIR(sbuf.st_mode)) {
+        if (_isRecycleBin(filename))
+          pic = _isEmptyDir(filename) ? _rbempty : _rbfull;
+        lpic  = is_link ? _slink : NULL;
       }
 
       if (!pic)
@@ -768,12 +893,10 @@ OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y,
 
   pic = NULL;
 
-  if (_recyclePath) {
-    if (S_ISDIR(sbuf.st_mode)) {
-      if (_isRecycleBin(filename))
-        pic = _isEmptyDir(filename) ? _rbempty : _rbfull;
-      lpic  = is_link ? _slink : NULL;
-    }
+  if (S_ISDIR(sbuf.st_mode)) {
+    if (_isRecycleBin(filename))
+      pic = _isEmptyDir(filename) ? _rbempty : _rbfull;
+    lpic  = is_link ? _slink : NULL;
   }
 
   if (!pic)
@@ -799,7 +922,7 @@ int OXDesktopContainer::_isRecycleBin(const char *path) {
   getcwd(tmp, PATH_MAX);
   chdir(current);
 
-  return (strcmp(tmp, _recyclePath) == 0);
+  return (strcmp(tmp, _recycled->GetRecycleBin()) == 0);
 }
 
 int OXDesktopContainer::_isEmptyDir(const char *dir) {

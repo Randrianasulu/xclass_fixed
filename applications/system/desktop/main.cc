@@ -38,6 +38,8 @@
 #include <xclass/OXPropertiesDialog.h>
 #include <xclass/utils.h>
 
+#include <X11/keysym.h>
+
 #include "OXDesktopIcon.h"
 #include "OXDesktopContainer.h"
 #include "OXDesktopRoot.h"
@@ -116,8 +118,10 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
       if (retc != ID_YES) exit(1);
     }
 
-    OXDesktopRoot *dr = new OXDesktopRoot(_client, &retc);
+    OXDesktopRoot *dr = new OXDesktopRoot(_client, this, &retc);
     dr->Associate(this);
+
+    _parent = dr;
 
     if (retc == BadAccess) {
       new OXMsgBox(_client->GetRoot(), NULL,
@@ -188,7 +192,7 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
 
     Resize(GetDefaultSize());
 
-    AddInput(FocusChangeMask);
+    AddInput(FocusChangeMask | KeyPressMask | KeyReleaseMask);
 }
 
 OXDesktopMain::~OXDesktopMain() {
@@ -289,8 +293,28 @@ int OXDesktopMain::_CreateDesktop(const char *path) {
   if (chdir(path)) return errno;
 
   const char *home = getenv("HOME");
-  if (home)
+  if (home) {
+
+    // create a link to the user's home directory
     symlink(home, "Home");
+
+    // create a link to the recycle bin
+    char recycle[PATH_MAX];
+    const char *user_root = _client->GetResourcePool()->GetUserRoot();
+    sprintf(recycle, "%s/recycle", user_root);
+    if (access(recycle, F_OK)) MakePath(recycle, S_IRWXU);
+    if (access(recycle, F_OK)) {
+      // could not create the recycle bin directory, notify the user?
+    } else {
+      symlink(recycle, "Recycle Bin");
+    }
+
+    // shall we examine $PATH and add a few links to commonly used
+    // applications? (X/xclass/kde/gnome):
+    // xterm, xcgview, notepad, xcpaint, netscape, lock screen,
+    // acroread, xv, calculator, kcalc...
+
+  }
 
   return 0;
 }
@@ -306,7 +330,6 @@ int OXDesktopMain::HandleConfigureNotify(XConfigureEvent *event) {
   return True;
 }
 
-
 int OXDesktopMain::HandleFocusChange(XFocusChangeEvent *event) {
   if ((event->mode == NotifyNormal) &&
       (event->detail != NotifyPointer)) {
@@ -315,6 +338,64 @@ int OXDesktopMain::HandleFocusChange(XFocusChangeEvent *event) {
       _container->UnselectAll();
     }
   }
+  return True;
+}
+
+int OXDesktopMain::HandleKey(XKeyEvent *event) {
+  if (event->type == KeyPress) {
+
+    KeySym keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
+
+    switch (keysym) {
+      case XK_Left:
+        break;
+
+      case XK_Right:
+        break;
+
+      case XK_Up:
+        break;
+
+      case XK_Down:
+        break;
+
+      case XK_KP_Enter:
+      case XK_Return:
+        {
+        void *iterator = NULL;
+
+        while (1) {
+          OXDesktopIcon *f = (OXDesktopIcon *) _container->GetNextSelected(&iterator);
+          if (!f) break;
+          _container->DoAction(f);
+        }
+        }
+        break;
+
+      case XK_space:
+        break;
+
+      case XK_Delete:
+        _container->DeleteSelectedFiles();
+        break;
+
+      default:
+        {
+        char input[2] = { 0, 0 };
+        int  charcount;
+        KeySym keysym;
+        XComposeStatus compose = { NULL, 0 };
+        charcount = XLookupString(event, input, sizeof(input)-1,
+                                  &keysym, &compose);
+        if (charcount > 0) {
+        }
+        }
+        break;
+
+    }
+
+  }
+
   return True;
 }
 
@@ -365,6 +446,10 @@ int OXDesktopMain::ProcessMessage(OMessage *msg) {
 
             case M_VIEW_REFRESH:
               _container->DisplayDirectory();
+              break;
+
+            case M_FILE_DELETE:
+              _container->DeleteSelectedFiles();
               break;
 
             case M_FILE_PROPS:

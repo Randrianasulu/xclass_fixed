@@ -12,6 +12,7 @@ LDFLAGS=
 
 SRCS = main.cc \
 	URL.cc \
+	ORecycledFiles.cc \
 	ODesktopLayout.cc \
 	OXDesktopIcon.cc \
 	OXDesktopContainer.cc \

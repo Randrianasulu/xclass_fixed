@@ -70,10 +70,13 @@ public:
 
   virtual int HandleConfigureNotify(XConfigureEvent *event);
   virtual int HandleFocusChange(XFocusChangeEvent *event);
+  virtual int HandleKey(XKeyEvent *event);
   virtual int HandleTimer(OTimer *t);
   virtual int ProcessMessage(OMessage *msg);
 
   virtual OXFrame *GetFrameFromPoint(int x, int y);  
+  
+  OXDesktopContainer *GetDesktopContainer() const { return _container; }
 
 protected:
   int  _CreateDesktop(const char *path);

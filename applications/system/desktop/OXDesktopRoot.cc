@@ -25,9 +25,12 @@
 #include <X11/Xlib.h>
 
 #include <xclass/OGC.h>
+#include <xclass/ORectangle.h>
 #include <xclass/OResourcePool.h>
 
 #include "OXDesktopRoot.h"
+#include "OXDesktopContainer.h"
+#include "main.h"
 
 
 int OXDesktopRoot::_errorCode;
@@ -35,9 +38,10 @@ int OXDesktopRoot::_errorCode;
 
 //----------------------------------------------------------------------
 
-OXDesktopRoot::OXDesktopRoot(OXClient *c, int *retc) :
+OXDesktopRoot::OXDesktopRoot(OXClient *c, OXDesktopMain *main, int *retc) :
   OXRootWindow(c, c->GetRoot()->GetId()) {
 
+    _main = main;
     _errorCode = None;
 
     // grab all buttons, setup an error handler, since the grab might fail
@@ -45,10 +49,15 @@ OXDesktopRoot::OXDesktopRoot(OXClient *c, int *retc) :
     XSync(GetDisplay(), False);
     XErrorHandler oldHandler = XSetErrorHandler(OXDesktopRoot::ErrorHandler);
 
+#if 1
     XGrabButton(GetDisplay(), AnyButton, AnyModifier, _id,
-                True, ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
+                False, EnterWindowMask | LeaveWindowMask |
+                ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
                 GrabModeSync, GrabModeAsync, None,
-                _client->GetResourcePool()->GetGrabCursor());
+                _client->GetResourcePool()->GetTextCursor());
+#else
+    XSelectInput(GetDisplay(), _id, ButtonPressMask | ButtonReleaseMask);
+#endif
 
     XSync(GetDisplay(), False);
     XSetErrorHandler(oldHandler);
@@ -113,25 +122,45 @@ int OXDesktopRoot::HandleEvent(XEvent *event) {
   return True;
 }
 
+int OXDesktopRoot::HandleMaskEvent(XEvent *event) {
+
+  switch (event->xany.type) {
+    case ButtonPress:
+    case ButtonRelease:
+      XSync(GetDisplay(), False);
+      XAllowEvents(GetDisplay(), ReplayPointer, event->xbutton.time/*CurrentTime*/);
+      XSync(GetDisplay(), False);
+      break;
+
+    default:
+      return OXRootWindow::HandleMaskEvent(event);
+      break;
+  }
+
+  return False;
+}
+
 int OXDesktopRoot::HandleButton(XButtonEvent *event) {
 
   if ((event->subwindow != None) && !_dragSelecting) {
 
     // pass the click event to the WM
     XSync(GetDisplay(), False);
-    XAllowEvents(GetDisplay(), ReplayPointer, CurrentTime);
+    XAllowEvents(GetDisplay(), ReplayPointer, event->time/*CurrentTime*/);
     XSync(GetDisplay(), False);
 
   } else {
 
     // process the click, but do not pass it to the WM
     XSync(GetDisplay(), False);
-    XAllowEvents(GetDisplay(), AsyncPointer, CurrentTime);
+    XAllowEvents(GetDisplay(), AsyncPointer, event->time/*CurrentTime*/);
     XSync(GetDisplay(), False);
 
-    ODesktopRootMessage msg(MSG_DESKTOPROOT, MSG_CLICK, event->button,
-                            event->x_root, event->y_root);
-    SendMessage(_msgObject, &msg);
+    if (event->type == ButtonRelease) {
+      ODesktopRootMessage msg(MSG_DESKTOPROOT, MSG_CLICK, event->button,
+                              event->x_root, event->y_root);
+      SendMessage(_msgObject, &msg);
+    }
 
     if (event->button == Button1) {
       if (event->type == ButtonPress) {
@@ -174,6 +203,10 @@ void OXDesktopRoot::DrawDragOutline() {
   _y1 = min(_y1, _client->GetDisplayHeight());
   _x1 = min(_x1, _client->GetDisplayWidth());
 
-  DrawRectangle(_lineGC->GetGC(), min(_x0, _x1), min(_y0, _y1),
-                abs(_x1 - _x0), abs(_y1 - _y0));
+  ORectangle rect(min(_x0, _x1), min(_y0, _y1),
+                  abs(_x1 - _x0), abs(_y1 - _y0));
+
+  DrawRectangle(_lineGC->GetGC(), rect.x, rect.y, rect.w, rect.h);
+
+  _main->GetDesktopContainer()->SelectInRectangle(rect);
 }
