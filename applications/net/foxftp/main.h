@@ -31,7 +31,7 @@ class OXFtpConfig;
 #include <xclass/OXMdi.h>
 
 
-#define FOXFTP_VERSION  "0.5.3"
+#define FOXFTP_VERSION  "0.5.4"
 
 
 #define M_FILE_NEW		1
