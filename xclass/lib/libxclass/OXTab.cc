@@ -371,3 +371,8 @@ void OXTab::_ShowFocusHilite() {
     te->ShowFocusHilite((i == _current) && HasFocus());
   }
 }
+
+void OXTab::DrawBorder() {
+  DrawRectangle(_bckgndGC, 0, 0, _w-1, _h-1);
+  DrawRectangle(_bckgndGC, 1, 1, _w-3, _h-3);
+}

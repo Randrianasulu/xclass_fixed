@@ -76,6 +76,7 @@ public:
   }
 
   virtual void DrawBorder() {};
+  virtual void Reconfig() { OXCompositeFrame::Reconfig(); _container->Reconfig(); }
   virtual void Layout() {}
   virtual ODimension GetDefaultSize() const { return ODimension(_w, _h); }
   
@@ -93,24 +94,21 @@ protected:
 //-------------------------------------------------------------------
 // This is the scrollable canvas frame arrangement
 
-class OXCanvas : public OXFrame {
+class OXCanvas : public OXCompositeFrame {
 public:
   OXCanvas(const OXWindow *p, int w, int h,
            unsigned int options = SUNKEN_FRAME | DOUBLE_BORDER,
            unsigned long back = _defaultFrameBackground);
   virtual ~OXCanvas();
 
-  void AddFrame(OXFrame *f, OLayoutHints *l);
+  virtual void AddFrame(OXFrame *f, OLayoutHints *l);
   OXFrame *GetContainer() const { return _vport->GetContainer(); }
   OXFrame *GetViewPort()  const { return ((OXFrame *) _vport); }
   virtual void SetContainer(OXFrame *f) { _vport->SetContainer(f); }
-  virtual void MapSubwindows();
   virtual void Layout();
   virtual ODimension GetDefaultSize() const { return ODimension(_w, _h); }
 
   virtual int ProcessMessage(OMessage *msg);
-
-  virtual OXFrame *GetFrameFromPoint(int x, int y);
 
   void SetScrolling(int scrolling);
   int  GetScrolling() const { return _scrolling; }

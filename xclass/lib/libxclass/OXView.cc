@@ -44,7 +44,9 @@ OXViewCanvas::OXViewCanvas(const OXView *p, int w, int h,
 
 OXView::OXView(const OXWindow *p, int w, int h, int id,
 	       unsigned int options, unsigned int sboptions) :
-  OXFrame(p, w, h, options), OXWidget(id, "OXView") {
+  OXCompositeFrame(p, w, h, options), OXWidget(id, "OXView") {
+
+    SetLayoutManager(NULL);
 
     _canvas = new OXViewCanvas(this, 10, 10, CHILD_FRAME | OWN_BKGND);
     _sboptions = sboptions;
@@ -54,6 +56,10 @@ OXView::OXView(const OXWindow *p, int w, int h, int id,
 
     _vsb = new OXVScrollBar(this, 10, 10, CHILD_FRAME);
     _vsb->Associate(this);
+
+    AddFrame(_canvas, NULL);
+    AddFrame(_hsb, NULL);
+    AddFrame(_vsb, NULL);
 
     XGCValues gcv;
     int mask;
@@ -84,9 +90,6 @@ OXView::OXView(const OXWindow *p, int w, int h, int id,
 }
 
 OXView::~OXView() {
-  delete _hsb;
-  delete _vsb;
-  delete _canvas;
 }
 
 void OXView::Clear() {
@@ -305,13 +308,6 @@ void OXView::Layout() {
 		 _canvas->GetWidth() / _scrollValue.x/*, False*/);
   _vsb->SetRange(_virtualSize.h / _scrollValue.y,
 		 _canvas->GetHeight() / _scrollValue.y/*, False*/);
-}
-
-void OXView::MapSubwindows() {
-  OXWindow::MapSubwindows();
-  _hsb->MapSubwindows();
-  _vsb->MapSubwindows();
-  _canvas->MapSubwindows();
 }
 
 void OXView::DrawBorder() {

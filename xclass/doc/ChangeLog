@@ -2017,3 +2017,12 @@ OPicture.cc
 - Added OXColorDialog and OXColorSelect classes. The "custom" colors are
   not handled yet by OXColorDialog.
 
+
+24/11/01
+
+- OXView and OXCanvas now derivate from OXCompositeFrame, as they should.
+
+
+25/11/01
+
+- OListViewItem: allow NULL icons.

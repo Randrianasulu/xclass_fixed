@@ -805,7 +805,7 @@ Atom OXFileList::HandleDNDposition(int x, int y, Atom action,
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(this, x, y, &nx, &ny);
   nx -= _canvas->GetX();
   ny -= _canvas->GetY();
-#else  // this won't work until OXView gets composite!
+#else
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(_canvas, x, y, &nx, &ny);
 #endif
 

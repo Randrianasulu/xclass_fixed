@@ -67,6 +67,8 @@ public:
 
   virtual void SetState(int state);
   virtual void DrawBorder();
+  virtual void Reconfig() { _backPixel = _defaultFrameBackground;
+                            OXFrame::Reconfig(); }
 
 protected:
   int _state;
@@ -94,6 +96,7 @@ public:
   virtual int  HandleMotion(XMotionEvent *event) = 0;
   virtual int  HandleTimer(OTimer *t) = 0;
   virtual void Layout() = 0;
+  virtual void Reconfig();
 
   virtual void SetRange(int range, int page_size, int sendMsg = True) = 0;
   virtual void SetDelay(int pre = SB_DF_PREDELAY, int repeat = SB_DF_RPTDELAY);

@@ -21,6 +21,9 @@
 #include <X11/Xlib.h>
 #include <xclass/OXSpinner.h>
 
+#include "icons/arrow-down.xpm"
+#include "icons/arrow-up.xpm"
+
 
 //----------------------------------------------------------------------
 
@@ -28,11 +31,13 @@ OXDoubleScroller :: OXDoubleScroller(const OXWindow *p, int w, int h) :
   OXCompositeFrame(p, w, h, CHILD_FRAME | VERTICAL_FRAME),
   OXWidget(-1, "OXDoubleScroller") {
 
-    const OPicture *_picd = _client->GetPicture("arrow-down.xpm");
-    const OPicture *_picu = _client->GetPicture("arrow-up.xpm");
+    const OPicture *_picd = _client->GetPicture("arrow-down.xpm",
+                                                XCP_arrow_down);
+    const OPicture *_picu = _client->GetPicture("arrow-up.xpm",
+                                                XCP_arrow_up);
 
     if (!(_picd || _picu))
-      FatalError("OXDoubleScoller: arrow images failed to load\n");
+      FatalError("OXDoubleScroller: arrow images failed to load\n");
 
     _up = new OXScrollBarElt(this, _picu, SB_WIDTH, _h/2, RAISED_FRAME);
     _down = new OXScrollBarElt(this, _picd, SB_WIDTH, _h/2, RAISED_FRAME);

@@ -61,14 +61,15 @@ public:
 
   virtual OXFrame *GetFrameFromPoint(int x, int y);
 
-  virtual int  TranslateCoordinates(OXFrame *child, int x, int y,
-                                    int *fx, int *fy);
+  virtual int TranslateCoordinates(OXFrame *child, int x, int y,
+                                   int *fx, int *fy);
 
   OLayoutManager *GetLayoutManager() const { return _layoutManager; }
-  void            SetLayoutManager(OLayoutManager *l);
+  void SetLayoutManager(OLayoutManager *l);
 
-  void AddFrame(OXFrame *f, OLayoutHints *l = NULL);
-  void RemoveFrame(OXFrame *f);
+  virtual void AddFrame(OXFrame *f, OLayoutHints *l = NULL);
+  virtual void RemoveFrame(OXFrame *f);
+
   void ShowFrame(OXFrame *f);
   void HideFrame(OXFrame *f);
 

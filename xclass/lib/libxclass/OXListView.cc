@@ -138,16 +138,19 @@ void OListViewItem::SetViewMode(int viewMode) {
 
   Resize(GetDefaultSize());
 
-  if (_currentPic != NULL) {
-    if (_selectedPic != NULL) delete _selectedPic;
+  if (_currentPic) {
+    if (_selectedPic) delete _selectedPic;
     _selectedPic = new OSelectedPicture(_client, _currentPic);
   }
 }
 
 ODimension OListViewItem::GetDefaultSize() const {
   ODimension size;
-  ODimension isize(_currentPic->GetWidth(), _currentPic->GetHeight());
+  ODimension isize(0, 0);
   ODimension lsize(_tw, _th+1);
+
+  if (_currentPic)
+    isize = ODimension(_currentPic->GetWidth(), _currentPic->GetHeight());
 
   switch (_viewMode) {
     default:
@@ -171,7 +174,7 @@ int OListViewItem::GetDefaultColumnWidth(int column) const {
   if (column >= _names.size()) return 0;
 
   if (column == 0)
-    return _smallPic->GetWidth() + 2 + _tw;
+    return (_smallPic ? _smallPic->GetWidth() + 2 : 0) + _tw;
   else
     return _font->XTextWidth(_names[column]->GetString(),
                              _names[column]->GetLength());
@@ -199,8 +202,9 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
 
   // displaying icon and name
 
-  pic->Draw(_client->GetDisplay(), w->GetId(), drawGC,
-            pos.x + _iconPos.x, pos.y + _iconPos.y);
+  if (pic)
+    pic->Draw(_client->GetDisplay(), w->GetId(), drawGC,
+              pos.x + _iconPos.x, pos.y + _iconPos.y);
 
 
   if ((_viewMode == LV_DETAILS) && (columnData.size() > 0)) {
@@ -286,9 +290,12 @@ void OListViewItem::DrawTruncated(OXWindow *w, GC gc, OPosition pos,
 }
 
 void OListViewItem::Layout() {
+  int pic_w = _currentPic ? _currentPic->GetWidth() : 0;
+  int pic_h = _currentPic ? _currentPic->GetHeight() : 0;
+
   switch (_viewMode) {
     case LV_LARGE_ICONS:
-      _iconPos.x = (_size.w - _currentPic->GetWidth()) / 2;
+      _iconPos.x = (_size.w - pic_w) / 2;
       _iconPos.y = 0;
       _textPos.x = (_size.w - _tw) / 2;
       _textPos.y = _size.h - (_th+1) - 2;
@@ -298,8 +305,8 @@ void OListViewItem::Layout() {
     case LV_SMALL_ICONS:
     case LV_DETAILS:
       _iconPos.x = 0;
-      _iconPos.y = (_size.h - _currentPic->GetHeight()) / 2;
-      _textPos.x = _currentPic->GetWidth() + 2;
+      _iconPos.y = (_size.h - pic_h) / 2;
+      _textPos.x = _currentPic ? pic_w + 2 : 0;
       _textPos.y = (_size.h - (_th+1)) / 2;
       break;
 

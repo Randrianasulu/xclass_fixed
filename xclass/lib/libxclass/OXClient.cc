@@ -182,10 +182,24 @@ unsigned long OXClient::GetColor(OColor c) const {
   }
 
   return color.pixel;
-
 }
 
-unsigned long OXClient::GetHilite(const unsigned long base_color) const {
+// this is used to increase X's ref count of a pixel
+
+unsigned long OXClient::GetColor(unsigned long pixel) const {
+  XColor color;
+
+  color.pixel = pixel;
+
+  XQueryColor(_dpy, _defaultColormap, &color);
+  if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+    Debug(DBG_WARN, "OXClient: failed to re-allocate pixel!!!\n");
+  }
+
+  return color.pixel;
+}
+
+unsigned long OXClient::GetHilite(unsigned long base_color) const {
   XColor color, white_p;
   
   color.pixel = base_color;
@@ -220,7 +234,7 @@ unsigned long OXClient::GetHilite(const unsigned long base_color) const {
   return color.pixel;
 }
 
-unsigned long OXClient::GetShadow(const unsigned long base_color) const {
+unsigned long OXClient::GetShadow(unsigned long base_color) const {
   XColor color;
   
   color.pixel = base_color;
@@ -313,6 +327,10 @@ OXFont *OXClient::GetFont(const char *string) {
 OXFont *OXClient::GetFont(const char *family, int ptsize, int weight,
                           int slant) {
   return _fontPool->GetFont(family, ptsize, weight, slant);
+}
+
+OXFont *OXClient::GetFont(OXFont *font) {
+  return _fontPool->GetFont(font);
 }
 
 void OXClient::FreeFont(OXFont *font) {

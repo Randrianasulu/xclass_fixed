@@ -92,9 +92,10 @@ public:
   OXWindow *GetWindowById(Window sw) const;
 
   unsigned long GetColor(OColor color) const;
+  unsigned long GetColor(unsigned long color) const;
   unsigned long GetColorByName(const char *name) const;
-  unsigned long GetHilite(const unsigned long base_color) const;
-  unsigned long GetShadow(const unsigned long base_color) const;
+  unsigned long GetHilite(unsigned long base_color) const;
+  unsigned long GetShadow(unsigned long base_color) const;
   void FreeColor(unsigned long pixel) const;
 
   Colormap GetDefaultColormap() const { return _defaultColormap; }
@@ -135,6 +136,7 @@ public:
 
   OXFont *GetFont(const char *string);
   OXFont *GetFont(const char *family, int ptsize, int weight, int slant);
+  OXFont *GetFont(OXFont *font);
   void   FreeFont(OXFont *font);
   OFontPool *GetFontPool() const { return _fontPool; }
 

@@ -26,7 +26,7 @@
 
 #include <X11/Xatom.h>
 
-#include <xclass/OXFrame.h>
+#include <xclass/OXCompositeFrame.h>
 #include <xclass/OXScrollBar.h>
 #include <xclass/ODimension.h>
 #include <xclass/ORectangle.h>
@@ -67,7 +67,7 @@ class OXViewCanvas;
 
 //----------------------------------------------------------------------
 
-class OXView : public OXFrame, public OXWidget {
+class OXView : public OXCompositeFrame, public OXWidget {
 public:
   OXView(const OXWindow *p, int w, int h, int id,
          unsigned int options = SUNKEN_FRAME | DOUBLE_BORDER | OWN_BKGND,
@@ -80,7 +80,6 @@ public:
   virtual int  ProcessMessage(OMessage *msg);
   virtual int  HandleExpose(XExposeEvent *event);
   virtual int  HandleGraphicsExpose(XGraphicsExposeEvent *event);
-  virtual void MapSubwindows();
   virtual void DrawBorder();
 
   void NeedRedraw(ORectangle area);
@@ -181,6 +180,8 @@ public:
     { ((OXView *) _parent)->HandleMotion(event); return True; }
   virtual int HandleKey(XKeyEvent *event)
     { ((OXView *) _parent)->HandleKey(event); return True; }
+
+  virtual void Reconfig() {}
 };
 
 

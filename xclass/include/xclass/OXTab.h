@@ -90,7 +90,7 @@ public:
   virtual void RemoveTab(int tabnum);
   virtual void RemoveTab(char *tabname);
   virtual void SelectTab(int tabnum, int sendmsg = False);
-  virtual void DrawBorder() {}
+  virtual void DrawBorder();
   virtual int  HandleButton(XButtonEvent *event);
   virtual int  HandleKey(XKeyEvent *event);
 

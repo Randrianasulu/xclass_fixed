@@ -600,6 +600,8 @@ int OResourcePool::Reload() {
   int retc = LoadFromServer(&config);
   if (!retc) return 0;
 
+  // TODO: free old pixels, update _checkered pixmap
+
   if (!_colorServer) {
     _frameFgnd = _client->GetColorByName(config.frame_fg_color);
     _frameBgnd = _client->GetColorByName(config.frame_bg_color);
@@ -648,6 +650,7 @@ int OResourcePool::Reload() {
 
   _focusGC->SetBackground(_selBgnd);
 
+  //_checkered = ...
 
   return _changeMask;
 }

@@ -181,9 +181,13 @@ void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
     first = (OXLBEntry *)_flist->frame;
 
   if (lbe == first){
+#if 0
     ptr = _flist; 
     while (ptr->next != NULL) ptr = ptr->next;
     e = (OXLBEntry *) ptr->frame;
+#else
+    return;
+#endif
   } else {
     for (ptr=_flist; ptr->next != NULL; ptr=ptr->next) {
       if ((OXLBEntry *) ptr->next->frame== lbe) break;
@@ -222,7 +226,11 @@ void OXLBContainer::MoveSelectDown(OXLBEntry *lbe){
     }
   }
 
+#if 0
   if (!ptr->next) e = first;
+#else
+  if (!ptr->next) return;
+#endif
 
   //printf("Selecting %d\n",e->ID());
   Select(e->ID());

@@ -1,14 +1,34 @@
+/**************************************************************************
+
+    This is an example xclass application.
+    Copyright (C) 2000, 2001, Hector Peraza.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+**************************************************************************/
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <errno.h>
 #include <sys/stat.h>
 
 #include <xclass/OXMsgBox.h>
-#include <xclass/OMimeTypes.h>
 #include <xclass/OXFileDialog.h>
 #include <xclass/OXAboutDialog.h>
-#include <xclass/OResourcePool.h>
 #include <xclass/version.h>
 
 #include "main.h"
@@ -45,8 +65,6 @@ int main(int argc, char **argv) {
 
 OXMain::OXMain(const OXWindow *p, int w, int h) :
   OXMainFrame(p, w, h) {
-  char tmp[BUFSIZ];
-  const OPicture *cbgnd;
 
   _menuBarLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT | LHINTS_EXPAND_X, 
                                     0, 0, 1, 1);
@@ -148,14 +166,14 @@ OXPopupMenu *OXMain::_MakePopup(struct _popup *p) {
 int OXMain::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch (msg->action) {
+  switch (msg->type) {
 
-    case MSG_CLICK:
-      switch(msg->type) {
+    case MSG_MENU:
+    case MSG_BUTTON:
+      switch (msg->action) {
 
-        case MSG_BUTTON:
-        case MSG_MENU:
-          switch(wmsg->id) {
+        case MSG_CLICK:
+          switch (wmsg->id) {
 
             //--------------------------------------- File
 
@@ -200,7 +218,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
               DoToggleStatusBar();
               break;
 
-            //--------------------------------------- HELP
+            //--------------------------------------- Help
 
             case M_HELP_CONTENTS:
               break;
@@ -215,19 +233,19 @@ int OXMain::ProcessMessage(OMessage *msg) {
             default:
               break;
 
-          } // switch(wmsg->id)
+          } // switch (wmsg->id)
           break;
 
         default:
           break;
 
-      } // switch(msg->type)
+      } // switch (msg->action)
       break;
 
     default:
       break;
 
-  } // switch(msg->action)
+  } // switch (msg->type)
 
   return True;
 }
@@ -238,7 +256,7 @@ void OXMain::SetWindowTitle(char *title) {
   static char *pname = "Test application";
 
   if (title) {
-    char *wname = new char[strlen(title) + 20];
+    char *wname = new char[strlen(title) + strlen(pname) + 4];
     sprintf(wname, "%s - %s", pname, title);
     SetWindowName(wname);
     delete wname;
@@ -254,25 +272,22 @@ void OXMain::UpdateStatus() {
   _statusBar->SetText(0, new OString(tmp));
 }
 
-//void OXMain::ErrorMsg(int icon_type, char *msg) {
-//  OString stitle((icon_type == MB_ICONSTOP) ? "Error" : "Warning");
-//  OString smsg(msg);
-//  new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
-//               icon_type, ID_OK);
-//}
-
 //----------------------------------------------------------------------
 
 void OXMain::ReadFile(char *fname) {
-  struct stat sbuf;
-  char buf[BUFSIZ];
   FILE *fp;
 
   if (!fname) return;
 
   if ((fp = fopen(fname, "r")) == NULL) {
-    fprintf(stderr, "Could not open input file: \"%s\"\n", fname);
-    exit(1);
+
+    char tmp[PATH_MAX];
+    sprintf(tmp, "Could not open input file \"%s\": %s.",
+                 fname, strerror(errno));
+    new OXMsgBox(_client->GetRoot(), this, new OString("File Open"),
+                 new OString(tmp), MB_ICONSTOP, ID_OK);
+    return;
+
   } else {
 
     // Add your code to process the file here
@@ -282,15 +297,19 @@ void OXMain::ReadFile(char *fname) {
 }
 
 void OXMain::WriteFile(char *fname) {
-  struct stat sbuf;
-  char buf[BUFSIZ];
   FILE *fp;
 
   if (!fname) return;
 
   if ((fp = fopen(fname, "w")) == NULL) {
-    fprintf(stderr, "Could open output file for output: \"%s\"\n", fname);
-    exit(1);
+
+    char tmp[PATH_MAX];
+    sprintf(tmp, "Could not create output file \"%s\": %s.",
+                 fname, strerror(errno));
+    new OXMsgBox(_client->GetRoot(), this, new OString("File Open"),
+                 new OString(tmp), MB_ICONSTOP, ID_OK);
+    return;
+
   } else {
 
     // Add your code to save the file here
@@ -301,11 +320,11 @@ void OXMain::WriteFile(char *fname) {
 
 void OXMain::DoOpen() {
   OFileInfo fi;
-  struct stat sbuf;
   FILE *fp;
 
-  fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
+  fi.MimeTypesList = NULL;
   fi.file_types = filetypes;
+
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
   if (fi.filename) {
     ReadFile(fi.filename);
@@ -317,8 +336,9 @@ void OXMain::DoSave(char *fname) {
   OFileInfo fi;
   FILE *fp;
 
-  fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
+  fi.MimeTypesList = NULL;
   fi.file_types = filetypes;
+
   new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
   if (fi.filename) {
 

@@ -535,7 +535,7 @@ void OXFrame::Reconfig() {
     }
   } else {
     if (_options & OWN_BKGND) {
-      SetBackgroundColor(_backPixel);
+      //SetBackgroundColor(_backPixel);
     } else {
 #if 0
       if (_defaultBackgroundPicture) {
@@ -553,5 +553,10 @@ void OXFrame::Reconfig() {
 
   if (_tip) _tip->Reconfig();
 
+#if 0
   NeedRedraw(True);
+#else
+  ClearWindow();
+  NeedRedraw(True/*False*/);
+#endif
 }

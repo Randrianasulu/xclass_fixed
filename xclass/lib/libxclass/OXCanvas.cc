@@ -28,33 +28,27 @@
 //-----------------------------------------------------------------
 
 OXCanvas::OXCanvas(const OXWindow *p, int w, int h,
-           unsigned int options, unsigned long back) :
-    OXFrame(p, w, h, options, back) {
-    
-  _vport = new OXViewPort(this, w-4, h-4, CHILD_FRAME | OWN_BKGND,
-                                _whitePixel);
-  _hscrollbar = new OXHScrollBar(this, w-4, SB_WIDTH);
-  _vscrollbar = new OXVScrollBar(this, SB_WIDTH, h-4);
+                   unsigned int options, unsigned long back) :
+  OXCompositeFrame(p, w, h, options, back) {
 
-  _scrolling = CANVAS_SCROLL_BOTH;
+    SetLayoutManager(NULL);
 
-  _hscrollbar->Associate(this);
-  _vscrollbar->Associate(this);
+    _vport = new OXViewPort(this, w-4, h-4, CHILD_FRAME | OWN_BKGND,
+                            _defaultDocumentBackground);
+    _hscrollbar = new OXHScrollBar(this, w-4, SB_WIDTH);
+    _vscrollbar = new OXVScrollBar(this, SB_WIDTH, h-4);
+
+    _scrolling = CANVAS_SCROLL_BOTH;
+
+    _hscrollbar->Associate(this);
+    _vscrollbar->Associate(this);
+
+    OXCompositeFrame::AddFrame(_hscrollbar, NULL);
+    OXCompositeFrame::AddFrame(_vscrollbar, NULL);
+    OXCompositeFrame::AddFrame(_vport, NULL);
 }
            
 OXCanvas::~OXCanvas() {
-  // =!= we have to delete these explicitely here, since OXCanvas is
-  // not a derivated of OXCompositeFrame, and thus we do not AddFrame()'s
-  delete _hscrollbar;
-  delete _vscrollbar;
-  delete _vport;
-}
-
-void OXCanvas::MapSubwindows() {
-  OXWindow::MapSubwindows();
-  _hscrollbar->MapSubwindows();
-  _vscrollbar->MapSubwindows();
-  _vport->MapSubwindows();
 }
 
 void OXCanvas::AddFrame(OXFrame *f, OLayoutHints *l) {
@@ -172,29 +166,12 @@ void OXCanvas::SetScrolling(int scrolling) {
   }
 }
 
-OXFrame *OXCanvas::GetFrameFromPoint(int x, int y) {
-
-  if (!Contains(x, y)) return NULL;
-
-  if (_hscrollbar->Contains(x - _hscrollbar->GetX(),
-                            y - _hscrollbar->GetY())) return _hscrollbar;
-
-  if (_vscrollbar->Contains(x - _vscrollbar->GetX(),
-                            y - _vscrollbar->GetY())) return _hscrollbar;
-
-  OXFrame *f = _vport->GetFrameFromPoint(x - _vport->GetX(),
-                                         y - _vport->GetY());
-  if (f) return f;
-
-  return this;
-}
-
 
 //-----------------------------------------------------------------
 
 OXViewPort::OXViewPort(const OXWindow *p, int w, int h,
-           unsigned int options, unsigned long back) :   
-    OXCompositeFrame(p, w, h, options, back) {
+                       unsigned int options, unsigned long back) :   
+  OXCompositeFrame(p, w, h, options, back) {
 
     _container = NULL;
     _x0 = _y0 = 0;
