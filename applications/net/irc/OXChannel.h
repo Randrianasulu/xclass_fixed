@@ -115,10 +115,6 @@ protected:
   void _AddToHistory(const char *str);
   void _ClearHistory();
 
-  void ProcessDCCRequest(const char *nick, const char *string);
-  void AcceptDCCChat(const char *nick, const char *server, int port);
-  void StartDCCChat(const char *nick);
-
   OXIrc *_server;
 
   OTextDoc *_log;

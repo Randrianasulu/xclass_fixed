@@ -53,6 +53,7 @@ be typed on the channel window:
 /kick <nick>
 /command --> sends command as raw, that way you can type such commands
              as /who, /silence, etc...
+/ctcp <nick or channel> <command> <args>
 
 
 Private chat (/msg) windows also recognize a few of these commands:

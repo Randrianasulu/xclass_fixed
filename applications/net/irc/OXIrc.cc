@@ -12,6 +12,7 @@
 #include <X11/keysym.h>
 
 #include <xclass/utils.h>
+#include <xclass/version.h>
 #include <xclass/OXFontDialog.h>
 
 #include "IRCcodes.h"
@@ -20,6 +21,7 @@
 #include "OXChatChannel.h"
 #include "OXMsgChannel.h"
 #include "OXDCCChannel.h"
+#include "OXDCCFile.h"
 #include "OXPreferences.h"
 #include "OXIrc.h"
 #include "OXServerDlg.h"
@@ -65,18 +67,19 @@
 #define M_SERV_NICK       3002
 #define M_SERV_WALLOPS    3003
 #define M_SERV_LINKS      3004
-#define M_SERV_VERSION    3005
-#define M_SERV_MOTD       3006
-#define M_SERV_TIME       3007
-#define M_SERV_TRACE      3008
-#define M_SERV_ADMIN      3009
-#define M_SERV_LUSERS     3010
-#define M_SERV_INFO       3011
-#define M_SERV_STATS      3012
-#define M_SERV_OPER       3013
-#define M_SERV_REHASH     3014
-#define M_SERV_RESTART    3015
-#define M_SERV_SQUIT      3016
+#define M_SERV_MAP        3005
+#define M_SERV_VERSION    3006
+#define M_SERV_MOTD       3007
+#define M_SERV_TIME       3008
+#define M_SERV_TRACE      3009
+#define M_SERV_ADMIN      3010
+#define M_SERV_LUSERS     3011
+#define M_SERV_INFO       3012
+#define M_SERV_STATS      3013
+#define M_SERV_OPER       3014
+#define M_SERV_REHASH     3015
+#define M_SERV_RESTART    3016
+#define M_SERV_SQUIT      3017
 
 #define M_USERS_WHO       4001
 #define M_USERS_WHOIS     4002
@@ -159,11 +162,12 @@ SPopupData pservdata = {
   { "&Nick...",     M_SERV_NICK,    0,             NULL },
   { "&Wallops...",  M_SERV_WALLOPS, 0,             NULL },
   { "&Links...",    M_SERV_LINKS,   0,             NULL },
+  { "M&ap...",      M_SERV_MAP,     0,             NULL },
   { "&Version...",  M_SERV_VERSION, 0,             NULL },
   { "&Motd...",     M_SERV_MOTD,    0,             NULL },
   { "&Time...",     M_SERV_TIME,    0,             NULL },
   { "T&race...",    M_SERV_TRACE,   0,             NULL },
-  { "&Admin...",    M_SERV_ADMIN,   0,             NULL },
+  { "A&dmin...",    M_SERV_ADMIN,   0,             NULL },
   { "L&users...",   M_SERV_LUSERS,  0,             NULL },
   { "&Info...",     M_SERV_INFO,    0,             NULL },
   { "&Stats...",    M_SERV_STATS,   0,             NULL },
@@ -979,6 +983,10 @@ int OXIrc::ProcessMessage(OMessage *msg) {
               DoLinks();
               break;
 
+            case M_SERV_MAP:
+              DoMap();
+              break;
+
             case M_SERV_LUSERS:
               DoLusers();
               break;
@@ -1040,16 +1048,6 @@ int OXIrc::ProcessMessage(OMessage *msg) {
     case INCOMING_IRC_MSG:
       {
         OIrcMessage *ircmsg = (OIrcMessage *) msg;
-        char nick[512];
-
-        nick[0] = '\0';
-        if (ircmsg->prefix) {
-          char *p = strchr(ircmsg->prefix, '!');
-          if (p) {
-            strncpy(nick, ircmsg->prefix, p - ircmsg->prefix);
-            nick[p - ircmsg->prefix] = '\0';
-          }
-        }
 
         if (isdigit(*ircmsg->command)) {  // numeric response?
           int cmd = atoi(ircmsg->command);
@@ -1092,6 +1090,15 @@ int OXIrc::ProcessMessage(OMessage *msg) {
                 }
               }
               Log(str, P_COLOR_SERVER_2);
+              break;
+
+            //--------------------------------- MAP reply
+
+            case 6:                   // (006) - map info (rush 2.7.5)
+            case 15:                  // (015) - map info (u2.10.H.05.21)
+            case 7:                   // (007) - end of MAP (rush 2.7.5)
+            case 16:                  // (016) - end of MAP (u2.10.H.05.21)
+              ProcessMap(cmd, ircmsg);
               break;
 
             //--------------------------------- USERHOST reply
@@ -1534,7 +1541,7 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
           if (ircmsg->argv[0] && (strcasecmp(ircmsg->argv[0], "AUTH") == 0)) {
             Log(ircmsg->argv[1], P_COLOR_NOTICE);
-          } else if (!*nick) {
+          } else if (!*ircmsg->nick) {
             const char *channel = ircmsg->argv[0];
             if (*channel == '@') {
               ++channel;
@@ -1543,19 +1550,31 @@ int OXIrc::ProcessMessage(OMessage *msg) {
               Log(ircmsg->argv[1], P_COLOR_NOTICE);
             }
           } else {
-            if (strcasecmp(ircmsg->argv[0], _nick) == 0) {
-              GetChannel(nick)->Say(nick, ircmsg->argv[1], NOTICE);
+            if (*ircmsg->argv[1] == '\001') {
+              ProcessCTCPReply(ircmsg);
             } else {
-              GetChannel(ircmsg->argv[0])->Say(nick, ircmsg->argv[1], NOTICE);
+              if (strcasecmp(ircmsg->argv[0], _nick) == 0) {
+                GetChannel(ircmsg->nick)->Say(ircmsg->nick,
+                                              ircmsg->argv[1], NOTICE);
+              } else {
+                GetChannel(ircmsg->argv[0])->Say(ircmsg->nick,
+                                                 ircmsg->argv[1], NOTICE);
+              }
             }
           }
 
         } else if ((strcasecmp(ircmsg->command, "PRIVMSG") == 0)) {
 
-          if (strcasecmp(ircmsg->argv[0], _nick) == 0) {
-            GetChannel(nick)->Say(nick, ircmsg->argv[1], PRIVMSG);
+          if (*ircmsg->argv[1] == '\001') {
+            ProcessCTCPRequest(ircmsg);
           } else {
-            GetChannel(ircmsg->argv[0])->Say(nick, ircmsg->argv[1], PRIVMSG);
+            if (strcasecmp(ircmsg->argv[0], _nick) == 0) {
+              GetChannel(ircmsg->nick)->Say(ircmsg->nick,
+                                            ircmsg->argv[1], PRIVMSG);
+            } else {
+              GetChannel(ircmsg->argv[0])->Say(ircmsg->nick,
+                                               ircmsg->argv[1], PRIVMSG);
+            }
           }
 
         } else if ((strcasecmp(ircmsg->command, "MODE") == 0)) {
@@ -1586,7 +1605,7 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
         } else if ((strcasecmp(ircmsg->command, "JOIN") == 0)) {
 
-          if (strcmp(nick, _nick) == 0) {
+          if (strcmp(ircmsg->nick, _nick) == 0) {
             // we just joined a new channel...
             SendMessage(GetChannel(ircmsg->argv[0]), msg);
             sprintf(str, "MODE :%s", ircmsg->argv[0]);
@@ -1619,12 +1638,12 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
           if (foxircSettings->SendToInfo(P_LOG_KILL)) {
             sprintf(str, "You have been KILLED by %s (%s)",
-                         *nick ? nick : ircmsg->prefix,
+                         *ircmsg->nick ? ircmsg->nick : ircmsg->prefix,
                          ircmsg->argv[ircmsg->argc-1]);
             Log(str, P_COLOR_NOTICE);
           } else {
             sprintf(str, "You have been KILLED by %s:\n%s",
-                         *nick ? nick : ircmsg->prefix,
+                         *ircmsg->nick ? ircmsg->nick : ircmsg->prefix,
                          ircmsg->argv[ircmsg->argc-1]);
             new OXMsgBox(_client->GetRoot(), this,
                          new OString("KILL"),
@@ -1649,8 +1668,8 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
         } else if ((strcasecmp(ircmsg->command, "WALLOPS") == 0)) {
 
-          char *who = nick;
-          if (!*nick) who = ircmsg->prefix;
+          char *who = ircmsg->nick;
+          if (!*ircmsg->nick) who = ircmsg->prefix;
 
           sprintf(str, "Wallops from %s: %s", who, ircmsg->argv[0]);
           Log(str, P_COLOR_WALLOPS);
@@ -1658,8 +1677,8 @@ int OXIrc::ProcessMessage(OMessage *msg) {
         } else if ((strcasecmp(ircmsg->command, "INVITE") == 0)) {
 
           int retval;
-          char *who = nick;
-          if (!*nick) who = ircmsg->prefix;
+          char *who = ircmsg->nick;
+          if (!*ircmsg->nick) who = ircmsg->prefix;
 
           sprintf(str, "%s invites you to join channel %s\n"
                        "Do you want to join the channel?", 
@@ -1696,16 +1715,275 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
 //----------------------------------------------------------------------
 
-void OXIrc::CTCPSend(const char *nick, char *command, int mode) {
+// CTCP stuff...
+
+void OXIrc::ProcessCTCPRequest(OIrcMessage *msg) {
+  char m[IRC_MSG_LENGTH];
+  const char *nick = msg->nick;
+  char *cmd, *p, *message = StrDup(msg->argv[1]);
+
+  if (message[0] == '\001') {
+
+    cmd = message + 1;
+
+    for (int i = 1; i < strlen(message); ++i)
+      if (message[i] == '\001') message[i] = '\0';
+
+    p = strchr(cmd, ' ');
+    if (p) *p++ = '\0'; else p = "";
+    while (*p == ' ') ++p;
+
+    if (strcmp(cmd, "ACTION") == 0) {
+      if (strcasecmp(msg->argv[0], _nick) == 0) {
+        GetChannel(msg->nick)->Say(msg->nick, msg->argv[1], PRIVMSG);
+      } else {
+        GetChannel(msg->argv[0])->Say(msg->nick, msg->argv[1], PRIVMSG);
+      }
+      delete[] message;
+      return;
+
+    } else if (strcmp(cmd, "CLIENTINFO") == 0) {
+      if (*p) {
+        char *info;
+        for (info = p; *info; ++info) *info = toupper(*info);
+        if (strcmp(p, "ACTION") == 0) {
+          info = "sends action description";
+        } else if (strcmp(p, "CLIENTINFO") == 0) {
+          info = "shows available CTCP commands on the remote client";
+        } else if (strcmp(p, "DCC") == 0) {
+          info = "requests a Direct Client Connection";
+        } else if (strcmp(p, "ECHO") == 0) {
+          info = "echoes back the argument it receives";
+        } else if (strcmp(p, "ERRMSG") == 0) {
+          info = "returns error messages";
+        } else if (strcmp(p, "TIME") == 0) {
+          info = "shows the time in the remote client host";
+        } else if (strcmp(p, "PING") == 0) {
+          info = "sends back the argument it receives";
+        } else if (strcmp(p, "VERSION") == 0) {
+          info = "shows client type and version";
+        } else {
+          cmd = "ERRMSG";
+          info = p;
+          p = "CLIENTINFO: No such command";
+        }
+        sprintf(m, "%s %s %s", cmd, p, info);
+        CTCPReply(nick, m);
+        sprintf(m, "%s requested CTCP CLIENTINFO %s", nick, p);
+      } else {
+        sprintf(m, "CLIENTINFO "
+                   "ACTION CLIENTINFO DCC ECHO ERRMSG TIME PING VERSION "
+                   ":Use CLIENTINFO <COMMAND> to get more specific information");
+        CTCPReply(nick, m);
+        sprintf(m, "%s requested CTCP CLIENTINFO", nick);
+      }
+
+    } else if (strcmp(cmd, "DCC") == 0) {
+      sprintf(m, "%s requested CTCP DCC %s", nick, p);
+      ProcessDCCRequest(nick, p);
+
+    } else if ((strcmp(cmd, "PING") == 0) ||
+               (strcmp(cmd, "ECHO") == 0)) {
+      sprintf(m, "%s %s", cmd, p);
+      CTCPReply(nick, m);
+      sprintf(m, "%s requested CTCP %s %s", nick, cmd, p);
+
+    } else if (strcmp(cmd, "ERRMSG") == 0) {
+      sprintf(m, "ERRMSG %s :No error", p);
+      CTCPReply(nick, m);
+      sprintf(m, "%s requested CTCP ERRMSG %s", nick, p);
+
+    } else if (strcmp(cmd, "TIME") == 0) {
+      time_t now = time(NULL);
+      sprintf(m, "TIME %s", DateString(now));
+      CTCPReply(nick, m);
+      sprintf(m, "%s requested CTCP TIME", nick);
+
+    } else if (strcmp(cmd, "VERSION") == 0) {
+      sprintf(m, "VERSION %s %s (compiled with xclass %s) %s",
+                 FOXIRC_NAME, FOXIRC_VERSION, XCLASS_VERSION,
+                 FOXIRC_HOMEPAGE);
+      CTCPReply(nick, m);
+      sprintf(m, "%s requested CTCP VERSION", nick);
+
+    } else {
+      sprintf(m, "%s requested unknown CTCP %s %s", nick, cmd, p);
+    }
+
+    if (foxircSettings->SendToInfo(P_LOG_CTCP)) {
+      Log(m, P_COLOR_CTCP);
+    } else {
+      if (strcasecmp(msg->argv[0], _nick) == 0) {
+        GetChannel(msg->nick)->Log(m, P_COLOR_CTCP);
+      } else {
+        GetChannel(msg->argv[0])->Log(m, P_COLOR_CTCP);
+      }
+    }
+
+  }
+
+  delete[] message;
+}
+
+void OXIrc::ProcessCTCPReply(OIrcMessage *msg) {
+  char m[IRC_MSG_LENGTH];
+  const char *nick = msg->nick;
+  char *cmd, *p, *message = StrDup(msg->argv[1]);
+
+  if (message[0] == '\001') {
+
+    cmd = message + 1;
+
+    for (int i = 1; i < strlen(message); ++i)
+      if (message[i] == '\001') message[i] = '\0';
+
+    p = strchr(cmd, ' ');
+    if (p) *p++ = '\0'; else p = "";
+
+    if (strcmp(cmd, "PING") == 0) {
+      time_t tm = strtoul(p, (char **) 0, 10);
+      sprintf(m, "CTCP PING reply from %s: %ld seconds", nick, time(NULL) - tm);
+    } else {
+      sprintf(m, "CTCP %s reply from %s: %s", cmd, nick, p);
+    }
+
+    if (foxircSettings->SendToInfo(P_LOG_CTCP)) {
+      Log(m, P_COLOR_CTCP);
+    } else {
+      if (strcasecmp(msg->argv[0], _nick) == 0) {
+        GetChannel(msg->nick)->Log(m, P_COLOR_CTCP);
+      } else {
+        GetChannel(msg->argv[0])->Log(m, P_COLOR_CTCP);
+      }
+    }
+
+  }
+
+  delete[] message;
+}
+
+void OXIrc::CTCPRequest(const char *target, const char *command) {
   char str[512];
 
-  if ((mode >= 0) && (mode <= 1)) {
-    sprintf(str, "%s %s :\001%s\001",
-                 (mode == NOTICE) ? "NOTICE" : "PRIVMSG",
-                 nick, command);
-    SendRawCommand(str);
+  sprintf(str, "PRIVMSG %s :\001%s\001", target, command);
+  SendRawCommand(str);
+}
+
+void OXIrc::CTCPReply(const char *target, const char *command) {
+  char str[512];
+
+  sprintf(str, "NOTICE %s :\001%s\001", target, command);
+  SendRawCommand(str);
+}
+
+
+//----------------------------------------------------------------------
+
+// DCC stuff...
+
+void OXIrc::ProcessDCCRequest(const char *nick, const char *string) {
+  int  ret;
+  char *str = StrDup(string);
+  char *p, *cmd, *arg;
+  char char1[IRC_MSG_LENGTH], char2[IRC_MSG_LENGTH],
+       char3[IRC_MSG_LENGTH], char4[IRC_MSG_LENGTH];
+
+  p = str;
+
+  cmd = p;
+  while (*p && *p != ' ') ++p;
+  if (*p) *p++ = '\0';
+  while (*p && *p == ' ') ++p;
+  arg = p;
+
+  if (strcmp(cmd, "SEND") == 0) {
+
+    printf("DCC SEND received\n");
+    if (sscanf(arg, "%s %s %s %s", char1, char2, char3, char4) == 4) {
+      new OXDCCFile(_client->GetRoot(), nick,
+                    char1, char2, char3, char4, &ret);
+
+      if (ret == ID_DCC_REJECT) {
+        printf("Refusing DCC SEND from %s\n", nick);
+        sprintf(char1, "DCC REJECT SEND %s", char1);
+        CTCPReply(nick, char1);
+      }
+    } else {
+      printf("Invalid DCC SEND: %s\n", arg);
+    }
+
+  } else if (strcmp(cmd, "CHAT") == 0) {
+
+    printf("DCC CHAT received\n");
+    if (sscanf(arg, "%s %s %s", char1, char2, char3) == 3) {
+      sprintf(char4, "%s wishes to chat with you ", nick);
+      new OXMsgBox(_client->GetRoot(), this, new OString("DCC Confirm"), 
+                   new OString(char4), MB_ICONQUESTION,
+                   ID_YES | ID_NO | ID_IGNORE, &ret);
+
+      if (ret == ID_YES) {
+        printf("Accepting DCC CHAT from %s\n", nick);
+        AcceptDCCChat(nick, char2, atoi(char3));
+
+      } else if (ret == ID_NO) {
+        printf("Refusing DCC CHAT from %s\n", nick);
+        CTCPReply(nick, "DCC REJECT CHAT chat"); // CTCPRequest?
+
+      } else {
+        printf("Ignoring DCC CHAT from %s\n", nick);
+
+      }
+    } else {
+      printf("Invalid DCC CHAT: %s\n", arg);
+    }
+
+  } else if (strcmp(cmd, "REJECT") == 0) {
+
+    printf("DCC REJECT received\n");
+    if (sscanf(arg, "%s %s", char1, char2) == 2) {
+      if (strcasecmp(char1, "CHAT") == 0) {
+        CTCPReply(nick, "DCC REJECT CHAT chat");
+        printf("DCC CHAT REJECT from %s\n", nick);
+        sprintf(char3, "=%s", nick);
+        OXChannel *ch = FindChannel(char3);
+        if (ch) ((OXDCCChannel *) ch)->Disconnect();
+      }
+    } else {
+      printf("Unknown DCC REJECT: %s\n", arg);
+    }
+
   }
 }
+
+void OXIrc::StartDCCChat(const char *nick) {
+  char char1[20], char2[256];
+  unsigned long hostnum;
+  unsigned short portnum;
+
+  sprintf(char1, "=%s", nick);
+  OXDCCChannel *xdcc = (OXDCCChannel *) GetChannel(char1);
+
+  if (!xdcc->Listen(&hostnum, &portnum)) {
+    xdcc->Log("Failed to create server socket", P_COLOR_NOTIFY);
+    printf("StartDCCChat: Listen Failed!\n");
+  } else {
+    printf("Listening for DCC Chat with %s on IP %u Port %d\n",
+           nick, ntohl(hostnum), ntohs(portnum));
+    sprintf(char2, "DCC CHAT chat %u %d", ntohl(hostnum), ntohs(portnum));
+    CTCPRequest(nick, char2);  
+  }
+}
+
+void OXIrc::AcceptDCCChat(const char *nick, const char *server, int port) {
+  char char1[IRC_MSG_LENGTH];
+
+  sprintf(char1, "=%s", nick);
+  OXDCCChannel *xdcc = (OXDCCChannel *) GetChannel(char1);
+  xdcc->Connect(server, port);
+}
+
+
+//----------------------------------------------------------------------
 
 // Change the current nick name, and signal the server accordingly.
 
@@ -1839,6 +2117,18 @@ void OXIrc::DoVersion() {
 
 void OXIrc::DoLinks() {
   OString cmd("LINKS"), arg("");
+
+  if (PromptServer(&cmd, &arg)) {
+    if (arg.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(arg.GetString());
+    }
+    SendRawCommand(cmd.GetString());
+  }
+}
+
+void OXIrc::DoMap() {
+  OString cmd("MAP"), arg("");
 
   if (PromptServer(&cmd, &arg)) {
     if (arg.GetLength() > 0) {
@@ -2352,6 +2642,23 @@ void OXIrc::ProcessLink(int cmd, OIrcMessage *msg) {
       } else {
         GetServerTree()->BuildTree();
       }
+      break;
+  }
+}
+
+void OXIrc::ProcessMap(int cmd, OIrcMessage *msg) {
+  char str[512];
+  OServerLink *link;
+
+  switch (cmd) {
+    case 6:
+    case 15:
+      Log(msg->argv[1], P_COLOR_SERVER_2);
+      break;
+
+    case 7:
+    case 17:
+      Log("End of MAP", P_COLOR_SERVER_2);
       break;
   }
 }

@@ -248,13 +248,13 @@ void OXServerTree::BuildTree() {
         if (hopcnt == 0) {   // this is a root server
           e = new OLinkTreeItem(_client, _links[i]->serverName, i);
           _listTree->AddItem(NULL, e);
-          e->open = True;
+          _listTree->OpenNode(e);
         } else {
           item = _FindServer(NULL, _links[i]->connectedTo, hopcnt - 1);
           if (item) {
             e = new OLinkTreeItem(_client, _links[i]->serverName, i);
             _listTree->AddItem(item, e);
-            e->open = True;
+            _listTree->OpenNode(e);
           }
         }
       }

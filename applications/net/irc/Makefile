@@ -20,6 +20,7 @@ SRCS = OIrc.cc \
 	OXChannelEditor.cc \
 	OXChannelList.cc \
 	OXChatChannel.cc \
+	OXCommandDlg.cc \
 	OXConfirmDlg.cc \
 	OXDCCChannel.cc \
 	OXDCCFile.cc \

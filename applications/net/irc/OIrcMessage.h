@@ -49,12 +49,13 @@
 class OIrcMessage : public OMessage {
 public:
   OIrcMessage(int typ, int act, const char *raw_msg);
+  virtual ~OIrcMessage();
 
 public:
   int  argc;
   char *prefix, *command, *argv[IRC_MAX_ARGS];
   const char *rawmsg;
-  //char *nick, *ircname;
+  char *nick, *ircname;
 
 protected:
   char msg[IRC_MSG_LENGTH];

@@ -53,6 +53,7 @@ protected:
   OXCanvas *_canvas;
   OXNameList *_nlist;
   void DoChannelMode(const char *mode);
+  void DoAskCTCP(const char *target);
 
   OXHorizontal3dLine *_topicsep;
   OXCompositeFrame *_ftopic;

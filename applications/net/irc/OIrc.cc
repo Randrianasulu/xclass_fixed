@@ -57,9 +57,27 @@ OIrcMessage::OIrcMessage(int typ, int act, const char *raw_msg) :
     }
   }
 
+  if (prefix) {
+    char *p = strchr(prefix, '!');
+    if (p) {
+      nick = new char[p - prefix + 1];
+      strncpy(nick, prefix, p - prefix);
+      nick[p - prefix] = '\0';
+      ircname = StrDup(p + 1);
+    } else {
+      nick = StrDup("");
+      ircname = StrDup(prefix);
+    }
+  } else {
+    nick = StrDup("");
+    ircname = StrDup("");
+  }
+
 #ifdef DEBUG
   fprintf(stderr, "*** raw msg:  \"%s\"\n", rawmsg);
   fprintf(stderr, "+++ prefix:   \"%s\"\n", prefix);
+  fprintf(stderr, "++++ nick:    \"%s\"\n", nick);
+  fprintf(stderr, "++++ ircname: \"%s\"\n", ircname);
   fprintf(stderr, "+++ command:  \"%s\"\n", command);
   for (int i = 0; i < 16; ++i) {
     if (!argv[i]) break;
@@ -68,6 +86,14 @@ OIrcMessage::OIrcMessage(int typ, int act, const char *raw_msg) :
   fprintf(stderr, "\n");
 #endif
 }
+
+OIrcMessage::~OIrcMessage() {
+  delete[] nick;
+  delete[] ircname;
+}
+
+
+//----------------------------------------------------------------------
 
 OIrc::OIrc() : OComponent() {
   _tcp = new OTcp();

@@ -8,11 +8,12 @@
 
 #include <xclass/utils.h>
 
+#include "OXIrc.h"
 #include "IRCcodes.h"
 #include "OIrcMessage.h"
 #include "OXChatChannel.h"
-#include "OXIrc.h"
 #include "OXConfirmDlg.h"
+#include "OXCommandDlg.h"
 
 
 //----------------------------------------------------------------------
@@ -71,6 +72,7 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _nick_ctcp->AddEntry(new OHotString("Time"),       CTCP_TIME);
   _nick_ctcp->AddEntry(new OHotString("Version"),    CTCP_VERSION);
   _nick_ctcp->AddEntry(new OHotString("Userinfo"),   CTCP_USERINFO);
+  _nick_ctcp->AddSeparator();
   _nick_ctcp->AddEntry(new OHotString("Other..."),   CTCP_OTHER);
 
   _nick_dcc = new OXPopupMenu(_client->GetRoot());
@@ -94,8 +96,6 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _nick_actions->AddEntry(new OHotString("Whois"),    C_WHOIS);
   _nick_actions->AddEntry(new OHotString("Message"),  C_MESSAGE);
   _nick_actions->AddEntry(new OHotString("Notice"),   C_NOTICE);
-  _nick_actions->AddEntry(new OHotString("Ping"),     C_PING);
-  _nick_actions->AddEntry(new OHotString("Time"),     C_TIME);
   _nick_actions->AddPopup(new OHotString("CTCP"),     _nick_ctcp);
   _nick_actions->AddPopup(new OHotString("DCC"),      _nick_dcc);
   _nick_actions->AddEntry(new OHotString("Notify"),   C_NOTIFY);
@@ -397,15 +397,19 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
 
             case CTCP_PING:
               sprintf(char1, "PING %ld", time(NULL));
-              _server->CTCPSend((char *) _name, char1, PRIVMSG);
+              _server->CTCPRequest(_name, char1);
               break;
 
             case CTCP_VERSION:
-              _server->CTCPSend((char *) _name, "VERSION", PRIVMSG);
+              _server->CTCPRequest(_name, "VERSION");
               break;
 
             case CTCP_CLIENTINFO:
-              _server->CTCPSend((char *) _name, "CLIENTINFO", PRIVMSG);
+              _server->CTCPRequest(_name, "CLIENTINFO");
+              break;
+
+            case CTCP_OTHER:
+              DoAskCTCP(_name);
               break;
 
             case M_VIEW_STATUSBAR:
@@ -447,15 +451,11 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
     case IRC_NICKLIST:
       {
         ONickListMessage *nlmsg = (ONickListMessage *) msg;
+        OXName *e;
 
         switch (msg->action) {
           case MSG_CLICK:
             switch (nlmsg->id) {
-              case C_PING:
-                sprintf(char1, "PING %ld", time(NULL));
-                _server->CTCPSend((char *) nlmsg->name, char1, PRIVMSG);
-                break;
-
               case C_WHOIS:
                 sprintf(char1, "WHOIS %s", nlmsg->name);
                 _server->SendRawCommand(char1);
@@ -465,35 +465,52 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
                 _server->GetChannel(nlmsg->name)->MapRaised();
                 break;
 
+              case CTCP_PING:
+                sprintf(char1, "PING %ld", time(NULL));
+                _server->CTCPRequest(nlmsg->name, char1);
+                break;
+
               case CTCP_VERSION:
-                _server->CTCPSend((char *) nlmsg->name, "VERSION", PRIVMSG);
+                _server->CTCPRequest(nlmsg->name, "VERSION");
+                break;
+
+              case CTCP_TIME:
+                _server->CTCPRequest(nlmsg->name, "TIME");
+                break;
+
+              case CTCP_FINGER:
+                _server->CTCPRequest(nlmsg->name, "FINGER");
+                break;
+
+              case CTCP_USERINFO:
+                _server->CTCPRequest(nlmsg->name, "USERINFO");
                 break;
 
               case CTCP_CLIENTINFO:
-                _server->CTCPSend((char *) nlmsg->name, "CLIENTINFO", PRIVMSG);
+                _server->CTCPRequest(nlmsg->name, "CLIENTINFO");
+                break;
+
+              case CTCP_OTHER:
+                DoAskCTCP(nlmsg->name);
                 break;
 
               case C_SPEAK:
-                {
-                OXName *e = _nlist->GetName(nlmsg->name);
+                e = _nlist->GetName(nlmsg->name);
                 if (e) {
                   sprintf(m, "%s %s",
                              e->IsVoiced() ? "-v" : "+v",
                              nlmsg->name);
                   _server->SendMode(_name, m);
                 }
-                }
                 break;
 
               case C_CHAN_OP:
-                {
-                OXName *e = _nlist->GetName(nlmsg->name);
+                e = _nlist->GetName(nlmsg->name);
                 if (e) {
                   sprintf(m, "%s %s",
                              e->IsOp() ? "-o" : "+o",
                              nlmsg->name);
                   _server->SendMode(_name, m);
-                }
                 }
                 break;
 
@@ -518,7 +535,7 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
                 break;
 
               case DCC_CHAT:
-                StartDCCChat((char *) nlmsg->name);
+                _server->StartDCCChat((char *) nlmsg->name);
                 break;
 
               default:
@@ -532,20 +549,6 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
     case INCOMING_IRC_MSG:
       {
         OIrcMessage *ircmsg = (OIrcMessage *) msg;
-        char nick[512], ircname[512];
-
-        nick[0] = '\0';
-        ircname[0] = '\0';
-        if (ircmsg->prefix) {
-          char *p = strchr(ircmsg->prefix, '!');
-          if (p) {
-            strncpy(nick, ircmsg->prefix, p - ircmsg->prefix);
-            nick[p - ircmsg->prefix] = '\0';
-            strcpy(ircname, p + 1);
-          } else {
-            strcpy(ircname, ircmsg->prefix);
-          }
-        }
 
         if (isdigit(*ircmsg->command)) {  // numeric response?
           int cmd = atoi(ircmsg->command);
@@ -620,29 +623,31 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
 
         } else if (strcasecmp(ircmsg->command, "JOIN") == 0) {
 
-          _nlist->AddName(nick);
-          if (ircname && *ircname)
-            sprintf(m, "%s (%s) joined the channel.", nick, ircname);
+          _nlist->AddName(ircmsg->nick);
+          if (*ircmsg->ircname)
+            sprintf(m, "%s (%s) joined the channel.",
+                       ircmsg->nick, ircmsg->ircname);
           else
-            sprintf(m, "%s joined the channel.", nick);
+            sprintf(m, "%s joined the channel.", ircmsg->nick);
           Log(m, P_COLOR_JOIN);
           _canvas->Layout();
 
         } else if (strcasecmp(ircmsg->command, "PART") == 0) {
 
-          _nlist->RemoveName(nick);
+          _nlist->RemoveName(ircmsg->nick);
           if (ircmsg->argv[1] && *ircmsg->argv[1])
-            sprintf(m, "%s left the channel (%s).", nick, ircmsg->argv[1]);
+            sprintf(m, "%s left the channel (%s).",
+                       ircmsg->nick, ircmsg->argv[1]);
           else
-            sprintf(m, "%s left the channel.", nick);
+            sprintf(m, "%s left the channel.", ircmsg->nick);
           Log(m, P_COLOR_PART);
           _canvas->Layout();
-          if (strcmp(nick, _server->GetNick()) == 0)
+          if (strcmp(ircmsg->nick, _server->GetNick()) == 0)
             OXChannel::CloseWindow();
 
         } else if (strcasecmp(ircmsg->command, "KICK") == 0) {
 
-          char *who = nick;
+          char *who = ircmsg->nick;
           if (!*who) who = ircmsg->prefix;
 
           _nlist->RemoveName(ircmsg->argv[1]);
@@ -680,27 +685,27 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
 
         } else if (strcasecmp(ircmsg->command, "QUIT") == 0) {
 
-          if (_nlist->GetName(nick)) {
-            _nlist->RemoveName(nick);
+          if (_nlist->GetName(ircmsg->nick)) {
+            _nlist->RemoveName(ircmsg->nick);
             if (ircmsg->argv[0] && *ircmsg->argv[0])
-              sprintf(m, "SignOff: %s (%s).", nick, ircmsg->argv[0]);
+              sprintf(m, "SignOff: %s (%s).", ircmsg->nick, ircmsg->argv[0]);
             else
-              sprintf(m, "SignOff: %s", nick);
+              sprintf(m, "SignOff: %s", ircmsg->nick);
             Log(m, P_COLOR_QUIT);
             _canvas->Layout();
           }
 
         } else if (strcasecmp(ircmsg->command, "NICK") == 0) {
 
-          if (_nlist && _nlist->GetName(nick)) {
-            _nlist->ChangeName(nick, ircmsg->argv[0]);
-            sprintf(m, "%s is now known as %s.", nick, ircmsg->argv[0]);
+          if (_nlist && _nlist->GetName(ircmsg->nick)) {
+            _nlist->ChangeName(ircmsg->nick, ircmsg->argv[0]);
+            sprintf(m, "%s is now known as %s.", ircmsg->nick, ircmsg->argv[0]);
             Log(m, P_COLOR_NICK);
           }
 
         } else if (strcasecmp(ircmsg->command, "MODE") == 0) {
 
-          char *who = nick;
+          char *who = ircmsg->nick;
           if (!*who) who = ircmsg->prefix;
 
           char1[0] = '\0';
@@ -717,7 +722,7 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
 
         } else if (strcasecmp(ircmsg->command, "TOPIC") == 0) {
 
-          char *who = nick;
+          char *who = ircmsg->nick;
           if (!*who) who = ircmsg->prefix;
 
           _topic->Clear();
@@ -801,10 +806,24 @@ int OXChatChannel::ProcessCommand(char *cmd) {
     }
 
   } else if (!strncmp(cmd, "/kick ", 6)) {
-    if (strlen(&cmd[8]) > 0) {
+    if (strlen(&cmd[6]) > 0) {
       sprintf(char1, "KICK %s %s", _name, &cmd[6]);
       _server->SendRawCommand(char1);
     }
+
+  } else if (!strncmp(cmd, "/ctcp ", 6)) {
+    if (strlen(&cmd[6]) > 0) {
+      int n;
+      char m[IRC_MSG_LENGTH];
+      if (sscanf(&cmd[6], "%s %s %n", char1, char2, &n) == 2) {
+        char *p = char2;
+        while (*p) *p = toupper(*p), ++p;
+        sprintf(m, "%s %s", char2, cmd+n+6);
+        _server->CTCPRequest(char1, m);
+      }
+    }
+
+  } else if (!strncmp(cmd, "/dcc ", 5)) {
 
   } else {
     if (strlen(cmd) > 1) _server->SendRawCommand(&cmd[1]);
@@ -1162,4 +1181,25 @@ void OXChatChannel::DoChannelMode(const char *mode) {
   SetChannelMode(mode_bits);
 
   delete[] temp;
+}
+
+void OXChatChannel::DoAskCTCP(const char *target) {
+  OString wtitle("CTCP");
+  OString cmd(""), args("");
+  int retc;
+
+  new OXCommandDlg(_client->GetRoot(), this, &wtitle,
+                   new OString("Enter CTCP command and arguments"),
+                   new OString("Command:"), &cmd,
+                   new OString("Arguments:"), &args, &retc);
+
+  if (retc == ID_OK) {
+    char *p = (char *) cmd.GetString();
+    while (*p) *p = toupper(*p), ++p;
+    if (args.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(args.GetString());
+    }
+    _server->CTCPRequest(target, cmd.GetString());
+  }
 }

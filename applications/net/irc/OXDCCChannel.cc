@@ -5,7 +5,6 @@
 
 #include <X11/keysym.h>
 
-#include "OXDCCFile.h"
 #include "OIrcMessage.h"
 #include "OXDCCChannel.h"
 #include "OXIrc.h"

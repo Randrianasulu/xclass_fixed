@@ -10,9 +10,6 @@
 #include "OXChannel.h"
 #include "OXIrc.h"
 
-#include "OXDCCFile.h"
-#include "OXDCCChannel.h" //////
-
 #include "versiondef.h"
 
 //----------------------------------------------------------------------
@@ -129,11 +126,11 @@ void OXChannel::_ClearHistory() {
 
 void OXChannel::Say(const char *nick, char *message, int mode) {
   char m[IRC_MSG_LENGTH];
-  int  int1 = 0, int2 = 0, ctcp = false;
+  int  int1 = 0, int2 = 0;
 
   m[0] = '\0';
 
-  if (message[0] == 1) {
+  if (message[0] == 1) {  // CTCP command
 
     for (int1 = 1; int1 < strlen(message); ++int1)
       if (message[int1] == 1) message[int1] = 0;
@@ -146,57 +143,11 @@ void OXChannel::Say(const char *nick, char *message, int mode) {
       Log(m, P_COLOR_ACTION);
       return;
 
-    } else if ((!strncmp(message+1, "PING", 4)) ||
-             (!strncmp(message+1, "ECHO", 4))) {
-      sscanf(message+6, "%i", &int2);
-      if (mode == NOTICE) {
-        sprintf(m, "PING reply from %s: %ld seconds.", nick, time(NULL)-int2);
-      } else {
-        sprintf(m, "NOTICE %s :\001%s\001", nick, message+1);
-	_server->SendRawCommand(m);
-        sprintf(m, "%s requested %s.", nick, message+1);
-      }
-      ctcp = true;
-
-    } else if (!strncmp(message+1, "VERSION", 7)) {
-      if (mode == NOTICE) {
-        sprintf(m, "VERSION reply from %s: %s", nick, message+9);
-      } else {
-        sprintf(m, "VERSION %s %s %s",
-                   FOXIRC_NAME, FOXIRC_VERSION, FOXIRC_HOMEPAGE);
-        _server->CTCPSend(nick, m, NOTICE);
-        sprintf(m, "%s requested VERSION.", nick);
-      }
-      ctcp = true;
-
-    } else if (!strncmp(message+1, "CLIENTINFO", 10)) {
-      if (mode == NOTICE) {
-        sprintf(m, "CLIENTINFO reply from %s: %s", nick, message+12);
-      } else {
-        sprintf(m, "CLIENTINFO CLIENTINFO DCC ECHO VERSION");
-        _server->CTCPSend(nick, m, NOTICE);
-        sprintf(m, "%s requested CLIENTINFO.", nick);
-      }
-      ctcp = true;
-
-    } else if (!strncmp(message+1, "DCC", 3)) {
-      if (mode == NOTICE) {
-        sprintf(m, "DCC reply from %s: %s", nick, message+1);
-      } else {
-        sprintf(m, "%s requested DCC: %s.", nick, message+1);
-        ProcessDCCRequest(nick, message+1);
-      }
-
     } else {
-//      _server->CTCPSend(nick, message+1, PRIVMSG);
-      sprintf(m, "%s CTCP: %s", nick, message+1);
-      ctcp = true;
-    }
-
-    if (ctcp && foxircSettings->SendToInfo(P_LOG_CTCP))
-      _server->Log(m, P_COLOR_CTCP);
-    else
+      sprintf(m, "%s requested unknown CTCP %s", nick, message+1);
       Log(m, P_COLOR_CTCP);
+
+    }
 
 //  } else if (!strcasecmp(nick, _name)) {
 //    sprintf(m, "\003%d=\003%d%s\003%d=\003%d %s", 2, 11, nick, 2, 0, message);
@@ -205,8 +156,8 @@ void OXChannel::Say(const char *nick, char *message, int mode) {
   } else if (!strcasecmp(nick, _name)) { // for MSG windows
     if (mode == DCC)
       sprintf(m, "\003%d=\003%d%s\003%d=\003 %s", 9, 15, nick+1, 9, message);
-//    else if (mode == NOTICE)
-//      sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 9, 15, nick, 9, message);
+    else if (mode == NOTICE)
+      sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 9, 15, nick, 9, message);
     else
       sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 9, 15, nick, 9, message);
     Log(m);    
@@ -258,100 +209,6 @@ void OXChannel::Log(const char *message, int color) {
   l->Fill(message);
   _log->AddLine(l);
   _logw->ScrollUp();
-}
-
-void OXChannel::StartDCCChat(const char *nick) {
-  char char1[20], char2[256];
-  unsigned long hostnum;
-  unsigned short portnum;
-
-  sprintf(char1, "=%s", nick);
-  OXDCCChannel *xdcc = (OXDCCChannel *) _server->GetChannel(char1);
-
-  if (!xdcc->Listen(&hostnum, &portnum)) {
-    xdcc->Log("Failed to create server socket", P_COLOR_NOTIFY);
-    printf("StartDCCChat: Listen Failed!\n");
-  } else {
-    printf("Listening for DCC Chat with %s on IP %u Port %d\n",
-           nick, ntohl(hostnum), ntohs(portnum));
-    sprintf(char2, "DCC CHAT chat %u %d", ntohl(hostnum), ntohs(portnum));
-    _server->CTCPSend(nick, char2, PRIVMSG);  
-  }
-}
-
-void OXChannel::AcceptDCCChat(const char *nick,
-                              const char *server, int port) {
-  char char1[IRC_MSG_LENGTH];
-
-  sprintf(char1, "=%s", nick);
-  OXDCCChannel *xdcc = (OXDCCChannel *) _server->GetChannel(char1);
-  xdcc->Connect(server, port);
-}
-
-void OXChannel::ProcessDCCRequest(const char *nick, const char *string) {
-  int  ret;
-  char char1[IRC_MSG_LENGTH], char2[IRC_MSG_LENGTH],
-       char3[IRC_MSG_LENGTH], char4[IRC_MSG_LENGTH],
-       char5[IRC_MSG_LENGTH], char6[IRC_MSG_LENGTH];
-
-  if (sscanf(string, "DCC %s %s %s %s %s",
-                     char1, char2, char3, char4, char5) == 5) {
-    printf("ahh a DCC send\n");
-    new OXDCCFile(_client->GetRoot(), nick, char2, char3, char4, char5, &ret);
-
-//    sprintf(char6, "%s wishes to send you %s which is %s bytes in size", 
-//            nick, char2, char5);
-//    new OXMsgBox(_client->GetRoot(), this, new OString("DCC Confirm"), 
-//                 new OString(char6), MB_ICONQUESTION,
-//                 ID_YES | ID_NO | ID_IGNORE, &ret);
-//    if (ret == ID_YES) {
-//      printf("Accepting %s from %s\n", char2, nick);
-      //AcceptDCCFile(nick, char2, char3, char4, char5);
-
-//    } else if (ret == ID_NO) {
-//      printf("Refusing %s from %s\n", char2, nick);
-//
-//    } else {
-//      printf("Ignoring %s from %s\n", char2, nick);
-//    }
-
-    if (ret == ID_DCC_REJECT) {
-      printf("Refusing send from %s\n", nick);
-      sprintf(char1, "DCC REJECT SEND %s", char2);
-      _server->CTCPSend(nick, char1, NOTICE);
-
-    }
-
-  } else if (sscanf(string, "DCC %s %s %s %s",
-                             char1, char2, char3, char4) == 4) {
-    printf("ahh a DCC chat\n");
-    sprintf(char6, "%s wishes to chat with you ", nick);
-    new OXMsgBox(_client->GetRoot(), this, new OString("DCC Confirm"), 
-                 new OString(char6), MB_ICONQUESTION,
-                 ID_YES | ID_NO | ID_IGNORE, &ret);
-    if (ret == ID_YES) {
-      printf("Accepting chat from %s\n", nick);
-      AcceptDCCChat(nick, char3, atoi(char4));
-
-    } else if (ret == ID_NO) {
-      printf("Refusing chat from %s\n", nick);
-      _server->CTCPSend(nick, "DCC REJECT CHAT chat", NOTICE);
-
-    } else {
-      printf("Ignoring chat from %s\n", nick);
-
-    }
-
-  } else if (sscanf(string, "DCC REJECT %s %s", char1, char2) == 2) {
-    if (strcasecmp(char1, "chat") == 0) { 
-      _server->CTCPSend(nick, "DCC REJECT CHAT chat", NOTICE);
-      printf("A chat reject from %s\n", nick);
-      sprintf(char3, "=%s", nick);
-      OXChannel *ch = _server->FindChannel(char3);
-      if (ch) ((OXDCCChannel *) ch)->Disconnect();
-    }
-                                
-  }
 }
 
 int OXChannel::ProcessMessage(OMessage *msg) {

@@ -9,19 +9,17 @@
 #define NICK_IGNORED (1<<2)
 #define NICK_FRIEND  (1<<3)
 
-#define C_PING        1
-#define C_WHOIS       2
-#define C_MESSAGE     3
-#define C_NOTICE      4
-#define C_TIME        5
-#define C_NOTIFY      6
-#define C_FINGER      7
-#define C_SPEAK       8
-#define C_CHAN_OP     9
-#define C_KICK       10
-#define C_BAN        11
-#define C_BANKICK    12
-#define C_KILL       13
+#define C_WHOIS       1
+#define C_MESSAGE     2
+#define C_NOTICE      3
+#define C_NOTIFY      4
+#define C_FINGER      5
+#define C_SPEAK       6
+#define C_CHAN_OP     7
+#define C_KICK        8
+#define C_BAN         9
+#define C_BANKICK    10
+#define C_KILL       11
 
 class OXNameList;
 

@@ -97,6 +97,7 @@ public:
   void DoMotd();
   void DoVersion();
   void DoLinks();
+  void DoMap();
   void DoLusers();
   void DoAdmin();
   void DoTime();
@@ -122,7 +123,17 @@ public:
   void ProcessIrcError(int cmd, OIrcMessage *msg);
   void ProcessUMode(const char *modestr);
   void ProcessLink(int cmd, OIrcMessage *msg);
-  void CTCPSend(const char *nick, char *command, int mode);
+  void ProcessMap(int cmd, OIrcMessage *msg);
+
+  void ProcessCTCPRequest(OIrcMessage *msg);
+  void ProcessCTCPReply(OIrcMessage *msg);
+  void CTCPReply(const char *target, const char *command);
+  void CTCPRequest(const char *target, const char *command);
+
+  void ProcessDCCRequest(const char *nick, const char *string);
+  void StartDCCChat(const char *nick);
+  void AcceptDCCChat(const char *nick, const char *server, int port);
+
   void ChangeNick(const char *nick);
   void JoinChannel(const char *channel);
   void ToggleUMode(int which);

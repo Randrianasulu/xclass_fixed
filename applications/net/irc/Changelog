@@ -156,3 +156,13 @@
 
 - Calculate lag only from the PONG commands we requested, any other should
   go to info.
+
+
+22/08/02  (0.4.2)
+
+- CTCP and DCC code moved to OXIrc. Added CTCP TIME, ERRMSG and CLIENTINFO
+  command help.
+
+- Added a command dialog. Used to get CTCP/Other... command and arguments.
+
+- Added /ctcp command to OXChatChannel.
