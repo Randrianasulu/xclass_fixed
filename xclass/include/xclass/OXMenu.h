@@ -95,9 +95,9 @@ public:
   virtual ODimension GetDefaultSize() const;
 
   void AddEntry(OHotString *s, int ID, const OPicture *p = NULL);
-  void AddSeparator();
-  void AddPopup(OHotString *s, OXPopupMenu *popup);
-  void RemoveEntry(int ID);
+  void AddSeparator(int ID = -1);
+  void AddPopup(OHotString *s, OXPopupMenu *popup, int ID = -2);
+  void RemoveEntry(int ID, int type = MENU_ENTRY);
   void RemoveAllEntries();
   void EnableEntry(int ID);
   void DisableEntry(int ID);
@@ -131,8 +131,7 @@ protected:
   OMenuEntry *_first, *_last, *_current;
   OXGC *_normGC, *_selGC, *_selbackGC;
   const OXFont *_font, *_hifont;
-  int _stick;
-  int _hasgrab, _popdown;
+  int _stick, _hasgrab, _popdown, _lastID;
   int _xl, _xr;
   int _mw, _mh;    // temp!
   OTimer *_delay;

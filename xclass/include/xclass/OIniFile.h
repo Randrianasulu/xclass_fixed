@@ -23,12 +23,13 @@
 #define __OINIFILE_H
 
 #include <stdio.h>
+#include <limits.h>
 #include <xclass/OBaseObject.h>
 
-#define MAX_LINE_LEN    1024
-#define INI_READ        100
-#define INI_WRITE       101
-#define INI_APPEND      102
+#define INI_MAX_LINE_LEN    (PATH_MAX+256)
+#define INI_READ            100
+#define INI_WRITE           101
+#define INI_APPEND          102
 
 
 //----------------------------------------------------------------------

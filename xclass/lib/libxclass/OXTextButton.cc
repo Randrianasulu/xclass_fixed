@@ -59,6 +59,8 @@ OXTextButton::OXTextButton(const OXWindow *p, OString *s, int ID,
     _wrapLength = -1;
     _hkeycode = 0;
 
+    _ml = _mr = _mt = _mb = 0;
+
     _font = _defaultFont;
     _normGC = (OXGC *) _defaultGC;
 
@@ -140,18 +142,18 @@ void OXTextButton::_DoRedraw() {
   OXFrame::_DoRedraw();
 
   if (_align & TEXT_LEFT)
-    x = 4;
+    x = _ml + 4;
   else if (_align & TEXT_RIGHT)
-    x = _w - _tw - 4;
+    x = _w - _tw - _mr - 4;
   else
-    x = (_w - _tw) >> 1;
+    x = (_w - _tw + _ml - _mr) >> 1;
 
   if (_align & TEXT_TOP)
-    y = 3;
+    y = _mt + 3;
   else if (_align & TEXT_BOTTOM)
-    y = _h - _th -3;
+    y = _h - _th - _mb - 3;
   else
-    y = (_h - _th) >> 1;
+    y = (_h - _th + _mt - _mb) >> 1;
 
   if (_state == BUTTON_DOWN || _state == BUTTON_ENGAGED) { ++x; ++y; }
 

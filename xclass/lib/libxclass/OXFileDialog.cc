@@ -210,7 +210,7 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
       }
     }
     _addFavor = new OXPictureButton(_htop, paddfavor, IDF_ADDFAVOR);
-    _favor = new OXPictureButton(_htop, pfavor,IDF_FAVOR);
+    _favor = new OXPictureButton(_htop, pfavor, IDF_FAVOR);
 
     _addFavor->SetTip("Add to favourites");
     _favor->SetTip("Go to favourites folder");

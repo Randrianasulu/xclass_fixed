@@ -387,6 +387,8 @@ OXPopupMenu::OXPopupMenu(const OXWindow *p, int w, int h,
     _hasgrab = False;
     _popdown = False;
 
+    _lastID = -1;
+
     mask = CWOverrideRedirect | CWSaveUnder;
     wattr.override_redirect = True;
     wattr.save_under = True;
@@ -438,10 +440,10 @@ void OXPopupMenu::AddEntry(OHotString *s, int ID, const OPicture *p) {
   AdjustSize();
 }
 
-void OXPopupMenu::AddSeparator() {
+void OXPopupMenu::AddSeparator(int ID) {
   OMenuEntry *e;
 
-  e = new OMenuEntry(MENU_SEPARATOR);
+  e = new OMenuEntry(MENU_SEPARATOR, ID);
 
   e->_ex = _sidePic ? _sidePic->GetWidth() + 4 : 2;
   e->_ey = _h - 2;
@@ -457,11 +459,11 @@ void OXPopupMenu::AddSeparator() {
   AdjustSize();
 }
 
-void OXPopupMenu::AddPopup(OHotString *s, OXPopupMenu *popup) {
+void OXPopupMenu::AddPopup(OHotString *s, OXPopupMenu *popup, int ID) {
   OMenuEntry *e;
   int hotchar;
 
-  e = new OMenuEntry(MENU_POPUP, -2, s);
+  e = new OMenuEntry(MENU_POPUP, ID, s);
 
   e->_popup = popup;
   e->_ex = _sidePic ? _sidePic->GetWidth() + 4 : 2;
@@ -485,10 +487,12 @@ void OXPopupMenu::AddPopup(OHotString *s, OXPopupMenu *popup) {
   AdjustSize();
 }
 
-void OXPopupMenu::RemoveEntry(int ID) {
+void OXPopupMenu::RemoveEntry(int ID, int type) {
   OMenuEntry *ptr, *ptr2;
 
-  for (ptr = _first; ptr && ptr->_entryID != ID; ptr = ptr->next);
+  for (ptr = _first; ptr; ptr = ptr->next) {
+    if ((ptr->_entryID == ID) && (ptr->_type == type)) break;
+  }
   if (ptr == NULL) return; // not found!
 
   if (ptr->prev == NULL) {
@@ -507,6 +511,7 @@ void OXPopupMenu::RemoveEntry(int ID) {
     ptr2 = ptr->next;
     ptr2->prev = ptr->prev;
   }
+  if (ptr == _current) _current = NULL;
   delete ptr;
 
   AdjustSize();
@@ -522,6 +527,7 @@ void OXPopupMenu::RemoveAllEntries() {
     ptr = next;
   }
   _first = _last = NULL;
+  _current = NULL;
 
   AdjustSize();
 }
@@ -661,13 +667,10 @@ void OXPopupMenu::PlaceMenu(int x, int y, int stick_mode, int grab_pointer) {
 int OXPopupMenu::PopupMenu(int x, int y) {
   PlaceMenu(x, y, True, True);
   _client->WaitForUnmap(this);
-  if (_current && _current->_status & MENU_ENABLE_MASK)
-    return _current->_entryID;
-  return -1;
+  return _lastID;
 }
 
 int OXPopupMenu::EndMenu() {
-  int ID;
 
   if (_delay) { delete _delay; _delay = NULL; }
 
@@ -679,28 +682,29 @@ int OXPopupMenu::EndMenu() {
     _current->_status &= ~MENU_ACTIVE_MASK;
 
     if (_current->_type == MENU_POPUP) {
-      ID = _current->_popup->EndMenu();
-    } else {
+      _lastID = _current->_popup->EndMenu();
+    } else if (_current->_type == MENU_ENTRY) {
       // return the ID if the entry is enabled, otherwise -1
       if (_current->_status & MENU_ENABLE_MASK) {
-        ID = _current->_entryID;
+        _lastID = _current->_entryID;
       } else {
-        ID = -1;
+        _lastID = -1;
       }
+    } else {  // separator
+      _lastID = -1;
     }
 
   } else {
     // if no entry selected...
-    ID = -1;
+    _lastID = -1;
   }
 
   // then unmap itself
   UnmapWindow();
-  return ID;
+  return _lastID;
 }
 
 int OXPopupMenu::HandleButton(XButtonEvent *event) {
-  int ID;
   
   if (event->type == ButtonRelease) {
     if (_stick) {
@@ -708,7 +712,7 @@ int OXPopupMenu::HandleButton(XButtonEvent *event) {
       return True;
     }
 
-    ID = EndMenu();
+    int ID = EndMenu();
     if (_hasgrab) {
       XUngrabPointer(GetDisplay(), CurrentTime);
       XUngrabKeyboard(GetDisplay(), CurrentTime);

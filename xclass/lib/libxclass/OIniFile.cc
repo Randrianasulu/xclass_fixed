@@ -43,7 +43,7 @@ OIniFile::OIniFile(const char *filename, int type) {
 
 char *OIniFile::GetItem(const char *item, char *value) {
 
-  char  line[MAX_LINE_LEN];
+  char  line[INI_MAX_LINE_LEN];
   char *tmp;
 
   if (value) *value = '\0';
@@ -52,7 +52,7 @@ char *OIniFile::GetItem(const char *item, char *value) {
 
   fseek(ifp, offset, SEEK_SET);
   while (!(feof(ifp))) {
-    if (fgets(line, MAX_LINE_LEN, ifp) != NULL) {
+    if (fgets(line, INI_MAX_LINE_LEN, ifp) != NULL) {
       line[strlen(line) - 1] = '\0';
       if ((strchr(line, '[') != 0) && (strchr(line, ']') != 0)) {
 	return NULL;
@@ -75,14 +75,14 @@ char *OIniFile::GetItem(const char *item, char *value) {
 }
 
 bool OIniFile::GetBool(const char *item, bool _default) {
-  char line[MAX_LINE_LEN];
+  char line[INI_MAX_LINE_LEN];
   char *tmp;
 
   if (!ifp) return false;
 
   fseek(ifp, offset, SEEK_SET);
   while (!(feof(ifp))) {
-    if (fgets(line, MAX_LINE_LEN, ifp) != NULL) {
+    if (fgets(line, INI_MAX_LINE_LEN, ifp) != NULL) {
       line[strlen(line) - 1] = '\0';
       if ((strchr(line, '[') != 0) && (strchr(line, ']') != 0)) {
         return _default;
@@ -104,14 +104,14 @@ bool OIniFile::GetBool(const char *item, bool _default) {
 
 int OIniFile::GetNext(char *type) {
 
-  char  line[MAX_LINE_LEN];
+  char  line[INI_MAX_LINE_LEN];
   char *start, *end;
 
   if (!ifp) return 0;
 
   fseek(ifp, offset, SEEK_SET);
   while (!(feof(ifp))) {
-    if (fgets(line, MAX_LINE_LEN, ifp) != NULL) {
+    if (fgets(line, INI_MAX_LINE_LEN, ifp) != NULL) {
       line[strlen(line) - 1] = '\0';
       if (((start = strchr(line, '[')) != NULL) && 
           ((end = strchr(start, ']')) != NULL)) {

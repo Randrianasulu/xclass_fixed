@@ -46,7 +46,7 @@ public:
   virtual ~OXTextButton();
 
   virtual ODimension GetDefaultSize() const
-          { return ODimension(_tw+8, _th+7); }
+          { return ODimension(_tw+_ml+_mr+8, _th+_mt+_mb+7); }
 
   virtual int HandleKey(XKeyEvent *event);
 
@@ -58,11 +58,19 @@ public:
   void SetWrapLength(int wl) { _wrapLength = wl; Layout(); }
   void SetTextColor(unsigned int color);
 
+  void SetMargins(int left=0, int right=0, int top=0, int bottom=0)
+      { _ml = left; _mr = right; _mt = top; _mb = bottom; }
+
   const OString *GetText() const { return _text; }
   int GetTextAlignment() const { return _align; }
   int GetTextJustify() const { return _justify; }
   int GetTextFlags() const { return _textFlags; }
   int GetWrapLength() const { return _wrapLength; }
+
+  int GetLeftMargin() const { return _ml; }
+  int GetRightMargin() const { return _mr; }
+  int GetTopMargin() const { return _mt; }
+  int GetBottomMargin() const { return _mb; }
 
   virtual void Layout();
   
@@ -71,6 +79,7 @@ protected:
 
   OString *_text;
   int _align, _textFlags, _justify, _wrapLength;
+  int _ml, _mr, _mt, _mb;
   int _hkeycode;
   const OXFont *_font;
   OTextLayout *_tl;

@@ -2199,3 +2199,23 @@ OPicture.cc
 21/07/02
 
 - OXColorPick: colormap[] and pixel[] arrays are now private class members.
+
+
+23/07/02
+
+- OXClient::HandleMaskEvent(): allow dispatching events to the root window
+  in case some client established a WaitFor() on it.
+
+
+25/07/02
+
+- OIniFile.h: renamed MAX_LINE_LEN to INI_MAX_LINE_LEN, and increased its
+  value to PATH_MAX+256.
+
+- OXPopupMenu::RemoveEntry(): allow removing separators and popups as
+  well.
+
+- OXPopupMenu::PopupMenu(): return the correct entry ID if it came from
+  another popup.
+
+- OXTextButton() added SetMargins() method, similar to OXLabel's one.

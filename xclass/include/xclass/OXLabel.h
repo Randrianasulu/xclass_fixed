@@ -77,6 +77,11 @@ public:
   int GetTextFlags() const { return _textFlags; }
   int GetWrapLength() const { return _wrapLength; }
   int Get3DStyle() const { return _3dStyle; }
+  
+  int GetLeftMargin() const { return _ml; }
+  int GetRightMargin() const { return _mr; }
+  int GetTopMargin() const { return _mt; }
+  int GetBottomMargin() const { return _mb; }
 
   virtual void Layout();
 

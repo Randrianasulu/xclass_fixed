@@ -729,7 +729,7 @@ int OXClient::HandleMaskEvent(XEvent *Event, Window wid) {
     // This breaks class member protection, but OXClient is a friend of all
     // classes and _should_ know what to do and what *not* to do...
 
-    for (ptr = w; ptr->_parent != NULL; ptr = (OXWindow *) ptr->_parent) {
+    for (ptr = w; ptr != NULL; ptr = (OXWindow *) ptr->_parent) {
       if (ptr->_id == wid) {
         w->HandleEvent(Event);
         return True;
