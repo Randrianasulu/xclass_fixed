@@ -33,6 +33,13 @@
 #include <xclass/OXFileDialog.h>
 #include <xclass/OResourcePool.h>
 
+#include "icons/tb-uplevel.xpm"
+#include "icons/tb-newfolder.xpm"
+#include "icons/tb-list.xpm"
+#include "icons/tb-details.xpm"
+#include "icons/tb-addfavor.xpm"
+#include "icons/tb-favor.xpm"
+
 
 #define IDF_CDUP        0
 #define IDF_NEW_FOLDER  1
@@ -158,13 +165,26 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
   _tree_lb = new OXFileSystemDDListBox(_htop, IDF_FSLB);
   _tree_lb->Associate(this);
 
+  // try user-defined toolbar pixmaps first...
+
   pcdup = _client->GetPicture("tb-uplevel.xpm");
   pnewf = _client->GetPicture("tb-newfolder.xpm");
   plist = _client->GetPicture("tb-list.xpm");
   pdetails = _client->GetPicture("tb-details.xpm");
 
-  if (!(plist && pnewf && plist && pdetails))
-    FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
+  // use our default pixmaps for the missing ones...
+
+  if (!pcdup)
+    pcdup = _client->GetPicture("tb-uplevel.xpm", XCP_tb_uplevel_xpm);
+  if (!pnewf)
+    pnewf = _client->GetPicture("tb-newfolder.xpm", XCP_tb_newfolder_xpm);
+  if (!plist)
+    plist = _client->GetPicture("tb-list.xpm", XCP_tb_list_xpm);
+  if (!pdetails)
+    pdetails = _client->GetPicture("tb-details.xpm", XCP_tb_details_xpm);
+
+  if (!(pcdup && pnewf && plist && pdetails))
+    FatalError("OXFileDialog: missing toolbar pixmap(s).");
 
   _cdup = new OXPictureButton(_htop, pcdup, IDF_CDUP);
   _newf = new OXPictureButton(_htop, pnewf, IDF_NEW_FOLDER);
@@ -190,8 +210,13 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
     paddfavor = _client->GetPicture("tb-addfavor.xpm");
     pfavor = _client->GetPicture("tb-favor.xpm");
 
+    if (!paddfavor)
+      paddfavor = _client->GetPicture("tb-addfavor.xpm", XCP_tb_addfavor_xpm);
+    if (!pfavor)
+      pfavor = _client->GetPicture("tb-favor.xpm", XCP_tb_favor_xpm);
+
     if (!(paddfavor && pfavor))
-      FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
+      FatalError("OXFileDialog: missing toolbar pixmap(s).");
 
     const char *userRoot = _client->GetResourcePool()->GetUserRoot();
     _favorDir = new char[strlen(userRoot) + 12];

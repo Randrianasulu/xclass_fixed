@@ -45,6 +45,22 @@
 #include <xclass/OResourcePool.h>
 #include <xclass/OXFileList.h>
 
+#include "icons/folder.s.xpm"
+#include "icons/folder.t.xpm"
+#include "icons/app.s.xpm"
+#include "icons/app.t.xpm"
+#include "icons/doc.s.xpm"
+#include "icons/doc.t.xpm"
+#include "icons/slink.s.xpm"
+#include "icons/slink.t.xpm"
+#include "icons/desktop.s.xpm"
+#include "icons/desktop.t.xpm"
+#include "icons/recycle-empty.s.xpm"
+#include "icons/recycle-empty.t.xpm"
+#include "icons/recycle-full.s.xpm"
+#include "icons/recycle-full.t.xpm"
+
+
 #define REFRESH_TIME   5000
 
 Atom OXFileList::URI_list = None;
@@ -318,6 +334,8 @@ OXFileList::OXFileList(const OXWindow *p, int id,
     _autoRefresh = True;
     _refresh = new OTimer(this, REFRESH_TIME);
 
+    // try loading user-defined pixmaps first...
+
     _folder_s  = _client->GetPicture("folder.s.xpm");
     _folder_t  = _client->GetPicture("folder.t.xpm");
     _app_s     = _client->GetPicture("app.s.xpm");
@@ -333,7 +351,36 @@ OXFileList::OXFileList(const OXWindow *p, int id,
     _rbfull_s  = _client->GetPicture("recycle-full.s.xpm");
     _rbfull_t  = _client->GetPicture("recycle-full.t.xpm");
 
-    _compileFilter(filter);
+    // use xclass default pixmaps for the missing ones...
+
+    if (!_folder_s)
+      _folder_s  = _client->GetPicture("folder.s.xpm", XCP_folder_s_xpm);
+    if (!_folder_t)
+      _folder_t  = _client->GetPicture("folder.t.xpm", XCP_folder_t_xpm);
+    if (!_app_s)
+      _app_s     = _client->GetPicture("app.s.xpm", XCP_app_s_xpm);
+    if (!_app_t)
+      _app_t     = _client->GetPicture("app.t.xpm", XCP_app_t_xpm);
+    if (!_doc_s)
+      _doc_s     = _client->GetPicture("doc.s.xpm", XCP_doc_s_xpm);
+    if (!_doc_t)
+      _doc_t     = _client->GetPicture("doc.t.xpm", XCP_doc_t_xpm);
+    if (!_slink_s)
+      _slink_s   = _client->GetPicture("slink.s.xpm", XCP_slink_s_xpm);
+    if (!_slink_t)
+      _slink_t   = _client->GetPicture("slink.t.xpm", XCP_slink_t_xpm);
+    if (!_desktop_s)
+      _desktop_s = _client->GetPicture("desktop.s.xpm", XCP_desktop_s_xpm);
+    if (!_desktop_t)
+      _desktop_t = _client->GetPicture("desktop.t.xpm", XCP_desktop_t_xpm);
+    if (!_rbempty_s)
+      _rbempty_s = _client->GetPicture("recycle-empty.s.xpm", XCP_recycle_empty_s_xpm);
+    if (!_rbempty_t)
+      _rbempty_t = _client->GetPicture("recycle-empty.t.xpm", XCP_recycle_empty_t_xpm);
+    if (!_rbfull_s)
+      _rbfull_s  = _client->GetPicture("recycle-full.s.xpm", XCP_recycle_full_s_xpm);
+    if (!_rbfull_t)
+      _rbfull_t  = _client->GetPicture("recycle-full.t.xpm", XCP_recycle_full_t_xpm);
 
     if (!_folder_s  || !_folder_t ||
         !_app_s     || !_app_t    ||
@@ -342,7 +389,9 @@ OXFileList::OXFileList(const OXWindow *p, int id,
         !_desktop_s || !_desktop_t ||
         !_rbempty_s || !_rbempty_t ||
         !_rbfull_s  || !_rbfull_t)
-      FatalError("OXFileList: Missing required pixmap(s)\n");
+      FatalError("OXFileList: Missing required pixmap(s).");
+
+    _compileFilter(filter);
 
     const char *uroot = _client->GetResourcePool()->GetUserRoot();
     if (uroot) {

@@ -4,7 +4,7 @@ static char *XCP_mb_asterisk[] = {
 "32 32 6 1 ",
 /* colors */
 "0 c #000000   m black  s s_black",
-"a c #808080   m black  s s_darkgray",
+"a c #808080   m black  s FrameShadowColor",
 "A c #c0c0c0   m white  s s_gray",
 "B c #0000FF   m white  s s_blue",
 "W c #FFFFFF   m white  s s_white",

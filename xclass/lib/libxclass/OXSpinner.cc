@@ -38,7 +38,7 @@ OXDoubleScroller :: OXDoubleScroller(const OXWindow *p, int w, int h) :
                                                 XCP_arrow_up);
 
     if (!(_picd || _picu))
-      FatalError("OXDoubleScroller: arrow images failed to load\n");
+      FatalError("OXDoubleScroller: arrow images failed to load");
 
     _up = new OXScrollBarElt(this, _picu, SB_WIDTH, _h/2, RAISED_FRAME);
     _down = new OXScrollBarElt(this, _picd, SB_WIDTH, _h/2, RAISED_FRAME);

@@ -49,6 +49,11 @@
 #include <xclass/OPicture.h>
 #include <xclass/OXPropertiesDialog.h>
 
+#include "icons/folder.s.xpm"
+#include "icons/app.s.xpm"
+#include "icons/doc.s.xpm"
+#include "icons/slink.s.xpm"
+
 
 //-------------------------------------------------------------------
 
@@ -60,12 +65,23 @@ OXPropertiesDialog::OXPropertiesDialog(const OXWindow *p, const OXWindow *main,
     char name[PATH_MAX], wname[PATH_MAX];
 
     _folder = _client->GetPicture("folder.s.xpm");
-    _app    = _client->GetPicture("app.s.xpm");
-    _doc    = _client->GetPicture("doc.s.xpm");
-    _slink  = _client->GetPicture("slink.s.xpm");
+    if (!_folder)
+      _folder = _client->GetPicture("folder.s.xpm", XCP_folder_s_xpm);
+
+    _app = _client->GetPicture("app.s.xpm");
+    if (!_app)
+      _app = _client->GetPicture("app.s.xpm", XCP_app_s_xpm);
+
+    _doc = _client->GetPicture("doc.s.xpm");
+    if (!_doc)
+      _doc = _client->GetPicture("doc.s.xpm", XCP_doc_s_xpm);
+
+    _slink = _client->GetPicture("slink.s.xpm");
+    if (!_slink)
+      _slink = _client->GetPicture("slink.s.xpm", XCP_slink_s_xpm);
 
     if (!_folder || !_app || !_doc || !_slink)
-      FatalError("OXDesktopContainer: Missing required pixmap(s)\n");
+      FatalError("OXPropertiesDialog: Missing required pixmap(s)");
 
     _fname = fname;
     _tname = new OString("");

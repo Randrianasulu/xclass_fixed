@@ -38,16 +38,21 @@ int main(int argc, char **argv) {
   if (argc > 1) {
     appname = argv[1];
   } else {
-    fprintf(stderr, "usage: %s appname  (for example: %s rx320)\n",
+    fprintf(stderr, "usage: %s appname [filename]  (for example: %s rx320)\n",
             argv[0], argv[0]);
     return 1;
+  }
+
+  char *fname = "index.html";
+  if (argc > 2) {
+    fname = argv[2];
   }
 
   int w = 600;  // 450;
   int h = 650;  // 500;
 
   OXHelpWindow *mainWindow = new OXHelpWindow(clientX->GetRoot(), NULL, w, h,
-                                              "index.html", NULL, appname);
+                                              fname, NULL, appname);
   mainWindow->MapWindow();
 
   clientX->Run();

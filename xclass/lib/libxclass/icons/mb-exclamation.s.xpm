@@ -5,7 +5,7 @@ static char *XCP_mb_exclamation[] = {
 /* colors */
 "0 c #000000   m black  s s_black",
 "y c #808000   m black  s s_darkyellow",
-"a c #808080   m black  s s_darkgray",
+"a c #808080   m black  s FrameShadowColor",
 "A c #c0c0c0   m white  s s_gray",
 "Y c #FFFF00   m white  s s_yellow",
 "  c none      m white  s none",

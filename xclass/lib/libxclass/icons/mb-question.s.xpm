@@ -4,7 +4,7 @@ static char *XCP_mb_question[] = {
 "32 32 6 1",
 /* colors */
 " 	s none	m white	c none",
-".	s s_darkgray	m black	c #808080",
+".	s FrameShadowColor	m black	c #808080",
 "X	s s_gray	m white	c #c0c0c0",
 "o	s s_white	m white	c white",
 "O	s s_blue	m white	c #0000FF",

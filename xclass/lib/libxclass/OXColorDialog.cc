@@ -726,9 +726,9 @@ void OXColorPick::_InitImages() {
 
         OColor::HLS2RGB(h, l, s, &r, &g, &b);
 
-        r = r * rmax / 256;
-        g = g * gmax / 256;
-        b = b * bmax / 256;
+        r = r * rmax / 255;
+        g = g * gmax / 255;
+        b = b * bmax / 255;
         XPutPixel(_HSimage, x, y, (r << rshift) | (g << gshift) | (b << bshift));
       }
     }
@@ -767,9 +767,9 @@ void OXColorPick::_SetSliderColor() {
 
       OColor::HLS2RGB(_currentColor.GetH(), l, _currentColor.GetS(), &r, &g, &b);
 
-      r = r * rmax / 256;
-      g = g * gmax / 256;
-      b = b * bmax / 256;
+      r = r * rmax / 255;
+      g = g * gmax / 255;
+      b = b * bmax / 255;
       unsigned long pixel = (r << rshift) | (g << gshift) | (b << bshift);
 
       for (int x = 0; x < _Limage->width; ++x) {
@@ -787,19 +787,19 @@ void OXColorPick::SetColor(OColor color) {
 
   _currentColor = color;
 
-  _SetHScursor(_currentColor.GetH() * _HSimage->width / 256,
-               (255 - _currentColor.GetS()) * _HSimage->height / 256);
+  _SetHScursor(_currentColor.GetH() * (_HSimage->width - 1) / 255,
+               (255 - _currentColor.GetS()) * (_HSimage->height - 1) / 255);
 
-  _SetLcursor((255 - _currentColor.GetL()) * _Limage->height / 256);
+  _SetLcursor((255 - _currentColor.GetL()) * (_Limage->height - 1) / 255);
 
   _SetSliderColor();
 }
 
 void OXColorPick::_UpdateCurrentColor() {
 
-  int h = _cx * 255 / _HSimage->width;
-  int l = (_Limage->height - _cz) * 255 / _Limage->height;
-  int s = (_HSimage->height - _cy) * 255 / _HSimage->height;
+  int h = _cx * 255 / (_HSimage->width - 1);
+  int l = (_Limage->height - _cz - 1) * 255 / (_Limage->height - 1);
+  int s = (_HSimage->height - _cy - 1) * 255 / (_HSimage->height - 1);
 
   _currentColor.SetHLS(h, l, s);
 }
@@ -848,7 +848,7 @@ void OXColorPick::_SetLcursor(int z) {
 
   _DrawLcursor(False);
 
-  _cz = z - _sliderRect.y;
+  _cz = z - _sliderRect.y + 1;
 
   if (_cz < 0)
     _cz = 0;

@@ -131,7 +131,7 @@ static FILE *__f = NULL;
 void OpenLog() {
   if (!__f) {
     __f = fopen("mem.log", "a");
-    if (!__f) FatalError("Can't open log file\n");
+    if (!__f) FatalError("Can't open log file");
     fprintf(__f, "******** Log started ********\n"); fflush(__f);
   }
 }

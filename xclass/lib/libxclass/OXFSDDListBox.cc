@@ -29,6 +29,8 @@
 #include <xclass/OResourcePool.h>
 #include <xclass/OGC.h>
 
+#include "icons/folder.t.xpm"
+
 
 //--- this is temp here...
 
@@ -164,7 +166,10 @@ OXFileSystemDDListBox::OXFileSystemDDListBox(const OXWindow *parent,
     char  *p;
 
     pic = _client->GetPicture("folder.t.xpm");
-    if (!pic) FatalError("Pixmap not found: folder.t.xpm");
+    if (!pic)
+      pic = _client->GetPicture("folder.t.xpm", XCP_folder_t_xpm);
+    if (!pic)
+      FatalError("OXFSDDListBox: Pixmap not found: folder.t.xpm");
 
     SetTopEntry(new OXTreeLBEntry(this, new OString("Current dir"), pic, 0),
                 new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_X |
@@ -178,7 +183,7 @@ OXFileSystemDDListBox::OXFileSystemDDListBox(const OXWindow *parent,
 
     char *HomeDir = getenv("HOME");
 
-    for (i=0; lbc[i].path != NULL; ++i) {
+    for (i = 0; lbc[i].path != NULL; ++i) {
       if (strstr(lbc[i].path, "$HOME") != NULL) {
         if (HomeDir) {
           int hlen = strlen(HomeDir);
@@ -194,12 +199,17 @@ OXFileSystemDDListBox::OXFileSystemDDListBox(const OXWindow *parent,
     }
 
     //--- then init the contents...
-  
-    for (i=0; lbc[i].name != NULL; ++i) {
+
+    for (i = 0; lbc[i].name != NULL; ++i) {
       if (lbc[i].flags) {
         indent = 4 + (lbc[i].indent * 10);
         pic = _client->GetPicture(lbc[i].pixmap);
-        if (!pic) FatalError("Pixmap not found: %s", lbc[i].pixmap);
+        if (!pic)
+          pic = _client->GetPicture("folder.t.xpm");
+        if (!pic)
+          pic = _client->GetPicture("folder.t.xpm", XCP_folder_t_xpm);
+        if (!pic)
+          FatalError("OXFSDDListBox: pixmap not found: %s", lbc[i].pixmap);
         AddEntry(new OXTreeLBEntry(_lb->GetContainer(),
                        new OString(lbc[i].name), pic, lbc[i].ID,
                        new OString(lbc[i].path)),
@@ -217,11 +227,11 @@ void OXFileSystemDDListBox::UpdateContents(char *path) {
   
   if (!path) return;
 
-  for (i=0; lbc[i].path != NULL; ++i)
+  for (i = 0; lbc[i].path != NULL; ++i)
     RemoveEntries(lbc[i].ID+1, lbc[i+1].ID-1);
 
   int len = 0;
-  for (i=0; lbc[i].name != NULL; ++i) {
+  for (i = 0; lbc[i].name != NULL; ++i) {
     if (lbc[i].flags) {
       int slen = strlen(lbc[i].path);
       if (strncmp(path, lbc[i].path, slen) == 0) {
@@ -254,7 +264,12 @@ void OXFileSystemDDListBox::UpdateContents(char *path) {
         strcat(mpath, dirname);
         int indent = 4 + (indent_lvl * 10);
         const OPicture *pic = _client->GetPicture(picname);
-        if (!pic) FatalError("Pixmap not found: %s", picname);
+        if (!pic)
+          pic = _client->GetPicture("folder.t.xpm");
+        if (!pic)
+          pic = _client->GetPicture("folder.t.xpm", XCP_folder_t_xpm);
+        if (!pic)
+          FatalError("OXFSDDListBox: pixmap not found: %s", picname);
         InsertEntry(new OXTreeLBEntry(_lb->GetContainer(),
                             new OString(dirname), pic, afterID+1,
                             new OString(mpath)),

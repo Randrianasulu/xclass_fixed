@@ -71,7 +71,7 @@ void OXClient::_Init(const char *DpyName) {
   //--- Open the connection to the display
 
   if (!(_dpy = XOpenDisplay(DpyName)))
-    FatalError("Can't open display \"%s\"\n", XDisplayName(DpyName));
+    FatalError("Can't open display \"%s\"", XDisplayName(DpyName));
 
   _screen = DefaultScreen(_dpy);
   _depth = DefaultDepth(_dpy, _screen);

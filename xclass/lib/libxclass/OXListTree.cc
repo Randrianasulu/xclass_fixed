@@ -35,6 +35,9 @@
 #include <xclass/OTimer.h>
 #include <xclass/OGC.h>
 
+#include "icons/folder.t.xpm"
+#include "icons/ofolder.t.xpm"
+
 
 #define KBD_DELAY   500
 
@@ -917,8 +920,13 @@ void OXListTree::AddItem(OListTreeItem *parent, OListTreeItem *item) {
 
   if (!item->open_pic)
     item->open_pic = _client->GetPicture("ofolder.t.xpm");
+  if (!item->open_pic)
+    item->open_pic = _client->GetPicture("ofolder.t.xpm", XCP_ofolder_t_xpm);
+
   if (!item->closed_pic)
     item->closed_pic = _client->GetPicture("folder.t.xpm");
+  if (!item->closed_pic)
+    item->closed_pic = _client->GetPicture("folder.t.xpm", XCP_folder_t_xpm);
 
   _InsertChild(parent, item);
 
@@ -941,8 +949,15 @@ OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, const char *string,
                                    const OPicture *closed) {
   OListTreeItem *item;
 
-  if (!open) open = _client->GetPicture("ofolder.t.xpm");
-  if (!closed) closed = _client->GetPicture("folder.t.xpm");
+  if (!open)
+    open = _client->GetPicture("ofolder.t.xpm");
+  if (!open)
+    open = _client->GetPicture("ofolder.t.xpm", XCP_ofolder_t_xpm);
+
+  if (!closed)
+    closed = _client->GetPicture("folder.t.xpm");
+  if (!closed)
+    closed = _client->GetPicture("folder.t.xpm", XCP_folder_t_xpm);
 
   item = new OListTreeItem(_client, string, open, closed);
   _InsertChild(parent, item);

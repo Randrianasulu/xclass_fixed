@@ -2445,3 +2445,22 @@ OPicture.cc
   html-based help system. To use it, user applications need only to create
   a OXHelpWindow top-level window object and to pass the application and
   root document names.
+
+
+24/07/04  (0.9.1)
+
+- OXColorPick: corrected the max hue range and min saturation range when
+  using the mouse to select a color, both were off by one.
+
+- Added OXImageView, a simple OXView-based widget for viewing rgb images.
+  The widget can do dithering (Floyd-Steinberg or Bayer) in display modes
+  with reduced number of color cells.
+
+
+25/07/04
+
+- Added default compiled-in pixmaps to the following widgets: OXFileList,
+  OXFSDDListBox, OXListTree, OXFileDialog and OXPropertiesDialog. No more of
+  these annoying "Fatal Error: missing required pixmaps" messages when an
+  application cannot find the icon directory. Statically-linked xclass
+  programs can now run on machines that do not have xclass installed.
