@@ -4,6 +4,7 @@ widgets and features of the xclass library.
 wintest  - used to test the dialog and message boxes, as
            well as the following widgets:
              - menu bar and popup menus
+             - side pixmaps in menus
              - scrollable canvas
              - buttons
              - tab
