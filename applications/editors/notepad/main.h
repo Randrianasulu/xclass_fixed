@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of notepad, a simple text editor.
-    Copyright (C) 1997-2001, Harald Radke, Hector Peraza.
+    Copyright (C) 1997-2004, Harald Radke, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,9 +30,10 @@
 #include <xclass/OXMsgBox.h>
 #include <xclass/OXStatusBar.h>
 #include <xclass/OXTextEdit.h>
+#include <xclass/OXHelpWindow.h>
 #include <xclass/OString.h>
 
-#define NOTEPAD_VERSION    "0.9.1"
+#define NOTEPAD_VERSION    "0.9.5"
 
 #define M_FILE_NEW         101
 #define M_FILE_OPEN        102
@@ -75,6 +76,7 @@ public:
   void Search(int ret);
   void Goto();
   void TimeDate();
+  void ShowHelp();
   void About();
 
   int IsSaved();
@@ -95,6 +97,8 @@ protected:
   OXMenuBar *_menuBar;
   OXPopupMenu *_menuFile, *_menuEdit, *_menuSearch, *_menuHelp;
   OString *_fontName;
+
+  OXHelpWindow *_helpWindow;
   
   int _exiting;
 };

@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of notepad, a simple text editor.
-    Copyright (C) 1997-2001, Harald Radke, Hector Peraza.
+    Copyright (C) 1997-2004, Harald Radke, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ OXClient *clientX;
 search_struct search;
 
 int main(int argc, char **argv) {
-  clientX = new OXClient;
+  clientX = new OXClient(argc, argv);
 
   search.direction = True;
   search.caseSensitive = False;
@@ -68,6 +68,8 @@ int main(int argc, char **argv) {
 }
 
 OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
+
+  _helpWindow = 0;
 
   _menuBarLayout = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 1, 1);
   _menuBarItemLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 0, 4, 0, 0);
@@ -110,11 +112,9 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
   _menuSearch->AddEntry(new OHotString("&Goto line..."), M_SEARCH_GOTO);
 
   _menuHelp = new OXPopupMenu(_client->GetRoot());
-  _menuHelp->AddEntry(new OHotString("&Help topics\tF1"), M_HELP_CONTENTS);
+  _menuHelp->AddEntry(new OHotString("&Help\tF1"), M_HELP_CONTENTS);
   _menuHelp->AddSeparator();
   _menuHelp->AddEntry(new OHotString("&About..."), M_HELP_ABOUT);
-
-  _menuHelp->DisableEntry(M_HELP_CONTENTS);
 
   _menuFile->Associate(this);
   _menuEdit->Associate(this);
@@ -152,6 +152,10 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
 
   int keycode;
 
+  keycode = XKeysymToKeycode(GetDisplay(), XK_F1);
+  XGrabKey(GetDisplay(), keycode, AnyModifier, _id, True,
+           GrabModeAsync, GrabModeAsync);
+
   keycode = XKeysymToKeycode(GetDisplay(), XK_F3);
   XGrabKey(GetDisplay(), keycode, AnyModifier, _id, True,
            GrabModeAsync, GrabModeAsync);
@@ -183,6 +187,7 @@ void OXMain::LoadFile(char *fname) {
   if (fname == NULL) {
     fi.MimeTypesList = NULL;
     fi.file_types = filetypes;
+    fi.file_types_index = 2;
 
     new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
     fname = fi.filename;
@@ -241,6 +246,7 @@ void OXMain::SaveFileAs() {
 
   fi.MimeTypesList = NULL;
   fi.file_types = filetypes;
+  fi.file_types_index = 0;
   new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
   if (fi.filename) {
     SaveFile(fi.filename);
@@ -319,6 +325,7 @@ int OXMain::CloseWindow() {
       SaveFile(filename);
     if (_te->TextChanged()) break;
   case ID_NO:
+    if (_helpWindow) _helpWindow->CloseWindow();
     return OXMainFrame::CloseWindow();
   }
   _exiting = False;
@@ -329,6 +336,10 @@ int OXMain::HandleKey(XKeyEvent *event) {
   if (event->type == KeyPress) {
     int keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
     switch (keysym) {
+      case XK_F1:
+        ShowHelp();
+        break;
+
       case XK_F3:
         Search(True);
         break;
@@ -388,6 +399,15 @@ void OXMain::TimeDate() {
   _te->InsertText(tstr);
 }
 
+void OXMain::ShowHelp() {
+  if (!_helpWindow) {
+    _helpWindow = new OXHelpWindow(_client->GetRoot(), NULL, 600, 650,
+                                   "index.html", NULL, "notepad");
+    _helpWindow->Associate(this);
+  }
+  _helpWindow->MapRaised();
+}
+
 void OXMain::About() {
   OAboutInfo info;
 
@@ -395,11 +415,11 @@ void OXMain::About() {
   info.title = "fOX Notepad version " NOTEPAD_VERSION "\n"
                "A simple text editor.\n"
                "Compiled with xclass version "XCLASS_VERSION;
-  info.copyright = "Copyright © 1997-2002 by H. Radke and H. Peraza";
+  info.copyright = "Copyright © 1997-2004 by H. Radke and H. Peraza";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"
-              "http://www.foxproject.org";
+              "http://xclass.sourceforge.net";
 
   new OXAboutDialog(_client->GetRoot(), this, &info);
 }
@@ -571,12 +591,17 @@ int OXMain::ProcessMessage(OMessage *msg) {
 
       //------------------------------- Help
 
+      case M_HELP_CONTENTS:
+        ShowHelp();
+        break;
+
       case M_HELP_ABOUT:
         About();
         break;
 
       default:
 	break;
+
       }
       break;
 
@@ -584,6 +609,10 @@ int OXMain::ProcessMessage(OMessage *msg) {
       break;
 
     }
+    break;
+
+  case MSG_HELP:
+    if (msg->action == MSG_CLOSE) _helpWindow = 0;
     break;
 
   default:
