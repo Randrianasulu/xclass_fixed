@@ -331,7 +331,7 @@ install_shared: install
 install:
 	mkdir -p ${icon_dir}
 	for i in ${ICONS} ; do \
-		${INSTALL_DATA} ./$$i ${icon_dir} ; \
+		${INSTALL_DATA} "./$$i" ${icon_dir} ; \
 	done
 
 clean:

@@ -2358,3 +2358,13 @@ OPicture.cc
 
 - OResourcePool::FindIniFile(): changed the search order for read operations,
   the system ini file must be the last in the chain.
+
+
+10/05/03
+
+- OXComboBox now has its own message structure. Also, MSG_TEXTCHANGED is
+  now properly sent to the associated frame.
+
+- Added OXComboBox::Select().
+
+- OXColorDialog now remembers custom color settingg.

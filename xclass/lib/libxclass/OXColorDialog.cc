@@ -962,7 +962,7 @@ OXColorDialog::OXColorDialog(const OXWindow *p, const OXWindow *m,
     _cpalette = new OXColorPalette(vf1, 8, 3, CDLG_CPALETTE);
     vf1->AddFrame(_cpalette, new OLayoutHints(LHINTS_NORMAL, 5, 5, 0, 0));
     _cpalette->Associate(this);
-    //_cpalette->SetColors(ucolor);
+    LoadCustomColors();
 
     // button frame
 
@@ -1149,7 +1149,9 @@ int OXColorDialog::ProcessMessage(OMessage *msg) {
                                   atoi(_gte->GetString()),
                                   atoi(_bte->GetString()));
               }
+              //SaveCustomColors();
             case CDLG_CANCEL:
+              SaveCustomColors();
               CloseWindow();
               break;
           }
@@ -1242,4 +1244,58 @@ int OXColorDialog::ProcessMessage(OMessage *msg) {
   }
 
   return True;
+}
+
+void OXColorDialog::LoadCustomColors() {
+  char *inipath, line[1024], arg[PATH_MAX];
+
+  inipath = GetResourcePool()->FindIniFile("colordlg", INI_READ);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_READ);
+
+  while (ini.GetNext(line)) {
+    if (strcasecmp(line, "custom colors") == 0) {
+      char tmp[50];
+
+      for (int i = 0; i < 8 * 3; ++i) {
+        sprintf(tmp, "color %d", i+1);
+        if (ini.GetItem(tmp, arg)) {
+          int r, g, b;
+
+          if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+            if (r >= 0 && r <= 255 &&
+                g >= 0 && g <= 255 &&
+                b >= 0 && b <= 255)
+              _cpalette->SetColor(i, OColor(r, g, b));
+          }
+        }
+      }
+    }
+  }
+
+  delete[] inipath;
+}
+
+void OXColorDialog::SaveCustomColors() {
+  char *inipath, tmp[20], arg[100];
+
+  inipath = GetResourcePool()->FindIniFile("colordlg", INI_WRITE);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_WRITE);
+
+  ini.PutNext("custom colors");
+  for (int i = 0; i < 8 * 3; ++i) {
+    OColor color = _cpalette->GetColorByIndex(i);
+    sprintf(tmp, "color %d", i+1);
+    sprintf(arg, "%d,%d,%d",
+                 color.GetR(),
+                 color.GetG(),
+                 color.GetB());
+    ini.PutItem(tmp, arg);
+  }
+  ini.PutNewLine();
+
+  delete[] inipath;
 }

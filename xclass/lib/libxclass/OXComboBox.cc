@@ -119,11 +119,17 @@ void OXComboBox::_PopDown() {
   _dd->PlacePopup(ax, ay, _w-2, _dd->GetDefaultHeight());
 }
 
+OXLBEntry *OXComboBox::Select(int ID) {
+  OXLBEntry *e = _lb->Select(ID);
+  _UpdateText(e);
+  return e;
+}
+
 void OXComboBox::_UpdateText(OXLBEntry *e) {
   if (e) {
     _te->Clear();
     _te->AddText(0, ((OXTextLBEntry *)e)->GetText()->GetString());
-    _te->SelectAll();
+    if (_te->HasFocus()) _te->SelectAll();
   }
 }
 
@@ -164,9 +170,12 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
             //case XK_Execute:
             case XK_Return:
             case XK_KP_Enter:
-              // TODO: transform this into an OComboBox message
-              SendMessage(_msgObject, msg);
               break;
+          }
+          {
+            OComboBoxMessage cmsg(MSG_COMBOBOX, msg->action, _widgetID,
+                                  0, 0, 0, temsg->keysym);
+            SendMessage(_msgObject, &cmsg);
           }
           break;
       }
@@ -179,10 +188,11 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
           e = _lb->GetSelectedEntry();
           if (e && lbmsg->id) {
             _UpdateText(e);
-            // TODO: transform this into an OComboBox message
-            OListBoxMessage message(MSG_LISTBOX, MSG_CLICK,
-                                    _widgetID, e->ID());
-            SendMessage(_msgObject, &message);
+            // TODO: update total/selected fields
+            // also send messages on MSG_SELCHANGED
+            OComboBoxMessage cmsg(MSG_COMBOBOX, msg->action, _widgetID,
+                                  e->ID(), 0, 0, 0);
+            SendMessage(_msgObject, &cmsg);
           }
           break;
       }

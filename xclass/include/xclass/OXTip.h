@@ -43,12 +43,19 @@ public:
   void SetText(OString *text);
   void Show(int x, int y);
   void Hide();
+  
+  void UseShadow(int onoff);
+
+protected:
+  void SetupShadow();
 
 private:
   OXLabel *_label;
   OLayoutHints *_ll;
   
   unsigned long _bg, _fg;
+  int _useShadow;
+  Pixmap _pclip, _pmask;
 };
 
 

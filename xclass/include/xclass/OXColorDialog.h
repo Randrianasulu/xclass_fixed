@@ -121,6 +121,8 @@ public:
   virtual int ProcessMessage(OMessage *msg);
 
 protected:
+  void LoadCustomColors();
+  void SaveCustomColors();
   void UpdateRGBentries(OColor *c);
   void UpdateHLSentries(OColor *c);
 

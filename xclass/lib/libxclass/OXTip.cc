@@ -24,6 +24,7 @@
 #include <xclass/OResourcePool.h>
 #include <xclass/OXTip.h>
 
+#include <X11/extensions/shape.h>
 
 //----------------------------------------------------------------------
 
@@ -42,6 +43,11 @@ OXTip::OXTip(const OXWindow *p, OString *text) :
   _bg = _client->GetResourcePool()->GetTipBgndColor();
   _fg = _client->GetResourcePool()->GetTipFgndColor();
 
+  _useShadow = True;
+
+  _pclip = None;
+  _pmask = None;
+
   SetBackgroundColor(_bg);
 
   _label = new OXLabel(this, text);
@@ -49,27 +55,48 @@ OXTip::OXTip(const OXWindow *p, OString *text) :
   _label->SetTextColor(_fg);
   //_label->SetFont(...);
 
+
   AddFrame(_label, _ll = new OLayoutHints(LHINTS_LEFT | LHINTS_TOP,
                                           2, 3, 0, 0));
   MapSubwindows();
-  Resize(GetDefaultSize());
+
+  if (_useShadow) {
+    ODimension size = GetDefaultSize();
+    Resize(size.w + 4, size.h + 4);
+    SetupShadow();
+  } else {
+    Resize(GetDefaultSize());
+  }
 }
 
 OXTip::~OXTip() {
   delete _ll;
   XDestroyWindow(GetDisplay(), _id);
+  if (_pclip != None) XFreePixmap(GetDisplay(), _pclip);
+  if (_pmask != None) XFreePixmap(GetDisplay(), _pmask);
 }
 
 void OXTip::DrawBorder() {
-  DrawLine(_shadowGC, 0, 0, _w-2, 0);
-  DrawLine(_shadowGC, 0, 0, 0, _h-2);
+  if (_useShadow) {
+    DrawLine(_blackGC, 0, 0, _w-2, 0);
+    DrawLine(_blackGC, 0, 0, 0, _h-2);
+  } else {
+    DrawLine(_shadowGC, 0, 0, _w-2, 0);
+    DrawLine(_shadowGC, 0, 0, 0, _h-2);
+  }
   DrawLine(_blackGC,  0, _h-1, _w-1, _h-1);
   DrawLine(_blackGC,  _w-1, _h-1, _w-1, 0);
 }
 
 void OXTip::SetText(OString *text) {
   _label->SetText(text);
-  Resize(GetDefaultSize());
+  if (_useShadow) {
+    ODimension size = GetDefaultSize();
+    Resize(size.w + 4, size.h + 4);
+    SetupShadow();
+  } else {
+    Resize(GetDefaultSize());
+  }
 }
 
 void OXTip::Show(int x, int y) {
@@ -82,6 +109,51 @@ void OXTip::Hide() {
   UnmapWindow();
 }
 
+void OXTip::SetupShadow() {
+  Window Root = _client->GetRoot()->GetId();
+  XGCValues gcval;
+  unsigned long gcmask;
+
+  if (_pclip != None) XFreePixmap(GetDisplay(), _pclip);
+  if (_pmask != None) XFreePixmap(GetDisplay(), _pmask);
+
+  ODimension size = GetDefaultSize();
+
+  _pmask = XCreatePixmap(GetDisplay(), Root, size.w + 4, size.h + 4, 1);
+  _pclip = XCreatePixmap(GetDisplay(), Root, size.w + 4, size.h + 4, 1);
+
+  gcmask = GCForeground | GCBackground | GCFillStyle | GCStipple;
+  gcval.foreground = 1;
+  gcval.background = 0;
+  gcval.fill_style = FillStippled;
+  gcval.stipple = _client->GetResourcePool()->GetCheckeredBitmap();
+  GC cgc = XCreateGC(GetDisplay(), _pmask, gcmask, &gcval);
+
+  gcmask = GCForeground | GCBackground | GCFillStyle;
+  gcval.fill_style = FillSolid;
+  gcval.foreground = 0;
+  gcval.background = 0;
+  GC gc0 = XCreateGC(GetDisplay(), _pmask, gcmask, &gcval);
+
+  gcval.foreground = 1;
+  gcval.background = 1;
+  GC gc1 = XCreateGC(GetDisplay(), _pmask, gcmask, &gcval);
+
+  XFillRectangle(GetDisplay(), _pmask, gc0, 0, 0, size.w + 4, size.h + 4);
+  XFillRectangle(GetDisplay(), _pmask, cgc, 3, 3, size.w + 4, size.h + 4);
+  XFillRectangle(GetDisplay(), _pmask, gc1, 0, 0, size.w + 1, size.h + 1);
+
+  XFillRectangle(GetDisplay(), _pclip, gc0, 0, 0, size.w + 4, size.h + 4);
+  XFillRectangle(GetDisplay(), _pclip, gc1, 1, 1, size.w - 1, size.h - 1);
+
+  XShapeCombineMask(GetDisplay(), _id, ShapeBounding, 0, 0, _pmask, ShapeSet);
+  XShapeCombineMask(GetDisplay(), _id, ShapeClip,     0, 0, _pclip, ShapeSet);
+
+  XFreeGC(GetDisplay(), gc0);
+  XFreeGC(GetDisplay(), gc1);
+  XFreeGC(GetDisplay(), cgc);
+}
+
 void OXTip::Reconfig() {
 
   _bg = _client->GetResourcePool()->GetTipBgndColor();
@@ -92,6 +164,7 @@ void OXTip::Reconfig() {
   _label->SetBackgroundColor(_bg);
   _label->SetTextColor(_fg);
   //_label->SetFont(...);
+  // resize, etc. if font changed
 
   _label->Reconfig();
   NeedRedraw(True);

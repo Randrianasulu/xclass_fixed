@@ -262,6 +262,13 @@ ODimension OXTextEntry::GetDefaultSize() const {
 }
 
 
+ODimension OXTextEntry::GetTextSize() {
+  return ODimension(_TextWidth(0, _text->GetTextLength()) + 4 +
+                              _insets.l + _insets.r,
+                    _th + 3 + _insets.t + _insets.b);
+}
+
+
 int OXTextEntry::_TextWidth(int begin, int length) {
   return _font->XTextWidth(_text->GetString() + begin, length);
 }
@@ -453,6 +460,8 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
   static XComposeStatus compose = { NULL, 0 };
 
   if (!IsEnabled()) return True;
+
+  if (event->type == KeyRelease) return False;
 
   len = _text->GetTextLength();
   n = XLookupString(event, tmp, sizeof(tmp)-1, &keysym, &compose);

@@ -66,6 +66,7 @@ public:
   virtual int  HandleSelection(XSelectionEvent *event);
   virtual int  HandleTimer(OTimer *t);
   virtual ODimension GetDefaultSize() const;
+  virtual ODimension GetTextSize();
 
   unsigned GetTextLength() const { return _text->GetTextLength(); }
   unsigned GetBufferLength() const { return _text->GetBufferLength(); }

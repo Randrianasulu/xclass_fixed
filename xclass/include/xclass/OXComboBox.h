@@ -31,9 +31,20 @@
 #include <xclass/OXButton.h>
 #include <xclass/OMessage.h>
 
-#define OComboBoxMessage OWidgetMessage;
 
+//----------------------------------------------------------------------
 
+class OComboBoxMessage : public OListBoxMessage {
+public:
+  OComboBoxMessage(int typ, int act, int wid, int eid = -1,
+                   int tot = 0, int sel = 0, int key = 0) : 
+    OListBoxMessage(typ, act, wid, eid, tot, sel) {
+      keysym = key;
+    }
+              
+  int keysym;
+};
+                
 //----------------------------------------------------------------------
 
 class OXComboBox : public OXCompositeFrame, public OXWidget {
@@ -61,7 +72,7 @@ public:
   virtual void RemoveAllEntries()
     { _lb->RemoveAllEntries(); }
   virtual const OXListBox *GetListBox() const { return _lb; }
-//  virtual void Select(int ID);
+  virtual OXLBEntry *Select(int ID);
   virtual int  GetSelected() const { return _lb->GetSelected(); }
   virtual OXLBEntry *GetSelectedEntry() const
     { return _lb->GetSelectedEntry(); }
