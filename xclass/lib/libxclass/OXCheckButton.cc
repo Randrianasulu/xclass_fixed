@@ -56,7 +56,7 @@ OXCheckButton::OXCheckButton(const OXWindow *p, OString *s, int ID,
       _offd = _client->GetPicture("chkbutton.offd.xpm", XCP_chkbutton_offd);
 
       if (!_on || !_off || !_ond || !_offd)
-        FatalError("OXRadioButton: missing required pixmaps");
+        FatalError("OXCheckButton: bad or missing pixmaps");
 
       _init = True;
     }

@@ -2054,7 +2054,7 @@ OPicture.cc
 - Corrected the configure script: added the AC_LANG_CPLUSPLUS macro to
   ensure that all the tests are done using the c++ compiler, and *not*
   simply cc. That should correct the const problem in Solaris machines
-  with gcc. (Well, it didn't, so I just disabled the test).
+  with gcc. (Well, it didn't, so I just disabled the 'const' test).
 
 - Corrected the Makefile.in for the icons directory.
 

@@ -42,7 +42,7 @@ OXComboBox::OXComboBox(const OXWindow *p, char *name, int id,
 
     if (!_bpic) {
       _bpic = _client->GetPicture("arrow-down.xpm", XCP_arrow_down);
-      if (!_bpic) FatalError("OXComboBox: missing required pixmap");
+      if (!_bpic) FatalError("OXComboBox: bad or missing pixmap");
     }
 
     _te = new OXTextEntry(this, new OTextBuffer(255), 100);

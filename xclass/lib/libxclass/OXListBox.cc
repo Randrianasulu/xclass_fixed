@@ -168,7 +168,7 @@ void OXLBContainer::AddEntry(OXLBEntry *lbe, OLayoutHints *lhints) {
 }
 
 void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
-  OXLBEntry *e,*first;
+  OXLBEntry *e, *first = NULL;
   SListFrameElt *ptr;
 
   //printf("OXLBContainer::MoveSelectUp(ID:%d)\n", lbe->ID());
@@ -178,9 +178,9 @@ void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
   //}
 
   if (_flist)
-    first = (OXLBEntry *)_flist->frame;
+    first = (OXLBEntry *) _flist->frame;
 
-  if (lbe == first){
+  if (lbe == first) {
 #if 0
     ptr = _flist; 
     while (ptr->next != NULL) ptr = ptr->next;
@@ -189,8 +189,8 @@ void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
     return;
 #endif
   } else {
-    for (ptr=_flist; ptr->next != NULL; ptr=ptr->next) {
-      if ((OXLBEntry *) ptr->next->frame== lbe) break;
+    for (ptr = _flist; ptr->next != NULL; ptr = ptr->next) {
+      if ((OXLBEntry *) ptr->next->frame == lbe) break;
     }
     e = (OXLBEntry *) ptr->frame;
   }
@@ -207,7 +207,7 @@ void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
 }
 
 void OXLBContainer::MoveSelectDown(OXLBEntry *lbe){
-  OXLBEntry *e,*first;
+  OXLBEntry *e, *first = NULL;
   SListFrameElt *ptr;
 
   //if (lbe) {
@@ -217,10 +217,10 @@ void OXLBContainer::MoveSelectDown(OXLBEntry *lbe){
   //}
 
   if (_flist)
-    first = (OXLBEntry *)_flist->frame;
+    first = (OXLBEntry *) _flist->frame;
 
-  for (ptr=_flist; ptr->next != NULL; ptr=ptr->next) {
-    if ((OXLBEntry *) ptr->frame== lbe) {
+  for (ptr = _flist; ptr->next != NULL; ptr = ptr->next) {
+    if ((OXLBEntry *) ptr->frame == lbe) {
       e = (OXLBEntry *) ptr->next->frame;
       break;
     }
@@ -249,7 +249,7 @@ void OXLBContainer::InsertEntry(OXLBEntry *lbe, OLayoutHints *lhints, int afterI
 
   lbe->SetBackgroundColor(GetResourcePool()->GetDocumentBgndColor());
 
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     e = (OXLBEntry *) ptr->frame;
     if (e->ID() == afterID) break;
   }
@@ -281,7 +281,7 @@ void OXLBContainer::RemoveEntry(int ID) {
   SListFrameElt *ptr;
   OLayoutHints *l;
 
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     e = (OXLBEntry *) ptr->frame;
     l = ptr->layout;
     if (e->ID() == ID) {
@@ -344,13 +344,14 @@ void OXLBContainer::UnSelectAll() {
   SListFrameElt *ptr;
   OXLBEntry *f;
 
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {   
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
     f = (OXLBEntry *) ptr->frame;
     f->Activate(False);
     f->ShowFocusHilite(False);  // ==!==
   }
 
   _last_active = NULL;
+
   OContainerMessage message(MSG_CONTAINER, MSG_SELCHANGED, -1, 0, 0, 0);
   SendMessage(_msgObject, &message);
 }
@@ -362,7 +363,7 @@ void OXLBContainer::SelectAll() {
 
   if (!_multipleSelect) return;
 
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {   
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
     f = (OXLBEntry *) ptr->frame;
     f->Activate(True);
     ++total;
@@ -384,7 +385,7 @@ OXLBEntry *OXLBContainer::Select(int ID) {
     _last_active = NULL;
   }
 
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {   
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
     f = (OXLBEntry *) ptr->frame;
     if (f->ID() == ID) {
       f->Activate(True);
@@ -403,7 +404,7 @@ OXLBEntry *OXLBContainer::FindEntry(int ID) {
   SListFrameElt *ptr;
   OXLBEntry *e;
 
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {   
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
     e = (OXLBEntry *) ptr->frame;
     if (e->ID() == ID) return e;
   }
@@ -425,7 +426,7 @@ int OXLBContainer::HandleKey(XKeyEvent *event) {
 
     if (keysym == XK_Down) {
       if (_last_active) {
-        for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+        for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
           f = (OXLBEntry *) ptr->frame;
           if (f == _last_active) {
             if (ptr->next) f = (OXLBEntry *) ptr->next->frame;
@@ -438,7 +439,7 @@ int OXLBContainer::HandleKey(XKeyEvent *event) {
 
     } else if (keysym == XK_Up) {
       if (_last_active) {
-        for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+        for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
           f = (OXLBEntry *) ptr->frame;
           if (f == _last_active) {
             if (ptr->prev) f = (OXLBEntry *) ptr->prev->frame;
@@ -521,7 +522,7 @@ int OXLBContainer::HandleButton(XButtonEvent *event) {
           // and this.
           int highlighting = False;
 
-          for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+          for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
             f = (OXLBEntry *) ptr->frame;
             if ((f->GetId() == event->subwindow) ||
                  (f == _last_active)) {
@@ -540,7 +541,7 @@ int OXLBContainer::HandleButton(XButtonEvent *event) {
     } else if (event->state & ControlMask) {
       if (_multipleSelect) {
         // toggle this item
-        for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+        for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
           f = (OXLBEntry *) ptr->frame;
           if (f->GetId() == event->subwindow) {
             f->Activate(!f->IsActive());
@@ -560,7 +561,7 @@ int OXLBContainer::HandleButton(XButtonEvent *event) {
         f->ShowFocusHilite(False);
         _last_active = NULL;
       }
-      for (ptr=_flist; ptr != NULL; ptr=ptr->next) {   
+      for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
         f = (OXLBEntry *) ptr->frame;
         if (f->GetId() == event->subwindow) {
           f->Activate(True);
@@ -604,7 +605,7 @@ int OXLBContainer::HandleMotion(XMotionEvent *event) {
 //    f->Activate(False);
 //    _last_active = NULL;
 //  }
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {   
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {   
     f = (OXLBEntry *) ptr->frame;
     if (f->GetId() == event->subwindow) {
       f->Activate(True);
