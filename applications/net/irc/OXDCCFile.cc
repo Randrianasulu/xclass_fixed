@@ -525,6 +525,8 @@ int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
                                     sizeof(unsigned long)) < 0) {
               // error
             } else {
+              if (_fh) delete _fh;  // here and not below to avoid receiving file
+              _fh = 0;              // events while the message box is active
               bytestemp = ntohl(bytestemp);
               _acksize += bytestemp;
               if (_acksize == _lastsent) _acksize = 0;
@@ -538,7 +540,6 @@ int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
                 CloseWindow();
                 return False;
               }
-              if (_fh) delete _fh;
               _fh = new OFileHandler(this, _tcp->GetFD(),
                                      XCM_READABLE | XCM_WRITABLE);
             }
@@ -597,6 +598,8 @@ bool OXDCCFile::_FetchSomeData() {
     _fh = new OFileHandler(this, _tcp->GetFD(), XCM_READABLE);
 
   } else {
+    if (_fh) delete _fh;  // here and not below to avoid recursive file events
+    _fh = 0;              // while the message box is active
     if (_bytesread != _filesize) {
       OString stitle("Error Reading File");
       OString smsg("File size is different than reported");
@@ -606,8 +609,6 @@ bool OXDCCFile::_FetchSomeData() {
     }
     close(_file);
     _file = -1;
-    if (_fh) delete _fh;
-    _fh = 0;
     _tcp->Close();
 
     CloseWindow();

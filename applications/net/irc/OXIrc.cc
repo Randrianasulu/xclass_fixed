@@ -145,7 +145,7 @@ SToolBarData tdata[] = {
 };
 
 SPopupData plogdata = {
-  { NULL }, {
+  NULL, {
   { "&View...",    M_LOG_VIEW,  0,             NULL },
   { "",            -1,          -1,            NULL },
   { "&Save as...", M_LOG_OPEN,  0,             NULL },
@@ -157,7 +157,7 @@ SPopupData plogdata = {
 
 
 SPopupData pservdata = {
-  { NULL }, {
+  NULL, {
   { "&Raw...",      M_SERV_RAW,     0,             NULL },
   { "",             -1,             0,             NULL },
   { "&Nick...",     M_SERV_NICK,    0,             NULL },
@@ -180,7 +180,7 @@ SPopupData pservdata = {
 };
 
 SPopupData pusersdata = {
-  { NULL }, {
+  NULL, {
   { "W&ho...",      M_USERS_WHO,    0,  NULL },
   { "&Whois...",    M_USERS_WHOIS,  0,  NULL },
   { "Whow&as...",   M_USERS_WHOWAS, 0,  NULL },
@@ -198,7 +198,7 @@ SPopupData pusersdata = {
 };
 
 SPopupData pchandata = {
-  { NULL }, {
+  NULL, {
   { "&Join...",        M_CHAN_JOIN,       0,  NULL },
   { "",                -1,                0,  NULL },
   { "&Who...",         M_CHAN_WHO,        0,  NULL },
@@ -211,7 +211,7 @@ SPopupData pchandata = {
 };
 
 SPopupData mircdata = {
-  { NULL }, {
+  NULL, {
   { "&Connect to...", M_IRC_CONNECT,    0,              NULL },
   { "&Disconnect",    M_IRC_DISCONNECT, MENU_DISABLED,  NULL },
   { "&Away",          M_IRC_AWAY,       MENU_DISABLED,  NULL },
@@ -226,7 +226,7 @@ SPopupData mircdata = {
 };
 
 SPopupData meditdata = {
-  { NULL }, {
+  NULL, {
   { "&Copy",             M_EDIT_COPY,      MENU_DISABLED, NULL },
   { "",                  -1,               0,             NULL },
   { "Select &All",       M_EDIT_SELECTALL, MENU_DISABLED, NULL },
@@ -237,7 +237,7 @@ SPopupData meditdata = {
 };
 
 SPopupData mviewdata = {
-  { NULL }, {
+  NULL, {
   { "&Toolbar",    M_VIEW_TOOLBAR,   MENU_CHECKED, NULL },
   { "Status &Bar", M_VIEW_STATUSBAR, MENU_CHECKED, NULL },
   { "",            -1,               0,            NULL },
@@ -247,7 +247,7 @@ SPopupData mviewdata = {
 };
 
 SPopupData mhelpdata = {
-  { NULL }, {
+  NULL, {
   { "&Contents...", M_HELP_CONTENTS, MENU_DISABLED, NULL },
   { "&Index...",    M_HELP_INDEX,    MENU_DISABLED, NULL },
   { "",             -1,              0,             NULL },

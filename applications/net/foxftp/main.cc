@@ -53,7 +53,7 @@
 #include "main.h"
 
 static struct _popup file_popup = {
-  { NULL }, {
+  NULL, {
   { "Ne&w",                  M_FILE_NEW,        0, NULL },
   { "&Open",                 M_FILE_OPEN,       0, NULL },
   { "Op&en With...",         M_FILE_OPEN_WITH,  0, NULL },
@@ -76,7 +76,7 @@ static struct _popup file_popup = {
 };
 
 static struct _popup edit_popup = {
-  { NULL }, {
+  NULL, {
   { "&Copy",             M_EDIT_COPY,          0, NULL },
   { "&Paste",            M_EDIT_PASTE,         0, NULL },
   { "",                  -1,                   0, NULL },
@@ -86,7 +86,7 @@ static struct _popup edit_popup = {
 };
 
 static struct _popup arrange_popup = {
-  { NULL }, {
+  NULL, {
   { "By &Name",  M_VIEW_ARRANGE_BYNAME, 0, NULL },
   { "By &Type",  M_VIEW_ARRANGE_BYTYPE, 0, NULL },
   { "By &Size",  M_VIEW_ARRANGE_BYSIZE, 0, NULL },
@@ -95,7 +95,7 @@ static struct _popup arrange_popup = {
 };
 
 static struct _popup view_popup = {
-  { NULL }, {
+  NULL, {
   { "&Toolbar",            M_VIEW_TOOLBAR,     0, NULL },
   { "Show button l&abels", M_VIEW_SHOW_LABELS, 0, NULL },
   { "Status &Bar",         M_VIEW_STATUSBAR,   0, NULL },
@@ -114,14 +114,14 @@ static struct _popup view_popup = {
 };
 
 static struct _popup options_popup = {
-  { NULL }, {
+  NULL, {
   { "&Session Configuration...", M_OPTIONS_SESSION, 0 },
   { "&Global Configuration...",  M_OPTIONS_GLOBAL,  0 },
   { NULL,                        -1,                0, NULL } }
 };
 
 static struct _popup window_popup = {
-  { NULL }, {
+  NULL, {
   { "&Cascade",           M_WINDOW_CASCADE,      0, NULL },
   { "Tile &Horizontally", M_WINDOW_HORIZONTALLY, 0, NULL },
   { "Tile &Vertically",   M_WINDOW_VERTICALLY,   0, NULL },
@@ -131,7 +131,7 @@ static struct _popup window_popup = {
 };
 
 static struct _popup help_popup = {
-  { NULL }, {
+  NULL, {
   { "&Contents...", M_HELP_CONTENTS, MENU_DISABLED, NULL },
   { "&Search...",   M_HELP_SEARCH,   MENU_DISABLED, NULL },
   { "",             -1,              0,             NULL },
