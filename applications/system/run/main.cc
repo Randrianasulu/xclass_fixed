@@ -5,24 +5,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <X11/keysym.h>
+
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
-#include <xclass/OXFrame.h>
+#include <xclass/OXMainFrame.h>
 #include <xclass/OXTextButton.h>
 #include <xclass/OXCheckButton.h>
 #include <xclass/OXIcon.h>
-#include <xclass/OXTextEntry.h>
+#include <xclass/OXComboBox.h>
 #include <xclass/OXMsgBox.h>
 #include <xclass/OString.h>
-#include <xclass/OMimeTypes.h>
 #include <xclass/OXFileDialog.h>
+#include <xclass/OResourcePool.h>
+#include <xclass/OIniFile.h>
 #include <xclass/utils.h>
-#include <unistd.h>
 
 #include "run.xpm"
 
 #define MaxArgs          10
+#define MaxHistory       20
 
 #define OKButtonID       1
 #define CancelButtonID   2
@@ -30,34 +32,28 @@
 #define UseXTermID       4
 #define RunTextEntryID   5
 
-OMimeTypes *MimeTypeList;
-
 char *filetypes[] = { "All Files", "*",
                       NULL,        NULL };
 
-class RunTextEntry : public OXTextEntry {
-public:
-  RunTextEntry(const OXWindow * p, OTextBuffer * text, int ID) : 
-    OXTextEntry(p, text, ID) {} 
-
-  virtual int HandleKey(XKeyEvent * event);
-};
 
 class RunFrame : public OXMainFrame {
 public:
-  RunFrame(const OXWindow * p, int w, int h, unsigned long options);
+  RunFrame(const OXWindow *p, int w, int h, unsigned long options);
   virtual ~RunFrame();
 
   virtual int ProcessMessage(OMessage *msg);
 
 protected:
+  void LoadHistory();
+  void SaveHistory();
+  void AddToHistory(const char *cmd);
+
   OXCompositeFrame *DescriptionFrame;
   OXCompositeFrame *TextFrame;
   OXCompositeFrame *ButtonFrame;
+  OXCompositeFrame *ButtonSubFrame;
 
-  OTextBuffer *ProgramToRun;
-
-  RunTextEntry *ProgramTextEntry;
+  OXComboBox *ProgramTextEntry;
 
   OXLabel *Description;
   OString *DescriptionText;
@@ -68,15 +64,12 @@ protected:
 
   const OPicture *IconPicture;
 
-  OHotString *UseXTermHotString;
-  OHotString *OKHotString;
-  OHotString *CancelHotString;
-  OHotString *BrowseHotString;
-
   OXCheckButton *UseXTerm;
   OXTextButton *OKButton;
   OXTextButton *CancelButton;
   OXTextButton *BrowseButton;
+
+  char *CommandHistory[MaxHistory];
 };
 
 
@@ -90,12 +83,6 @@ main()
   /* Create Client */
   ClientX = new OXClient;
 
-  /* Get location of .mime.types file */
-  sprintf(mimerc, "%s/.mime.types", getenv("HOME"));
-
-  /* Initialize mime type list for browse option */
-  MimeTypeList = new OMimeTypes(ClientX, mimerc);
-
   /* Create Main Window */
   MainWindow = new RunFrame(ClientX->GetRoot(), 250, 115, MAIN_FRAME | VERTICAL_FRAME);
 
@@ -106,27 +93,6 @@ main()
   ClientX->Run();
 
   return 0;
-}
-
-
-int RunTextEntry::HandleKey(XKeyEvent *event) {
-  char tmp[10];
-  KeySym keysym;
-  XComposeStatus compose = { NULL, 0 };
-
-  OXTextEntry::HandleKey(event);
-
-  XLookupString(event, tmp, sizeof(tmp)-1, &keysym, &compose);
-
-  if ((keysym == XK_Execute) || (keysym == XK_Return)) {
-    OButtonMessage message(MSG_BUTTON, MSG_CLICK, OKButtonID);
-    SendMessage(_msgObject, &message);
-  } else if (keysym == XK_Escape) {
-    OButtonMessage message(MSG_BUTTON, MSG_CLICK, CancelButtonID);
-    SendMessage(_msgObject, &message);
-  }
-
-  return True;
 }
 
 
@@ -173,11 +139,8 @@ RunFrame::RunFrame(const OXWindow *p, int w, int h, unsigned long options) :
     TextFrame->AddFrame(OpenLabel, new OLayoutHints(LHINTS_LEFT,
                                         10, 10, 3, 10));
 
-    /* Create Text Buffer For Text Box */
-    ProgramToRun = new OTextBuffer(255);
-
     /* Create Text Box */
-    ProgramTextEntry = new RunTextEntry(TextFrame, ProgramToRun, RunTextEntryID);
+    ProgramTextEntry = new OXComboBox(TextFrame, "", RunTextEntryID);
     ProgramTextEntry->Associate(this);
 
     /* Set The Length Of The Text Box */
@@ -190,36 +153,53 @@ RunFrame::RunFrame(const OXWindow *p, int w, int h, unsigned long options) :
     /* Create Frame To Hold Buttons */
     ButtonFrame = new OXCompositeFrame(this, 60, 20, HORIZONTAL_FRAME);
 
-    /* Create Label For Check Box */
-    UseXTermHotString = new OHotString("Use &XTerm");
-
     /* Create Check Box */
-    UseXTerm = new OXCheckButton(ButtonFrame, UseXTermHotString, UseXTermID);
+    UseXTerm = new OXCheckButton(ButtonFrame, new OHotString("Use &XTerm"),
+                                 UseXTermID);
 
     /* Attach Check Box To Button Frame */
-    ButtonFrame->AddFrame(UseXTerm, new OLayoutHints(LHINTS_TOP | LHINTS_LEFT,
-                                         10, 5, 7, 2));
+    ButtonFrame->AddFrame(UseXTerm, new OLayoutHints(LHINTS_CENTER_Y | LHINTS_LEFT,
+                                         10, 5, 0, 0));
 
-    OKHotString = new OHotString("    OK    ");
-    OKButton = new OXTextButton(ButtonFrame, OKHotString, OKButtonID);
+    /* Create SubFrame To Hold OK, Cancel and Browse Buttons */
+    ButtonSubFrame = new OXCompositeFrame(ButtonFrame, 60, 20,
+                                          HORIZONTAL_FRAME | FIXED_WIDTH);
+
+    /* Create OK button */
+    OKButton = new OXTextButton(ButtonSubFrame, new OHotString("OK"), OKButtonID);
     OKButton->Associate(this);
     OKButton->Disable();
 
-    /* Attach Button To Button Frame */
-    ButtonFrame->AddFrame(OKButton, new OLayoutHints(LHINTS_TOP | LHINTS_LEFT,
-                                         0, 5, 7, 2));
+    /* Attach Button To Button SubFrame */
+    ButtonSubFrame->AddFrame(OKButton, new OLayoutHints(LHINTS_CENTER_Y | LHINTS_EXPAND_X,
+                                         0, 5, 0, 0));
 
-    CancelHotString = new OHotString(" Cancel ");
-    CancelButton = new OXTextButton(ButtonFrame, CancelHotString, CancelButtonID);
+    /* Create Cancel button */
+    CancelButton = new OXTextButton(ButtonSubFrame, new OHotString("Cancel"),
+                                    CancelButtonID);
     CancelButton->Associate(this);
-    ButtonFrame->AddFrame(CancelButton, new OLayoutHints(LHINTS_TOP | LHINTS_LEFT,
-                                             5, 5, 7, 2));
 
-    BrowseHotString = new OHotString(" Browse ");
-    BrowseButton = new OXTextButton(ButtonFrame, BrowseHotString, BrowseButtonID);
+    /* Attach Button To Button SubFrame */
+    ButtonSubFrame->AddFrame(CancelButton, new OLayoutHints(LHINTS_CENTER_Y | LHINTS_EXPAND_X,
+                                             0, 5, 0, 0));
+
+    /* Create Browse button */
+    BrowseButton = new OXTextButton(ButtonSubFrame, new OHotString("&Browse"),
+                                    BrowseButtonID);
     BrowseButton->Associate(this);
-    ButtonFrame->AddFrame(BrowseButton, new OLayoutHints(LHINTS_TOP | LHINTS_LEFT,
-                                             5, 5, 7, 2));
+
+    /* Attach Button To Button SubFrame */
+    ButtonSubFrame->AddFrame(BrowseButton, new OLayoutHints(LHINTS_CENTER_Y | LHINTS_EXPAND_X,
+                                             0, 5, 0, 0));
+
+    /* Attach SubFrame to Button Frame, resize accordingly */
+    ButtonFrame->AddFrame(ButtonSubFrame, new OLayoutHints(LHINTS_TOP | LHINTS_RIGHT,
+                                             0, 5, 0, 0));
+
+    width = OKButton->GetDefaultWidth();
+    width = max(width, CancelButton->GetDefaultWidth());
+    width = max(width, BrowseButton->GetDefaultWidth());
+    ButtonSubFrame->Resize(3 * (width + 10), ButtonSubFrame->GetDefaultHeight());
 
     SetDefaultAcceptButton(OKButton);
     SetDefaultCancelButton(CancelButton);
@@ -231,8 +211,8 @@ RunFrame::RunFrame(const OXWindow *p, int w, int h, unsigned long options) :
     AddFrame(TextFrame, new OLayoutHints(LHINTS_TOP, 0, 0, 1, 0));
 
     /* Attach Button Frame To Main Window */
-    AddFrame(ButtonFrame, new OLayoutHints(LHINTS_TOP, 0, 0, 1, 10));
-
+    AddFrame(ButtonFrame, new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X,
+                                           0, 0, 8, 12));
 
 
     /* Set The Name Displayed In The Title Bar */
@@ -263,19 +243,29 @@ RunFrame::RunFrame(const OXWindow *p, int w, int h, unsigned long options) :
                 MWM_INPUT_MODELESS);
 
     /* Set the default input focus to the text entry widget */
-    SetFocusOwner(ProgramTextEntry);
+    SetFocusOwner(ProgramTextEntry->GetTextEntry());
+
+    for (int i = 0; i < MaxHistory; ++i) CommandHistory[i] = NULL;
+
+    /* Load Command History */
+    LoadHistory();
+
+    ProgramTextEntry->Select(0);
+    ProgramTextEntry->GetTextEntry()->GetTextLength() ? OKButton->Enable() : OKButton->Disable();
 }
 
 RunFrame::~RunFrame() {
+  SaveHistory();
   _client->FreePicture(IconPicture);
+  for (int i = 0; i < MaxHistory; ++i)
+    if (CommandHistory[i]) delete[] CommandHistory[i];
 }
 
 int RunFrame::ProcessMessage(OMessage *msg) {
   int  i, j, k, Slen;
-  char errmsg[255];
-  char P2Run[255];
+  char errmsg[256];
+  char P2Run[256];
   char *Parg[MaxArgs];
-  char *c;
   char PDirectory[PATH_MAX];
   OFileInfo fi;
   OWidgetMessage *wmsg;
@@ -290,11 +280,10 @@ int RunFrame::ProcessMessage(OMessage *msg) {
       switch (wmsg->id) {
 
       case OKButtonID:
-	c = (char *) ProgramToRun->GetString();
-	strcpy(P2Run, c);
+	strcpy(P2Run, ProgramTextEntry->GetText());
 	if (strlen(P2Run) > 0) {
 	  Slen = strlen(P2Run);
-	  for (i=0, j=0, k=0; (i<Slen) && (j<MaxArgs); i++) {
+	  for (i = 0, j = 0, k = 0; (i < Slen) && (j < MaxArgs); i++) {
 	    if (P2Run[i] == ' ') {
 	      P2Run[i] = '\0';
 	      Parg[j++] = &P2Run[k];
@@ -303,7 +292,10 @@ int RunFrame::ProcessMessage(OMessage *msg) {
 	  }
 
 	  Parg[j++] = &P2Run[k];
-	  for (; j<MaxArgs; j++) Parg[j] = NULL;
+	  for ( ; j < MaxArgs; j++) Parg[j] = NULL;
+
+	  AddToHistory(P2Run);
+          SaveHistory();
 
 	  if (UseXTerm->GetState() == BUTTON_DOWN) {
 	    j = execlp("xterm", " ", "-e", Parg[0], Parg[1], Parg[2], Parg[3], Parg[4], Parg[5], Parg[6], Parg[7], Parg[8], Parg[9], 0);
@@ -313,8 +305,7 @@ int RunFrame::ProcessMessage(OMessage *msg) {
 
 	  if (j == -1) {
 	    strcpy(errmsg, "Could not open ");
-	    c = (char *) ProgramToRun->GetString();
-	    strcat(errmsg, c);
+	    strcat(errmsg, ProgramTextEntry->GetText());
 	    strcat(errmsg, ".");
 	    new OXMsgBox(this->GetParent(), this, new OString("Run Error"),
                          new OString(errmsg), MB_ICONSTOP, ID_OK);
@@ -327,7 +318,6 @@ int RunFrame::ProcessMessage(OMessage *msg) {
 	break;
 
       case BrowseButtonID:
-	fi.MimeTypesList = MimeTypeList;
 	fi.file_types = filetypes;
 	new OXFileDialog(ClientX->GetRoot(), this, FDLG_OPEN, &fi);
 	if (fi.filename) {
@@ -335,8 +325,8 @@ int RunFrame::ProcessMessage(OMessage *msg) {
 	  if (PDirectory[strlen(PDirectory) - 1] != '/')
             strcat(PDirectory, "/");
 	  strcat(PDirectory, fi.filename);
-	  ProgramToRun->Clear();
-	  ProgramToRun->AddText(0, PDirectory);
+	  ProgramTextEntry->GetTextEntry()->Clear();
+	  ProgramTextEntry->GetTextEntry()->AddText(0, PDirectory);
 	  OKButton->Enable();
 	}
 	break;
@@ -346,10 +336,10 @@ int RunFrame::ProcessMessage(OMessage *msg) {
     }
     break;
 
-  case MSG_TEXTENTRY:
+  case MSG_COMBOBOX:
     switch (msg->action) {
     case MSG_TEXTCHANGED:
-      ProgramToRun->GetTextLength() ? OKButton->Enable() : OKButton->Disable();
+      ProgramTextEntry->GetTextEntry()->GetTextLength() ? OKButton->Enable() : OKButton->Disable();
       break;
     }
     break;
@@ -357,4 +347,89 @@ int RunFrame::ProcessMessage(OMessage *msg) {
   }
 
   return True;
+}
+
+void RunFrame::LoadHistory() {
+  char *inipath, line[1024], arg[PATH_MAX];
+
+  inipath = GetResourcePool()->FindIniFile("runrc", INI_READ);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_READ);
+
+  while (ini.GetNext(line)) {
+    if (strcasecmp(line, "command history") == 0) {
+      char tmp[50];
+
+      for (int i = MaxHistory-1; i >= 0; --i) {
+        sprintf(tmp, "cmd%d", i+1);
+        if (ini.GetItem(tmp, arg)) AddToHistory(arg);
+      }
+    }
+  }
+
+  delete[] inipath;
+}
+
+void RunFrame::SaveHistory() {
+  char *inipath, tmp[256];
+
+  inipath = GetResourcePool()->FindIniFile("runrc", INI_WRITE);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_WRITE);
+
+  ini.PutNext("command history");
+  for (int i = 0; i < MaxHistory; ++i) {
+    if (CommandHistory[i]) {
+      sprintf(tmp, "cmd%d", i+1);
+      ini.PutItem(tmp, CommandHistory[i]);
+    }
+  }
+  ini.PutNewLine();
+
+  delete[] inipath;
+}
+
+void RunFrame::AddToHistory(const char *cmd) {
+  int i;
+
+  if (!cmd) return;
+
+  /* check whether the command is already in the list */
+
+  for (i = 0; i < MaxHistory; ++i) {
+    if (CommandHistory[i] && (strcmp(cmd, CommandHistory[i]) == 0)) break;
+  }
+
+  if (i == 0) {
+
+    return; /* nothing to do, the command was already the most recent */
+
+  } else if (i < MaxHistory) {
+
+    /* the command was there, move it to the top of the list */
+
+    char *tmp = CommandHistory[i];
+
+    for ( ; i > 0; --i) CommandHistory[i] = CommandHistory[i-1];
+    CommandHistory[0] = tmp;
+
+  } else {
+
+    /* new command: shift all the entries down
+       and add the command to the head of the list */
+
+    if (CommandHistory[MaxHistory-1]) delete[] CommandHistory[MaxHistory-1];
+    for (i = MaxHistory-1; i > 0; --i)
+      CommandHistory[i] = CommandHistory[i-1];
+    CommandHistory[0] = StrDup(cmd);
+
+  }
+
+  ProgramTextEntry->RemoveAllEntries();
+  for (i = 0; i < MaxHistory; ++i) {
+    if (CommandHistory[i])
+      ProgramTextEntry->AddEntry(new OString(CommandHistory[i]), i);
+  }
 }
