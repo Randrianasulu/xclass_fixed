@@ -248,7 +248,7 @@ ODimension OXCpuLoadPlugin::GetDefaultSize() const {
 
   if (_hasSMP && _SMPmode) w *= 2;
 
-  return ODimension(w + _insets.l + insets.r, h);
+  return ODimension(w + _insets.l + _insets.r, h);
 }
 
 int OXCpuLoadPlugin::HandleTimer(OTimer *t) {
