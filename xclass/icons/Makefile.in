@@ -18,6 +18,7 @@ ICONS = app.s.xpm \
 	audio.s.xpm \
 	briefcase.t.xpm \
 	cdrom.t.xpm \
+	desktop.s.xpm \
 	desktop.t.xpm \
 	doc.s.xpm \
 	doc.t.xpm \
@@ -109,6 +110,7 @@ ICONS = app.s.xpm \
 	xcd-stop.xpm \
 	xcd-trackelapsed.xpm \
         xcd-trackremain.xpm \
+	xclass.xpm \
 	xv.xpm \
 
 all:

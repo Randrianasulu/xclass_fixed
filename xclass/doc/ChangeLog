@@ -1886,3 +1886,10 @@ OPicture.cc
 - OXTextEdit::InsertText(): flag text as changed.
 
 - Added preliminary keyboard support to OXListTree.
+
+
+13/10/01
+
+- OXFileList: handle "desktop" and "recycle bin" folders properly.
+
+- OXListTree: improved keyboard support.
