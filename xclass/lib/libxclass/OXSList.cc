@@ -68,6 +68,30 @@ Bool ODList::Remove(int id) {
   return True;
 }
 
+Bool ODList::SetFirst(int id) {
+  OXSNode *item;
+
+  item = GetNode(id);
+  if (!item) return False;
+
+  _Unlink(item);
+  _Link(item, False);
+
+  return True;
+}
+
+Bool ODList::SetLast(int id) {
+  OXSNode *item;
+
+  item = GetNode(id);
+  if (!item) return False;
+
+  _Unlink(item);
+  _Link(item, True);
+
+  return True;
+}
+
 Bool ODList::_Link(OXSNode *item, Bool toend) {
 
   if (!item) return False;

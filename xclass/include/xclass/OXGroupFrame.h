@@ -47,6 +47,8 @@ public:
                unsigned long back = _defaultFrameBackground);
   virtual ~OXGroupFrame();
 
+  void OldInsets(int onoff = True);
+
   virtual void DrawBorder();
 
 protected:

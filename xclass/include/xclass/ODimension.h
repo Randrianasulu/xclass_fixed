@@ -68,5 +68,19 @@ public:
                { return OPosition(x + b.x, y + b.y); }
 };
 
+class OInsets : public OBaseObject {
+public:
+  // attributes
+  int l, t, r, b;
+  
+  // Constructors
+  OInsets() { l = r = t = b = 0; }
+  OInsets(const int lf, const int rg, const int tp, const int bt)
+               { l = lf; r = rg; t = tp; b = bt; }
+  OInsets(const OInsets &in)
+               { l = in.l; r = in.r; t = in.t; b = in.b; }
+
+};
+
 
 #endif  // __ODIMENSION_H

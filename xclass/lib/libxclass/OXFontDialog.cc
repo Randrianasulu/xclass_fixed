@@ -168,6 +168,7 @@ OXFontDialog::OXFontDialog(const OXWindow *p, const OXWindow *t,
     //--------------------- sample box
 
     _gf = new OXGroupFrame(this, new OString("Sample"), FIXED_SIZE);
+    _gf->OldInsets(False);
     AddFrame(_gf, new OLayoutHints(LHINTS_NORMAL, 5, 5, 0, 5));
 
     _cf = new OXCompositeFrame(_gf, 10, 10, CHILD_FRAME);
@@ -232,25 +233,7 @@ OXFontDialog::OXFontDialog(const OXWindow *p, const OXWindow *t,
     MapSubwindows();
     Resize(GetDefaultSize());
 
-    //---- position the dialog relative to the parent's window
-
-    if (t) {
-      int ax, ay;
-      Window wdummy;
-
-      XTranslateCoordinates(GetDisplay(),
-                            t->GetId(), GetParent()->GetId(),
-                            50, 50, &ax, &ay, &wdummy);
-
-      int dw = _client->GetDisplayWidth();
-      int dh = _client->GetDisplayHeight();
-
-      if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
-      if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _h - 50;
-
-      Move(ax, ay);
-      SetWMPosition(ax, ay);
-    }
+    CenterOnParent();
 
     //---- make the dialog box non-resizable
 

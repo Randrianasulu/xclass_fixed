@@ -49,12 +49,22 @@ OXGroupFrame::OXGroupFrame(const OXWindow *p, OString *title,
     _normGC = (OXGC *) _defaultGC;
 
     _bw = _font->TextHeight() + 1;
+
+    _insets = OInsets(_bw, _bw, _bw, _bw);
 }
 
 OXGroupFrame::~OXGroupFrame() {
   delete _text;
   if (_normGC != _defaultGC) delete _normGC;
   if (_font != _defaultFont) _client->FreeFont((OXFont *) _font);
+}
+
+void OXGroupFrame::OldInsets(int onoff) {
+  if (onoff) {
+    _insets = OInsets(_bw, _bw, _bw, _bw);
+  } else {
+    _insets = OInsets(2, 2, _font->TextHeight() + 1, 2);
+  }
 }
 
 void OXGroupFrame::DrawBorder() {
@@ -66,8 +76,8 @@ void OXGroupFrame::DrawBorder() {
 
   l = 0;
   t = (_font->TextHeight() + 2) >> 1;
-  r = _w-1;
-  b = _h-1;
+  r = _w - 1;
+  b = _h - 1;
 
   sep = 3;
   gl = 5 + sep;

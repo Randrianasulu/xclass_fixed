@@ -215,7 +215,7 @@ OXDDListBox::~OXDDListBox() {
 }
 
 ODimension OXDDListBox::GetDefaultSize() const {
-  return ODimension (_w, _selentry->GetDefaultHeight() + (_bw << 1));
+  return ODimension (_w, _selentry->GetDefaultHeight() + _insets.t + _insets.b);
 }
 
 void OXDDListBox::SetTopEntry(OXLBEntry *e, OLayoutHints *lh) {

@@ -42,17 +42,18 @@ void OVerticalLayout::Layout() {
   int exp_max = 0;
   int remain;
   int x = 0, y = 0;
-  int bw = _main->GetBorderWidth();
+  OInsets ins = _main->GetInsets();
   ODimension size, csize;
   ODimension msize = _main->GetSize();
   int pad_left, pad_top, pad_right, pad_bottom;
 
   if (*_list == NULL) return;
 
-  bottom = msize.h - (top = bw);
-  remain = msize.h - (bw << 1);
+  top = ins.t;
+  bottom = msize.h - ins.b;
+  remain = msize.h - ins.t - ins.b;
 
-  for (ptr=*_list; ptr != NULL; ptr = ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
 
     if (ptr->frame->IsVisible()) {
       layout = ptr->layout;
@@ -75,7 +76,7 @@ void OVerticalLayout::Layout() {
     rem_expand = remain % nb_expand;
   }
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
 
     if (ptr->frame->IsVisible()) {
 
@@ -87,15 +88,15 @@ void OVerticalLayout::Layout() {
       pad_bottom = layout->GetPadBottom();
 
       if (hints & LHINTS_RIGHT)
-	x = msize.w - bw - csize.w - pad_right;
+	x = msize.w - ins.r - csize.w - pad_right;
       else if (hints & LHINTS_CENTER_X)
 	x = (msize.w - csize.w) >> 1; 
       else // defaults to LHINTS_LEFT
-	x = pad_left + bw;
+	x = pad_left + ins.l;
       
       if (hints & LHINTS_EXPAND_X) {
-	size.w = msize.w - (bw << 1) - pad_left - pad_right;
-	x = pad_left + bw;
+	size.w = msize.w - ins.l - ins.r - pad_left - pad_right;
+	x = pad_left + ins.l;
       } else {
 	size.w = csize.w;
       }
@@ -141,12 +142,13 @@ void OVerticalLayout::Layout() {
 ODimension OVerticalLayout::GetDefaultSize() const {
   SListFrameElt *ptr;
   ODimension size(0,0), msize = _main->GetSize(), csize;
+  OInsets ins = _main->GetInsets();
   int options = _main->GetOptions();
 
   if ((options & FIXED_WIDTH) && (options & FIXED_HEIGHT))
     return msize;
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       csize = ptr->frame->GetDefaultSize();
       size.w = max(size.w, csize.w + ptr->layout->GetPadLeft() +
@@ -156,8 +158,8 @@ ODimension OVerticalLayout::GetDefaultSize() const {
     }
   }
 
-  size.w += _main->GetBorderWidth() << 1;
-  size.h += _main->GetBorderWidth() << 1;
+  size.w += ins.l + ins.r;
+  size.h += ins.t + ins.b;
 
   if (options & FIXED_WIDTH) size.w = msize.w;
   if (options & FIXED_HEIGHT) size.h = msize.h;
@@ -177,17 +179,18 @@ void OHorizontalLayout::Layout() {
   int size_expand, esize_expand, rem_expand, tmp_expand = 0;
   int remain;
   int x = 0, y = 0;
-  int bw = _main->GetBorderWidth();
+  OInsets ins = _main->GetInsets();
   ODimension size, csize;
   ODimension msize = _main->GetSize();
   int pad_left, pad_top, pad_right, pad_bottom;
 
   if (*_list == NULL) return;
 
-  right  = msize.w - (left = bw);
-  remain = msize.w - (bw << 1);
+  left   = ins.l;
+  right  = msize.w - ins.r;
+  remain = msize.w - ins.l - ins.r;
 
-  for (ptr=*_list; ptr != NULL; ptr = ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
 
     if (ptr->frame->IsVisible()) {
       layout  = ptr->layout;
@@ -210,7 +213,7 @@ void OHorizontalLayout::Layout() {
     rem_expand = remain % nb_expand;
   }
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
 
     if (ptr->frame->IsVisible()) {
 
@@ -222,15 +225,15 @@ void OHorizontalLayout::Layout() {
       pad_bottom = layout->GetPadBottom();
 
       if (hints & LHINTS_BOTTOM)
-	y = msize.h - bw - csize.h - pad_bottom;
+	y = msize.h - ins.b - csize.h - pad_bottom;
       else if (hints & LHINTS_CENTER_Y)
 	y = (msize.h - csize.h) >> 1;
       else // LHINTS_TOP by default
-	y = pad_top + bw;
+	y = pad_top + ins.t;
 
       if (hints & LHINTS_EXPAND_Y) {
-	size.h = msize.h - (bw << 1) - pad_top - pad_bottom;
-	y = pad_top + bw;
+	size.h = msize.h - ins.t - ins.b - pad_top - pad_bottom;
+	y = pad_top + ins.t;
       } else {
 	size.h = csize.h;
       }
@@ -276,12 +279,13 @@ void OHorizontalLayout::Layout() {
 ODimension OHorizontalLayout::GetDefaultSize() const {
   SListFrameElt *ptr;
   ODimension size(0,0), msize = _main->GetSize(), csize;
+  OInsets ins = _main->GetInsets();
   int options = _main->GetOptions();
 
   if ((options & FIXED_WIDTH) && (options & FIXED_HEIGHT))
     return msize;
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       csize = ptr->frame->GetDefaultSize();
       size.w += csize.w + ptr->layout->GetPadLeft() +
@@ -291,12 +295,11 @@ ODimension OHorizontalLayout::GetDefaultSize() const {
     }
   }
 
-  size.w += _main->GetBorderWidth() << 1;
-  size.h += _main->GetBorderWidth() << 1;
+  size.w += ins.l + ins.r;
+  size.h += ins.t + ins.b;
 
   if (options & FIXED_WIDTH) size.w = msize.w;
   if (options & FIXED_HEIGHT) size.h = msize.h;
 
   return size;
 }
-

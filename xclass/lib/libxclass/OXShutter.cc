@@ -208,14 +208,14 @@ void OXShutter::Layout() {
 
   if (_selectedItem == NULL) _selectedItem = (OXShutterItem*) _flist->frame;
 
-  exh = _h - (_bw << 1);
+  exh = _h - _insets.t - _insets.b;
   for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     child = (OXShutterItem *) ptr->frame;
     bh = child->_button->GetDefaultHeight();
     exh -= bh;
   }
 
-  y = _bw;
+  y = _insets.t;
   for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     child = (OXShutterItem *) ptr->frame;
     bh = child->_button->GetDefaultHeight();
@@ -225,14 +225,16 @@ void OXShutter::Layout() {
       else
         child->_canvas->SetScrolling(CANVAS_SCROLL_VERTICAL);
       child->ShowFrame(child->_canvas);
-      child->MoveResize(_bw, y, _w - (_bw << 1), exh - _closingHeight + bh);
+      child->MoveResize(_insets.l, y, _w - _insets.r - _insets.l,
+                        exh - _closingHeight + bh);
       y += exh - _closingHeight + bh;
     } else if (child == _closingItem) {
       child->_canvas->SetScrolling(CANVAS_NO_SCROLL);
-      child->MoveResize(_bw, y, _w - (_bw << 1), _closingHeight + bh);
+      child->MoveResize(_insets.l, y, _w - _insets.r - _insets.l,
+                        _closingHeight + bh);
       y += _closingHeight + bh;
     } else {
-      child->MoveResize(_bw, y, _w - (_bw << 1), bh);
+      child->MoveResize(_insets.l, y, _w - _insets.r - _insets.l, bh);
       child->HideFrame(child->_canvas);
       y += bh;
     }

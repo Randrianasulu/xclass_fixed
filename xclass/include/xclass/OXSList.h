@@ -37,9 +37,9 @@
 
 class OXSNode : public OBaseObject {
 public:
-    int id;
-    OXSNode *prev, *next;
-    XPointer data;
+  int id;
+  OXSNode *prev, *next;
+  XPointer data;
 };
 
 
@@ -53,6 +53,8 @@ public:
   virtual OXSNode *Add(int id, XPointer data);
   virtual Bool Remove(int id);
   virtual OXSNode *GetNode(int id);
+  virtual Bool SetFirst(int id);
+  virtual Bool SetLast(int id);
   const OXSNode *GetHead() const { return _head; }
   const OXSNode *GetTail() const { return _tail; }
   int NoOfItems() const { return _nentries; }

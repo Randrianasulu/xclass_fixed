@@ -33,11 +33,12 @@ void OXIcon::SetPicture(const OPicture *pic) {
 }
 
 ODimension OXIcon::GetDefaultSize() const {
-  return ODimension((_pic) ? 2 * _bw + _pic->GetWidth()  : _w,
-                    (_pic) ? 2 * _bw + _pic->GetHeight() : _h);
+  return ODimension((_pic) ? _insets.l + _insets.r + _pic->GetWidth()  : _w,
+                    (_pic) ? _insets.t + _insets.b + _pic->GetHeight() : _h);
 }
 
 void OXIcon::_DoRedraw() {
   OXFrame::_DoRedraw();
-  if (_pic) _pic->Draw(_client->GetDisplay(), _id, _bckgndGC, _bw, _bw);
+  if (_pic) _pic->Draw(_client->GetDisplay(), _id, _bckgndGC,
+                       _insets.t, _insets.b);
 }

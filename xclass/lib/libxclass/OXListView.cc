@@ -727,14 +727,20 @@ void OXListView::ShowHeaderBar() {
   int n = _columnData.size();
 
   if (n > 0) {
-    int i, w = 0, h = 0, xl = -_visibleStart.x, bfw = _w - 2*_bw;
+    int i, w, h, xl, bfw;
+
+    w = h = 0;
+
+    xl = -_visibleStart.x;
+    bfw = _w - _insets.r - _insets.l;
 
     h = _columnData[0]->button->GetDefaultHeight() - 4;
     for (i = 0; i < n; ++i) {
       w = _columnData[i]->width;
       if (i == 0) w += _itemSep.w;
       if (i == n - 1) w = bfw - xl;
-      _columnData[i]->resizer->MoveResize(xl+w-1+_bw, _bw, 2, _h-2*_bw);
+      _columnData[i]->resizer->MoveResize(xl + w - 1 + _insets.l, _insets.t,
+                                          2, _h - _insets.t - _insets.b);
       _columnData[i]->resizer->MoveResizeHandle(-3, 0, 6, h);
       if ((xl + w > 0) && (xl < bfw)) {
         _columnData[i]->button->MoveResize(xl, 0, w, h);
@@ -749,7 +755,7 @@ void OXListView::ShowHeaderBar() {
       }
       xl += w;
     }
-    _header->MoveResize(_bw, _bw, bfw, h);
+    _header->MoveResize(_insets.l, _insets.t, bfw, h);
     _header->MapWindow();
   }
 }
@@ -820,6 +826,9 @@ void OXListView::AddItem(OListViewItem *newItem) {
 
   const OResourcePool *res = _client->GetResourcePool();
   if (_itemFont) newItem->SetFont(res->GetFontPool()->GetFont(_itemFont));
+
+  ODimension itemSize = newItem->GetDefaultSize();
+  newItem->Resize(itemSize);
 
   _items.push_back(newItem);
 

@@ -238,6 +238,8 @@ public:
   }
   bool IsMinimized() const { return _isMinimized; }
   bool IsMaximized() const { return _isMaximized; }
+  
+  void SetDecorBorderWidth(int bw);
 
   friend class OXMdiMainFrame;
 

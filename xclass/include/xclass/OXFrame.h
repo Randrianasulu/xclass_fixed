@@ -158,6 +158,9 @@ public:
   OPosition GetPosition() const { return OPosition(_x, _y); }
   int GetBorderWidth() const { return _bw; }
 
+  OInsets GetInsets() const { return _insets; }
+  void SetInsets(const OInsets &in) { _insets = in; }
+
   int Contains(int x, int y) const { return ((x >= 0) && (x < _w) &&
                                              (y >= 0) && (y < _h)); }
 
@@ -225,6 +228,7 @@ protected:
   int _compressConfigureEvents, _compressMotionEvents;
 
   OXTip *_tip;
+  OInsets _insets;
 };
 
 

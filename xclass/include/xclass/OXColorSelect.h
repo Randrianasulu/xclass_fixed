@@ -84,7 +84,7 @@ protected:
 
 class OXColorPopup : public OXCompositeFrame {
 public:
-  OXColorPopup(const OXWindow *p, OColor color);
+  OXColorPopup(const OXWindow *p, OColor color, int dlg = True);
 
   virtual int HandleButton(XButtonEvent *event);
   virtual int ProcessMessage(OMessage *msg);
@@ -101,7 +101,7 @@ protected:
 
 class OXColorSelect : public OXButton {
 public:
-  OXColorSelect(const OXWindow *p, OColor color, int id);
+  OXColorSelect(const OXWindow *p, OColor color, int id, int dlg = True);
   virtual ~OXColorSelect();
 
   virtual int HandleButton(XButtonEvent *event);
@@ -118,6 +118,7 @@ protected:
   
   void _DrawTriangle(GC gc, int x, int y);
 
+  int _dlg;
   unsigned long _pixel;
   OColor _color;
   OXGC *_drawGC;

@@ -265,8 +265,8 @@ void OXView::Layout() {
   need_vsb = need_hsb = False;
 
   // test whether we need scrollbars
-  cw = _w - (_bw << 1) - _offset.x;
-  ch = _h - (_bw << 1) - _offset.y;
+  cw = _w - _insets.l - _insets.r - _offset.x;
+  ch = _h - _insets.t - _insets.b - _offset.y;
 
   _canvas->SetWidth(cw);
   _canvas->SetHeight(ch);
@@ -305,11 +305,11 @@ void OXView::Layout() {
 
   if (need_hsb) {
 #ifdef INCL_SB
-    _hsb->MoveResize(_bw, ch + _bw + _offset.y,
+    _hsb->MoveResize(_insets.l, ch + _insets.t + _offset.y,
                      cw + _offset.x, _hsb->GetDefaultHeight());
     _hsb->MapRaised();
 #else
-    _hsb->MoveResize(_bw + _offset.x, ch + _bw + _offset.y,
+    _hsb->MoveResize(_insets.l + _offset.x, ch + _insets.t + _offset.y,
                      cw, _hsb->GetDefaultHeight());
     _hsb->MapWindow();
 #endif
@@ -320,11 +320,11 @@ void OXView::Layout() {
 
   if (need_vsb) {
 #ifdef INCL_SB
-    _vsb->MoveResize(cw + _bw + _offset.x, _bw,
+    _vsb->MoveResize(cw + _insets.l + _offset.x, _insets.t,
                      _vsb->GetDefaultWidth(), ch + _offset.y);
     _vsb->MapRaised();
 #else
-    _vsb->MoveResize(cw + _bw + _offset.x, _bw + _offset.y,
+    _vsb->MoveResize(cw + _insets.l + _offset.x, _insets.t + _offset.y,
                      _vsb->GetDefaultWidth(), ch);
     _vsb->MapWindow();
 #endif
@@ -333,7 +333,7 @@ void OXView::Layout() {
     _vsb->SetPosition(0 /*, False*/);
   }
 
-  _canvas->MoveResize(_bw + _offset.x, _bw + _offset.y, cw, ch);
+  _canvas->MoveResize(_insets.l + _offset.x, _insets.t + _offset.y, cw, ch);
 
   _hsb->SetRange(_virtualSize.w / _scrollValue.x,
 		 _canvas->GetWidth() / _scrollValue.x/*, False*/);

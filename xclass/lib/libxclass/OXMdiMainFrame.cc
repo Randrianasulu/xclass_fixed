@@ -663,7 +663,7 @@ void OXMdiMainFrame::Maximize(OXMdiFrame *mdiframe) {
 
   if (frame->_isMinimized) Restore(mdiframe);
 
-  frame->_bw = 0;
+  frame->SetDecorBorderWidth(0);
   frame->_preResizeX = frame->_x;
   frame->_preResizeY = frame->_y;
   frame->_preResizeWidth = frame->_w;
@@ -714,7 +714,7 @@ void OXMdiMainFrame::Restore(OXMdiFrame *mdiframe) {
       ptr->frame->MapWindow();
     }
   } else if (frame->_isMaximized) {
-    frame->_bw = MDI_BORDER_WIDTH;
+    frame->SetDecorBorderWidth(MDI_BORDER_WIDTH);
     // shouldn't we better be calling MapSubwindows() here?
     frame->_upperHR->MapWindow();
     frame->_lowerHR->MapWindow();   

@@ -40,8 +40,8 @@ protected:
   static int id_count;
 
 public:
-  OTimer(OComponent *c, int msecs);
-  ~OTimer();
+  OTimer(OComponent *c, unsigned long msecs);
+  virtual ~OTimer();
 
   friend class OXClient;
   friend class OXSTimerList;

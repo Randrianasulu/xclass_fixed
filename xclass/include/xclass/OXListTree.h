@@ -74,7 +74,8 @@ protected:
 
 class OXListTree : public OXView {
 public:
-  OXListTree(const OXWindow *p, int w, int h, int id, unsigned int options);
+  OXListTree(const OXWindow *p, int w, int h, int id = -1,
+             unsigned int options = SUNKEN_FRAME | DOUBLE_BORDER);
   virtual ~OXListTree();
 
   virtual int HandleButton(XButtonEvent *event);

@@ -158,7 +158,7 @@ int OX16ColorSelector::ProcessMessage(OMessage *msg) {
 
 //----------------------------------------------------------------------
 
-OXColorPopup::OXColorPopup(const OXWindow *p, OColor color) :
+OXColorPopup::OXColorPopup(const OXWindow *p, OColor color, int dlg) :
   OXCompositeFrame(p, 10, 10, DOUBLE_BORDER | RAISED_FRAME | OWN_BKGND,
 		   _defaultFrameBackground) {
 
@@ -180,16 +180,20 @@ OXColorPopup::OXColorPopup(const OXWindow *p, OColor color) :
 
   OX16ColorSelector *cs = new OX16ColorSelector(this);
   AddFrame(cs, new OLayoutHints(LHINTS_CENTER_X, 1, 1, 1, 1));
-  AddFrame(new OXHorizontal3dLine(this),
-	   new OLayoutHints(LHINTS_EXPAND_X | LHINTS_CENTER_Y, 2, 2, 2, 2));
-  OXButton *other = new OXTextButton(this, new OHotString("&Other..."), 1002);
-  other->Associate(this);
-  AddFrame(other, new OLayoutHints(LHINTS_EXPAND_X, 2, 10, 2, 2));
+
+  if (dlg) {
+    AddFrame(new OXHorizontal3dLine(this),
+             new OLayoutHints(LHINTS_EXPAND_X | LHINTS_CENTER_Y, 2, 2, 2, 2));
+    OXButton *other = new OXTextButton(this, new OHotString("&Other..."), 1002);
+    other->Associate(this);
+    AddFrame(other, new OLayoutHints(LHINTS_EXPAND_X, 2, 10, 2, 2));
+  }
 
   MapSubwindows();
 
-  Resize(cs->GetDefaultWidth() + 6,
-	 cs->GetDefaultHeight() + other->GetDefaultHeight());
+//  Resize(cs->GetDefaultWidth() + 6,
+//	 cs->GetDefaultHeight() + other->GetDefaultHeight());
+  Resize(GetDefaultSize());
 }
 
 void OXColorPopup::EndPopup() {
@@ -293,8 +297,9 @@ int OXColorPopup::ProcessMessage(OMessage *msg) {
 //----------------------------------------------------------------------
 
 OXColorSelect::OXColorSelect(const OXWindow *p, OColor color,
-                             int id) : OXButton(p, id) {
+                             int id, int dlg) : OXButton(p, id) {
 
+  _dlg = dlg;
   _color = color;
   _pixel = _client->GetColor(_color); 
 
@@ -356,7 +361,7 @@ int OXColorSelect::HandleButton(XButtonEvent *event) {
         int ax, ay;
         Window wdummy;
 
-        OXColorPopup *cd = new OXColorPopup(_client->GetRoot(), _color);
+        OXColorPopup *cd = new OXColorPopup(_client->GetRoot(), _color, _dlg);
         XTranslateCoordinates(GetDisplay(), _id, _client->GetRoot()->GetId(),
                               0, _h, &ax, &ay, &wdummy);
         cd->Associate(this);
@@ -377,10 +382,10 @@ void OXColorSelect::_DoRedraw() {
 
     // color rectangle
 
-    x = _bw + 2;
-    y = _bw + 2;  // 1;
+    x = _insets.l + 2;
+    y = _insets.t + 2;  // 1;
     w = 22;
-    h = _h - (_bw * 2) - 4;  // -3;  // 14
+    h = _h - _insets.t - _insets.b - 4;  // -3;  // 14
 
     if (_state == BUTTON_DOWN) { ++x; ++y; }
 
@@ -389,9 +394,9 @@ void OXColorSelect::_DoRedraw() {
 
     // separator
 
-    x = _w - 6 - _bw - 6;
-    y = _bw + 1;
-    h = _h - _bw - 1;  // actually y1
+    x = _w - 6 - _insets.r - 6;
+    y = _insets.t + 1;
+    h = _h - _insets.b - 1;  // actually y1
 
     if (_state == BUTTON_DOWN) { ++x; ++y; }
 
@@ -401,7 +406,7 @@ void OXColorSelect::_DoRedraw() {
 
     // arrow
 
-    x = _w - 6 - _bw - 2;
+    x = _w - 6 - _insets.r - 2;
     y = (_h - 4) / 2 + 1;
 
     if (_state == BUTTON_DOWN) { ++x; ++y; }
@@ -412,18 +417,18 @@ void OXColorSelect::_DoRedraw() {
 
     // sunken rectangle
 
-    x = _bw + 2;
-    y = _bw + 2;  // 1;
+    x = _insets.l + 2;
+    y = _insets.t + 2;  // 1;
     w = 22;
-    h = _h - (_bw * 2) - 4;  // 3;
+    h = _h - _insets.t - _insets.b - 4;  // 3;
 
     _Draw3dRectangle(SUNKEN_FRAME, x, y, w, h);
 
     // separator
 
-    x = _w - 6 - _bw - 6;
-    y = _bw + 1;
-    h = _h - _bw - 1;  // actually y1
+    x = _w - 6 - _insets.r - 6;
+    y = _insets.t + 1;
+    h = _h - _insets.b - 1;  // actually y1
 
     DrawLine(_shadowGC,  x, y, x, h - 2);
     DrawLine(_hilightGC, x + 1, y, x + 1, h - 1);
@@ -431,7 +436,7 @@ void OXColorSelect::_DoRedraw() {
 
     // sunken arrow
 
-    x = _w - 6 - _bw - 2;
+    x = _w - 6 - _insets.r - 2;
     y = (_h - 4) / 2 + 1;
 
     _DrawTriangle(_hilightGC, x + 1, y + 1);

@@ -51,7 +51,7 @@ class OXDockHideButton : public OXDockButton {
 public:
   OXDockHideButton(const OXCompositeFrame *p);
 
-  SetAspect(int a) { _aspect = a; _DoRedraw(); }
+  void SetAspect(int a) { _aspect = a; _DoRedraw(); }
 
 protected:
   virtual void _DoRedraw();

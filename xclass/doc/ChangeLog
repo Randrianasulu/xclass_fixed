@@ -2238,3 +2238,41 @@ OPicture.cc
 - Added wheel-mouse support to OXCanvas and OXView. It works on derivates as
   well: OXItemView, OXListView, OXFileList, OXListTree, OXTextEdit and
   OXMdiMainFrame.
+
+
+06/08/02 (0.7.4)
+
+- OXListBox::MoveSelectUp/Down(): do nothing if lbe is NULL.
+
+
+08/08/02
+
+- OXColorSelect: added an extra optional argument to the constructor to
+  control the inclusion of the "Other..." button.
+
+- ODList: added SetFirst() and SetLast() methods.
+
+
+09/08/02
+
+- OXTextEntry::_DoRedraw(): avoid having all the text scrolled to the left.
+
+
+12/08/02
+
+- OXDockableFrame::SetAspect() - added forgotten 'void'.
+
+
+14/08/02
+
+- OTimer: time argument type set to unsigned long.
+
+
+20/08/02
+
+- Added OInsets class. OXFrame's now have the notion of insets, which
+  determines the inner rectangle where children windows can be positioned. 
+  Before we assumed that all OXFrame borders (left, right, top and bottom)
+  were of equal width. But there are some special widgets (OXGroupFrame, for
+  example) which have different border widths, and therefore require this.
+

@@ -28,10 +28,10 @@
 void ORowLayout::Layout() {
   SListFrameElt *ptr;
   ODimension size;
-  int bw = _main->GetBorderWidth();
-  int x = bw, y = bw;
+  OInsets ins = _main->GetInsets();
+  int x = ins.l, y = ins.t;
  
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       size = ptr->frame->GetDefaultSize();
       ptr->frame->MoveResize(x, y, size.w, size.h);
@@ -43,13 +43,14 @@ void ORowLayout::Layout() {
 
 ODimension ORowLayout::GetDefaultSize() const {
   ODimension size(0,0), dsize, msize = _main->GetSize();
+  OInsets ins = _main->GetInsets();
   SListFrameElt *ptr;
   int options = _main->GetOptions();
   
   if ((options & FIXED_HEIGHT) && (options & FIXED_WIDTH))
     return msize;
  
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       dsize   = ptr->frame->GetDefaultSize();
       size.h  = max(size.h, dsize.h);
@@ -57,8 +58,8 @@ ODimension ORowLayout::GetDefaultSize() const {
     }
   }
 
-  size.h += _main->GetBorderWidth() << 1;
-  size.w += _main->GetBorderWidth() << 1;
+  size.h += ins.t + ins.b;
+  size.w += ins.l + ins.r;
   size.w -= sep;
 
   if (options & FIXED_HEIGHT) size.h = msize.h;
@@ -72,10 +73,10 @@ ODimension ORowLayout::GetDefaultSize() const {
 void OColumnLayout::Layout() {
   SListFrameElt *ptr;
   ODimension size;
-  int bw = _main->GetBorderWidth();
-  int x = bw, y = bw;
+  OInsets ins = _main->GetInsets();
+  int x = ins.l, y = ins.t;
  
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       size = ptr->frame->GetDefaultSize();
       ptr->frame->MoveResize(x, y, size.w, size.h);
@@ -87,13 +88,14 @@ void OColumnLayout::Layout() {
 
 ODimension OColumnLayout::GetDefaultSize() const {
   ODimension size(0,0), dsize, msize = _main->GetSize();
+  OInsets ins = _main->GetInsets();
   SListFrameElt *ptr;
   int options = _main->GetOptions();
   
   if (options & FIXED_HEIGHT && options & FIXED_WIDTH)
     return msize;
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       dsize   = ptr->frame->GetDefaultSize();
       size.h += dsize.h + sep;
@@ -101,9 +103,9 @@ ODimension OColumnLayout::GetDefaultSize() const {
     }
   }
 
-  size.h += _main->GetBorderWidth() << 1;
+  size.h += ins.t + ins.b;
   size.h -= sep;
-  size.w += _main->GetBorderWidth() << 1;
+  size.w += ins.l + ins.r;
 
   if (options & FIXED_HEIGHT) size.h = msize.h;
   if (options & FIXED_WIDTH)  size.w = msize.w;

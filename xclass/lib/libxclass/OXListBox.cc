@@ -170,6 +170,8 @@ void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
   OXLBEntry *e, *first = NULL;
   SListFrameElt *ptr;
 
+  if (!lbe) return;
+
   //printf("OXLBContainer::MoveSelectUp(ID:%d)\n", lbe->ID());
   //if (lbe) {
   //  lbe->Activate(False);
@@ -208,6 +210,8 @@ void OXLBContainer::MoveSelectUp(OXLBEntry *lbe) {
 void OXLBContainer::MoveSelectDown(OXLBEntry *lbe){
   OXLBEntry *e, *first = NULL;
   SListFrameElt *ptr;
+
+  if (!lbe) return;
 
   //if (lbe) {
   //  lbe->Activate(False);
@@ -724,27 +728,30 @@ void OXListBox::Update() {
 }
 
 void OXListBox::Resize(int w, int h) {
-  if (_integralHeight) 
-    h = max(_itemVsize, ((h - (_bw << 1)) / _itemVsize) * _itemVsize) 
-        + (_bw << 1);
+  if (_integralHeight) {
+    int ih = _insets.t + _insets.b;
+    h = max(_itemVsize, ((h - ih) / _itemVsize) * _itemVsize) + ih;
+  }
   OXCompositeFrame::Resize(w, h);
 }
 
 void OXListBox::MoveResize(int x, int y, int w, int h) {
-  if (_integralHeight) 
-    h = max(_itemVsize, ((h - (_bw << 1)) / _itemVsize) * _itemVsize)
-        + (_bw << 1);
+  if (_integralHeight) {
+    int ih = _insets.t + _insets.b;
+    h = max(_itemVsize, ((h - ih) / _itemVsize) * _itemVsize) + ih;
+  }
   OXCompositeFrame::MoveResize(x, y, w, h);
 }
 
 ODimension OXListBox::GetDefaultSize() const {
   int h;
 
-  if (_integralHeight)
-    h = max(_itemVsize, ((_h - (_bw << 1)) / _itemVsize) * _itemVsize)
-        + (_bw << 1);
-  else
+  if (_integralHeight) {
+    int ih = _insets.t + _insets.b;
+    h = max(_itemVsize, ((_h - ih) / _itemVsize) * _itemVsize) + ih;
+  } else {
     h = _h;
+  }
 
   return ODimension(_w, h);
 }
@@ -774,19 +781,19 @@ void OXListBox::Layout() {
 
   // test whether we need vertical scrollbar or not
 
-  cw = _w-(_bw << 1);
-  ch = _h-(_bw << 1);
+  cw = _w - _insets.l - _insets.r;
+  ch = _h - _insets.t - _insets.b;
 
   _container->SetWidth(cw);
   _container->SetHeight(ch);
 
   if (_container->GetDefaultHeight() > ch) {
     need_vsb = True;
-    cw = _w-(_bw << 1)-_vscrollbar->GetDefaultWidth();
+    cw = _w - _insets.l - _insets.r - _vscrollbar->GetDefaultWidth();
     _container->SetWidth(cw);
   }
 
-  _vport->MoveResize(_bw, _bw, cw, ch);
+  _vport->MoveResize(_insets.l, _insets.t, cw, ch);
   _container->Layout();
   tch = max(_container->GetDefaultHeight(), ch);
   _container->SetHeight(0); // force a resize in OXFrame::Resize
@@ -794,7 +801,8 @@ void OXListBox::Layout() {
 //  _vport->SetPos(0, 0);
 
   if (need_vsb) {
-    _vscrollbar->MoveResize(cw+_bw, _bw, _vscrollbar->GetDefaultWidth(), ch);
+    _vscrollbar->MoveResize(cw + _insets.l, _insets.t,
+                            _vscrollbar->GetDefaultWidth(), ch);
     _vscrollbar->MapWindow();
   } else {
     _vscrollbar->UnmapWindow();

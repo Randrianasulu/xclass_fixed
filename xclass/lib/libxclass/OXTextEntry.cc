@@ -85,7 +85,7 @@ OXTextEntry::OXTextEntry(const OXWindow *p, OTextBuffer *text, int ID,
     _th = fm.linespace;
     _ascent = fm.ascent;
 
-    _w = tw+(_bw<<1)+4; //Resize(tw + 8, _th + 7);
+    _w = tw + _insets.l + _insets.r + 4; //Resize(tw + 8, _th + 7);
 
     _cursor_x  = _vstart_x = _start_x = _end_x = 0;
     _cursor_ix = _start_ix = _end_ix = 0;
@@ -145,8 +145,8 @@ void OXTextEntry::SetTextColor(unsigned int color) {
 
 
 void OXTextEntry::DrawCursor(bool mode) {
-  int y = 2 + _bw;
-  int x = 2 + _bw;
+  int y = 2 + _insets.t;
+  int x = 2 + _insets.l;
 
   int cursor_width = 2;
 
@@ -169,10 +169,10 @@ void OXTextEntry::DrawCursor(bool mode) {
       }
 
       XRectangle rect;
-      rect.x = _bw;
-      rect.y = _bw;
-      rect.width = _w - 2 * _bw;
-      rect.height = _h - 2 * _bw;
+      rect.x = _insets.l;
+      rect.y = _insets.t;
+      rect.width = _w - _insets.l - _insets.r;
+      rect.height = _h - _insets.t - _insets.b;
       XSetClipRectangles(GetDisplay(), drawGC->GetGC(),
                          0, 0, &rect, 1, Unsorted);
 
@@ -189,38 +189,43 @@ void OXTextEntry::DrawCursor(bool mode) {
 
 
 void OXTextEntry::_DoRedraw() {
-  int x, y;
+  int tw, ww, x, y;
   int start_char, end_char;
 
   OXFrame::_DoRedraw();
 
-  x = 2 + _bw; // do not center text
-  y = 2 + _bw;
+  x = 2 + _insets.l; // do not center text
+  y = 2 + _insets.t;
 
+  tw = _TextWidth(0, _text->GetTextLength());
+  ww = _w - 4 - _insets.l - _insets.r;
+
+  if (_vstart_x > tw - ww) _vstart_x = tw - ww;
   if (_vstart_x < 0) _vstart_x = 0;
 
   start_char = _GetCharacterIndex(_vstart_x);
-  end_char = _GetCharacterIndex(_vstart_x + _w-(4+(_bw<<1)));
+  end_char = _GetCharacterIndex(_vstart_x + ww);
 
   x = _TextWidth(0, start_char) - _vstart_x;
 
   XRectangle rect;
-  rect.x = _bw;
-  rect.y = _bw;
-  rect.width = _w - 2 * _bw;
-  rect.height = _h - 2 * _bw;
+  rect.x = _insets.l;
+  rect.y = _insets.t;
+  rect.width = _w - _insets.l - _insets.r;
+  rect.height = _h - _insets.t - _insets.b;
   XSetClipRectangles(GetDisplay(), _normGC->GetGC(),
                      0, 0, &rect, 1, Unsorted);
   XSetClipRectangles(GetDisplay(), _selGC->GetGC(),
                      0, 0, &rect, 1, Unsorted);
 
-  ClearArea(_bw, y-1, 4-_bw, _th +1);
+  ClearArea(_insets.l, y - 1, 4 - _insets.l, _th +1);
   _normGC->SetBackground(_backPixel);
-  _DrawImageString(_normGC->GetGC(), x+_bw+2, y + _ascent,
+  _DrawImageString(_normGC->GetGC(), x + _insets.l + 2, y + _ascent,
                    start_char, end_char - start_char + 1);
   int xr = _TextWidth(0, _text->GetTextLength()) - _vstart_x;
-  if (xr+_bw+2 < _w-_bw)
-    ClearArea(xr+_bw+2, y-1, _w-_bw-(xr+_bw+2), _th +1);
+  if (xr + _insets.l + 2 < _w - _insets.r)
+    ClearArea(xr + _insets.l + 2, y - 1,
+              _w - _insets.r - (xr + _insets.l + 2), _th +1);
 
   if (_selection_on) {
     int xs, ws, ixs, iws;
@@ -238,10 +243,11 @@ void OXTextEntry::_DoRedraw() {
       iws = abs(_end_ix - _start_ix);
     }
     FillRectangle(_selbackGC->GetGC(),
-                  xs - _vstart_x + _bw+2, y+1/*-1*/, ws, _th-1 /*+1*/);
+                  xs - _vstart_x + _insets.l + 2, y+1/*-1*/, ws, _th-1 /*+1*/);
     Font oldfont = _selGC->GetFont();
     _selGC->SetFont(_normGC->GetFont());
-    _DrawString(_selGC->GetGC(), xs - _vstart_x + _bw+2, y + _ascent, ixs, iws);
+    _DrawString(_selGC->GetGC(), xs - _vstart_x + _insets.l + 2, y + _ascent,
+                ixs, iws);
     _selGC->SetFont(oldfont);
   }
   _normGC->SetClipMask(None);
@@ -251,7 +257,8 @@ void OXTextEntry::_DoRedraw() {
 
 
 ODimension OXTextEntry::GetDefaultSize() const {
-  return ODimension(_w /*tw + 4 + (_bw<<1)*/, _th + 3 + (_bw<<1));
+  return ODimension(_w /*tw + 4 + _insets.l + _insets.r*/,
+                    _th + 3 + _insets.t + _insets.b);
 }
 
 
@@ -339,7 +346,7 @@ int OXTextEntry::HandleButton(XButtonEvent *event) {
 
     if (event->button == Button1) {
 
-      x = 2 + _bw;
+      x = 2 + _insets.l;
       _start_ix = _GetCharacterIndex(event->x - x +_vstart_x);
       _start_x  = _TextWidth(0, _start_ix);
       SetCursor(_start_ix);
@@ -386,8 +393,8 @@ int OXTextEntry::HandleDoubleClick(XButtonEvent *event) {
   _end_x  = _TextWidth(0, _end_ix);
   SetCursor(_end_ix);
   _selection_on = True;
-//  _vstart_x = _TextWidth(0, _end_ix)-_w;
-//  _vstart_x = _end_x - (_w-((_bw<<1)+4));
+//  _vstart_x = _TextWidth(0, _end_ix) - _w;
+//  _vstart_x = _end_x - (_w - (_insets.l + _insets.r + 4));
   _DoRedraw();
 
   return True;
@@ -420,13 +427,13 @@ int OXTextEntry::HandleMotion(XMotionEvent *event) {
   }
 
 /*
-  if ((event->x < (2+_bw)) ||
+  if ((event->x < (2 + _insets.l)) ||
       (_scrollDirection != TE_SCROLL_NONE))
     return True;
 */
 
-  x = 2 + _bw;
-  y = 2 + _bw;
+  x = 2 + _insets.l;
+  y = 2 + _insets.t;
   _end_ix = _GetCharacterIndex(_vstart_x + event->x - x); // + 1;
   if (_end_ix < _GetCharacterIndex(_vstart_x))
     _end_ix = _GetCharacterIndex(_vstart_x);
@@ -554,7 +561,7 @@ void OXTextEntry::SetCursor(int newpos) {
   DrawCursor(False);
   _cursor_ix = newpos;
   _cursor_x = _TextWidth(0, _cursor_ix);
-  if (_cursor_x > _vstart_x +(_w-((_bw<<1)+4))) {
+  if (_cursor_x > _vstart_x + (_w - (_insets.l + _insets.r + 4))) {
     _vstart_x += _cursor_x - old_cursor;
     _DoRedraw();
   } else if (_cursor_x < _vstart_x) {
@@ -768,8 +775,8 @@ void OXTextEntry::SelectAll() {
   _end_x  = _TextWidth(0, _end_ix);
   SetCursor(_end_ix);
   _selection_on = True;
-//  _vstart_x = _TextWidth(0, _end_ix)-_w;
-//  _vstart_x = _end_x - (_w-((_bw<<1)+4)); 
+//  _vstart_x = _TextWidth(0, _end_ix) - _w;
+//  _vstart_x = _end_x - (_w - (_insets.l + _insets.r + 4)); 
   _DoRedraw();
 
   return;

@@ -28,7 +28,7 @@
 
 int OTimer::id_count = 0;
 
-OTimer::OTimer(OComponent *c, int msecs) {
+OTimer::OTimer(OComponent *c, unsigned long msecs) {
 
   if (c != NULL) {
 

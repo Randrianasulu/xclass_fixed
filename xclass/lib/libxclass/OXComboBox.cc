@@ -92,7 +92,7 @@ OXComboBox::~OXComboBox() {
 }
 
 ODimension OXComboBox::GetDefaultSize() const {
-  return ODimension (_w, _te->GetDefaultHeight() + (_bw << 1));
+  return ODimension (_w, _te->GetDefaultHeight() + _insets.t + _insets.b);
 }
 
 int OXComboBox::HandleButton(XButtonEvent *event) {

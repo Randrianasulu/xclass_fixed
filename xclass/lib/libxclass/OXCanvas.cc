@@ -101,8 +101,8 @@ void OXCanvas::Layout() {
 
   // test whether we need scrollbars
 
-  cw = _w-(_bw << 1);
-  ch = _h-(_bw << 1);
+  cw = _w - _insets.l - _insets.r;
+  ch = _h - _insets.t - _insets.b;
 
   _container->SetWidth(cw);
   _container->SetHeight(ch);
@@ -110,7 +110,7 @@ void OXCanvas::Layout() {
   if (_container->GetDefaultWidth() > cw) {
     if (_scrolling & CANVAS_SCROLL_HORIZONTAL) {
       need_hsb = True;
-      ch = _h-(_bw << 1)-_vscrollbar->GetDefaultWidth(); 
+      ch = _h - _insets.t - _insets.b - _vscrollbar->GetDefaultWidth(); 
       _container->SetHeight(ch);
     }
   }
@@ -118,7 +118,7 @@ void OXCanvas::Layout() {
   if (_container->GetDefaultHeight() > ch) {
     if (_scrolling & CANVAS_SCROLL_VERTICAL) {
       need_vsb = True;
-      cw = _w-(_bw << 1)-_hscrollbar->GetDefaultHeight();
+      cw = _w - _insets.l - _insets.r - _hscrollbar->GetDefaultHeight();
       _container->SetWidth(cw);
     }
   }
@@ -130,14 +130,15 @@ void OXCanvas::Layout() {
     if (!need_hsb) {
       if (_scrolling & CANVAS_SCROLL_HORIZONTAL) {
         need_hsb = True;
-        ch = _h-(_bw << 1)-_vscrollbar->GetDefaultWidth();
+        ch = _h - _insets.t - _insets.b - _vscrollbar->GetDefaultWidth();
         _container->SetHeight(ch);
       }
     }
   }
 
   if (need_hsb) {
-    _hscrollbar->MoveResize(_bw, ch+_bw, cw, _hscrollbar->GetDefaultHeight());
+    _hscrollbar->MoveResize(_insets.l, ch + _insets.t,
+                            cw, _hscrollbar->GetDefaultHeight());
     _hscrollbar->MapWindow();
   } else {
     _hscrollbar->UnmapWindow();
@@ -145,14 +146,15 @@ void OXCanvas::Layout() {
   }
 
   if (need_vsb) {
-    _vscrollbar->MoveResize(cw+_bw, _bw, _vscrollbar->GetDefaultWidth(), ch);
+    _vscrollbar->MoveResize(cw + _insets.l, _insets.t,
+                            _vscrollbar->GetDefaultWidth(), ch);
     _vscrollbar->MapWindow();
   } else {
     _vscrollbar->UnmapWindow();
     _vscrollbar->SetPosition(0);
   }
 
-  _vport->MoveResize(_bw, _bw, cw, ch);
+  _vport->MoveResize(_insets.l, _insets.t, cw, ch);
 
   tcw = max(_container->GetDefaultWidth(), cw);
   tch = max(_container->GetDefaultHeight(), ch);

@@ -45,11 +45,12 @@ OXMdiDecorFrame::OXMdiDecorFrame(OXMdiMainFrame *main, OXMdiFrame *frame,
 
   _mdiMainFrame = main;
   _frame = frame;
-  _bw = MDI_BORDER_WIDTH;
   _isMinimized = _isMaximized = False;
   _minimizedX = _minimizedY = 0;
   _minimizedUserPlacement = False;
   _buttonMask = MDI_DEFAULT_HINTS;
+
+  SetDecorBorderWidth(MDI_BORDER_WIDTH);
 
   _titlebar = new OXMdiTitleBar(this, _mdiMainFrame);
 
@@ -118,6 +119,11 @@ OXMdiDecorFrame::~OXMdiDecorFrame() {
   delete _upperRightCR;
   delete _lowerRightCR;
   DestroyWindow();
+}
+
+void OXMdiDecorFrame::SetDecorBorderWidth(int bw) {
+  _bw = bw;
+  _insets = OInsets(_bw, _bw, _bw, _bw);
 }
 
 void OXMdiDecorFrame::SetMdiButtons(unsigned long buttons) {

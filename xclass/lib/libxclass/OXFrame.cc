@@ -133,6 +133,8 @@ OXFrame::OXFrame(const OXWindow *p, int w, int h,
     _compressMotionEvents = True;
 
     _tip = NULL;
+
+    _insets = OInsets(_bw, _bw, _bw, _bw);
 }
 
 OXFrame::OXFrame(OXClient *c, Window id, OXWindow *parent) :
@@ -159,6 +161,8 @@ OXFrame::OXFrame(OXClient *c, Window id, OXWindow *parent) :
   _options = 0;
   _tip = NULL;
   _eventMask = 0;
+
+  _insets = OInsets(_bw, _bw, _bw, _bw);
 }
 
 OXFrame::~OXFrame() {
@@ -173,6 +177,7 @@ void OXFrame::ChangeOptions(unsigned int options) {
       _bw = (options & DOUBLE_BORDER) ? 2 : 1;
     else
       _bw = 0;
+    _insets = OInsets(_bw, _bw, _bw, _bw);
   }
 
   _options = options;
