@@ -1009,9 +1009,11 @@ int OXHtml::HandleButton(XButtonEvent *event) {
     int y = event->y + _visibleStart.y;
     char *uri = GetHref(x, y);
 
-char ix[20];
-sprintf(ix, "begin");
-SetInsert(ix);
+#if 0  // insertion cursor test
+    char ix[20];
+    sprintf(ix, "begin");
+    SetInsert(ix);
+#endif
 
     if (uri) {
       uri = ResolveUri(uri);
