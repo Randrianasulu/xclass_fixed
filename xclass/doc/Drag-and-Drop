@@ -1,16 +1,17 @@
 In order to fully understand the xclass dnd (drag and drop) mechanism, and
-to make efficient use of it it is strongly recommended that you become
-familiar first with the Xdnd protocol, for that purpose see the excellent
+to make efficient use of it, we strongly recommend that you become
+familiar first with the Xdnd protocol. For that purpose see the excellent
 documentation available at http://www.newplanetsoftware.com/xdnd/
 
+=========================================================================
 
 Xclass applications wanting to participate in dnd operations must first
 create an ODNDmanager object on its top-level window, since none is
-avialable by default. Usually this operation is done in the constructor of
+available by default. Usually this operation is done in the constructor of
 the top-level window (a derivate of OXMainFrame or OXTransientFrame), with a
 statement like the following:
 
-  _dndManager = new ODNDmanager(this, typelist);
+  _dndManager = new ODNDmanager(_client, this, typelist);
 
 The ODNDmanager takes care of all the low-level communication details
 between dnd source and target windows. Xclass' ODNDmanager implements XDND

@@ -1893,3 +1893,9 @@ OPicture.cc
 - OXFileList: handle "desktop" and "recycle bin" folders properly.
 
 - OXListTree: improved keyboard support.
+
+
+15/10/01
+
+- OResourcePool: must search for xclassrc file exactly as specified in
+  doc/INSTALL.
