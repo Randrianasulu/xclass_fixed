@@ -105,8 +105,8 @@ OXSampleView::~OXSampleView() {
 void OXSampleView::_CreatePixmap() {
   if (_pix != None) XFreePixmap(GetDisplay(), _pix);
 
-  _pixw = _w - 2 * _bw;
-  _pixh = _h - 2 * _bw;
+  _pixw = _w - _insets.l - _insets.r;
+  _pixh = _h - _insets.t - _insets.b;
 
   _pix = XCreatePixmap(GetDisplay(), _id, _pixw, _pixh,
                        _client->GetDisplayDepth());
@@ -133,7 +133,8 @@ void OXSampleView::_Draw() {
     x0 = y0 = 0;
   } else {
     dst = _id;
-    x0 = y0 = _bw;
+    x0 = _insets.l;
+    y0 = _insets.t;
   }
 
   // draw desktop background
@@ -369,7 +370,7 @@ void OXSampleView::_DoRedraw() {
   OXFrame::DrawBorder();
   if (_pix != None)
     XCopyArea(GetDisplay(), _pix, _id, _drawGC->GetGC(), 
-              0, 0, _pixw, _pixh, _bw, _bw);
+              0, 0, _pixw, _pixh, _insets.l, _insets.t);
   else
     _Draw();
 }

@@ -253,8 +253,8 @@ int OXTextView::ProcessMessage(OMessage *msg) {
 void OXTextView::Layout() {
   int lines, vlines, tcw, tch;
 
-  tch = _h - (_bw << 1);
-  tcw = _w - (_bw << 1);
+  tch = _h - _insets.t - _insets.b;
+  tcw = _w - _insets.l - _insets.r;
   _textCanvas->SetHeight(tch);
   lines = _textCanvas->GetLines();
   vlines = _textCanvas->GetVisibleLines();
@@ -263,12 +263,12 @@ void OXTextView::Layout() {
     _vsb->UnmapWindow();
   } else {
     tcw -= _vsb->GetDefaultWidth();
-    _vsb->MoveResize(_bw + tcw, _bw, _vsb->GetDefaultWidth(), tch);
+    _vsb->MoveResize(_insets.l + tcw, _insets.t, _vsb->GetDefaultWidth(), tch);
     _vsb->MapWindow();
     _vsb->SetRange(lines, vlines);
   }
 
-  _textCanvas->MoveResize(_bw, _bw, tcw, tch);
+  _textCanvas->MoveResize(_insets.l, _insets.t, tcw, tch);
 }
 
 void OXTextView::DrawBorder() {

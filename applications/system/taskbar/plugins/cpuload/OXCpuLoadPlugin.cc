@@ -218,23 +218,23 @@ void OXCpuLoadPlugin::_DoRedraw() {
   OXFrame::_DoRedraw();
 
   _gc->SetForeground(_pixel0);
-  h = _h - _bw - _bw;
+  h = _h - _insets.t - _insets.b;
   for (i = 0; i < _hlen; ++i) {
     if (_hbfr1[i] > 0) {
-      x = _hlen - 1 + _bw - i;
-      y = _h - _bw - 1 - (_hbfr0[i] * h / 100);
-      if (y < _bw) y = _bw;
-      DrawLine(_gc->GetGC(), x, y, x, _h-_bw-1);
+      x = _hlen - 1 + _insets.l - i;
+      y = _h - _insets.b - 1 - (_hbfr0[i] * h / 100);
+      if (y < _insets.t) y = _insets.t;
+      DrawLine(_gc->GetGC(), x, y, x, _h - _insets.b - 1);
     }
   }
   if (_hasSMP && _SMPmode) {
     _gc->SetForeground(_pixel1);
     for (i = 0; i < _hlen; ++i) {
       if (_hbfr1[i] > 0) {
-        x = _hlen + _hlen - 1 + _bw - i;
-        y = _h - _bw - 1 - (_hbfr1[i] * h / 100);
-        if (y < _bw) y = _bw;
-        DrawLine(_gc->GetGC(), x, y, x, _h-_bw-1);
+        x = _hlen + _hlen - 1 + _insets.l - i;
+        y = _h - _insets.b - 1 - (_hbfr1[i] * h / 100);
+        if (y < _insets.t) y = _insets.t;
+        DrawLine(_gc->GetGC(), x, y, x, _h - _insets.b - 1);
       }
     }
   }
@@ -248,7 +248,7 @@ ODimension OXCpuLoadPlugin::GetDefaultSize() const {
 
   if (_hasSMP && _SMPmode) w *= 2;
 
-  return ODimension(w + _bw * 2, h);
+  return ODimension(w + _insets.l + insets.r, h);
 }
 
 int OXCpuLoadPlugin::HandleTimer(OTimer *t) {
