@@ -490,10 +490,14 @@ int OXListView::HandleKey(XKeyEvent *event) {
             _anchorItem = item;
             ShowFocusHilite(HasFocus());
           }
+        } else {
+          return True;  // probably a modifier key...
         }
         }
         break;
     }
+  } else {
+    return False;  // key release
   }
 
   if (_anchorItem) {
