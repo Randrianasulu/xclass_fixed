@@ -296,7 +296,7 @@ OXPopupMenu *OXFreqDB::_MakePopup(struct _popup *p) {
 
 int OXFreqDB::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-  OItemViewMessage *vmsg;
+  OItemViewMessage *vmsg = (OItemViewMessage *) msg;
 
   switch (msg->type) {
 
