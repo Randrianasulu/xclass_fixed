@@ -1,7 +1,7 @@
 Intro
 -----
 
-This the version 0.5 of foxftp, a cool ftp client. The program was 
+This the version 0.5.3 of foxftp, a cool ftp client. The program was 
 originally started by M. Gerald, I just took the latest version I could 
 find on the net (0.3), corrected a few bugs and made it compile under
 the latest xclass.
@@ -10,7 +10,7 @@ the latest xclass.
 Installation
 ------------
 
-This version of foxftp uses a MDI interface, so it requires xclass 0.7.2
+This version of foxftp uses a MDI interface, so it requires xclass 0.7.4
 or later. To build the executable, cd to the directory where you unpacked
 the sources and type 'make'. Copy the resulting 'foxftp' executable to a
 directory somewhere in your $PATH.
