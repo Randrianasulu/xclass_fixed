@@ -90,7 +90,7 @@ void OXTButton::DrawBorder() {
     break;
 
   case BUTTON_ENGAGED:
-    FillRectangle(_hibckgndGC, x+2, y+2, w-4, h-4);
+    FillRectangle(_hibckgndGC->GetGC(), x+2, y+2, w-4, h-4);
     DrawLine(_hilightGC, x+2, y+2, x+w-3, y+2);
   case BUTTON_DOWN:
     DrawLine(_blackGC,   x, y, x+w-1, y);

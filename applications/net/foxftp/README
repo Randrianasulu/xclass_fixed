@@ -10,7 +10,7 @@ the latest xclass.
 Installation
 ------------
 
-This version of foxftp requires xclass 0.8.2 or higher. To build the
+This version of foxftp requires xclass 0.8.3 or higher. To build the
 executable, cd to the directory where you unpacked the sources and type
 'make'. Copy the resulting 'foxftp' executable to a directory somewhere in
 your $PATH (or use 'make install' as superuser).

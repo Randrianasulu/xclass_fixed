@@ -22,7 +22,7 @@
 
 //----------------------------------------------------------------------
 
-#define XCGVIEW_VERSION   "0.8.2"
+#define XCGVIEW_VERSION   "0.8.3"
 #define XCGVIEW_INI       "xcgviewrc"
 
 

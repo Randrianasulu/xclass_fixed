@@ -72,3 +72,13 @@ exception - used to test xclass exception objects.
 
 htmltest  - used to test the OXHtml widget. Select File/Open, go to the
             html directory and open index.html
+
+helptest  - used to test the help browser widget. Use the following command
+            line when invoking it:
+
+               helptest appname [filename]
+
+            where appname is the name of an installed application, helptest
+            will try to automotically locate the help files and show the
+            index page. If a filename is specified, helptest will display
+            that page instead of the index page.

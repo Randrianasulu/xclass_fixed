@@ -32,7 +32,7 @@
 OXOutput *output_dlg = NULL;
 
 struct _popup file_popup = {
-  { NULL }, {
+  NULL, {
   { "&Open...",               M_FILE_OPEN,       0,             NULL },
   { "&Reopen",                M_FILE_REOPEN,     MENU_DISABLED, NULL },
   { "&Save marked pages...",  M_FILE_SAVEMARKED, MENU_DISABLED, NULL },
@@ -44,11 +44,11 @@ struct _popup file_popup = {
   { NULL,                     -1,                0,             NULL } } };
 
 struct _popup media_popup = {
-  { NULL }, {
+  NULL, {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup magstep_popup = {
-  { NULL }, {
+  NULL, {
   { "-5",              M_MAGSTEP_M5,      0,             NULL },
   { "-4",              M_MAGSTEP_M4,      0,             NULL },
   { "-3",              M_MAGSTEP_M3,      0,             NULL },
@@ -63,7 +63,7 @@ struct _popup magstep_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup orien_popup = {
-  { NULL }, {
+  NULL, {
   { "&Document Default", M_ORIEN_DEFAULT, MENU_CHECKED,  NULL },
   { "",                -1,                0,             NULL },
   { "&Portrait",       M_ORIEN_PORTRAIT,  MENU_RCHECKED, NULL },
@@ -75,7 +75,7 @@ struct _popup orien_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup view_popup = {
-  { NULL }, {
+  NULL, {
   { "&Toolbar",        M_VIEW_TOOLBAR,     MENU_CHECKED,  NULL },
   { "Status &Bar",     M_VIEW_STATUSBAR,   MENU_CHECKED,  NULL },
   { "&Page Index",     M_VIEW_PAGEINDEX,   MENU_CHECKED | MENU_DISABLED,  NULL },
@@ -88,7 +88,7 @@ struct _popup view_popup = {
   { NULL,              -1,                 0,             NULL } } };
 
 struct _popup page_popup = {
-  { NULL }, {
+  NULL, {
   { "&Next\tPgDn",     M_PAGE_NEXT,       MENU_DISABLED, NULL },
   { "&Previous\tPgUp", M_PAGE_PREVIOUS,   MENU_DISABLED, NULL },
   { "&Redisplay",      M_PAGE_REDISPLAY,  MENU_DISABLED, NULL },
@@ -98,7 +98,7 @@ struct _popup page_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup help_popup = {
-  { NULL }, {
+  NULL, {
   { "&Contents...",    M_HELP_CONTENTS,   MENU_DISABLED, NULL },
   { "&Search...",      M_HELP_SEARCH,     MENU_DISABLED, NULL },
   { "",                -1,                0,             NULL },
@@ -143,6 +143,41 @@ int main(int argc, char **argv) {
 OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
   char tmp[BUFSIZ];
   const OPicture *cbgnd;
+
+  //------ init variables...
+
+  _psFile = NULL;
+
+  doc = NULL;
+  current_page = -1;
+  current_pagemedia = 0;
+  current_orientation = PageOrientationPortrait;
+  swap_landscape = False;
+  has_toc = False;
+  mag_step = 0;
+  base_papersize = 0;
+  default_document_pagemedia = True;
+  default_document_orientation = True;
+  last_pagemedia_entry = M_PAGEMEDIA;
+
+  _filename = NULL;
+  _full_filename = NULL;
+
+  for (int i = 0; i < NUM_RECENT; ++i) _recent_files[i] = NULL;
+
+  _printerName = StrDup("lp");
+  _printProg = StrDup("lpr");
+
+  _gsCommand = StrDup("gs");
+
+  _winx = w;
+  _winy = h;
+
+  // we will keep our own list of listbox entries,
+  // as that makes operations with marked pages easier
+  toc = NULL;
+
+  //------ setup popup menus
 
   _menuBarLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT | LHINTS_EXPAND_X, 
                                     0, 0, 1, 1);
@@ -243,39 +278,6 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
 
   SetWindowTitle(NULL);
   SetClassHints("XCGhostView", "XCGhostView");
-
-  //------ init variables...
-
-  _psFile = NULL;
-
-  doc = NULL;
-  current_page = -1;
-  current_pagemedia = 0;
-  current_orientation = PageOrientationPortrait;
-  swap_landscape = False;
-  has_toc = False;
-  mag_step = 0;
-  base_papersize = 0;
-  default_document_pagemedia = True;
-  default_document_orientation = True;
-  last_pagemedia_entry = M_PAGEMEDIA;
-
-  _filename = NULL;
-  _full_filename = NULL;
-
-  for (int i = 0; i < NUM_RECENT; ++i) _recent_files[i] = NULL;
-
-  _printerName = StrDup("lp");
-  _printProg = StrDup("lpr");
-
-  _gsCommand = StrDup("gs");
-
-  _winx = w;
-  _winy = h;
-
-  // we will keep our own list of listbox entries,
-  // as that makes operations with marked pages easier
-  toc = NULL;
 
   AddInput(KeyPressMask);
   SetFocusOwner(this);
@@ -1400,7 +1402,7 @@ void OXMain::_BuildPagemediaMenu() {
     }
     _mediaPopup->AddSeparator();
   }
-  for (i=0; papersizes[i].name; ++i) {
+  for (i = 0; papersizes[i].name; ++i) {
     if (i > 0) {
       // skip over same paper size with small imageable area
       if ((papersizes[i].width  == papersizes[i-1].width)  &&

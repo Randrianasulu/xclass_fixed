@@ -20,6 +20,7 @@ SRCS = btest.cc \
 	favordlg.cc \
 	flies.cc \
 	ftest.cc \
+	helptest.cc \
 	htmltest.cc \
 	listview.cc \
 	mditest.cc \

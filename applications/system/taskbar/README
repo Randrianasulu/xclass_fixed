@@ -35,7 +35,7 @@ INSTALLATION
 
 Before attempting to compile the taskbar, make sure you have compiled and
 installed properly the xclass library. The current version of the taskbar
-needs at least xclass-0.7.4.
+needs at least xclass-0.8.3.
 
 To compile and install the taskbar, just cd to the directory where you
 unpacked it and do:

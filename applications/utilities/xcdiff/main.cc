@@ -51,7 +51,7 @@
 #include "OXDialogs.h"
 
 
-#define XCDIFF_VERSION    "V0.7.2"
+#define XCDIFF_VERSION    "V0.7.3"
 
 
 #define MENU_DISABLED     (1<<0)
@@ -103,7 +103,7 @@ SToolBarData tb_data[] = {
 };
 
 struct _popup file_popup = {
-  { NULL }, {
+  0, {
   { "&Open left...",  M_FILE_OPENLEFT,  0, NULL },
   { "Open &right...", M_FILE_OPENRIGHT, 0, NULL },
   { "",               -1,               0, NULL },
@@ -111,7 +111,7 @@ struct _popup file_popup = {
   { NULL,             -1,               0, NULL } } };
 
 struct _popup diff_popup = {
-  { NULL }, {
+  0, {
   { "&Do",       M_DIFF_DO,       MENU_DISABLED, NULL },
   { "&Undo",     M_DIFF_UNDO,     0,             NULL },
   { "",          -1,              0,             NULL },
@@ -121,7 +121,7 @@ struct _popup diff_popup = {
   { NULL,        -1,              0,             NULL } } };
 
 struct _popup options_popup = {
-  { NULL }, {
+  0, {
   { "&Font...",	          M_OPTIONS_FONT,   0, NULL },
   { "&Colors...",         M_OPTIONS_COLORS, 0, NULL },
   { "&Show Line Numbers", M_OPTIONS_LINES,  0, NULL },
@@ -130,7 +130,7 @@ struct _popup options_popup = {
   { NULL,                 -1,               0, NULL } } };
  
 struct _popup help_popup = {
-  { NULL }, {
+  0, {
   { "&Contents...", M_HELP_CONTENTS, 0, NULL },
   { "&Search...",   M_HELP_SEARCH,   0, NULL },
   { "",             -1,              0, NULL },
@@ -190,7 +190,6 @@ int main(int argc, char **argv) {
   OXDiffMainFrame *mainw = new OXDiffMainFrame(clientX.GetRoot(), 600, 400,
                                                argc, argv);
   mainw->MapWindow();
-
   clientX.Run();
 
   return 0;

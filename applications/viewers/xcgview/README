@@ -1,4 +1,4 @@
-This is the version 0.8.2 of xcgview, a xclass port of ghostview 1.5
+This is the version 0.8.3 of xcgview, a xclass port of ghostview 1.5
 
 Status Of The Port  or  Currently Implemented Features:
 
@@ -80,3 +80,8 @@ ChangeLog
 - Added recent file list to the File menu.
 
 - The PgUp/PgDn behaviour is now more comfortable.
+
+
+12/06/03 (0.8.3)
+
+- Corrected a bug due to an uninitialized variable.

@@ -106,6 +106,7 @@ int OXMain::ExceptionTest() {
     new OXMsgBox(_client->GetRoot(), this, new OString("Exception"),
                  new OString(e.GetMessage()), MB_ICONSTOP, ID_OK);
   }
+  return 0;
 }
 
 int OXMain::BadFunction() {

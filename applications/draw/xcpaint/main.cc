@@ -51,7 +51,7 @@
 #define XCPAINT_VERSION "0.7.4"
 
 struct _popup file_popup = {
-  { NULL }, {
+  0, {
   { "&New...",         M_FILE_NEW,        0,             NULL },
   { "",                -1,                0,             NULL },
   { "&Open...",        M_FILE_OPEN,       0,             NULL },
@@ -65,7 +65,7 @@ struct _popup file_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup edit_popup = {
-  { NULL }, {
+  0, {
   { "&Undo",           M_EDIT_UNDO,       0,             NULL },
   { "",                -1,                0,             NULL },
   { "Cu&t",            M_EDIT_CUT,        0,             NULL },
@@ -76,7 +76,7 @@ struct _popup edit_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup view_popup = {
-  { NULL }, {
+  0, {
   { "&Toolbar",        M_VIEW_TOOLBAR,    MENU_CHECKED,  NULL },
   { "Status &Bar",     M_VIEW_STATUSBAR,  MENU_CHECKED,  NULL },
   { "Color &Palette",  M_VIEW_PALETTE,    MENU_CHECKED,  NULL },
@@ -88,19 +88,19 @@ struct _popup view_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup rotate_popup = {
-  { NULL }, {
+  0, {
   { "90 Deg &Right",   M_ROTATE_RIGHT,    0,             NULL },
   { "90 Deg &Left",    M_ROTATE_LEFT,     0,             NULL },
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup flip_popup = {
-  { NULL }, {
+  0, {
   { "&Horizontal",     M_FLIP_HORIZONTAL, 0,             NULL },
   { "&Vertical",       M_FLIP_VERTICAL,   0,             NULL },
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup shift_popup = {
-  { NULL }, {
+  0, {
   { "&Up",             M_SHIFT_UP,        0,             NULL },
   { "&Down",           M_SHIFT_DOWN,      0,             NULL },
   { "&Left",           M_SHIFT_LEFT,      0,             NULL },
@@ -108,7 +108,7 @@ struct _popup shift_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup image_popup = {
-  { NULL }, {
+  0, {
   { "&Resize...",      M_IMAGE_RESIZE,    0,             NULL },
   { "Re&scale...",     M_IMAGE_RESCALE,   0,             NULL },
   { "",                -1,                0,             NULL },
@@ -121,7 +121,7 @@ struct _popup image_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup palette_popup = {
-  { NULL }, {
+  0, {
   { "&Load...",        M_PALETTE_LOAD,    0,             NULL },
   { "&Save...",        M_PALETTE_SAVE,    0,             NULL },
   { "",                -1,                0,             NULL },
@@ -129,7 +129,7 @@ struct _popup palette_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup help_popup = {
-  { NULL }, {
+  0, {
   { "&Contents...",    M_HELP_CONTENTS,   MENU_DISABLED, NULL },
   { "&Search...",      M_HELP_SEARCH,     MENU_DISABLED, NULL },
   { "",                -1,                0,             NULL },

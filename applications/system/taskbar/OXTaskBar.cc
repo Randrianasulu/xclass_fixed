@@ -73,6 +73,10 @@
 #undef USE_FVWM98_WORKSPACE
 #define USE_WORKSPACE_EXTENSION
 
+#ifndef isblank
+#define isblank(c) (((c) == ' ') || ((c) == '\t'))
+#endif
+
 //----------------------------------------------------------------------
 
 extern void ConsoleMessage(char *fmt, ...);
