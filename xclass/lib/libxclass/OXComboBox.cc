@@ -33,7 +33,7 @@ const OPicture *OXComboBox::_bpic = NULL;
 
 //-------------------------------------------------------------------
 
-OXComboBox::OXComboBox(const OXWindow *p, char *name, int id,
+OXComboBox::OXComboBox(const OXWindow *p, const char *text, int id,
                        unsigned int options, unsigned long back) :
   OXCompositeFrame(p, 100, 100, options, back) {
 
@@ -50,6 +50,8 @@ OXComboBox::OXComboBox(const OXWindow *p, char *name, int id,
     _te->ChangeOptions(CHILD_FRAME);
     _te->Resize(_te->GetDefaultWidth()*15, _te->GetDefaultHeight());
     _te->Associate(this);
+
+    if (text) SetText(text);
 
     _but = new OXScrollBarElt(this, _bpic, SB_WIDTH, SB_WIDTH, RAISED_FRAME);
 

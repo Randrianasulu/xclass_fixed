@@ -2385,3 +2385,9 @@ OPicture.cc
     alignment in images are not processed.
   * scattered images built with tables may not render always in the
     expected way.
+
+
+14/05/03
+
+- OXComboBox::SetText() must erase OXTextEntry contents prior to adding
+  the text.

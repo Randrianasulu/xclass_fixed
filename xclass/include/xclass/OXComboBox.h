@@ -52,7 +52,7 @@ protected:
   static const OPicture *_bpic;
 
 public:
-  OXComboBox(const OXWindow *p, char *name, int id,
+  OXComboBox(const OXWindow *p, const char *text = NULL, int id = -1,
              unsigned int options = HORIZONTAL_FRAME | SUNKEN_FRAME |
                                     DOUBLE_BORDER | OWN_BKGND,
              unsigned long back = _defaultDocumentBackground);
@@ -84,7 +84,7 @@ public:
     { return _te->HandleDoubleClick(event); };
 
   const char *GetText() { return _te->GetString(); }
-  void SetText(char *text) { _te->AddText(0, text); }
+  void SetText(const char *text) { _te->Clear(); _te->AddText(0, text); }
   OXTextEntry *GetTextEntry() const { return _te; }
 
 protected:

@@ -381,6 +381,7 @@ int OXHtml::ControlSize(OHtmlInput *pElem) {
       char *z = pElem->MarkupArg("value", 0);
       if (!z) z = "Reset";
       OXFrame *f = new OXTextButton(_canvas, new OHotString(z), pElem->cnt);
+      f->TakeFocus(False);
       f->Associate(this);
       f->Resize(f->GetDefaultSize());
       SizeAndLink(f, pElem);
@@ -393,6 +394,7 @@ int OXHtml::ControlSize(OHtmlInput *pElem) {
       char *z = pElem->MarkupArg("value", 0);
       if (!z) z = "Submit";
       OXFrame *f = new OXTextButton(_canvas, new OHotString(z), pElem->cnt);
+      f->TakeFocus(False);
       f->Associate(this);
       // TODO: bg color!
       f->Resize(f->GetDefaultSize());
