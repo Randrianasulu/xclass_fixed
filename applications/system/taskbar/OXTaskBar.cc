@@ -71,8 +71,8 @@
 
 #undef DEBUG_PLUGINS
 
-#undef USE_FVWM98_EXTENSIONS
-
+#undef USE_FVWM98_WORKSPACE
+#define USE_WORKSPACE_EXTENSION
 
 //----------------------------------------------------------------------
 
@@ -457,8 +457,9 @@ void OXTaskBar::ProcessFvwmMessage(unsigned long type, unsigned long *body) {
         MoveResize(nx, ny, _scrWidth - (_decorBorder << 1), _h);
       }
 
-#ifdef USE_FVWM98_EXTENSIONS
+#ifdef USE_WORKSPACE_EXTENSION
 
+#ifdef USE_FVWM98_WORKSPACE
       int wsX0 = 0;
       int wsY0 = 0;
       int wsX1 = _scrWidth - 1;
@@ -472,6 +473,21 @@ void OXTaskBar::ProcessFvwmMessage(unsigned long type, unsigned long *body) {
       char tmp[255];
       sprintf(tmp, "SetWorkspace %i %i %i %i", wsX0, wsY0, wsX1, wsY1);
       SendFvwmText(tmp, _id);
+#else
+      int wsX = 0;
+      int wsY = 0;
+      int wsW = _scrWidth;
+      int wsH = _scrHeight;
+
+      if (_y < _midLine)
+        wsY = (_autoHide ? 1 : _h + _decorBorder * 2);
+
+      wsH -= (_autoHide ? 1 : _h + _decorBorder * 2);
+
+      char tmp[255];
+      sprintf(tmp, "SetWorkspace %i %i %i %i", wsX, wsY, wsW, wsH);
+      SendFvwmText(tmp, _id);
+#endif
 
 #endif
 
