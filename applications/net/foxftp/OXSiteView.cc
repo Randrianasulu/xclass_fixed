@@ -761,7 +761,7 @@ int OXSiteView::Disconnect(int force) {
     rtc = true;
   }
   if (rtc) {
-    OStatusMessage m1(STATUS_MESSAGE, STATUS_CHANGED, "Disonnecting from site");
+    OStatusMessage m1(STATUS_MESSAGE, STATUS_CHANGED, "Disconnecting from site");
     SendMessage(GetTopLevel(), &m1);
     SetWindowName("not connected");
     SetAliveTimer(false);

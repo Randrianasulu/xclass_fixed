@@ -336,9 +336,9 @@ OHandle *OFtp::OpenDir(const char *path, const char *args, int mode) {
 
   if (_OpenPort(&handle, mode) == 0) return NULL;
 
-  sprintf(cmd, "%s %s %s",
+  sprintf(cmd, "%s %s%s%s",
 	  ((mode & MODE_DIR_NLST) == MODE_DIR_NLST) ? "NLST" : "LIST",
-	  (args) ? args : "", (path) ? path : ".");
+	  (args) ? args : "", (args && *args) ? " " : "", (path) ? path : ".");
   if (_SendCmd(cmd, '1') == 0) {
     _ClosePort(handle);
     return NULL;

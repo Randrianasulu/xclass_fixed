@@ -57,4 +57,12 @@ root_flies,
 root_trails - similar to the above programs, but they run on the root window
               of the screen. Used to test the OXRootWindow object, shows how
               to subclass it. The root_flies program accepts an '-ontop'
-              option to keep the fileson top of all other windows.
+              option to keep the "flies" on top of all other windows. BUT
+              warning: that option makes some XFree86 servers to become
+              sloooow, apparently because the "flies" request save-under,
+              which supposedly should make things faster, but in reality
+              many XFree86 servers have buggy save-under implementations. If
+              you have an ATI-Radeon card you better disable the save-under
+              option if you haven't done so already due to the obvious
+              redraw bugs. If you have a Riva-TNT card you can expect your
+              server even to crash.
