@@ -76,8 +76,9 @@ AC_CHECK_HEADERS(memory.h unistd.h string.h)
 AC_CHECK_HEADERS(fcntl.h sys/time.h sys/systeminfo.h sys/stat.h)
 AC_CHECK_HEADERS(sys/select.h pwd.h sys/types.h sys/wait.h)
 AC_HEADER_DIRENT
+# The following two tests were removed due to problems with Solaris.
 #AC_C_CONST
-AC_C_INLINE
+#AC_C_INLINE
 AC_HEADER_TIME
 
 AC_TYPE_SIGNAL

@@ -2057,3 +2057,8 @@ OPicture.cc
   with gcc. (Well, it didn't, so I just disabled the test).
 
 - Corrected the Makefile.in for the icons directory.
+
+
+26/03/02
+
+- Disabled the 'inline' test in the configure script.
