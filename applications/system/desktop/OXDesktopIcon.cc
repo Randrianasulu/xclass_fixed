@@ -51,7 +51,6 @@ unsigned int OXDesktopIcon::_selPixel;
 OXGC *OXDesktopIcon::_defaultGC;
 const OXFont *OXDesktopIcon::_defaultFont = NULL;
 
-extern ODNDmanager *dndManager;
 extern Atom URI_list;
 
 #define SHAPED_LABEL
@@ -124,24 +123,9 @@ OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
 
   XDefineCursor(GetDisplay(), _id, _defaultCursor);
 
-#if 0
-  int _version = 4; //XDND_PROTOCOL_VERSION;
+  // Setup the XDND manager. Each icon requires its own separate ODNDmanager
+  // object.
 
-  XChangeProperty(GetDisplay(), _id, ODNDmanager::DNDaware, XA_ATOM, 32,
-                  PropModeReplace, (unsigned char *) &_version, 1);
-
-/*
-  if (typelist) {
-    int n = _ArrayLength(typelist);
-    if (n > 0) {
-      XChangeProperty(GetDisplay(), _id, ODNDmanager::DNDaware, XA_ATOM, 32,
-                      PropModeAppend, (unsigned char *) typelist, n);
-    }
-  }
-*/
-
-  _dndManager = dndManager;
-#else
   static Atom dndTypeList[2];
 
   dndTypeList[0] = URI_list;
@@ -157,7 +141,6 @@ OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
   // cast below is safe.
 
   _dndManager = new ODNDmanager(_client, (OXMainFrame *) this, dndTypeList);
-#endif
 }
 
 OXDesktopIcon::~OXDesktopIcon() {

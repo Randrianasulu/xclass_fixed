@@ -47,16 +47,8 @@
 
 //-------------------------------------------------------------------
 
-OXClient *clientX;
-OXDesktopMain *mainWindow;
-
-OXDesktopContainer *fileWindow;
 OXPopupMenu *objectMenu;
 OXPopupMenu *sendToMenu;
-
-char *AppName;
-
-ODNDmanager *dndManager = NULL;
 
 Atom URI_list = None;
 
@@ -78,21 +70,15 @@ int ErrorHandler(Display *dpy, XErrorEvent *event) {
 #endif
 
 int main(int argc, char *argv[]) {
-  char *p;
 
-  if ((p = strrchr(argv[0], '/')) == NULL)
-    AppName = argv[0];
-  else
-    AppName = ++p;
-
-  clientX = new OXClient;
+  OXClient *clientX = new OXClient(argc, argv);
 
 #ifdef TRAP_ERRORS
   XSynchronize(clientX->GetDisplay(), True);
   XSetErrorHandler(ErrorHandler);
 #endif
 
-  mainWindow = new OXDesktopMain(clientX->GetRoot(), 400, 200);
+  OXDesktopMain *mainWindow = new OXDesktopMain(clientX->GetRoot(), 400, 200);
   mainWindow->MapWindow();
 
   clientX->Run();
@@ -118,11 +104,9 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
 
     _dndManager = new ODNDmanager(_client, this, _dndTypeList);
 
-    dndManager = _dndManager;
-
     if (!_dndManager->SetRootProxy()) {
       new OXMsgBox(_client->GetRoot(), NULL,
-                   new OString("Desktop manager"),
+                   new OString("Desktop Manager"),
                    new OString("Could not grab the desktop window for "
                                "drag-and-drop operations.\n"
                                "Another desktop manager is probably running.\n"
@@ -137,7 +121,7 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
 
     if (retc == BadAccess) {
       new OXMsgBox(_client->GetRoot(), NULL,
-                   new OString("Desktop manager"),
+                   new OString("Desktop Manager"),
                    new OString("Could not grab the desktop window to capture mouse events.\n"
                                "Another desktop manager is probably running,\n"
                                "or you have conflicting window manager settings.\n"
@@ -162,9 +146,9 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
         char msg[256];
 
         sprintf(msg, "Could not create desktop directory\n"
-                     "\"%s\":\n%s", desktop_dir, strerror(errc));
+                     "\"%s\":\n%s\nExiting.", desktop_dir, strerror(errc));
         new OXMsgBox(_client->GetRoot(), NULL,
-                     new OString("Desktop manager"),
+                     new OString("Desktop Manager"),
                      new OString(msg), MB_ICONSTOP, ID_CLOSE);
         FatalError(msg);
       }
@@ -172,20 +156,20 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
 
     _MakeMenus();
 
-    fileWindow = new OXDesktopContainer(this, 500, 250, CHILD_FRAME);
-    fileWindow->Associate(this);
+    _container = new OXDesktopContainer(this, this, _dndManager);
+    _container->Associate(this);
 
-    fileWindow->ChangeDirectory(desktop_dir);
+    _container->ChangeDirectory(desktop_dir);
 
-    fileWindow->Init();
+    _container->Init();
     // We call Save() immediately after Init() in order to re-create the
     // contents of the desktoprc file in case the user or any other
     // program was messing around with the contents of the desktop
     // directory. Unused entries will get deleted, new entries will be
     // added for any new files...
-    fileWindow->Save();
+    _container->Save();
 
-    fileWindow->ArrangeIcons();
+    _container->ArrangeIcons();
 
     MapSubwindows();
 
@@ -208,7 +192,7 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
 }
 
 OXDesktopMain::~OXDesktopMain() {
-  delete fileWindow; 
+  delete _container;  // must delete explicitely, since it was not Added()
  
   delete _newMenu;
   delete _sortMenu;
@@ -268,7 +252,6 @@ void OXDesktopMain::_MakeMenus() {
   _sortMenu->AddEntry(new OHotString("By &Size"),      M_VIEW_ARRANGE_BYSIZE);
   _sortMenu->AddEntry(new OHotString("By &Date"),      M_VIEW_ARRANGE_BYDATE);
   _sortMenu->AddSeparator();
-  _sortMenu->AddEntry(new OHotString("Lin&e up Icons"), M_VIEW_LINEUP);
   _sortMenu->AddEntry(new OHotString("&Auto Arrange"), M_VIEW_ARRANGE_AUTO);
   _sortMenu->CheckEntry(M_VIEW_ARRANGE_AUTO);
   _sortMenu->RCheckEntry(M_VIEW_ARRANGE_BYNAME, 
@@ -283,9 +266,14 @@ void OXDesktopMain::_MakeMenus() {
   _rootMenu->AddEntry(new OHotString("&Copy"),  M_EDIT_COPY);
   _rootMenu->AddEntry(new OHotString("&Paste"), M_EDIT_PASTE);
   _rootMenu->AddSeparator();
-  _rootMenu->AddEntry(new OHotString("&Line Up Icons"), M_ROOT_LINEUP);
+  _rootMenu->AddPopup(new OHotString("Arrange &Icons"), _sortMenu);
+  _rootMenu->AddEntry(new OHotString("Lin&e up Icons"), M_VIEW_LINEUP);
   _rootMenu->AddSeparator();
   _rootMenu->AddEntry(new OHotString("P&roperties..."), M_ROOT_PROPS);
+
+  _rootMenu->DisableEntry(M_EDIT_CUT);
+  _rootMenu->DisableEntry(M_EDIT_COPY);
+  _rootMenu->DisableEntry(M_EDIT_PASTE);
 
   _rootMenu->Associate(this);
 }
@@ -324,7 +312,7 @@ int OXDesktopMain::HandleFocusChange(XFocusChangeEvent *event) {
       (event->detail != NotifyPointer)) {
     if (event->type == FocusIn) {
     } else {
-      fileWindow->UnselectAll();
+      _container->UnselectAll();
     }
   }
   return True;
@@ -354,37 +342,37 @@ int OXDesktopMain::ProcessMessage(OMessage *msg) {
             case M_VIEW_ARRANGE_BYNAME:
               _sortMenu->RCheckEntry(M_VIEW_ARRANGE_BYNAME,
                                      M_VIEW_ARRANGE_BYNAME, M_VIEW_ARRANGE_BYDATE);
-              fileWindow->Sort(SORT_BY_NAME);
+              _container->Sort(SORT_BY_NAME);
               break;
 
             case M_VIEW_ARRANGE_BYTYPE:
               _sortMenu->RCheckEntry(M_VIEW_ARRANGE_BYTYPE,
                                      M_VIEW_ARRANGE_BYNAME, M_VIEW_ARRANGE_BYDATE);
-              fileWindow->Sort(SORT_BY_TYPE);
+              _container->Sort(SORT_BY_TYPE);
               break;
 
             case M_VIEW_ARRANGE_BYSIZE:
               _sortMenu->RCheckEntry(M_VIEW_ARRANGE_BYSIZE,
                                      M_VIEW_ARRANGE_BYNAME, M_VIEW_ARRANGE_BYDATE);
-              fileWindow->Sort(SORT_BY_SIZE);
+              _container->Sort(SORT_BY_SIZE);
               break;
 
             case M_VIEW_ARRANGE_BYDATE:
               _sortMenu->RCheckEntry(M_VIEW_ARRANGE_BYDATE,
                                      M_VIEW_ARRANGE_BYNAME, M_VIEW_ARRANGE_BYDATE);
-              fileWindow->Sort(SORT_BY_DATE);
+              _container->Sort(SORT_BY_DATE);
               break;
 
             case M_VIEW_REFRESH:
-              fileWindow->DisplayDirectory();
+              _container->DisplayDirectory();
               break;
 
             case M_FILE_PROPS:
-              if (fileWindow->NumSelected() == 1) {
+              if (_container->NumSelected() == 1) {
                 const OXDesktopIcon *f;
                 void *iterator = NULL;
 
-                f = fileWindow->GetNextSelected(&iterator);
+                f = _container->GetNextSelected(&iterator);
                 new OXPropertiesDialog(_client->GetRoot(), NULL,
                                        new OString(f->GetName()));
               } else {
@@ -394,7 +382,6 @@ int OXDesktopMain::ProcessMessage(OMessage *msg) {
               break;
 
             default:
-              XBell(GetDisplay(), 0);
               break;
 
           }
@@ -431,5 +418,5 @@ OXFrame *OXDesktopMain::GetFrameFromPoint(int x, int y) {
   XTranslateCoordinates(GetDisplay(), _id, _client->GetRoot()->GetId(),
                         x, y, &x_root, &y_root, &child);
 
-  return fileWindow->GetFrameFromPoint(x_root, y_root);
+  return _container->GetFrameFromPoint(x_root, y_root);
 }

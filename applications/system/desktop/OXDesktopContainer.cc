@@ -45,15 +45,13 @@
 #include "OXDesktopIcon.h"
 #include "OXDesktopContainer.h"
 #include "ODesktopLayout.h"
+#include "main.h"
+
 
 OXGC *OXDesktopContainer::_lineGC = NULL;
 
-extern char *AppName;
-extern ODNDmanager *dndManager;
 extern Atom URI_list;
 
-/*mainWindow*/  #include "main.h"
-/*mainWindow*/  extern OXDesktopMain *mainWindow;
 
 
 // TODO:
@@ -87,9 +85,10 @@ extern Atom URI_list;
 
 //---------------------------------------------------------------------------
 
-OXDesktopContainer::OXDesktopContainer(const OXWindow *p, int w, int h,
-                    unsigned int options, unsigned long back) :
-  OXCompositeFrame(p, w, h, options, back) {
+OXDesktopContainer::OXDesktopContainer(const OXWindow *p, 
+                                       OXDesktopMain *main, 
+                                       ODNDmanager *dnd) :
+  OXCompositeFrame(p, 1, 1, CHILD_FRAME) {
 
     if (!_lineGC) {
       unsigned long gmask;
@@ -112,6 +111,9 @@ OXDesktopContainer::OXDesktopContainer(const OXWindow *p, int w, int h,
       _lineGC = new OXGC(GetDisplay(), _id, gmask, &gval);
       XSetDashes(GetDisplay(), _lineGC->GetGC(), 0, "\x1\x1", 2); 
     }
+
+    _desktopMain = main;
+    _dndManager = dnd;
 
     MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
 
@@ -209,7 +211,8 @@ int OXDesktopContainer::HandleButton(XButtonEvent *event) {
 
   if (event->type == ButtonPress) {
 
-/*mainWindow*/  XSetInputFocus(GetDisplay(), mainWindow->GetId(), RevertToParent, CurrentTime);
+    XSetInputFocus(GetDisplay(), _desktopMain->GetId(),
+                   RevertToParent, CurrentTime);
 
     inv = event->state & ControlMask;
     _xp = event->x;
@@ -625,7 +628,7 @@ void OXDesktopContainer::DisplayDirectory() {
 
   MapSubwindows();
   Init();           // read positions back from desktoprc file
-  ArrangeIcons();   // calls InitPos(), who calls MapWindow()
+  ArrangeIcons();   // calls InitPos(), which in order calls MapWindow()
 }
 
 
@@ -671,7 +674,7 @@ void OXDesktopContainer::CreateIcons() {
         sprintf(msg, "Can't read file attributes of \"%s\": %s.",
                      name, strerror(errno));
         new OXMsgBox(_client->GetRoot(), NULL /*_toplevel*/,
-                     new OString("Error"), new OString(msg),
+                     new OString("Desktop Manager"), new OString(msg),
                      MB_ICONSTOP, ID_OK);
       }
 
@@ -726,7 +729,7 @@ OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y,
         sprintf(msg, "Can't create soft link to \"%s\": %s.",
                      url->full_path, strerror(errno));
         new OXMsgBox(_client->GetRoot(), NULL,
-                     new OString("Error"), new OString(msg),
+                     new OString("Desktop Manager"), new OString(msg),
                      MB_ICONSTOP, ID_OK);
 
         return NULL;
@@ -759,7 +762,7 @@ OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y,
     sprintf(msg, "Can't read file attributes of \"%s\": %s.",
                  name, strerror(errno));
     new OXMsgBox(_client->GetRoot(), NULL,
-                 new OString("Error"), new OString(msg),
+                 new OString("Desktop Manager"), new OString(msg),
                  MB_ICONSTOP, ID_OK);
   }
 
@@ -923,7 +926,7 @@ printf("OXDesktopContainer: dnd drop (%s)\n", (char *) data->data);
 
   for (ptr = _flist; ptr; ptr = ptr->next) {
     i = (OXDesktopIcon *) ptr->frame;
-    if (i->GetId() == dndManager->GetSource()) {
+    if (i->GetId() == _dndManager->GetSource()) {
       i->PlaceIcon();
       return True;
     }

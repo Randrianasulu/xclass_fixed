@@ -47,7 +47,9 @@ class OTimer;
 extern OXPopupMenu *objectMenu;
 
 class OXDesktopIcon;
+class OXDesktopMain;
 class URL;
+class ODNDmanager;
 
 //-------------------------------------------------------------------
 
@@ -56,9 +58,8 @@ protected:
   static OXGC *_lineGC;
 
 public:
-  OXDesktopContainer(const OXWindow *p, int w, int h,
-                     unsigned int options = SUNKEN_FRAME,
-                     unsigned long back = _defaultFrameBackground);
+  OXDesktopContainer(const OXWindow *p, OXDesktopMain *main,
+                     ODNDmanager *dnd);
   virtual ~OXDesktopContainer();
 
   virtual OXDesktopIcon *AddIcon(const OPicture *pic, const OPicture *lpic,
@@ -105,7 +106,9 @@ protected:
   OMimeTypes *MimeTypesList;
 
   OTimer *_refresh;
+  OXDesktopMain *_desktopMain;
   OXDesktopIcon *_last_active;
+  ODNDmanager *_dndManager;
   OXPopupMenu *_popup, *_subpopup, *_dndpopup;
   OLayoutHints *_fl;
 

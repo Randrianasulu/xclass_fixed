@@ -45,9 +45,9 @@ Implemented features
   I've had a variable range of success with different applications:
 
   - StarOffice: their XDND implementation is the most complete I've seen so
-    far. Bugs: when dragging a file, the drop data is not a full URL as the
-    protocol requires, but rather a full local path. The URL class included
-    with the explorer handles that case correctly.
+    far. Bugs: when dragging a file, the data dropped is not a full URL as
+    the protocol requires, but rather a full local path. The URL class
+    included with the explorer handles that case correctly.
 
   - Gnome applications and filemanagers: they fail to negotiate the
     protocol version to be used in dnd operations. Apparently gtk implements

@@ -58,6 +58,8 @@
 
 
 class OXPopupMenu;
+class OXDesktopContainer;
+
 
 //---------------------------------------------------------------------
 
@@ -78,6 +80,7 @@ protected:
   void _MakeMenus();
 
   OTimer *_t;
+  OXDesktopContainer *_container;
   OXPopupMenu *_newMenu, *_sortMenu, *_rootMenu;
   Atom *_dndTypeList;
 };
