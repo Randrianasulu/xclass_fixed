@@ -1,0 +1,22 @@
+
+Well, this is my approve to implement a FTP Client
+
+Many things are missing and (I'm absolutly sure) there are numerous
+bugs.
+
+Most of the things are self-explanary ....... if not, find it out.
+I have no time to write a full documentation.
+
+BUGS:
+- ????????
+
+TODO: 
+- Open file with ...
+- Open file with default action of mimetypes
+- If a file is a link get correct size of file
+- Implement copy/paste
+- Implement stop button
+- Implement all other missing features
+
+- Drag'n drop would be very nice
+- Lots of things ....
