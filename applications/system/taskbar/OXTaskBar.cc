@@ -325,6 +325,12 @@ OXTaskBar::~OXTaskBar() {
   delete _swallowed;
 }
 
+int OXTaskBar::CloseWindow() {
+  // We should not exit in response to an accidental Alt-F4 or other
+  // WM close action. Perhaps we should ask the user for a confirmation?
+  return False;
+}
+
 
 //----------------------------------------------------------------------
 

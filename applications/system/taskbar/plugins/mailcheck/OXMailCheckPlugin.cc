@@ -69,6 +69,10 @@ OXMailCheckPlugin::OXMailCheckPlugin(const OXWindow *p, OComponent *c,
 OXMailCheckPlugin::~OXMailCheckPlugin() {
   delete _timer;
   delete[] _mailFile;
+  if (_icon[HAS_NO_MAIL]) _client->FreePicture(_icon[HAS_NO_MAIL]);
+  if (_icon[HAS_MAIL]) _client->FreePicture(_icon[HAS_MAIL]);
+  if (_icon[HAS_NEW_MAIL]) _client->FreePicture(_icon[HAS_NEW_MAIL]);
+  if (_icon[HAS_UNREAD_MAIL]) _client->FreePicture(_icon[HAS_UNREAD_MAIL]);
   delete[] _msg[HAS_NO_MAIL];
   delete[] _msg[HAS_MAIL];
   delete[] _msg[HAS_NEW_MAIL];
@@ -86,6 +90,13 @@ void OXMailCheckPlugin::_ParseConfig(OIniFile *rcfile) {
     _mailFile = envDupExpand(arg);
   }
 
+  if (rcfile->GetItem("update_interval", arg)) {
+    _updateInterval = atoi(arg);
+    if (_updateInterval < 1) _updateInterval = 1;
+  }
+
+  // actions
+
   if (rcfile->GetItem("fvwm_action_click", arg)) {
     if (_actionClick) delete[] _actionClick;
     _actionClick = StrDup(arg);
@@ -101,10 +112,62 @@ void OXMailCheckPlugin::_ParseConfig(OIniFile *rcfile) {
     _actionNewMail = StrDup(arg);
   }
 
-  if (rcfile->GetItem("update_interval", arg)) {
-    _updateInterval = atoi(arg);
-    if (_updateInterval < 1) _updateInterval = 1;
+  // icons
+
+  if (rcfile->GetItem("no_mail_icon", arg)) {
+    if (_icon[HAS_NO_MAIL]) _client->FreePicture(_icon[HAS_NO_MAIL]);
+    if (strcasecmp(arg, "None") == 0)
+      _icon[HAS_NO_MAIL] = NULL;
+    else
+      _icon[HAS_NO_MAIL] = _client->GetPicture(arg);
   }
+
+  if (rcfile->GetItem("has_mail_icon", arg)) {
+    if (_icon[HAS_MAIL]) _client->FreePicture(_icon[HAS_MAIL]);
+    if (strcasecmp(arg, "None") == 0)
+      _icon[HAS_MAIL] = NULL;
+    else
+      _icon[HAS_MAIL] = _client->GetPicture(arg);
+  }
+
+  if (rcfile->GetItem("new_mail_icon", arg)) {
+    if (_icon[HAS_NEW_MAIL]) _client->FreePicture(_icon[HAS_NEW_MAIL]);
+    if (strcasecmp(arg, "None") == 0)
+      _icon[HAS_NEW_MAIL] = NULL;
+    else
+      _icon[HAS_NEW_MAIL] = _client->GetPicture(arg);
+  }
+
+  if (rcfile->GetItem("unread_mail_icon", arg)) {
+    if (_icon[HAS_UNREAD_MAIL]) _client->FreePicture(_icon[HAS_UNREAD_MAIL]);
+    if (strcasecmp(arg, "None") == 0)
+      _icon[HAS_UNREAD_MAIL] = NULL;
+    else
+      _icon[HAS_UNREAD_MAIL] = _client->GetPicture(arg);
+  }
+
+  // tooltips
+
+  if (rcfile->GetItem("no_mail_tip", arg)) {
+    if (_msg[HAS_NO_MAIL]) delete[] _msg[HAS_NO_MAIL];
+    _msg[HAS_NO_MAIL] = StrDup(arg);
+  }
+
+  if (rcfile->GetItem("has_mail_tip", arg)) {
+    if (_msg[HAS_MAIL]) delete[] _msg[HAS_MAIL];
+    _msg[HAS_MAIL] = StrDup(arg);
+  }
+
+  if (rcfile->GetItem("new_mail_tip", arg)) {
+    if (_msg[HAS_NEW_MAIL]) delete[] _msg[HAS_NEW_MAIL];
+    _msg[HAS_NEW_MAIL] = StrDup(arg);
+  }
+
+  if (rcfile->GetItem("unread_mail_tip", arg)) {
+    if (_msg[HAS_UNREAD_MAIL]) delete[] _msg[HAS_UNREAD_MAIL];
+    _msg[HAS_UNREAD_MAIL] = StrDup(arg);
+  }
+
 }
 
 void OXMailCheckPlugin::_DoRedraw() {

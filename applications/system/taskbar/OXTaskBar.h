@@ -65,6 +65,7 @@ public:
   virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
   virtual int HandleTimer(OTimer *t);
   virtual int HandleIdleEvent(OIdleHandler *ih);
+  virtual int CloseWindow();
 
   void ReadIniFile(char *filename);
   void LoadPlugins(char *inifile);

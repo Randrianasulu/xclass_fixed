@@ -4,7 +4,8 @@ subdirs = clock \
 	mailcheck \
 	icon \
 	lockfile \
-	cpuload
+	cpuload \
+	battstat
 
 all:
 	@for i in ${subdirs}; do \

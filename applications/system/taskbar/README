@@ -160,6 +160,16 @@ then by the particular plugin module once it is loaded. For details about
 particular plugin commands, see the README file supplied with the
 corresponding plugin.
 
+Plugins appear in the tray window in the same order they are specified, from
+right to left. For example, if you want the clock to be the rightmost item,
+you have to specify it as the first one. Swallowed items, in the other hand,
+are not guaranteed to appear in the same order, since they are added when
+the associated application starts and popups the window. Different
+applications take different times to start, and the current system load also
+affects result. It may happen that one day the swallowed items are arranged
+in one certain way and the next time the X session (or the taskbar) is
+restarted they appear in different order.
+
 For an example of command syntax, see the EXAMPLE.taskbarrc file supplied
 with this distribution.
 
