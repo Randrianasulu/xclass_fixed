@@ -1,7 +1,7 @@
 Intro
 -----
 
-This is the alpha version 0.3.1 of desktop, a desktop manager for X11 with
+This is the alpha version 0.3.3 of desktop, a desktop manager for X11 with
 the windows-95 look and feel. It is intended to be used together with
 xclass explorer (available separatedly).
 
@@ -13,7 +13,8 @@ Implemented features
 --------------------
 
 - Desktops icons (wow!!!), you can move these around using the mouse,
-  double-click on them to execute the associated action.
+  double-click on them to execute the associated action. Click on the
+  label to rename them.
 
 - File Properties dialog (right-click on an icon, then select "Properties"
   from the popup menu). The file name can be edited, or settings can be
@@ -72,17 +73,7 @@ Implemented features
 Unimplemented features (or TODO list)
 -------------------------------------
 
-- There is no way to create a new desktop icon. You'll have to drag an
-  existing object using the explorer application and to place it on the
-  desktop.
-
-- Icons cannot be deleted. You'll have to use the explorer on the desktop
-  directory for that.
-
 - Right-click context menus are not finished yet.
-
-- Files cannot be renamed, except with the Properties dialog (edit the name
-  there!).
 
 - Missing dialogs:
   * Change Icon
@@ -94,7 +85,7 @@ Compilation and install
 -----------------------
 
 In order to compile and run this version of desktop, you need at least
-xclass version 0.7.3, available from ftp://mitac11.uia.ac.be/pub/xclass and
+xclass version 0.7.5, available from ftp://mitac11.uia.ac.be/pub/xclass and
 http://sourceforge.net/projects/xclass. Once you have xclass installed, all
 you need to do is to cd to the desktop's source directory and type 'make'.
 
@@ -112,12 +103,12 @@ startup:
   AddToFunc "InitFunction" "I" Exec desktop > /dev/null &
 
 When started the very first time, the desktop directory will be created
-(usually $HOME/.xclass/desktop), and a single icon (shortcut to your home
-directory) will appear on the left-top corner of the desktop. I'm planning
-to add some more useful default icons, like Recycle Bin and such, but right
-now you'll have to do it manually: start the xclass explorer and drag some
-files to the desktop. If you want to create a shortcut, just right-drag the
-file and select "Create symbolic link" from the popup menu.
+(usually $HOME/.xclass/desktop), and a couple of icons (a shortcut to your
+home directory and a "Recycle Bin" object) will appear on the left-top
+corner of the desktop. I'm planning to add some more useful default icons,
+but right now you'll have to do it manually: start the xclass explorer and
+drag some files to the desktop. If you want to create a shortcut, just
+right-drag the file and select "Create symbolic link" from the popup menu.
 
 
 Have fun!

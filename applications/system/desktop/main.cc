@@ -219,9 +219,9 @@ void OXDesktopMain::_MakeMenus() {
   sendToMenu->AddEntry(new OHotString("My Briefcase"),   23, _client->GetPicture("briefcase.t.xpm"));
 
   objectMenu = new OXPopupMenu(_client->GetRoot());
-  objectMenu->AddEntry(new OHotString("&Open"),    1501);
-  //objectMenu->AddEntry(new OHotString("&Explore"), 1502);
-  //objectMenu->AddEntry(new OHotString("&Find..."), 1503);
+  objectMenu->AddEntry(new OHotString("&Open"),    M_OBJECT_OPEN);
+  //objectMenu->AddEntry(new OHotString("&Explore"), M_OBJECT_EXPLORE);
+  //objectMenu->AddEntry(new OHotString("&Find..."), M_OBJECT_FIND);
   objectMenu->AddSeparator();
   objectMenu->AddPopup(new OHotString("Se&nd To"), sendToMenu);
   objectMenu->AddSeparator();
@@ -244,9 +244,9 @@ void OXDesktopMain::_MakeMenus() {
   _newMenu->AddEntry(new OHotString("&Folder"),       M_FILE_NEWFOLDER);
   _newMenu->AddEntry(new OHotString("&Shortcut"),     M_FILE_NEWSHORTCUT);
   _newMenu->AddSeparator();
-  _newMenu->AddEntry(new OHotString("Bitmap Image"),  113);
-  _newMenu->AddEntry(new OHotString("Text Document"), 113);
-  _newMenu->AddEntry(new OHotString("Briefcase"),     113);
+  _newMenu->AddEntry(new OHotString("Bitmap Image"),  M_FILE_NEWIMAGE);
+  _newMenu->AddEntry(new OHotString("Text Document"), M_FILE_NEWTEXTDOC);
+  _newMenu->AddEntry(new OHotString("Briefcase"),     M_FILE_NEWBRIEFCASE);
 
   _newMenu->DisableEntry(M_FILE_NEWSHORTCUT);
 
@@ -334,6 +334,8 @@ int OXDesktopMain::HandleFocusChange(XFocusChangeEvent *event) {
   if ((event->mode == NotifyNormal) &&
       (event->detail != NotifyPointer)) {
     if (event->type == FocusIn) {
+      // perhaps we should remember the selection and highlight
+      // the icons again here
     } else {
       _container->UnselectAll();
     }
@@ -360,8 +362,7 @@ int OXDesktopMain::HandleKey(XKeyEvent *event) {
         break;
 
       case XK_KP_Enter:
-      case XK_Return:
-        {
+      case XK_Return: {
         void *iterator = NULL;
 
         while (1) {
@@ -369,8 +370,8 @@ int OXDesktopMain::HandleKey(XKeyEvent *event) {
           if (!f) break;
           _container->DoAction(f);
         }
-        }
         break;
+      }
 
       case XK_space:
         break;
@@ -379,8 +380,7 @@ int OXDesktopMain::HandleKey(XKeyEvent *event) {
         _container->DeleteSelectedFiles();
         break;
 
-      default:
-        {
+      default: {
         char input[2] = { 0, 0 };
         int  charcount;
         KeySym keysym;
@@ -389,8 +389,8 @@ int OXDesktopMain::HandleKey(XKeyEvent *event) {
                                   &keysym, &compose);
         if (charcount > 0) {
         }
-        }
         break;
+      }
 
     }
 
@@ -452,6 +452,15 @@ int OXDesktopMain::ProcessMessage(OMessage *msg) {
               _container->DeleteSelectedFiles();
               break;
 
+            case M_FILE_RENAME:
+              if (_container->NumSelected() == 1) {
+                void *iterator = NULL;
+
+                OXDesktopIcon *f = (OXDesktopIcon *) _container->GetNextSelected(&iterator);
+                if (f) _container->Rename(f);
+              }
+              break;
+
             case M_FILE_PROPS:
               if (_container->NumSelected() == 1) {
                 const OXDesktopIcon *f;
@@ -483,7 +492,19 @@ int OXDesktopMain::ProcessMessage(OMessage *msg) {
         ODesktopRootMessage *dmsg = (ODesktopRootMessage *) msg;
 
         if (dmsg->button == Button3) {
-          _rootMenu->PopupMenu(dmsg->x_root, dmsg->y_root);
+          int choice = _rootMenu->PopupMenu(dmsg->x_root, dmsg->y_root);
+          switch (choice) {
+            case M_FILE_NEWFOLDER:
+            case M_FILE_NEWIMAGE:
+            case M_FILE_NEWTEXTDOC:
+            case M_FILE_NEWBRIEFCASE:
+              _container->CreateObject(dmsg->x_root, dmsg->y_root, choice);
+              break;
+
+            default:
+              break;
+
+          }
         }
       }
       break;

@@ -66,7 +66,9 @@ public:
 
   virtual OXDesktopIcon *AddIcon(const OPicture *pic, const OPicture *lpic,
                                  OString *name, int type, unsigned long size);
-  virtual OXDesktopIcon *NewIcon(int x, int y, URL *url, int action);
+  virtual OXDesktopIcon *NewIcon(int x, int y, URL *url, int ftype, int action);
+
+  virtual int CreateObject(int x, int y, int objtype);  ////
 
   virtual int HandleButton(XButtonEvent *event);
   virtual int HandleDoubleClick(XButtonEvent *event);
@@ -90,13 +92,14 @@ public:
   void RemoveAllIcons();
   void UnselectAll();
   void ArrangeIcons();
-
+  
   virtual const OXDesktopIcon *GetNextSelected(void **current);
   virtual int NumItems() const { return _total; }
   virtual int NumSelected() const { return _selected; }
 
   void SelectInRectangle(ORectangle rect, int add = False);
   void DeleteSelectedFiles();
+  void Rename(OXDesktopIcon *f);
   void DoAction(OXDesktopIcon *f);
 
 private:

@@ -48,6 +48,8 @@ public:
       
 
 //----------------------------------------------------------------------
+// Root window proxy object. Needed in order to process root window
+// mouse events.
 
 class OXDesktopRoot : public OXRootWindow {
 public:

@@ -41,6 +41,7 @@
 #include "URL.h"
 #include "OXDesktopIcon.h"
 #include "OXDesktopContainer.h"
+#include "OXEditLabel.h"
 
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
@@ -150,6 +151,14 @@ OXDesktopIcon::~OXDesktopIcon() {
   if (_font != _defaultFont) _client->FreeFont((OXFont *) _font);
 }
 
+void OXDesktopIcon::SetName(OString *name) {
+  if (_name) delete _name;
+  _name = name;
+  if (_name) _tw = _font->TextWidth(_name->GetString(), _name->GetLength());
+  Layout();
+  NeedRedraw();
+}
+
 void OXDesktopIcon::Activate(int a) {
   if (_active == a) return;
   _active = a;
@@ -168,31 +177,30 @@ void OXDesktopIcon::Activate(int a) {
 }
 
 void OXDesktopIcon::Layout() {
-  int ix, iy, lx, ly;
   XRectangle rect;
 
-  ix = (_w - _pic->GetWidth()) >> 1;
-  iy = 0;
-  lx = (_w - _tw) >> 1;
-  ly = _h - (_th+1) - 2;
+  _ix = (_w - _pic->GetWidth()) >> 1;
+  _iy = 0;
+  _lx = (_w - _tw) >> 1;
+  _ly = _h - (_th+1) - 2;
 
   OXFrame::Layout();
   
   if (_pic->GetMask() != None) {
     XShapeCombineMask(GetDisplay(), _id, ShapeBounding,
-                      ix, iy, _pic->GetMask(), ShapeSet);
+                      _ix, _iy, _pic->GetMask(), ShapeSet);
   } else {
     rect.x = 0;
     rect.y = 0;
     rect.width  = _pic->GetWidth();
     rect.height = _pic->GetHeight();
     XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
-                            ix, iy, &rect, 1, ShapeSet, Unsorted);
+                            _ix, _iy, &rect, 1, ShapeSet, Unsorted);
   }
 
   if (_lpic && _lpic->GetMask() != None) {
     XShapeCombineMask(GetDisplay(), _id, ShapeBounding,
-                      ix, iy, _lpic->GetMask(), ShapeUnion);
+                      _ix, _iy, _lpic->GetMask(), ShapeUnion);
   }
 
   rect.x = 0;
@@ -202,7 +210,7 @@ void OXDesktopIcon::Layout() {
 #ifdef SHAPED_LABEL
   if (_active) {
     XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
-                            lx, ly, &rect, 1, ShapeUnion, Unsorted);
+                            _lx, _ly, &rect, 1, ShapeUnion, Unsorted);
   } else {
     Pixmap lmask;
     XGCValues gcval;
@@ -230,41 +238,35 @@ void OXDesktopIcon::Layout() {
     XFreeGC(GetDisplay(), _maskGC);
 
     XShapeCombineMask(GetDisplay(), _id, ShapeBounding,
-                      lx, ly, lmask, ShapeUnion);
+                      _lx, _ly, lmask, ShapeUnion);
 
     XFreePixmap(GetDisplay(), lmask);
   }
 #else
   XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
-                          lx, ly, &rect, 1, ShapeUnion, Unsorted);
+                          _lx, _ly, &rect, 1, ShapeUnion, Unsorted);
 #endif
 }
 
 void OXDesktopIcon::_DoRedraw() {
-  int ix, iy, lx, ly;
-
-  ix = (_w - _pic->GetWidth()) >> 1;
-  iy = 0;
-  lx = (_w - _tw) >> 1;
-  ly = _h - (_th+1) - 2;
 
   if (_active) {
-    if (_selpic) _selpic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
+    if (_selpic) _selpic->Draw(GetDisplay(), _id, _normGC->GetGC(), _ix, _iy);
     _normGC->SetForeground(_defaultSelectedBackground);
-    FillRectangle(_normGC->GetGC(), lx, ly, _tw, _th+1);
+    FillRectangle(_normGC->GetGC(), _lx, _ly, _tw, _th+1);
     _normGC->SetForeground(_selPixel);
   } else {
-    _pic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
+    _pic->Draw(GetDisplay(), _id, _normGC->GetGC(), _ix, _iy);
 //    _normGC->SetForeground(GetResourcePool()->GetDocumentBgndColor());
     _normGC->SetForeground(_client->GetColorByName("turquoise4"));
-    FillRectangle(_normGC->GetGC(), lx, ly, _tw, _th+1);
+    FillRectangle(_normGC->GetGC(), _lx, _ly, _tw, _th+1);
 //    _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
     _normGC->SetForeground(_whitePixel);
   }
 
-  if (_lpic) _lpic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
+  if (_lpic) _lpic->Draw(GetDisplay(), _id, _normGC->GetGC(), _ix, _iy);
 
-  _name->Draw(GetDisplay(), _id, _normGC->GetGC(), lx, ly + _ta);
+  _name->Draw(GetDisplay(), _id, _normGC->GetGC(), _lx, _ly + _ta);
   _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
 }
 
@@ -277,11 +279,31 @@ ODimension OXDesktopIcon::GetDefaultSize() const {
   return size;
 }
 
+bool OXDesktopIcon::IsInsideLabel(OPosition pos) const {
+  return ((pos.x >= _lx) && (pos.x <= _lx + _tw) &&
+          (pos.y >= _ly) && (pos.y <= _ly + _th));
+}
+
+bool OXDesktopIcon::IsInsideIcon(OPosition pos) const {
+  return ((pos.x >= _ix) && (pos.x <= _ix + _pic->GetWidth()) &&
+          (pos.y >= _iy) && (pos.y <= _iy + _pic->GetHeight()));
+}
+
 
 int OXDesktopIcon::HandleButton(XButtonEvent *event) {
 
   event->window = _fw->GetId();
   event->subwindow = _id;
+
+#if 0
+  if ((event->type == ButtonPress) && _active) {
+    if ((event->x >= _lx) && (event->x <= _lx + _tw) &&
+        (event->y >= _ly) && (event->y <= _ly + _th)) {
+      EditLabel();
+      return True;
+    }
+  }
+#endif
 
   if (!_dragging) _fw->HandleButton(event);
 
@@ -358,19 +380,26 @@ void OXDesktopIcon::PlaceIcon(int x, int y) {
   ((OXDesktopContainer *)_fw)->Save();
 }
 
+OString *OXDesktopIcon::EditLabel() {
+
+  OXEditLabel *edl = new OXEditLabel(_client->GetRoot(), _name);
+  edl->Show(_x + _lx - 1, _y + _ly - 3, _tw, edl->GetDefaultHeight());
+
+  _client->WaitForUnmap(edl);
+
+  OString *str = new OString(edl->GetString());
+
+  delete edl;
+  return str;
+}
+
 void OXDesktopIcon::_SetDragPixmap() {
   Pixmap pic, mask;
   XGCValues gcval;
   unsigned long gcmask;
   GC _picGC, _maskGC;
-  int ix, iy, lx, ly;
 
   const OResourcePool *res = _client->GetResourcePool();
-
-  ix = (_w - _pic->GetWidth()) >> 1;
-  iy = 0;
-  lx = (_w - _tw) >> 1;
-  ly = _h - (_th+1) - 2;
 
   pic  = XCreatePixmap(GetDisplay(), _id, _w, _h, _client->GetDisplayDepth());
   mask = XCreatePixmap(GetDisplay(), _id, _w, _h, 1);
@@ -388,12 +417,12 @@ void OXDesktopIcon::_SetDragPixmap() {
   // Draw the pixmap...
 
   if (_pic)
-    _pic->Draw(GetDisplay(), pic, _picGC, ix, iy);
+    _pic->Draw(GetDisplay(), pic, _picGC, _ix, _iy);
 
   if (_lpic)
-    _lpic->Draw(GetDisplay(), pic, _picGC, ix, iy);
+    _lpic->Draw(GetDisplay(), pic, _picGC, _ix, _iy);
 
-  XDrawString(GetDisplay(), pic, _picGC, lx, ly + _ta,
+  XDrawString(GetDisplay(), pic, _picGC, _lx, _ly + _ta,
               _name->GetString(), _name->GetLength());
 
 
@@ -408,13 +437,13 @@ void OXDesktopIcon::_SetDragPixmap() {
   gcval.fill_style = FillStippled;
   gcval.stipple = res->GetCheckeredBitmap();
   gcval.clip_mask = _pic->GetMask();
-  gcval.clip_x_origin = ix;
-  gcval.clip_y_origin = iy;
-  gcval.ts_x_origin = ix;
-  gcval.ts_y_origin = iy;
+  gcval.clip_x_origin = _ix;
+  gcval.clip_y_origin = _iy;
+  gcval.ts_x_origin = _ix;
+  gcval.ts_y_origin = _iy;
   XChangeGC(GetDisplay(), _maskGC, gcmask, &gcval);
 
-  XFillRectangle(GetDisplay(), mask, _maskGC, ix, iy,
+  XFillRectangle(GetDisplay(), mask, _maskGC, _ix, _iy,
                  _pic->GetWidth(), _pic->GetHeight());
 
   if (_lpic) {
@@ -422,7 +451,7 @@ void OXDesktopIcon::_SetDragPixmap() {
     gcval.clip_mask = _lpic->GetMask();
     XChangeGC(GetDisplay(), _maskGC, gcmask, &gcval);
 
-    XFillRectangle(GetDisplay(), mask, _maskGC, ix, iy,
+    XFillRectangle(GetDisplay(), mask, _maskGC, _ix, _iy,
                    _lpic->GetWidth(), _lpic->GetHeight());
   }
 
@@ -433,7 +462,7 @@ void OXDesktopIcon::_SetDragPixmap() {
   gcval.font = _font->GetId();
   XChangeGC(GetDisplay(), _maskGC, gcmask, &gcval);
 
-  XDrawString(GetDisplay(), mask, _maskGC, lx, ly + _ta,
+  XDrawString(GetDisplay(), mask, _maskGC, _lx, _ly + _ta,
               _name->GetString(), _name->GetLength());
 
   XFreeGC(GetDisplay(), _picGC);

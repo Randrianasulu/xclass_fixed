@@ -77,6 +77,8 @@ public:
   int   GetType() const { return _type; }
   int   GetSize() const { return _size; }
 
+  void  SetName(OString *name);
+
   virtual ODimension GetDefaultSize() const;
 
   virtual int HandleButton(XButtonEvent *event);
@@ -102,13 +104,19 @@ public:
   void PlaceIcon() { PlaceIcon(bx, by); }
   void PlaceIcon(int x, int y);
 
+  bool IsInsideLabel(OPosition pos) const;
+  bool IsInsideIcon(OPosition pos) const;
+
+  OString *EditLabel();
+
 protected:
   virtual void _DoRedraw();
   
   void _SetDragPixmap();
   
   OString *_name;
-  int _active, _last_state, _dragging, _tw, _th, _ta, _type, _is_link;
+  int _active, _last_state, _dragging, _type, _is_link;
+  int _tw, _th, _ta, _lx, _ly, _ix, _iy;
   unsigned long _size;
   int x0, y0, bx, by, _button, _bdown;
   OXFrame *_fw;

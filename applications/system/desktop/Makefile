@@ -18,7 +18,8 @@ SRCS = main.cc \
 	ODesktopLayout.cc \
 	OXDesktopIcon.cc \
 	OXDesktopContainer.cc \
-	OXDesktopRoot.cc
+	OXDesktopRoot.cc \
+	OXEditLabel.cc
 
 OBJS = $(SRCS:.cc=.o)
 

@@ -26,6 +26,7 @@
 
 
 //----------------------------------------------------------------
+// A layout manager for desktop icons.
 
 class ODesktopLayout : public OLayoutManager {
 public:

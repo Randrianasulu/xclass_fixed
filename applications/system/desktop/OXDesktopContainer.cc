@@ -87,6 +87,7 @@ extern Atom URI_list;
 #define ACTION_MOVE     0
 #define ACTION_COPY     1
 #define ACTION_SYMLINK  2
+#define ACTION_CREATE   3
 
 
 //---------------------------------------------------------------------------
@@ -218,6 +219,8 @@ int OXDesktopContainer::HandleButton(XButtonEvent *event) {
   OXDesktopIcon *f;
   int total, selected, inv;
 
+//printf("OXDesktopContainer: click!\n");
+
   if (event->type == ButtonPress) {
 
     XSetInputFocus(GetDisplay(), _desktopMain->GetId(),
@@ -267,6 +270,14 @@ int OXDesktopContainer::HandleButton(XButtonEvent *event) {
     } else if (event->button == Button3) {
       _popup->PlaceMenu(event->x_root, event->y_root, False, True);
     }
+
+else
+    if ((_selected == 1) && _last_active) {
+      if (_last_active->IsInsideLabel(OPosition(event->x, event->y))) {
+        Rename(_last_active);
+      }
+    }
+
   }
 
   return True;
@@ -452,8 +463,8 @@ void OXDesktopContainer::DeleteSelectedFiles() {
       if (rename(filename, recfilename) != 0) {
         sprintf(prompt, "Cannot delete file \"%s\": %s.",
                 basename, strerror(errno));
-        new OXMsgBox(_client->GetRoot(), this,
-                     new OString("Error"), new OString(prompt),
+        new OXMsgBox(_client->GetRoot(), NULL,
+                     new OString("Desktop Manager"), new OString(prompt),
                      MB_ICONSTOP, ID_OK);
         
       }
@@ -526,7 +537,40 @@ void OXDesktopContainer::DoAction(OXDesktopIcon *f) {
 
 }
 
-
+void OXDesktopContainer::Rename(OXDesktopIcon *f) {
+  OString *new_name = f->EditLabel();
+  if (new_name) {
+    if (strcmp(f->GetName()->GetString(), new_name->GetString()) == 0) {
+      // same name, not changed.
+      delete new_name;
+      return;
+    }
+    if (access(new_name->GetString(), F_OK) == 0) {
+      char tmp[PATH_MAX];
+      sprintf(tmp, "Cannot rename file \"%s\" to \"%s\": File already exists.",
+              f->GetName()->GetString(), new_name->GetString());
+      new OXMsgBox(_client->GetRoot(), NULL,
+                   new OString("Desktop Manager"), new OString(tmp),
+                   MB_ICONSTOP, ID_OK);
+      delete new_name;
+      return;
+    }
+    int retc = rename(f->GetName()->GetString(), new_name->GetString());
+    if (retc != 0) {
+      char tmp[PATH_MAX];
+      sprintf(tmp, "Cannot rename file \"%s\" to \"%s\": %s.",
+              f->GetName()->GetString(), new_name->GetString(), strerror(errno));
+      new OXMsgBox(_client->GetRoot(), NULL,
+                   new OString("Desktop Manager"), new OString(tmp),
+                   MB_ICONSTOP, ID_OK);
+      delete new_name;
+      return;
+    } else {
+      f->SetName(new_name);
+      Save();
+    }
+  }
+}
 
 
 //----------------------------------------------------------------------
@@ -828,10 +872,11 @@ void OXDesktopContainer::CreateIcons() {
 }
 
 //--- This adds a new icon to the desktop
-//    mode can be link, copy or move.
+//    mode can be link, copy, move or create.
+//    'ftype' is used only on create
 
-OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y,
-                                           URL *url, int action) {
+OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y, URL *url,
+                                           int ftype, int action) {
   struct stat sbuf, lbuf;
   int type, is_link;
   unsigned long size;
@@ -856,8 +901,32 @@ OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y,
         new OXMsgBox(_client->GetRoot(), NULL,
                      new OString("Desktop Manager"), new OString(msg),
                      MB_ICONSTOP, ID_OK);
-
         return NULL;
+      }
+      break;
+
+    case ACTION_CREATE:
+      if (S_ISDIR(ftype)) {
+        if (MakePath(url->filename, 0755) != 0) {
+          sprintf(msg, "Can't create folder \"%s\": %s.",
+                       url->filename, strerror(errno));
+          new OXMsgBox(_client->GetRoot(), NULL,
+                       new OString("Desktop Manager"), new OString(msg),
+                       MB_ICONSTOP, ID_OK);
+          return NULL;
+        }
+      } else {  // regular file
+        int fd = creat(url->filename, 0644);
+        if (fd < 0) {
+          sprintf(msg, "Can't create file \"%s\": %s.",
+                       url->filename, strerror(errno));
+          new OXMsgBox(_client->GetRoot(), NULL,
+                       new OString("Desktop Manager"), new OString(msg),
+                       MB_ICONSTOP, ID_OK);
+          return NULL;
+        } else {
+          close(fd);
+        }
       }
       break;
 
@@ -912,9 +981,33 @@ OXDesktopIcon *OXDesktopContainer::NewIcon(int x, int y,
   return f;
 } 
 
+int OXDesktopContainer::CreateObject(int x, int y, int objtype) {
+  int i, retc = False;
+  char name[100];
+  URL url("file://localhost/dummy");
+
+  switch (objtype) {
+    case M_FILE_NEWFOLDER:
+      strcpy(name, "New Folder");
+      i = 1;
+      while (access(name, F_OK) == 0) sprintf(name, "New Folder (%d)", i++);
+      if (url.filename) delete[] url.filename;
+      url.filename = StrDup(name);
+      if (NewIcon(x, y, &url, S_IFDIR, ACTION_CREATE)) retc = True;
+      break;
+
+    default:
+      break;
+  }
+
+  return retc;
+}
+
 
 int OXDesktopContainer::_isRecycleBin(const char *path) {
   char current[PATH_MAX], tmp[PATH_MAX];
+
+  // shouldn't we use realpath() here?
 
   getcwd(current, PATH_MAX);
   if (chdir(path) != 0) return False;
@@ -1100,7 +1193,7 @@ printf("OXDesktopContainer: dnd drop (%s)\n", (char *) data->data);
         action = _dndpopup->PopupMenu(_dndx, _dndy);
       }
 
-      NewIcon(_dndx, _dndy, &url, action);
+      NewIcon(_dndx, _dndy, &url, 0, action);
 
     }
   }

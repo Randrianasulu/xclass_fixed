@@ -29,29 +29,39 @@
 #include <xclass/ODNDmanager.h>
 
 
+#define DESKTOP_VERSION         0.3.3
+
+
 #define M_FILE_NEW		101
 #define M_FILE_NEWFOLDER	    111
 #define M_FILE_NEWSHORTCUT	    112
+#define M_FILE_NEWIMAGE             113
+#define M_FILE_NEWTEXTDOC           114
+#define M_FILE_NEWBRIEFCASE         115
 #define M_FILE_DELETE		102
 #define M_FILE_RENAME		103
 #define M_FILE_PROPS		104
 #define M_FILE_CLOSE		105
 
-#define M_EDIT_UNDO		201
-#define M_EDIT_CUT		202
-#define M_EDIT_COPY		203
-#define M_EDIT_PASTE		204
-#define M_EDIT_PASTESHORTCUT	205
-#define M_EDIT_SELECTALL	206
-#define M_EDIT_INVSELECTION	207
+#define M_OBJECT_OPEN           201
+#define M_OBJECT_EXPLORE        202
+#define M_OBJECT_FIND           203
+
+#define M_EDIT_UNDO		301
+#define M_EDIT_CUT		302
+#define M_EDIT_COPY		303
+#define M_EDIT_PASTE		304
+#define M_EDIT_PASTESHORTCUT	305
+#define M_EDIT_SELECTALL	306
+#define M_EDIT_INVSELECTION	307
 
 #define M_VIEW_ARRANGE_BYNAME	    311
 #define M_VIEW_ARRANGE_BYTYPE	    312
 #define M_VIEW_ARRANGE_BYSIZE	    313
 #define M_VIEW_ARRANGE_BYDATE	    314
 #define M_VIEW_ARRANGE_AUTO	    315
-#define M_VIEW_LINEUP           307
-#define M_VIEW_REFRESH          308
+#define M_VIEW_LINEUP           308
+#define M_VIEW_REFRESH          309
 
 #define M_ROOT_LINEUP           401
 #define M_ROOT_PROPS            402
