@@ -54,7 +54,7 @@ OXDesktopRoot::OXDesktopRoot(OXClient *c, OXDesktopMain *main, int *retc) :
                 False, EnterWindowMask | LeaveWindowMask |
                 ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
                 GrabModeSync, GrabModeAsync, None,
-                _client->GetResourcePool()->GetTextCursor());
+                _client->GetResourcePool()->GetGrabCursor());
 #else
     XSelectInput(GetDisplay(), _id, ButtonPressMask | ButtonReleaseMask);
 #endif

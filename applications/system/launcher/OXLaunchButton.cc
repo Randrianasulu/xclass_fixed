@@ -36,7 +36,7 @@ OXLaunchButton::OXLaunchButton(const OXWindow *p, const OPicture *pic,
   OXButton(p, ID, option) {
 
   if (_defaultFont == NULL) {
-    _defaultFont = _client->GetResourcePool()->GetIconFont();
+    _defaultFont = (OXFont *) _client->GetResourcePool()->GetIconFont();
   }
 
   _font = _defaultFont;

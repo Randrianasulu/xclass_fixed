@@ -53,4 +53,9 @@ As a note we should mention that the date and time format strings can be
 interchanged, i.e, you can specify a date string for the "time_format"
 option and viceversa. In that case the plugin will show the current date in
 the tray window and the time will appear in a toopltip window when the mouse
-cursor stops for a second or more over the displayed date.
+cursor stops for a second or more over the displayed date. Alternatively,
+you can have both the date and time displayed in the tray window with the
+appropiate specification, for example:
+
+time_format = %B %d, %Y - %I:%M %p
+
