@@ -29,7 +29,7 @@
 #include <xclass/OXMsgBox.h>
 #include <xclass/OXFileDialog.h>
 
-#include <vector.h>
+#include <vector>
 
 #include "OXComposer.h"
 #include "OXPrintBox.h"
@@ -855,7 +855,7 @@ char *OXComposer::Sender() {
   return retstring;
 }
 
-void OXComposer::AddAttach(char *fname = NULL) {
+void OXComposer::AddAttach(char *fname) {
   OPicture *pic1, *pic2;
   OMime *travelmime;
   char *filetypes[] = {
@@ -868,7 +868,7 @@ void OXComposer::AddAttach(char *fname = NULL) {
   OFileInfo fi;
   char *p, tmp[1024];
 
-  vector<OString *> names;
+  std::vector<OString *> names;
 
   fi.filename = NULL;
 
@@ -991,7 +991,7 @@ unsigned char OXComposer::ToASCII64(unsigned char character) {
 bool OXComposer::SetCurrentAttachment() {
   CmpAttachList *travelAttach = attList;
   const OListViewItem *item;
-  vector<OItem *> items;
+  std::vector<OItem *> items;
 
   if (attachmentsView->NumSelected() == 0) {
     currentAttach = NULL;
@@ -1014,7 +1014,7 @@ bool OXComposer::SetCurrentAttachment() {
 
 void OXComposer::DelAttach() {
   OPicture *pic1, *pic2;
-  vector<OString *> names;
+  std::vector<OString *> names;
 
   if (currentAttach == NULL)
     return;

@@ -1,14 +1,14 @@
 Intro
 -----
 
-This the version 0.4.2 of fOXIrc, an irc client with a nice graphical 
+This the version 0.4.3 of fOXIrc, an irc client with a nice graphical 
 (point-and-click) user interface.
 
 
 Installation
 ------------
 
-This version of fOXIrc requires xclass 0.7.4 or newer. To build the
+This version of fOXIrc requires xclass 0.8.2 or newer. To build the
 executable, cd to the directory where you unpacked the sources and type
 'make'. Copy the resulting 'foxirc' executable to a directory somewhere in
 your $PATH (or use 'make install' as superuser).

@@ -1,7 +1,7 @@
 Intro
 -----
 
-This is the alpha version 0.4.2 of rx320, a Linux control program for the
+This is the alpha version 0.4.3 of rx320, a Linux control program for the
 Ten-Tec RX320 receiver with a graphical user interface.
 
 Currently the program is capable of communicating with the receiver using
@@ -47,7 +47,7 @@ volume, or the line-out volume if you hold the Shift key down.
 Installation
 ------------
 
-To compile and run the program you need to have xclass version 0.7.3 or
+To compile and run the program you need to have xclass version 0.8.2 or
 higher installed in your system (xclass is currently available from
 http://xclass.sourceforge.net and ftp://mitac11.uia.ac.be/pub/xclass).
 In order to build the executable go to the directory where you unpacked

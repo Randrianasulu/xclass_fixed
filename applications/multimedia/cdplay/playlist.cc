@@ -32,12 +32,9 @@ extern OLayoutHints *topexpandxlayout;
 extern OLayoutHints *expandxexpandylayout;
 
 OXEditPlayListFrame::OXEditPlayListFrame(const OXWindow *p,
-                                         const OXWindow *main, int w, int h,
-                                         OMedium *medium,
-                      unsigned long options = MAIN_FRAME | VERTICAL_FRAME) :
-    OXTransientFrame(p, main, w, h, options) {
-  int ax, ay;
-  Window wdummy;
+                       const OXWindow *main, int w, int h, OMedium *medium,
+                       unsigned long options) :
+  OXTransientFrame(p, main, w, h, options) {
 
   omedium = medium;
 
@@ -132,14 +129,10 @@ OXEditPlayListFrame::OXEditPlayListFrame(const OXWindow *p,
   AddFrame(bottombuttons, topexpandxlayout);
 
   MapSubwindows();
-  Resize(GetDefaultSize());
+  Resize(400, 300);
+  Layout();
 
-  XTranslateCoordinates(GetDisplay(),
-                        main->GetId(), GetParent()->GetId(),
-                        (((OXFrame *) main)->GetWidth()) >> 1,
-                        (((OXFrame *) main)->GetHeight()) >> 1,
-                        &ax, &ay, &wdummy);
-  MoveResize(ax, ay, 400, 300);
+  CenterOnParent();
 
   SetWMSize(_w, _h);
   SetWMSizeHints(_w, _h, 640, 480, 1, 1);

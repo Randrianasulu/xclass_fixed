@@ -58,7 +58,7 @@ char *filetypes[] = { "All files",       "*",
 //----------------------------------------------------------------------
 
 OFDBitem::OFDBitem(const OXListView *p, int id, OFreqRecord *fr,
-                   vector<OString *> names) :
+                   std::vector<OString *> names) :
   OListViewItem(p, id, NULL, NULL, names, 0) {
 
     _freqRec = NULL;
@@ -368,7 +368,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
             case M_EDIT_CHANGE:
               if (_listView->NumSelected() == 1) {
                 OFDBitem *f;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
                 OFreqRecord *frec;
                 int retc;
 
@@ -414,7 +414,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
             case M_EDIT_TUNE:
               if (_listView->NumSelected() == 1) {
                 const OFDBitem *f;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
 
                 items = _listView->GetSelectedItems();
                 f = (OFDBitem *) items[0];
@@ -467,7 +467,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
           if (vmsg->button == Button1) {
             if (_listView->NumSelected() == 1) {
               const OFDBitem *f;
-              vector<OItem *> items;
+              std::vector<OItem *> items;
 
               items = _listView->GetSelectedItems();
               f = (OFDBitem *) items[0];
@@ -740,7 +740,7 @@ void OXFreqDB::WriteFile(char *fname) {
 
 void OXFreqDB::AddStation(OFreqRecord *frec, int recno) {
   OFDBitem *item;
-  vector<OString *> dummy;
+  std::vector<OString *> dummy;
 
   dummy.clear();
   dummy.push_back(new OString(frec->name));

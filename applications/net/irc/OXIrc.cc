@@ -2649,7 +2649,7 @@ void OXIrc::ProcessWhois(int cmd, OIrcMessage *msg) {
 //#fOX mike itchy2-16-70.ionsys.com Wild.FoxChat.Net Foxxer H :0 Me
 
 void OXIrc::ProcessWho(int cmd, OIrcMessage *msg) {
-  char *chan, *user, *host, *server, *nick, *mode, *name;
+  const char *chan, *user, *host, *server, *nick, *mode, *name;
   char str[512];
   int  hopcnt;
 

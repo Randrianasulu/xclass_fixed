@@ -26,7 +26,7 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include <vector.h>
+#include <vector>
 
 #include <xclass/OXClient.h>
 #include <xclass/OXMsgBox.h>
@@ -643,7 +643,7 @@ void OXMain::StopSearch() {
 }
 
 void OXMain::AddFileName() {
-  vector<OString *> names;
+  std::vector<OString *> names;
   const char *str = _output->GetString();
 
   const char *p = strrchr(str, '/');

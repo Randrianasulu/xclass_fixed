@@ -1087,7 +1087,7 @@ int OXChatChannel::DoLeave() {
 }
 
 void OXChatChannel::DoChannelMode(const char *mode) {
-  vector<char *> sl;
+  std::vector<char *> sl;
   char *temp = StrDup(mode);
   const char *mode_str, *who, *ban_mask;
   int i, bit, param;

@@ -67,7 +67,7 @@ OXTestFrame::OXTestFrame(const OXWindow *p, int w, int h) :
   OXMainFrame(p, w, h) {
 
   OListViewItem *item;
-  vector<OString *> names;
+  std::vector<OString *> names;
   char string[14];
 
   bpic = _client->GetPicture("app.s.xpm");

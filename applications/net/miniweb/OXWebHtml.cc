@@ -26,7 +26,7 @@
 
 //----------------------------------------------------------------------
 
-OXWebHtml::OXWebHtml(const OXWindow *p, int w, int h, int id = -1) :
+OXWebHtml::OXWebHtml(const OXWindow *p, int w, int h, int id) :
   OXHtml(p, w, h, id) {
     nCachedImages = 0;
     imageCache = 0;

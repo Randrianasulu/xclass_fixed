@@ -53,7 +53,7 @@ void DeadPipe(int nonsense);
 
 //----------------------------------------------------------------------
 
-void main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   char *temp, *s;
 
   // Save the program name for error messages and config parsing

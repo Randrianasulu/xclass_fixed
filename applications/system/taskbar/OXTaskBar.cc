@@ -27,7 +27,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
-#define __USE_GNU
 #include <ctype.h>
 #include <stdlib.h>
 #include <limits.h>

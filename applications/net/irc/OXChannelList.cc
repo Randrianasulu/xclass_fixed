@@ -120,7 +120,7 @@ int OXChannelList::ProcessMessage(OMessage *msg) {
             case 101:
               if (_listView->NumSelected() > 0) {
                 const OListViewItem *e;
-                vector<OItem *> items;
+                std::vector<OItem *> items;
 
                 items = _listView->GetSelectedItems();
                 for (int i = 0; i < items.size(); ++i) {
@@ -154,7 +154,7 @@ int OXChannelList::ProcessMessage(OMessage *msg) {
           if (vmsg->button == Button1) {
             if (_listView->NumSelected() == 1) {
               const OListViewItem *e;
-              vector<OItem *> items;
+              std::vector<OItem *> items;
 
               items = _listView->GetSelectedItems();
               e = (OListViewItem *) items[0];
@@ -191,7 +191,7 @@ void OXChannelList::ClearList() {
 void OXChannelList::AddChannel(const char *name, int nusers,
                                const char *title) {
   OListViewItem *item;
-  vector<OString *> names;
+  std::vector<OString *> names;
   char tmp[20];
 
   names.clear();

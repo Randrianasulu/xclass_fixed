@@ -29,7 +29,7 @@
 #include <xclass/ODNDmanager.h>
 
 
-#define DESKTOP_VERSION         0.3.3
+#define DESKTOP_VERSION         "0.3.4"
 
 
 #define M_FILE_NEW		101

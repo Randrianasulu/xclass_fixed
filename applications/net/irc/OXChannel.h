@@ -13,7 +13,7 @@
 #include <xclass/OX3dLines.h>
 #include <xclass/OString.h>
 
-#include <vector.h>
+#include <vector>
 
 #include "OXViewDoc.h"
 #include "OXNameList.h"
@@ -120,7 +120,7 @@ protected:
 
   OTextDoc *_log;
   OXViewDoc *_logw;
-  vector<char *> _history;
+  std::vector<char *> _history;
   int _historyCurrent;
 
   OXCompositeFrame *_hf, *_vf;

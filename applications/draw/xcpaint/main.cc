@@ -48,7 +48,7 @@
 
 #include "pbg.xpm"
 
-#define XCPAINT_VERSION "0.7.3"
+#define XCPAINT_VERSION "0.7.4"
 
 struct _popup file_popup = {
   { NULL }, {

@@ -1,7 +1,7 @@
 #ifndef __MAIN_H
 #define __MAIN_H
 
-#include <vector.h>
+#include <vector>
 
 #include <xclass/utils.h>
 #include <xclass/OXMainFrame.h>
@@ -16,7 +16,7 @@
 #include "OXWebHtml.h"
 
 #define APP_NAME          "miniweb"
-#define APP_VERSION       "0.1"
+#define APP_VERSION       "0.1.1"
 
 #define M_FILE_OPEN       101
 #define M_FILE_SAVE       102
@@ -65,6 +65,7 @@ public:
 
 protected:
   void LoadDoc(OHtmlUri *uri);
+  void UpdateButtons();
   void ReadIniFile();
   void SaveIniFile();
   void AddToHistory(const char *url);
@@ -85,7 +86,7 @@ protected:
 
   ORectangle _geom;
 
-  vector<char *> prev, next;
+  std::vector<char *> prev, next;
 };
 
 

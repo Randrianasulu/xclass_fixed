@@ -86,8 +86,7 @@
 
 OXSiteView::OXSiteView(OXMdiMainFrame *p, OMimeTypes *mime_types,
                        OFileSystem *base, int w, int h,
-                       unsigned int options = SUNKEN_FRAME,
-                       unsigned long back = _defaultFrameBackground)
+                       unsigned int options, unsigned long back)
  : OXMdiFrame(p, w, h, options, back) {
 
   _base = base;
@@ -498,7 +497,7 @@ void OXSiteView::AddFile(OFile *elem) {
                          elem->_is_link, elem->_name, false);
     _lv->GetFilePictures(&spic, &slpic, elem->_type,
                          elem->_is_link, elem->_name, true);
-    vector<OString *> names;
+    std::vector<OString *> names;
     names.push_back(new OString(elem->_name));
     names.push_back(new OString(""));  // as required by OXFileList
     names.push_back(new OString(_lv->AttributeString(elem->_type,
@@ -785,7 +784,7 @@ void OXSiteView::ShowProperties() {
 
     if (_base->NeedConnect()) local = false;
 
-    vector<OItem *> items = _lv->GetSelectedItems();
+    std::vector<OItem *> items = _lv->GetSelectedItems();
     _base->Pwd(tmp, PATH_MAX);
     for (int i = 0; i < items.size(); ++i) {
       f = (OFtpItem *) items[i];
@@ -943,7 +942,7 @@ TDDLList<ODir *> *OXSiteView::CreateFileListFromFc() {
   ODir *delem = new ODir(path, flist);
   list->Add(delem);
 
-  vector<OItem *> items = _lv->GetSelectedItems();
+  std::vector<OItem *> items = _lv->GetSelectedItems();
 
   for (int i = 0; i < items.size(); ++i) {
     item = (OFtpItem *) items[i];
@@ -1054,7 +1053,7 @@ int OXSiteView::ProcessMessage(OMessage *msg) {
               if (_lv->NumSelected() == 1) {
                 OFtpItem *f;
                 char tmp[PATH_MAX];
-                vector<OItem *> items = _lv->GetSelectedItems();
+                std::vector<OItem *> items = _lv->GetSelectedItems();
                 f = (OFtpItem *) items[0];
                 if (f->EditName(tmp)) {
                   if (strlen(tmp) != 0 &&
@@ -1148,7 +1147,7 @@ int OXSiteView::ProcessMessage(OMessage *msg) {
         case MSG_DBLCLICK:
           if (ivmsg->button == Button1) {
             int sel;
-            vector<OItem *> items;
+            std::vector<OItem *> items;
             OFtpItem *f;
 
             if ((sel = _lv->NumSelected()) == 1) {

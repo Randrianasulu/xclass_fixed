@@ -172,8 +172,7 @@ int OXPasswdDialog::ProcessMessage(OMessage *msg) {
 //----------------------------------------------------------------------
 
 OXSetDirectory::OXSetDirectory(const OXWindow *p, const OXWindow *main,
-               int w, int h, char *path, int *rtc,
-               unsigned long options = MAIN_FRAME | VERTICAL_FRAME) :
+               int w, int h, char *path, int *rtc, unsigned long options) :
   OXTransientFrame(p, main, w, h, options) {
 
   _l1 = new OLayoutHints(LHINTS_CENTER_X, 5, 5, 4, 4);

@@ -41,7 +41,7 @@
 class OFDBitem : public OListViewItem {
 public:
   OFDBitem(const OXListView *p, int id, OFreqRecord *fr,
-           vector<OString *> names);
+           std::vector<OString *> names);
   virtual ~OFDBitem();
   
   OFreqRecord *GetFreqRecord() const { return _freqRec; }

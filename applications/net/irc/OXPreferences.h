@@ -127,7 +127,7 @@ public:
 };
 
 
-//typedef vector<ONameInfo *> ONameList;
+//typedef std::vector<ONameInfo *> ONameList;
 
 #define TRANSIENT_WINDOW 	(1<<0)
 #define USES_BACKGROUND_PIX 	(1<<1)
@@ -149,7 +149,7 @@ public:
   int   flags;
 };
 
-//typedef vector<OChannelInfo *> OChannelList;
+//typedef std::vector<OChannelInfo *> OChannelList;
 
 class OSettings : public OBaseObject {
 public:

@@ -118,7 +118,7 @@ protected:
 class OBookmarkItem : public OListViewItem {
 public:
   OBookmarkItem(const OXListView *p, int id,
-                vector <OString *> names, OBookmark *bmark,
+                std::vector <OString *> names, OBookmark *bmark,
                 const OPicture *bpic, const OPicture *spic) :
     OListViewItem(p, id, bpic, spic, names, LV_SMALL_ICONS) {
       _bmark = bmark;

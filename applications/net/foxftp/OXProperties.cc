@@ -137,35 +137,35 @@ OXFtpPropertiesDialog::OXFtpPropertiesDialog(const OXWindow *p, const OXWindow *
     frame->AddFrame(gmode, _l6);
     frame->AddFrame(omode, _l6);
 
-    ur = new OXCheckButton(umode, new OHotString("Read"),    71);
-    uw = new OXCheckButton(umode, new OHotString("Write"),   72);
-    ux = new OXCheckButton(umode, new OHotString("Execute"), 73);
-    gr = new OXCheckButton(gmode, new OHotString("Read"),    74);
-    gw = new OXCheckButton(gmode, new OHotString("Write"),   75);
-    gx = new OXCheckButton(gmode, new OHotString("Execute"), 76);
-    or = new OXCheckButton(omode, new OHotString("Read"),    77);
-    ow = new OXCheckButton(omode, new OHotString("Write"),   78);
-    ox = new OXCheckButton(omode, new OHotString("Execute"), 79);
+    _ur = new OXCheckButton(umode, new OHotString("Read"),    71);
+    _uw = new OXCheckButton(umode, new OHotString("Write"),   72);
+    _ux = new OXCheckButton(umode, new OHotString("Execute"), 73);
+    _gr = new OXCheckButton(gmode, new OHotString("Read"),    74);
+    _gw = new OXCheckButton(gmode, new OHotString("Write"),   75);
+    _gx = new OXCheckButton(gmode, new OHotString("Execute"), 76);
+    _or = new OXCheckButton(omode, new OHotString("Read"),    77);
+    _ow = new OXCheckButton(omode, new OHotString("Write"),   78);
+    _ox = new OXCheckButton(omode, new OHotString("Execute"), 79);
 
-    ur->Associate(this);
-    uw->Associate(this);
-    ux->Associate(this);
-    gr->Associate(this);
-    gw->Associate(this);
-    gx->Associate(this);
-    or->Associate(this);
-    ow->Associate(this);
-    ox->Associate(this);
+    _ur->Associate(this);
+    _uw->Associate(this);
+    _ux->Associate(this);
+    _gr->Associate(this);
+    _gw->Associate(this);
+    _gx->Associate(this);
+    _or->Associate(this);
+    _ow->Associate(this);
+    _ox->Associate(this);
 
-    umode->AddFrame(ur, _l5);
-    umode->AddFrame(uw, _l5);
-    umode->AddFrame(ux, _l5);
-    gmode->AddFrame(gr, _l5);
-    gmode->AddFrame(gw, _l5);
-    gmode->AddFrame(gx, _l5);
-    omode->AddFrame(or, _l5);
-    omode->AddFrame(ow, _l5);
-    omode->AddFrame(ox, _l5);
+    umode->AddFrame(_ur, _l5);
+    umode->AddFrame(_uw, _l5);
+    umode->AddFrame(_ux, _l5);
+    gmode->AddFrame(_gr, _l5);
+    gmode->AddFrame(_gw, _l5);
+    gmode->AddFrame(_gx, _l5);
+    omode->AddFrame(_or, _l5);
+    omode->AddFrame(_ow, _l5);
+    omode->AddFrame(_ox, _l5);
 
     AddFrame(new OXHorizontal3dLine(this), _l4);
 
@@ -270,15 +270,15 @@ void OXFtpPropertiesDialog::InitControls() {
   lmod->SetText(new OString(tmp));
 
   // access permissions...
-  ur->SetState((type & S_IRUSR) ? BUTTON_DOWN : BUTTON_UP);
-  uw->SetState((type & S_IWUSR) ? BUTTON_DOWN : BUTTON_UP);
-  ux->SetState((type & S_IXUSR) ? BUTTON_DOWN : BUTTON_UP);
-  gr->SetState((type & S_IRGRP) ? BUTTON_DOWN : BUTTON_UP);
-  gw->SetState((type & S_IWGRP) ? BUTTON_DOWN : BUTTON_UP);
-  gx->SetState((type & S_IXGRP) ? BUTTON_DOWN : BUTTON_UP);
-  or->SetState((type & S_IROTH) ? BUTTON_DOWN : BUTTON_UP);
-  ow->SetState((type & S_IWOTH) ? BUTTON_DOWN : BUTTON_UP);
-  ox->SetState((type & S_IXOTH) ? BUTTON_DOWN : BUTTON_UP);
+  _ur->SetState((type & S_IRUSR) ? BUTTON_DOWN : BUTTON_UP);
+  _uw->SetState((type & S_IWUSR) ? BUTTON_DOWN : BUTTON_UP);
+  _ux->SetState((type & S_IXUSR) ? BUTTON_DOWN : BUTTON_UP);
+  _gr->SetState((type & S_IRGRP) ? BUTTON_DOWN : BUTTON_UP);
+  _gw->SetState((type & S_IWGRP) ? BUTTON_DOWN : BUTTON_UP);
+  _gx->SetState((type & S_IXGRP) ? BUTTON_DOWN : BUTTON_UP);
+  _or->SetState((type & S_IROTH) ? BUTTON_DOWN : BUTTON_UP);
+  _ow->SetState((type & S_IWOTH) ? BUTTON_DOWN : BUTTON_UP);
+  _ox->SetState((type & S_IXOTH) ? BUTTON_DOWN : BUTTON_UP);
 
   _apply->Disable();
 
@@ -325,15 +325,15 @@ void OXFtpPropertiesDialog::ApplyProperties() {
     _fitem->SetName((char *)_fileName->GetString());
     //fileWindow->DisplayDirectory();
   }
-  if (ur->GetState() == BUTTON_DOWN) newstate = newstate | S_IRUSR;
-  if (uw->GetState() == BUTTON_DOWN) newstate = newstate | S_IWUSR;
-  if (ux->GetState() == BUTTON_DOWN) newstate = newstate | S_IXUSR;
-  if (gr->GetState() == BUTTON_DOWN) newstate = newstate | S_IRGRP;
-  if (gw->GetState() == BUTTON_DOWN) newstate = newstate | S_IWGRP;
-  if (gx->GetState() == BUTTON_DOWN) newstate = newstate | S_IXGRP;
-  if (or->GetState() == BUTTON_DOWN) newstate = newstate | S_IROTH;
-  if (ow->GetState() == BUTTON_DOWN) newstate = newstate | S_IWOTH;
-  if (ox->GetState() == BUTTON_DOWN) newstate = newstate | S_IXOTH;
+  if (_ur->GetState() == BUTTON_DOWN) newstate = newstate | S_IRUSR;
+  if (_uw->GetState() == BUTTON_DOWN) newstate = newstate | S_IWUSR;
+  if (_ux->GetState() == BUTTON_DOWN) newstate = newstate | S_IXUSR;
+  if (_gr->GetState() == BUTTON_DOWN) newstate = newstate | S_IRGRP;
+  if (_gw->GetState() == BUTTON_DOWN) newstate = newstate | S_IWGRP;
+  if (_gx->GetState() == BUTTON_DOWN) newstate = newstate | S_IXGRP;
+  if (_or->GetState() == BUTTON_DOWN) newstate = newstate | S_IROTH;
+  if (_ow->GetState() == BUTTON_DOWN) newstate = newstate | S_IWOTH;
+  if (_ox->GetState() == BUTTON_DOWN) newstate = newstate | S_IXOTH;
 
   if (chmod(_fileName->GetString(), newstate) != 0){
     sprintf(msg, "Can't change file mode: %s.", strerror(errno));
@@ -344,7 +344,7 @@ void OXFtpPropertiesDialog::ApplyProperties() {
   }
 }
 
-OXFtpPropertiesDialog::ProcessMessage(OMessage *msg) {
+int OXFtpPropertiesDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
   switch (msg->type) {

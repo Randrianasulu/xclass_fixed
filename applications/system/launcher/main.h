@@ -31,7 +31,7 @@
 #include <xclass/OXShutter.h>
 #include <xclass/OXMenu.h>
 
-#define XCLAUNCHER_VERSION  "0.8.1"
+#define XCLAUNCHER_VERSION  "0.8.3"
 
 class OXLaunchButton;
 
@@ -113,8 +113,8 @@ protected:
   int _winx, _winy, _winw, _winh;
   int _showLabels;
 
-  vector<SGroup *> _groups;
-  vector<SButton *> _buttons;
+  std::vector<SGroup *> _groups;
+  std::vector<SButton *> _buttons;
 };
 
 

@@ -30,8 +30,8 @@ typedef struct {
 
 RgbName rgb_table[MAX_RGBNAMES];
 
-extern "C" int xpmReadRgbNames(); 
-extern "C" char *xpmGetRgbName();
+extern "C" int xpmReadRgbNames(const char *, RgbName *); 
+extern "C" char *xpmGetRgbName(RgbName *, int, int, int, int);
 
 //extern int xpmReadRgbNames(rgb_fname, rgb_table);
 

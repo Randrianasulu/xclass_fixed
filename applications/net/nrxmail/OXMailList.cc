@@ -19,7 +19,7 @@
 
 **************************************************************************/
 
-#include <vector.h>
+#include <vector>
 
 #include "OXMailList.h"
 
@@ -66,7 +66,7 @@ int OXMailList::GetCurrentMailNum() {
 
 void OXMailList::ReloadList() {
   int i;
-  vector<OString *> names;
+  std::vector<OString *> names;
 
   OPicture *pic = (OPicture *) _client->GetPicture("mailIcon.xpm",
                                                    unreadMailData);

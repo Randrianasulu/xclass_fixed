@@ -20,6 +20,7 @@
 **************************************************************************/
 
 #include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -27,7 +28,7 @@
 #include <xclass/OResourcePool.h>
 #include <xclass/OXMsgBox.h>
 
-#include <vector.h>
+#include <vector>
 
 #include "OXViewSrc.h"
 #include "OXPrintBox.h"
@@ -148,7 +149,7 @@ void OXBodyView::ShowMessage(OMail *newmail) {
   OMimeAtt *travel;
   OMime *travelmime;
   AttachList *travelAttach;
-  vector<OString *> names;
+  std::vector<OString *> names;
 
   Clear();
   mail = newmail;
@@ -354,7 +355,7 @@ void OXBodyView::SaveAttachment(char *filename) {
 bool OXBodyView::SetCurrentAttachment() {
   AttachList *travelAttach = startAttachList;
   const OListViewItem *item;
-  vector<OItem *> items;
+  std::vector<OItem *> items;
   void *iterator = NULL;
 
   if (attachmentsView->NumSelected() == 0) {

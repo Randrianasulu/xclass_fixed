@@ -1,7 +1,7 @@
 #ifndef __SERVERTREE_H
 #define __SERVERTREE_H
 
-#include <vector.h>
+#include <vector>
 
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXListTree.h>
@@ -58,7 +58,7 @@ protected:
   OXListTree *_listTree;
   OXLabel *_servName, *_connTo, *_servMsg;
   OXButton *_conn, *_cl;
-  vector<OServerLink *> _links;
+  std::vector<OServerLink *> _links;
   int _clearPending;
 };
 

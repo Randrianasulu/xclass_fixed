@@ -458,8 +458,7 @@ int OXBookmarkProp::ProcessMessage(OMessage *msg) {
 class OXFolderProp : public OXTransientFrame {
 public:
   OXFolderProp(const OXWindow *p, const OXWindow *main, int w, int h,
-               char *name, int *rtc,
-               unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
+               char *name, int *rtc, unsigned long options);
   virtual ~OXFolderProp();
 
   virtual int ProcessMessage(OMessage *);
@@ -763,7 +762,7 @@ void OXFtpManager::UpdateBookmarkList(OBookmarkList *blist) {
   if (blist) {
     for (int j = 0; j < blist->GetList()->GetSize(); j++) {
       bmark = blist->GetList()->GetAt(j + 1);
-      vector<OString *> names;
+      std::vector<OString *> names;
       names.push_back(new OString(bmark->GetName()));
       _lv->AddItem(new OBookmarkItem(_lv, -1, names, bmark, pic, pic));
     }
@@ -1122,7 +1121,7 @@ void OXFtpManager::DoEditBookmark() {
   int rtc;
 
   if (_lv->NumSelected() == 1) {
-    vector<OItem *> items;
+    std::vector<OItem *> items;
     items = _lv->GetSelectedItems();
     OBookmarkItem *f = (OBookmarkItem *) items[0];
     OBookmark *bmark = f->GetBookmark();
@@ -1135,7 +1134,7 @@ void OXFtpManager::DoCopyBookmark() {
   int rtc;
 
   if (_lv->NumSelected() == 1) {
-    vector<OItem *> items;
+    std::vector<OItem *> items;
     items = _lv->GetSelectedItems();
     OBookmarkItem *f = (OBookmarkItem *) items[0];
     OBookmark *copy = f->GetBookmark();
@@ -1154,7 +1153,7 @@ void OXFtpManager::DoCopyBookmark() {
 
 void OXFtpManager::DoDeleteBookmark() {
   OBookmarkItem *f;
-  vector<OItem *> items = _lv->GetSelectedItems();
+  std::vector<OItem *> items = _lv->GetSelectedItems();
   int i, j;
 
   for (i = 0; i < items.size(); ++i) {
@@ -1253,7 +1252,7 @@ void OXFtpManager::DoDeleteFolder() {
 
 void OXFtpManager::DoConnect() {
   if (_lv->NumSelected() == 1) {
-    vector<OItem *> items;
+    std::vector<OItem *> items;
 
     items = _lv->GetSelectedItems();
     OBookmarkItem *f = (OBookmarkItem *) items[0];
@@ -1291,7 +1290,7 @@ int OXFtpManager::ProcessMessage(OMessage *msg) {
       switch (msg->action) {
         case MSG_CLICK: 
           if (_lv->NumSelected() == 1) {
-            vector<OItem *> items;
+            std::vector<OItem *> items;
             items = _lv->GetSelectedItems();
             OBookmarkItem *f = (OBookmarkItem *) items[0];
             OBookmark *tmp = f->GetBookmark();

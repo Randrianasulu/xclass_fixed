@@ -16,8 +16,8 @@
 #include <sys/types.h>
 #ifdef __FreeBSD__
 #include <netinet/in.h>
-#include <sys/socket.h>
 #endif
+#include <sys/socket.h>
 #include <unistd.h>
 #include <xclass/OComponent.h>
 

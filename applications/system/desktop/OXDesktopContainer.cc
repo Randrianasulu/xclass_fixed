@@ -28,7 +28,7 @@
 #include <string.h>
 #include <limits.h>
 
-#include <vector.h>
+#include <vector>
 
 #include <X11/Xatom.h>
 
@@ -407,7 +407,7 @@ void OXDesktopContainer::DeleteSelectedFiles() {
   const  OPicture *pic;
   char  *title, prompt[256];
   void  *iterator = NULL;
-  vector<const OXDesktopIcon *> selected;
+  std::vector<const OXDesktopIcon *> selected;
 
   if ((sel = NumSelected()) == 0) return;
 

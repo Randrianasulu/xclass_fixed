@@ -52,7 +52,7 @@ public:
   OFtpItem(const OXListView *p, int id, 
            const OPicture *bpic, const OPicture *blpic,
            const OPicture *spic, const OPicture *slpic,
-           vector<OString *> names, OFile *felem, int ViewMode) :
+           std::vector<OString *> names, OFile *felem, int ViewMode) :
     OFileItem(p, id, bpic, blpic, spic, slpic, names,
               felem->_type, felem->_is_link, felem->_size, felem->_time,
               ViewMode) {

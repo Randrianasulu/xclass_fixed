@@ -168,6 +168,8 @@ OXMain::OXMain(const OXWindow *p, char *fname) :
   prev.clear();
   next.clear();
 
+  UpdateButtons();
+
   for (int i = 0; i < NUM_RECENT; ++i) _history[i] = NULL;
 
   _geom.w = 600;
@@ -327,6 +329,7 @@ void OXMain::LoadDoc(OHtmlUri *uri) {
     prev.push_back(_lastUrl);
     for (int i = 0; i < next.size(); ++i) delete[] next[i];
     next.clear();
+    UpdateButtons();
   }
   _lastUrl = uri->BuildUri();
 
@@ -534,6 +537,7 @@ void OXMain::DoPrevPage() {
   } else {
     XBell(GetDisplay(), 0);
   }
+  UpdateButtons();
 }
 
 void OXMain::DoNextPage() {
@@ -549,6 +553,18 @@ void OXMain::DoNextPage() {
   } else {
     XBell(GetDisplay(), 0);
   }
+  UpdateButtons();
+}
+
+void OXMain::UpdateButtons() {
+  if (prev.size() > 0)
+    tb_data[4].button->Enable();
+  else
+    tb_data[4].button->Disable();
+  if (next.size() > 0)
+    tb_data[5].button->Enable();
+  else
+    tb_data[5].button->Disable();
 }
 
 void OXMain::DoAbout() {

@@ -1,7 +1,7 @@
 Intro
 -----
 
-This is the alpha version 0.3.3 of desktop, a desktop manager for X11 with
+This is the alpha version 0.3.4 of desktop, a desktop manager for X11 with
 the windows-95 look and feel. It is intended to be used together with
 xclass explorer (available separatedly).
 
@@ -85,7 +85,7 @@ Compilation and install
 -----------------------
 
 In order to compile and run this version of desktop, you need at least
-xclass version 0.7.5, available from ftp://mitac11.uia.ac.be/pub/xclass and
+xclass version 0.8.2, available from ftp://mitac11.uia.ac.be/pub/xclass and
 http://sourceforge.net/projects/xclass. Once you have xclass installed, all
 you need to do is to cd to the desktop's source directory and type 'make'.
 

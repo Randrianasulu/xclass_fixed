@@ -1,7 +1,7 @@
 #ifndef __OXWEBHTML_H
 #define __OXWEBHTML_H
 
-#include <vector.h>
+#include <vector>
 
 #include <xclass/utils.h>
 #include <xclass/OException.h>
@@ -51,7 +51,7 @@ protected:
   char *docName;
   int docNameStart;
   
-  vector<char *> visitedUrl;
+  std::vector<char *> visitedUrl;
 };
 
 

@@ -100,7 +100,7 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
     _dndTypeList = new Atom[2];
 
     _dndTypeList[0] = XInternAtom(GetDisplay(), "text/uri-list", False);
-    _dndTypeList[1] = NULL;
+    _dndTypeList[1] = None;
 
     URI_list = _dndTypeList[0];
 

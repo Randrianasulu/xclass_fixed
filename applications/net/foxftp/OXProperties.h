@@ -71,9 +71,9 @@ protected:
   OXLabel *ltype, *ldev, *lusr, *lgrp, *llnks, *lsz, *lmod;
 
   // access permission controls
-  OXCheckButton *ur, *uw, *ux,
-                *gr, *gw, *gx,
-                *or, *ow, *ox;
+  OXCheckButton *_ur, *_uw, *_ux,
+                *_gr, *_gw, *_gx,
+                *_or, *_ow, *_ox;
 };
 
 
