@@ -370,10 +370,13 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     _dpanel->PowerOn();
 
 #if 0
-    XGrabPointer(GetDisplay(), _id, False /*True*/,
-                 ButtonPressMask | ButtonReleaseMask,
-                 GrabModeAsync, GrabModeAsync, None,
-                 GetResourcePool()->GetGrabCursor(), CurrentTime);
+    XGrabButton(GetDisplay(), Button4, AnyModifier, _id, False,
+                ButtonPressMask | ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+
+    XGrabButton(GetDisplay(), Button5, AnyModifier, _id, False,
+                ButtonPressMask | ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
 #else
     AddInput(ButtonPressMask | ButtonReleaseMask);
 #endif
@@ -610,35 +613,19 @@ int OXMain::ProcessMessage(OMessage *msg) {
               break;
 
             case 401:
-              _vfoA.freq = _rx->GetFrequency() + 10 * _vfoA.step;
-              if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-              _rx->SetFrequency(_vfoA.freq);
-              _dpanel->SetFreq(VFO_A, _vfoA.freq);
-              _knob->StepKnob(1);
+              TuneUp(10);
               break;
 
             case 402:
-              _vfoA.freq = _rx->GetFrequency() + _vfoA.step;
-              if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-              _rx->SetFrequency(_vfoA.freq);
-              _dpanel->SetFreq(VFO_A, _vfoA.freq);
-              _knob->StepKnob(1);
+              TuneUp(1);
               break;
 
             case 403:
-              _vfoA.freq = _rx->GetFrequency() - _vfoA.step;
-              if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-              _rx->SetFrequency(_vfoA.freq);
-              _dpanel->SetFreq(VFO_A, _vfoA.freq);
-              _knob->StepKnob(-1);
+              TuneDown(1);
               break;
 
             case 404:
-              _vfoA.freq = _rx->GetFrequency() - 10 * _vfoA.step;
-              if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-              _rx->SetFrequency(_vfoA.freq);
-              _dpanel->SetFreq(VFO_A, _vfoA.freq);
-              _knob->StepKnob(-1);
+              TuneDown(10);
               break;
 
             case 801:
@@ -697,19 +684,11 @@ int OXMain::ProcessMessage(OMessage *msg) {
     case MSG_TUNING_KNOB:
       switch (msg->action) {
         case MSG_UP:
-          _vfoA.freq = _rx->GetFrequency() + _vfoA.step;
-          if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-          _rx->SetFrequency(_vfoA.freq);
-          _dpanel->SetFreq(VFO_A, _vfoA.freq);
-          //_knob->StepKnob(1);
+          TuneUp(1, False);
           break;
 
         case MSG_DOWN:
-          _vfoA.freq = _rx->GetFrequency() - _vfoA.step;
-          if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-          _rx->SetFrequency(_vfoA.freq);
-          _dpanel->SetFreq(VFO_A, _vfoA.freq);
-          //_knob->StepKnob(1);
+          TuneDown(1, False);
           break;
       }
       break;
@@ -814,6 +793,44 @@ void OXMain::TuneTo(OFreqRecord *frec) {
   UpdateSliders();
 }
 
+void OXMain::TuneUp(int steps, int move_knob) {
+  _vfoA.freq = _rx->GetFrequency() + steps * _vfoA.step;
+  if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
+  _rx->SetFrequency(_vfoA.freq);
+  _dpanel->SetFreq(VFO_A, _vfoA.freq);
+  if (move_knob) _knob->StepKnob(1);
+}
+
+void OXMain::TuneDown(int steps, int move_knob) {
+  _vfoA.freq = _rx->GetFrequency() - steps * _vfoA.step;
+  if (_vfoA.freq < 50000) _vfoA.freq = 50000;
+  _rx->SetFrequency(_vfoA.freq);
+  _dpanel->SetFreq(VFO_A, _vfoA.freq);
+  if (move_knob) _knob->StepKnob(-1);
+}
+
+void OXMain::VolumeUp(int steps, int channel) {
+  int vol;
+
+  vol = _rx->GetVolume(channel) - steps;
+  if (vol < 0) vol = 0;
+  _rx->SetVolume(channel, vol);
+
+  _spkvol->SetPosition(_rx->GetVolume(RX320_SPEAKER));
+  _linevol->SetPosition(_rx->GetVolume(RX320_LINE));
+}
+
+void OXMain::VolumeDown(int steps, int channel) {
+  int vol;
+
+  vol = _rx->GetVolume(channel) + steps;
+  if (vol > 63) vol = 63;
+  _rx->SetVolume(channel, vol);
+
+  _spkvol->SetPosition(_rx->GetVolume(RX320_SPEAKER));
+  _linevol->SetPosition(_rx->GetVolume(RX320_LINE));
+}
+
 void OXMain::UpdateDisplay() {
 
   _dpanel->SetFreq(VFO_A, _vfoA.freq);
@@ -877,41 +894,27 @@ int OXMain::HandleKey(XKeyEvent *event) {
         break;
 
       case XK_Page_Up:
-        _vfoA.freq = _rx->GetFrequency() + 10 * _vfoA.step;
-        if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-        _rx->SetFrequency(_vfoA.freq);
-        _dpanel->SetFreq(VFO_A, _vfoA.freq);
-        _knob->StepKnob(1);
+        TuneUp(10);
         break;
 
       case XK_Page_Down:
-        _vfoA.freq = _rx->GetFrequency() - 10 * _vfoA.step;
-        if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-        _rx->SetFrequency(_vfoA.freq);
-        _dpanel->SetFreq(VFO_A, _vfoA.freq);
-        _knob->StepKnob(-1);
+        TuneDown(10);
         break;
 
       case XK_Up:
+        VolumeUp(1, (event->state & ShiftMask) ? RX320_LINE : RX320_SPEAKER);
         break;
 
       case XK_Down:
+        VolumeDown(1, (event->state & ShiftMask) ? RX320_LINE : RX320_SPEAKER);
         break;
 
       case XK_Left:
-        _vfoA.freq = _rx->GetFrequency() - _vfoA.step;
-        if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-        _rx->SetFrequency(_vfoA.freq);
-        _dpanel->SetFreq(VFO_A, _vfoA.freq);
-        _knob->StepKnob(-1);
+        TuneDown(1);
         break;
 
       case XK_Right:
-        _vfoA.freq = _rx->GetFrequency() + _vfoA.step;
-        if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
-        _rx->SetFrequency(_vfoA.freq);
-        _dpanel->SetFreq(VFO_A, _vfoA.freq);
-        _knob->StepKnob(1);
+        TuneUp(1);
         break;
 
       case XK_Escape:
@@ -957,6 +960,15 @@ int OXMain::HandleKey(XKeyEvent *event) {
 }
 
 int OXMain::HandleButton(XButtonEvent *event) {
+
+  if (event->type == ButtonPress) {
+    if (event->button == Button4) {
+      TuneUp((event->state & ShiftMask) ? 10 : 1);
+    } else if (event->button == Button5) {
+      TuneDown((event->state & ShiftMask) ? 10 : 1);
+    }
+  }
+
   if (event->type == ButtonRelease && event->button == Button3) {
     int retc, mute = _mute_on_exit;
     int menu_id = _menu->PopupMenu(event->x_root, event->y_root);
@@ -993,6 +1005,7 @@ int OXMain::HandleButton(XButtonEvent *event) {
         break;
     }
   }
+
   return True;
 }
 

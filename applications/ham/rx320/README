@@ -29,13 +29,19 @@ selected database entry.
 
 The main tuning knob works more like a real one (i.e. you click on the small
 hole and move the mouse around in circles), and not like the knob in the
-Ten-Tec's Windows program.
+Ten-Tec's Windows program. If you have a wheel mouse supported by your X
+server, then you can use the wheel to tune up and down with the selected
+step, or ten times the step value if you hold Shift down (note that for this
+to work the mouse pointer must be located somewhere over the main window).
 
 You can also use the Right and Left arrow keys on your keyboard to tune up
 and down in frequency with the currently selected tuning step, or PgUp and
 PgDn to tune by 10 times the current step. Use the number keys to enter
 directly a frequency (in Hertz), finish with Enter to tune to that
 frequency or with Escape to abort the operation.
+
+The Up and Down arrow keys can be used to increase/decrease the speaker
+volume, or the line-out volume if you hold the Shift key down.
 
 
 Installation

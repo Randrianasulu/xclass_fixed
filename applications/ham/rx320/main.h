@@ -61,6 +61,10 @@ public:
   void SwapVFO();
   void CopyVFO();
   void TuneTo(OFreqRecord *frec);
+  void TuneUp(int steps, int move_knob = True);
+  void TuneDown(int steps, int move_knob = True);
+  void VolumeUp(int steps, int channel);
+  void VolumeDown(int steps, int channel);
 
   void UpdateDisplay();
   void UpdateSliders();

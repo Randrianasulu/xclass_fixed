@@ -72,3 +72,7 @@
 - Each database window now keeps the full path to loaded filename.
   Previously other database instances could change the current dir, and
   the file would get saved in a different directory.
+
+- Added wheel mouse support.
+
+- Up/Down keys can be used now to control the volume.
