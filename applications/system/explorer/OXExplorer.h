@@ -42,7 +42,7 @@
 #include "OXDirectoryTree.h"
 
 
-#define EXPLORER_VERSION        "0.6.4"
+#define EXPLORER_VERSION        "0.6.5"
 
 
 //----- Operation modes:
