@@ -78,12 +78,14 @@ OXTextLBEntry::~OXTextLBEntry() {
 
 void OXTextLBEntry::_DoRedraw() {
   int x, y;
+  unsigned long old_bg;
   
   //OXFrame::_DoRedraw();
 
   x = 3;
   y = (_h - _th) >> 1;
 
+  old_bg = _backPixel;
   if (_active) {
     SetBackgroundColor(_defaultSelectedBackground);
     ClearWindow();
@@ -93,6 +95,7 @@ void OXTextLBEntry::_DoRedraw() {
     ClearWindow();
     _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
   }
+  _backPixel = old_bg;
 
   _text->Draw(GetDisplay(), _id, _normGC->GetGC(), x, y + _ta);
 
