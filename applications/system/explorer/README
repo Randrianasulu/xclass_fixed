@@ -1,7 +1,7 @@
 Intro
 -----
 
-This is the alpha version 0.5 of the xclass explorer, a file manager for X
+This is the alpha version 0.6 of the xclass explorer, a file manager for X
 with the windows-95 look and feel. I started writing it some years ago after
 hacking fvwm into fvwm95, together with the xclass library, but haven't got
 the time to finish it.
@@ -67,7 +67,48 @@ Implemented features
 
 - Settings are saved on a $HOME/.xclass/etc/explorerrc file.
 
-- The "Open With..." dialog is there, but is not finished.
+- The "Open With..." dialog is there, but it is not finished.
+
+- Drag and drop is partially implemented. Currently files can be moved (or
+  copied if you press ctrl during dnd) between different dirs or explorer
+  instances. Right-dragging shows a dnd menu. Dropping on an executable
+  file starts the application with the corresponding argument. Experiment
+  with it and use with care!
+
+  NOTE
+  ----
+  Xclass currently implements XDND protocol revision 4 (explained in detail
+  in http://www.newplanetsoftware.com/xdnd). It is a clean and efficient
+  protocol, is becoming the standard, and so is being adopted by many
+  programming libraries and toolkits. However, not all applications and/or
+  libraries implement the protocol as specified, and as a result you'll
+  suffer from incompatibility problems.
+
+  I've had a variable range of success with different applications:
+
+  - StarOffice: their XDND implementation is the most complete I've seen so
+    far. Bugs: when dragging a file, the drop data is not a full URL as the
+    protocol requires, but rather a full local path. The URL class included
+    with the explorer handles that case correctly.
+
+  - Gnome applications and filemanagers: they fail to negotiate the
+    protocol version to be used in dnd operations. Apparently gtk implements
+    protocol revision 3 and they just ignore any windows using a different
+    version. As a result, you won't be able to dnd anything from a gnome
+    filemanager to the xclass explorer, but it works the other way around.
+    Well... almost. They also suffer from the full URL problem, in this
+    case they specify the scheme and a full path (like file:/mydir/doc.txt),
+    but the hostname is not included. Explorer's URL class parses those
+    partial specifications correctly, but gtk apps fail to parse a full URL.
+
+  - KDE: this one uses only Motif dnd.
+
+  - KDE2: despite what they claim (http://www.kde.org/announcements/
+    announce-2.0.html), KDE2 (including Konqueror) does *not* support
+    XDND. They mainly use Motif dnd, which gnome apps also support. There
+    seems to be XDND support in Qt, and a very few apps (like konsole)
+    support XDND for text strings, but not for file objects.
+
 
 
 Unimplemented features (or TODO list)
@@ -75,9 +116,7 @@ Unimplemented features (or TODO list)
 
 - The Tree View is not kept in sync with the File List.
 
-- Drag and drop is partially implemented. Currently files can only be moved
-  (or copied if you ctrl-drag) between different explorer instances. 
-  Experiment with it and use with care!
+- Drag and drop is not implemented for the directory tree view.
 
 - Right-click context menus are not finished yet.
 

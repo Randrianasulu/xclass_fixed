@@ -34,16 +34,15 @@
 #include <xclass/OXLabel.h>
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
-#include <xclass/OXListView.h>
-#include <xclass/OXListTree.h>
 #include <xclass/OXFileList.h>
 #include <xclass/OXFSDDListBox.h>
 #include <xclass/utils.h>
 
 #include "ORecycledFiles.h"
+#include "OXDirectoryTree.h"
 
 
-#define EXPLORER_VERSION        "0.6"
+#define EXPLORER_VERSION        "0.6.4"
 
 
 //----- Operation modes:
@@ -157,8 +156,6 @@ public:
   void DoToggleStatusBar();
   void About();
 
-  void ReadDir(char *cdir, OListTreeItem *parent);
-  void ReadSubDirs(char *cdir, OListTreeItem *parent);
   void DisplayDir() { _fileWindow->DisplayDirectory(); }
 
   OXFileList *GetFileWindow() const { return _fileWindow; }
@@ -175,7 +172,7 @@ protected:
   OXHorizontalFrame *_hf;
   OXCompositeFrame *_treeHdr, *_listHdr;
   OXFileList *_fileWindow;
-  OXListTree *_lt;
+  OXDirectoryTree *_dt;
 
   OLayoutHints *_menuBarLayout, *_menuBarItemLayout;
 

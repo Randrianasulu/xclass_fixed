@@ -13,6 +13,7 @@ LDFLAGS=
 SRCS = main.cc \
 	URL.cc \
 	OXExplorer.cc \
+	OXDirectoryTree.cc \
 	OXCopyBox.cc \
 	OXOptions.cc \
 	OXEditMime.cc \

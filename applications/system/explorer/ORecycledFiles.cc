@@ -129,3 +129,10 @@ void ORecycledFiles::AddFile(const char *name, const char *storedname,
   listptr->next = NULL;
   _changed = True;
 }
+
+void ORecycledFiles::DeleteFile(const char *name, const char *storedname, 
+                                const char *date, const char *location) {
+}
+
+void ORecycledFiles::EmptyRecycleBin() {
+}

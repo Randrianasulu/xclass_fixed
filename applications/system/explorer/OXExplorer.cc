@@ -51,6 +51,7 @@
 #include <xclass/OXPropertiesDialog.h>
 #include <xclass/OXAboutDialog.h>
 #include <xclass/ODNDmanager.h>
+#include <xclass/OExec.h>
 
 #include "URL.h"
 #include "OXOptions.h"
@@ -185,54 +186,54 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
   _menuBarItemLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 0, 4, 0, 0);
 
   _sendToMenu = new OXPopupMenu(_client->GetRoot());
-  _sendToMenu->AddEntry(new OHotString("Fax Recipient"),  21, _client->GetPicture("fax.t.xpm"));
+  _sendToMenu->AddEntry(new OHotString("Fax Recipient"), 21, _client->GetPicture("fax.t.xpm"));
   _sendToMenu->AddEntry(new OHotString("Mail Recipient"), 22, _client->GetPicture("mail.t.xpm"));
-  _sendToMenu->AddEntry(new OHotString("My Briefcase"),   23, _client->GetPicture("briefcase.t.xpm"));
+  _sendToMenu->AddEntry(new OHotString("My Briefcase"), 23, _client->GetPicture("briefcase.t.xpm"));
 
   _contextMenu = new OXPopupMenu(_client->GetRoot());
-  _contextMenu->AddEntry(new OHotString("&Open"),    M_FILE_OPEN);
+  _contextMenu->AddEntry(new OHotString("&Open"), M_FILE_OPEN);
   _contextMenu->AddEntry(new OHotString("&Explore"), M_FILE_EXPLORE);
   _contextMenu->AddEntry(new OHotString("&Find..."), M_FILE_FIND);
   _contextMenu->AddSeparator();
   _contextMenu->AddPopup(new OHotString("Se&nd To"), _sendToMenu);
   _contextMenu->AddSeparator();
-  _contextMenu->AddEntry(new OHotString("Cu&t"),   M_EDIT_CUT);
-  _contextMenu->AddEntry(new OHotString("&Copy"),  M_EDIT_COPY);
+  _contextMenu->AddEntry(new OHotString("Cu&t"), M_EDIT_CUT);
+  _contextMenu->AddEntry(new OHotString("&Copy"), M_EDIT_COPY);
   _contextMenu->AddEntry(new OHotString("&Paste"), M_EDIT_PASTE);
   _contextMenu->AddSeparator();
   _contextMenu->AddEntry(new OHotString("Create &Soft Link"), M_FILE_NEWSHORTCUT);
-  _contextMenu->AddEntry(new OHotString("&Delete"),          M_FILE_DELETE);
-  _contextMenu->AddEntry(new OHotString("Rena&me"),          M_FILE_RENAME);
+  _contextMenu->AddEntry(new OHotString("&Delete"), M_FILE_DELETE);
+  _contextMenu->AddEntry(new OHotString("Rena&me"), M_FILE_RENAME);
   _contextMenu->AddSeparator();
-  _contextMenu->AddEntry(new OHotString("P&roperties"), M_FILE_PROPS);
+  _contextMenu->AddEntry(new OHotString("P&roperties..."), M_FILE_PROPS);
   _contextMenu->SetDefaultEntry(M_FILE_OPEN);
 
   _sendToMenu->Associate(this);
   _contextMenu->Associate(this);
 
   _newMenu = new OXPopupMenu(_client->GetRoot());
-  _newMenu->AddEntry(new OHotString("&Folder"),       M_FILE_NEWFOLDER);
-  _newMenu->AddEntry(new OHotString("&Soft Link"),    M_FILE_NEWSHORTCUT);
+  _newMenu->AddEntry(new OHotString("&Folder"), M_FILE_NEWFOLDER);
+  _newMenu->AddEntry(new OHotString("&Soft Link"), M_FILE_NEWSHORTCUT);
   _newMenu->AddSeparator();
-  _newMenu->AddEntry(new OHotString("Bitmap Image"),  113);
+  _newMenu->AddEntry(new OHotString("Bitmap Image"), 113);
   _newMenu->AddEntry(new OHotString("Text Document"), 113);
-  _newMenu->AddEntry(new OHotString("Briefcase"),     113);
+  _newMenu->AddEntry(new OHotString("Briefcase"), 113);
 
   _menuFile = new OXPopupMenu(_client->GetRoot());
-  _menuFile->AddEntry(new OHotString("&Open"),     M_FILE_OPEN);
-  _menuFile->AddEntry(new OHotString("&Explore"),  M_FILE_EXPLORE);
-  _menuFile->AddEntry(new OHotString("&Find..."),  M_FILE_FIND);
+  _menuFile->AddEntry(new OHotString("&Open"), M_FILE_OPEN);
+  _menuFile->AddEntry(new OHotString("&Explore"), M_FILE_EXPLORE);
+  _menuFile->AddEntry(new OHotString("&Find..."), M_FILE_FIND);
   _menuFile->AddSeparator();
-  _menuFile->AddPopup(new OHotString("Se&nd To"),  _sendToMenu);
+  _menuFile->AddPopup(new OHotString("Se&nd To"), _sendToMenu);
   _menuFile->AddSeparator();
   _menuFile->AddPopup(new OHotString("Ne&w"), _newMenu);
   _menuFile->AddSeparator();
   _menuFile->AddEntry(new OHotString("Create &Soft Link"), M_FILE_NEWSHORTCUT);
-  _menuFile->AddEntry(new OHotString("&Delete"),          M_FILE_DELETE);
-  _menuFile->AddEntry(new OHotString("Rena&me"),          M_FILE_RENAME);
-  _menuFile->AddEntry(new OHotString("P&roperties"),      M_FILE_PROPS);
+  _menuFile->AddEntry(new OHotString("&Delete"), M_FILE_DELETE);
+  _menuFile->AddEntry(new OHotString("Rena&me"), M_FILE_RENAME);
+  _menuFile->AddEntry(new OHotString("P&roperties..."), M_FILE_PROPS);
   _menuFile->AddSeparator();
-  _menuFile->AddEntry(new OHotString("&Close"),           M_FILE_CLOSE);
+  _menuFile->AddEntry(new OHotString("&Close"), M_FILE_CLOSE);
   _menuFile->SetDefaultEntry(M_FILE_OPEN);
 
   _newMenu->DisableEntry(M_FILE_NEWSHORTCUT);
@@ -242,14 +243,14 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
   _menuFile->DisableEntry(M_FILE_PROPS);
 
   _menuEdit = new OXPopupMenu(_client->GetRoot());
-  _menuEdit->AddEntry(new OHotString("&Undo"),             M_EDIT_UNDO);
+  _menuEdit->AddEntry(new OHotString("&Undo"), M_EDIT_UNDO);
   _menuEdit->AddSeparator();
-  _menuEdit->AddEntry(new OHotString("Cu&t"),              M_EDIT_CUT);
-  _menuEdit->AddEntry(new OHotString("&Copy"),             M_EDIT_COPY);
-  _menuEdit->AddEntry(new OHotString("&Paste"),            M_EDIT_PASTE);
+  _menuEdit->AddEntry(new OHotString("Cu&t"), M_EDIT_CUT);
+  _menuEdit->AddEntry(new OHotString("&Copy"), M_EDIT_COPY);
+  _menuEdit->AddEntry(new OHotString("&Paste"), M_EDIT_PASTE);
   _menuEdit->AddEntry(new OHotString("Paste &Soft Link"), M_EDIT_PASTESHORTCUT);
   _menuEdit->AddSeparator();
-  _menuEdit->AddEntry(new OHotString("Select &All"),       M_EDIT_SELECTALL);
+  _menuEdit->AddEntry(new OHotString("Select &All"), M_EDIT_SELECTALL);
   _menuEdit->AddEntry(new OHotString("&Invert Selection"), M_EDIT_INVSELECTION);
 //_menuEdit->SetDefaultEntry(M_EDIT_INVSELECTION);
   _menuEdit->DisableEntry(M_EDIT_UNDO);
@@ -259,28 +260,28 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
   _menuEdit->DisableEntry(M_EDIT_PASTESHORTCUT);
 
   _sortMenu = new OXPopupMenu(_client->GetRoot());
-  _sortMenu->AddEntry(new OHotString("By &Name"),      M_VIEW_ARRANGE_BYNAME);
-  _sortMenu->AddEntry(new OHotString("By &Type"),      M_VIEW_ARRANGE_BYTYPE);
-  _sortMenu->AddEntry(new OHotString("By &Size"),      M_VIEW_ARRANGE_BYSIZE);
-  _sortMenu->AddEntry(new OHotString("By &Date"),      M_VIEW_ARRANGE_BYDATE);
+  _sortMenu->AddEntry(new OHotString("By &Name"), M_VIEW_ARRANGE_BYNAME);
+  _sortMenu->AddEntry(new OHotString("By &Type"), M_VIEW_ARRANGE_BYTYPE);
+  _sortMenu->AddEntry(new OHotString("By &Size"), M_VIEW_ARRANGE_BYSIZE);
+  _sortMenu->AddEntry(new OHotString("By &Date"), M_VIEW_ARRANGE_BYDATE);
   _sortMenu->AddSeparator();
   _sortMenu->AddEntry(new OHotString("&Auto Arrange"), M_VIEW_ARRANGE_AUTO);
   _sortMenu->CheckEntry(M_VIEW_ARRANGE_AUTO);
 
   _menuView = new OXPopupMenu(_client->GetRoot());
-  _menuView->AddEntry(new OHotString("&Toolbar"),      M_VIEW_TOOLBAR);
-  _menuView->AddEntry(new OHotString("Status &Bar"),   M_VIEW_STATUS);
+  _menuView->AddEntry(new OHotString("&Toolbar"), M_VIEW_TOOLBAR);
+  _menuView->AddEntry(new OHotString("Status &Bar"), M_VIEW_STATUS);
   _menuView->AddSeparator();
-  _menuView->AddEntry(new OHotString("Lar&ge Icons"),  M_VIEW_LARGEICONS);
-  _menuView->AddEntry(new OHotString("S&mall Icons"),  M_VIEW_SMALLICONS);
-  _menuView->AddEntry(new OHotString("&List"),         M_VIEW_LIST);
-  _menuView->AddEntry(new OHotString("&Details"),      M_VIEW_DETAILS);
+  _menuView->AddEntry(new OHotString("Lar&ge Icons"), M_VIEW_LARGEICONS);
+  _menuView->AddEntry(new OHotString("S&mall Icons"), M_VIEW_SMALLICONS);
+  _menuView->AddEntry(new OHotString("&List"), M_VIEW_LIST);
+  _menuView->AddEntry(new OHotString("&Details"), M_VIEW_DETAILS);
   _menuView->AddSeparator();
   _menuView->AddPopup(new OHotString("Arrange &Icons"), _sortMenu);
   _menuView->AddEntry(new OHotString("Lin&e up Icons"), M_VIEW_LINEUP);
   _menuView->AddSeparator();
-  _menuView->AddEntry(new OHotString("&Refresh"),      M_VIEW_REFRESH);
-  _menuView->AddEntry(new OHotString("&Options..."),   M_VIEW_OPTIONS);
+  _menuView->AddEntry(new OHotString("&Refresh"), M_VIEW_REFRESH);
+  _menuView->AddEntry(new OHotString("&Options..."), M_VIEW_OPTIONS);
   _menuView->CheckEntry(M_VIEW_TOOLBAR);
   _menuView->CheckEntry(M_VIEW_STATUS);
 
@@ -292,17 +293,17 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
     _menuTools = new OXPopupMenu(_client->GetRoot());
     _menuTools->AddPopup(new OHotString("&Find"), _findMenu);
     _menuTools->AddSeparator();
-    _menuTools->AddEntry(new OHotString("&Mount file system..."),  1003);
-    _menuTools->AddEntry(new OHotString("&Dismount file system..."),  1004);
+    _menuTools->AddEntry(new OHotString("&Mount file system..."), 1003);
+    _menuTools->AddEntry(new OHotString("&Dismount file system..."), 1004);
     _menuTools->AddSeparator();
-    _menuTools->AddEntry(new OHotString("&Go to..."),  1005);
+    _menuTools->AddEntry(new OHotString("&Go to..."), 1005);
   }
 
   _menuHelp = new OXPopupMenu(_client->GetRoot());
-  _menuHelp->AddEntry(new OHotString("&Contents"),  M_HELP_CONTENTS);
+  _menuHelp->AddEntry(new OHotString("&Contents"), M_HELP_CONTENTS);
   _menuHelp->AddEntry(new OHotString("&Search..."), M_HELP_SEARCH);
   _menuHelp->AddSeparator();
-  _menuHelp->AddEntry(new OHotString("&About"),     M_HELP_ABOUT);
+  _menuHelp->AddEntry(new OHotString("&About"), M_HELP_ABOUT);
 
   _menuFile->Associate(this);
   _menuEdit->Associate(this);
@@ -390,13 +391,13 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
 
   if (_mainMode == EXPLORER_MODE) {
 
-    _lt = new OXListTree(_v1, 10, 10, -1, SUNKEN_FRAME | DOUBLE_BORDER);
-    _lt->Associate(this);
+    _dt = new OXDirectoryTree(_v1, 10, 10, -1, SUNKEN_FRAME | DOUBLE_BORDER);
+    _dt->Associate(this);
 
-    //_lt->SetScrollMode(SB_ACCELERATED);
-    //_lt->SetScrollDelay(10, 10);
+    //_dt->SetScrollMode(SB_ACCELERATED);
+    //_dt->SetScrollDelay(10, 10);
 
-    _v1->AddFrame(_lt, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y));
+    _v1->AddFrame(_dt, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y));
   }
 
   //-------------- files
@@ -441,20 +442,14 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
 
   SetMWMHints(MWM_DECOR_ALL, MWM_FUNC_ALL, MWM_INPUT_MODELESS);
 
-  MapSubwindows();
-
   ReadIniFile();
 
-#if 0
-  // we need to use GetDefaultSize() to initialize the layout algorithm...
-  Resize(GetDefaultSize());
-#else
+  MapSubwindows();
   Resize(_ww, _wh);
   Layout();
-#endif
 
   if (_mainMode == EXPLORER_MODE) {
-    SetFocusOwner(_lt);
+    SetFocusOwner(_dt);
   } else {
     SetFocusOwner(_fileWindow);
   }
@@ -706,145 +701,8 @@ void OXExplorer::UpdateListBox() {
 
 void OXExplorer::UpdateTree() {
   if (_mainMode == EXPLORER_MODE) {
-    OListTreeItem *i;
-    char *p, *dir = "/";
-    char wd[PATH_MAX+1];
-
-    wd[0] = '/';
-    getcwd(&wd[1], PATH_MAX);
-
-    // make entry for root dir
-    i = _lt->AddItem(NULL, dir,
-                     _client->GetPicture("fdisk.t.xpm"),
-                     _client->GetPicture("fdisk.t.xpm"));
-    i->open = True;
-
-    DefineCursor(GetResourcePool()->GetWaitCursor());
-    XFlush(GetDisplay());
-
-    dir = wd;
-    p = strchr(dir+1, '/');
-    if (p) *p++ = '\0';
-    while (dir) {
-chdir(dir);
-      ReadDir(".", i);  // ReadDir(dir, i);
-      dir = p;
-      if (p) p = strchr(p, '/');
-      if (p) {
-        *p++ = '\0';
-        i = _lt->FindChildByName(i, dir);
-        if (i) {
-          i->open = True;
-          _lt->HighlightItem(i);
-        //_lt->SortChildren(i);
-        }
-      }
-    }
-    _lt->SortChildren(NULL);
-
-    DefineCursor(None);
-    XFlush(GetDisplay());
+    _dt->UpdateTree();
   }
-}
-
-void OXExplorer::ReadDir(char *cdir, OListTreeItem *parent) {
-  DIR *dirp;
-  struct stat sbuf;
-  struct dirent *dp;
-  char *name;
-  char filename[256], tmp[PATH_MAX];
-  OListTreeItem *current;
-  const OPicture *pic1 = NULL, *pic2 = NULL;
-
-  getcwd(tmp, PATH_MAX);
-
-  //_lt->DeleteChildren(parent);
-
-  if (chdir(cdir) != 0) return;
-
-//printf("ReadDir: entering %s...\n", cdir);
-
-  if ((dirp = opendir(".")) == NULL) {
-    chdir(tmp);
-    return;
-  }
-
-  while ((dp = readdir(dirp)) != NULL) {
-    name = dp->d_name;
-    if (strcmp (name, ".") && strcmp (name, "..")) {
-      if ((stat(name, &sbuf) == 0) || (lstat(name, &sbuf) == 0)) {
-        if (S_ISDIR(sbuf.st_mode)) {
-          strcpy(filename, name);
-          current = _lt->FindChildByName(parent, filename);
-          if (!current) {
-            // here we should test for the full path name!  ==!==
-            if (strcmp(name, ".desktop") == 0) {
-              pic1 = _client->GetPicture("desktop.t.xpm");
-              pic2 = _client->GetPicture("desktop.t.xpm");
-            // and here as well... ==!==
-            } else if (strcmp(name, ".recycle") == 0) {
-              // here we should check for empty recycle bin! ==!==
-              pic1 = _client->GetPicture("recycle-empty.t.xpm");
-              pic2 = _client->GetPicture("recycle-empty.t.xpm");
-            } else {
-              pic1 = NULL;
-              pic2 = NULL;
-            }
-            current = _lt->AddItem(parent, filename, pic1, pic2);
-          }
-          ReadSubDirs(filename, current);
-          _lt->SortChildren(current);
-        }
-      } else {
-        fprintf(stderr, "lstat: \"%s\": ", name);
-        perror("");
-      }
-    }
-  }
-
-  _lt->SortChildren(parent);
-  closedir(dirp);
-  chdir(tmp);
-}
-
-void OXExplorer::ReadSubDirs(char *cdir, OListTreeItem *parent) {
-  DIR *dirp;
-  struct stat sbuf;
-  struct dirent *dp;
-  char *name;
-  char filename[256], tmp[PATH_MAX];
-  OListTreeItem *current;
-
-  getcwd(tmp, PATH_MAX);
-
-  if (chdir(cdir) != 0) return;
-
-//printf("ReadSubDirs: entering %s...\n", cdir);
-  _lt->DeleteChildren(parent);
-
-  if ((dirp = opendir(".")) == NULL) {
-    chdir(tmp);
-    return;
-  }
-
-  while ((dp = readdir(dirp)) != NULL) {
-    name = dp->d_name;
-    if (strcmp (name, ".") && strcmp (name, "..")) {
-      if (lstat(name, &sbuf) == 0) {
-        if (S_ISDIR(sbuf.st_mode)) {
-          strcpy(filename, name);
-          current = _lt->AddItem(parent, filename);
-          // break;
-        }
-      } else {
-        fprintf(stderr, "lstat: \"%s\" -- ", name);
-        perror("stat");
-      }
-    }
-  }
-
-  closedir(dirp);
-  chdir(tmp);
 }
 
 
@@ -1065,16 +923,14 @@ UpdateTree();
               } else {
                 if ((type & S_IXUSR) || (type & S_IXGRP) || (type & S_IXOTH)) {
                   // drop on an executable
-                  int pid = fork();
-                  if (pid == 0) {
-                    strcpy(to, cwd);
-                    strcat(to, "/");
-                    strcat(to, dndmsg->dragOver->GetName()->GetString());
-                    execlp(to, to, url.full_path, NULL);
-                    // if we are here then execlp failed!
-                    fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", to);
-                    exit(1);
-                  }
+                  strcpy(to, cwd);
+                  strcat(to, "/");
+                  strcat(to, dndmsg->dragOver->GetName()->GetString());
+                  char *argv[3];
+                  argv[0] = to;
+                  argv[1] = url.full_path;
+                  argv[2] = NULL;
+                  OExec exec(to, argv, False, True);
                   return True;
                 } else {
                   // drop on a regular document
@@ -1143,14 +999,14 @@ UpdateTree();
 
         case MSG_CLICK:
           { OListTreeItem *h;
-            if ((h = _lt->GetSelected()) != NULL) {
+            if ((h = _dt->GetSelected()) != NULL) {
               char *p, tmp[PATH_MAX];
-              _lt->GetPathnameFromItem(h, tmp);
+              _dt->GetPathnameFromItem(h, tmp);
               p = tmp;
               while (*p && *(p+1) == '/') ++p;
               DefineCursor(GetResourcePool()->GetWaitCursor());
               XFlush(GetDisplay());
-              ReadDir(p, h);
+              _dt->ReadDir(p, h);
               if (strcmp(p, _currentDir) != 0) {
                 DoChangeDirectory(p);
                 UpdateListBox();
@@ -1259,14 +1115,14 @@ void OXExplorer::SetupContextMenu(int mode, int ftype) {
   _contextMenu->AddEntry(new OHotString("&Delete"), M_FILE_DELETE);
   _contextMenu->AddEntry(new OHotString("Rena&me"), M_FILE_RENAME);
   _contextMenu->AddSeparator();
-  _contextMenu->AddEntry(new OHotString("P&roperties"), M_FILE_PROPS);
+  _contextMenu->AddEntry(new OHotString("P&roperties..."), M_FILE_PROPS);
 
   _menuFile->AddPopup(new OHotString("Ne&w"), _newMenu);
   _menuFile->AddSeparator();
   _menuFile->AddEntry(new OHotString("Create &Soft Link"), M_FILE_NEWSHORTCUT);
   _menuFile->AddEntry(new OHotString("&Delete"), M_FILE_DELETE);
   _menuFile->AddEntry(new OHotString("Rena&me"), M_FILE_RENAME);
-  _menuFile->AddEntry(new OHotString("P&roperties"), M_FILE_PROPS);
+  _menuFile->AddEntry(new OHotString("P&roperties..."), M_FILE_PROPS);
   _menuFile->AddSeparator();
   _menuFile->AddEntry(new OHotString("&Close"), M_FILE_CLOSE);
 
@@ -1320,16 +1176,11 @@ void OXExplorer::DoOpen(const OFileItem *f) {
   // is a directory?
   if (S_ISDIR(ftype)) { 
     if ((_mainMode == FILE_MGR_MODE) && NewBrowser) {
-      pid = fork();
-      if (pid == 0) {
-        execlp(AppPath,
-               AppPath,
-               f->GetName()->GetString(),
-               NULL);
-        // if we are here then execlp failed!
-        fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", AppPath);
-        exit(1);
-      }
+      char *argv[3];
+      argv[0] = AppPath;
+      argv[1] = (char *) f->GetName()->GetString();
+      argv[2] = NULL;
+      OExec exec(AppPath, argv, False, True);
     } else {
       DoChangeDirectory(f->GetName()->GetString());
       UpdateListBox();
@@ -1348,26 +1199,22 @@ void OXExplorer::DoOpen(const OFileItem *f) {
       argptr = strtok(NULL, " ");
     }
     argv[argc] = NULL;
-    pid = fork();
-    if (pid == 0) {
-      execvp(argv[0], argv);
-      // if we are here then execlp failed!
-      fprintf(stderr, "Cannot spawn \"%s\": execvp failed!\n", argv[0]);
-      exit(1);
-    }
+
+    OExec exec(argv[0], argv, False, True);
+
     for (int i = 0; i < argc; i++) delete[] argv[i];
 
   // is an exec file?
   } else if (S_ISREG(ftype) && (ftype & S_IXUSR)) {
-    pid = fork();
-    if (pid == 0) {  
-      getcwd(path, PATH_MAX);
-      sprintf(filename, "%s/%s", path, f->GetName()->GetString());
-      execlp(filename, filename, NULL, NULL);
-      // if we are here then execlp failed!
-      fprintf(stderr, "\"%s\" failed to run!\n", f->GetName()->GetString());
-      exit(1);
-    }
+
+    getcwd(path, PATH_MAX);
+    sprintf(filename, "%s/%s", path, f->GetName()->GetString());
+    char *argv[2];
+    argv[0] = (char *) f->GetName()->GetString();
+    argv[1] = NULL;
+
+    OExec exec(filename, argv, False, True);
+
   }
 }
 
@@ -1387,13 +1234,12 @@ void OXExplorer::DoOpenWith(const OFileItem *f) {
   getcwd(path, PATH_MAX);
   sprintf(filename, "%s/%s", path, f->GetName()->GetString());
 
-  pid = fork();
-  if (pid == 0) {
-    execlp(progname.GetString(), progname.GetString(), filename, NULL);
-    // if we are here then execlp failed!
-    fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", progname.GetString());
-    exit(1);
-  }
+  char *argv[3];
+  argv[0] = (char *) progname.GetString();
+  argv[1] = filename;
+  argv[2] = NULL;
+
+  OExec exec(progname.GetString(), argv, False, True);
 }
 
 

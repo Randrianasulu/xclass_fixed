@@ -45,6 +45,7 @@ public:
   void AddFile(const char *, const char *, const char *, const char *);
   void PrintFiles();
   void DeleteFile(const char *, const char *, const char *, const char *);
+  void EmptyRecycleBin();
 
 protected:
   File *list, *listptr;
