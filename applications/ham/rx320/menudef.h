@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ struct _popup {
 };
 
 struct _popup file_popup = {
-  { NULL }, {
+  NULL, {
   { "&Open...",          M_FILE_OPEN,       0,             NULL },
   { "&Save",             M_FILE_SAVE,       MENU_DISABLED, NULL },
   { "Save &as...",       M_FILE_SAVEAS,     MENU_DISABLED, NULL },
@@ -77,7 +77,7 @@ struct _popup file_popup = {
   { NULL,                -1,                0,             NULL } } };
 
 struct _popup edit_popup = {
-  { NULL }, {
+  NULL, {
   { "&Change entry...",    M_EDIT_CHANGE,     MENU_DISABLED, NULL },
   { "Add &new station...", M_EDIT_ADD,        0,             NULL },
   { "&Tune to station",    M_EDIT_TUNE,       MENU_DISABLED, NULL },
@@ -86,7 +86,7 @@ struct _popup edit_popup = {
   { NULL,                -1,                0,             NULL } } };
 
 struct _popup view_popup = {
-  { NULL }, {
+  NULL, {
   { "&Toolbar",          M_VIEW_TOOLBAR,    MENU_CHECKED,  NULL },
   { "Status &Bar",       M_VIEW_STATUSBAR,  MENU_CHECKED,  NULL },
   { "",                  -1,                0,             NULL },
@@ -94,8 +94,8 @@ struct _popup view_popup = {
   { NULL,                -1,                0,             NULL } } };
 
 struct _popup help_popup = {
-  { NULL }, {
-  { "&Contents...",      M_HELP_CONTENTS,   MENU_DISABLED, NULL },
+  NULL, {
+  { "&Contents...",      M_HELP_CONTENTS,   0,             NULL },
   { "&Search...",        M_HELP_SEARCH,     MENU_DISABLED, NULL },
   { "",                  -1,                0,             NULL },
   { "&About...",         M_HELP_ABOUT,      0,             NULL },

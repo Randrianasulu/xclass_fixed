@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,16 +24,18 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#include <math.h>
 
 #include <vector>
 
 #include <X11/keysym.h>
 
+#include <xclass/utils.h>
+#include <xclass/version.h>
 #include <xclass/OXClient.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXTextButton.h>
 #include <xclass/OXPictureButton.h>
+#include <xclass/OXAboutDialog.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXIcon.h>
 #include <xclass/OXMsgBox.h>
@@ -41,16 +43,18 @@
 #include <xclass/OString.h>
 #include <xclass/OIniFile.h>
 #include <xclass/OResourcePool.h>
-#include <xclass/utils.h>
 
 #include "ORX320.h"
 #include "OFreqRecord.h"
 #include "OXFreqDB.h"
 #include "OXDisplayPanel.h"
+#include "OXSlideRuler.h"
 #include "OXTuningKnob.h"
+#include "OXScan.h"
 #include "OXDialogs.h"
 
 #include "main.h"
+#include "versiondef.h"
 
 #include "up.xpm"
 #include "up2.xpm"
@@ -79,16 +83,48 @@ int filtno[] = {
 };
 #endif
 
+SBand OXMain::default_bands[] = {
+  { "AMBC",   530000,  1700000 },
+  { "160m",  1800000,  2000000 },
+  { "120m",  2300000,  2495000 },
+  {  "90m",  3200000,  3400000 },
+  {  "80m",  3500000,  4000000 },
+  {  "75m",  3900000,  4000000 },
+  {  "60m",  4750000,  5600000 },
+  {  "49m",  5900000,  6200000 },
+  {  "41m",  7100000,  7300000 },
+  {  "40m",  7000000,  7350000 },
+  {  "31m",  9400000,  9900000 },
+  {  "30m", 10100000, 10150000 },
+  {  "25m", 11600000, 12100000 },
+  {  "21m", 13570000, 13870000 },
+  {  "20m", 14000000, 14350000 },
+  {  "19m", 15100000, 15800000 },
+  {  "17m", 18068000, 18168000 },
+  {  "16m", 17480000, 17900000 },
+  {  "15m", 18900000, 19020000 },
+  {  "15m", 21000000, 21450000 },
+  {  "13m", 21450000, 21850000 },
+  {  "12m", 24890000, 24990000 },
+  {  "11m", 25670000, 26100000 },
+  {  "10m", 28000000, 29700000 },
+  {  0,     -1,       -1       } 
+};
+
+
 #define M_FREQDB   100
-#define M_CONFIG   101
-#define M_EXIT     102
+#define M_SCAN     101
+#define M_CONFIG   102
+#define M_ABOUT    103
+#define M_HELP     104
+#define M_EXIT     105
 
 
 //---------------------------------------------------------------------
 
 OXMain::OXMain(const OXWindow *p, int w, int h) :
   OXMainFrame(p, w, h) {
-    int i;
+    int i, width;
 
     OXHorizontalFrame *hf = new OXHorizontalFrame(this, 1, 1);
     AddFrame(hf, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP, 0, 0, 1, 0));
@@ -99,17 +135,25 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     //----------------- Popup menu
 
     _menu = new OXPopupMenu(_client->GetRoot());
-    _menu->AddEntry(new OHotString("&Frequency database..."), M_FREQDB);
+    _menu->AddEntry(new OHotString("&Frequency database...\tAlt+D"), M_FREQDB);
+    _menu->AddEntry(new OHotString("&Scan..."), M_SCAN);
     _menu->AddEntry(new OHotString("&Configure..."), M_CONFIG);
+    _menu->AddEntry(new OHotString("&About..."), M_ABOUT);
+    _menu->AddEntry(new OHotString("&Help...\tF1"), M_HELP);
     _menu->AddSeparator();
-    _menu->AddEntry(new OHotString("E&xit"), M_EXIT);
+    _menu->AddEntry(new OHotString("E&xit\tAlt+X"), M_EXIT);
     _menu->Associate(this);
 
-    //----------------- Display panel
+    //----------------- Display panel and slide ruler
 
-    _dpanel = new OXDisplayPanel(hf);
-    hf->AddFrame(_dpanel, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP));
+    OXVerticalFrame *vef = new OXVerticalFrame(hf);
+    hf->AddFrame(vef, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP));
 
+    _dpanel = new OXDisplayPanel(vef);
+    vef->AddFrame(_dpanel, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP));
+
+    _ruler = new OXSlideRuler(vef, this, 10, 10);
+    vef->AddFrame(_ruler, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP, 0, 0, 1, 0));
 
     hf = new OXHorizontalFrame(this, 1, 1);
     AddFrame(hf, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP));
@@ -118,7 +162,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
 
     OLayoutHints *lv = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y, 5, 5, 5, 5);
 
-    OXVerticalFrame *vef = new OXVerticalFrame(hf, 10, 10, FIXED_WIDTH);
+    vef = new OXVerticalFrame(hf, 10, 10, FIXED_WIDTH);
     hf->AddFrame(vef, lv);
 
     OXLabel *_al = new OXLabel(vef, new OString("AGC"));
@@ -155,8 +199,8 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     }
     vef->AddFrame(_al, lh2);
 
-    int ww = _agc[1]->GetDefaultWidth();
-    vef->Resize(ww + 10, vef->GetDefaultHeight());
+    width = _agc[1]->GetDefaultWidth();
+    vef->Resize(width + 10, vef->GetDefaultHeight());
 
     //----------------- Mode
 
@@ -191,7 +235,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
 
     _mute_on_exit = False;
 
-    vef->Resize(ww + 10, vef->GetDefaultHeight());
+    vef->Resize(width + 10, vef->GetDefaultHeight());
 
     //----------------- Tuning steps
 
@@ -218,13 +262,13 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
       _step[i]->Associate(this);
     }
 
-    vef->Resize(ww + 10, vef->GetDefaultHeight());
+    vef->Resize(width + 10, vef->GetDefaultHeight());
 
     //----------------- tuning knob
 
     _knob = new OXTuningKnob(hf);
     _knob->Associate(this);
-    hf->AddFrame(_knob, new OLayoutHints(LHINTS_CENTER, 5, 5, 5, 5));
+    hf->AddFrame(_knob, new OLayoutHints(LHINTS_CENTER, 15, 15, 5, 5));
 
     vef = new OXVerticalFrame(hf, 10, 10);
     _up2 = new OXPictureButton(vef, _client->GetPicture("up2.xpm", up2_xpm), 401);
@@ -241,56 +285,82 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     vef->AddFrame(_down, new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 5, 0));
     vef->AddFrame(_down2, lh1);
 
-    hf->AddFrame(vef, new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 5, 5, 5, 5));
+    hf->AddFrame(vef, new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y, 5, 5, 10, 5));
 
     //----------------- sliders
 
-    OLayoutHints *ls = new OLayoutHints(LHINTS_LEFT | LHINTS_BOTTOM, 2, 2, 1, 1);
+    OLayoutHints *ls1 = new OLayoutHints(LHINTS_LEFT | LHINTS_BOTTOM, 0, 1, 1, 1);
+    OLayoutHints *ls2 = new OLayoutHints(LHINTS_LEFT | LHINTS_BOTTOM, 0, 5, 1, 1);
 
-    vef = new OXVerticalFrame(hf, 10, 10);
-    _al = new OXLabel(vef, new OString("Vol"));
+    OXVerticalFrame *vef1 = new OXVerticalFrame(hf, 1, 1, FIXED_WIDTH);
+    _al = new OXLabel(vef1, new OString("Vol"));
     _al->SetFont(_client->GetFont("Helvetica -12 bold"));
     _al->Set3DStyle(LABEL_SUNKEN);
-    _spkvol = new OXVSlider(vef, 100, SLIDER_2 | SCALE_NONE, 301);
+    _spkvol = new OXVSlider(vef1, 100, SLIDER_2 | SCALE_NONE, 301);
     _spkvol->Associate(this);
     _spkvol->SetRange(0, 63);
-    vef->AddFrame(_spkvol, lh1);
-    vef->AddFrame(_al, lh1);
-    hf->AddFrame(vef, ls);
+    vef1->AddFrame(_spkvol, lh1);
+    vef1->AddFrame(_al, lh1);
+    hf->AddFrame(vef1, ls1);
+    width = _al->GetDefaultWidth();
 
-    vef = new OXVerticalFrame(hf, 10, 10);
-    _al = new OXLabel(vef, new OString("Line"));
+    OXVerticalFrame *vef2 = new OXVerticalFrame(hf, 1, 1, FIXED_WIDTH);
+    _al = new OXLabel(vef2, new OString("Line"));
     _al->SetFont(_client->GetFont("Helvetica -12 bold"));
     _al->Set3DStyle(LABEL_SUNKEN);
-    _linevol = new OXVSlider(vef, 100, SLIDER_2 | SCALE_NONE, 302);
+    _linevol = new OXVSlider(vef2, 100, SLIDER_2 | SCALE_NONE, 302);
     _linevol->Associate(this);
     _linevol->SetRange(0, 63);
-    vef->AddFrame(_linevol, lh1);
-    vef->AddFrame(_al, lh1);
-    hf->AddFrame(vef, ls);
+    vef2->AddFrame(_linevol, lh1);
+    vef2->AddFrame(_al, lh1);
+    hf->AddFrame(vef2, ls1);
+    width = max(width, _al->GetDefaultWidth());
 
-    vef = new OXVerticalFrame(hf, 10, 10);
-    _al = new OXLabel(vef, new OString("BW"));
+    OXVerticalFrame *vef3 = new OXVerticalFrame(hf, 1, 1, FIXED_WIDTH);
+    _al = new OXLabel(vef3, new OString("BW"));
     _al->SetFont(_client->GetFont("Helvetica -12 bold"));
     _al->Set3DStyle(LABEL_SUNKEN);
-    _bw = new OXVSlider(vef, 100, SLIDER_2 | SCALE_NONE, 303);
+    _bw = new OXVSlider(vef3, 100, SLIDER_2 | SCALE_NONE, 303);
     _bw->Associate(this);
     _bw->SetRange(0, 33);
-    vef->AddFrame(_bw, lh1);
-    vef->AddFrame(_al, lh1);
-    hf->AddFrame(vef, ls);
+    vef3->AddFrame(_bw, lh1);
+    vef3->AddFrame(_al, lh1);
+    hf->AddFrame(vef3, ls1);
+    width = max(width, _al->GetDefaultWidth());
 
-    vef = new OXVerticalFrame(hf, 10, 10);
-    _al = new OXLabel(vef, new OString("PBT"));
+    OXVerticalFrame *vef4 = new OXVerticalFrame(hf, 1, 1, FIXED_WIDTH);
+    _al = new OXLabel(vef4, new OString("PBT"));
     _al->SetFont(_client->GetFont("Helvetica -12 bold"));
     _al->Set3DStyle(LABEL_SUNKEN);
-    _bfo = new OXVSlider(vef, 100, SLIDER_2 | SCALE_NONE, 304);
-    _bfo->Associate(this);
-    _bfo->SetRange(-15, +15);
-    _bfo->SetPosition(0);
-    vef->AddFrame(_bfo, lh1);
-    vef->AddFrame(_al, lh1);
-    hf->AddFrame(vef, ls);
+    _pbt = new OXVSlider(vef4, 100, SLIDER_2 | SCALE_NONE, 304);
+    _pbt->Associate(this);
+    _pbt->SetRange(-20, +20);
+    _pbt->SetPosition(0);
+    vef4->AddFrame(_pbt, lh1);
+    vef4->AddFrame(_al, lh1);
+    hf->AddFrame(vef4, ls1);
+    width = max(width, _al->GetDefaultWidth());
+
+    OXVerticalFrame *vef5 = new OXVerticalFrame(hf, 1, 1, FIXED_WIDTH);
+    _al = new OXLabel(vef5, new OString("CWO"));
+    _al->SetFont(_client->GetFont("Helvetica -12 bold"));
+    _al->Set3DStyle(LABEL_SUNKEN);
+    _cwo = new OXVSlider(vef5, 100, SLIDER_2 | SCALE_NONE, 305);
+    _cwo->Associate(this);
+    _cwo->SetRange(-20, +20);
+    _cwo->SetPosition(0);
+    vef5->AddFrame(_cwo, lh1);
+    vef5->AddFrame(_al, lh1);
+    hf->AddFrame(vef5, ls2);
+    width = max(width, _al->GetDefaultWidth());
+
+    // ensure same widths
+
+    vef1->Resize(width, vef1->GetDefaultHeight());
+    vef2->Resize(width, vef2->GetDefaultHeight());
+    vef3->Resize(width, vef3->GetDefaultHeight());
+    vef4->Resize(width, vef4->GetDefaultHeight());
+    vef5->Resize(width, vef5->GetDefaultHeight());
 
     //----------------- other controls...
 
@@ -306,6 +376,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
 
     _rx = new ORX320(_client);
     _rx->Mute(True);
+    _rx->CompressEvents(True);
     _rx->Associate(this);
 
     _vfoA.freq = _vfoB.freq = _rx->GetFrequency();
@@ -317,6 +388,18 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     _vfoA.pbt = _vfoB.pbt = 0;
 
     _spoll = SPOLL;
+
+    _freqWindow = 0;
+    _helpWindow = 0;
+    _scanWindow = 0;
+
+    _scanning = False;
+
+    _scanSettings.range = 3000;
+    _scanSettings.ymode = SCOPE_LOG;
+    _scanSettings.style = SCOPE_BARS;
+
+    _bands = default_bands;
 
     ReadIniFile();
 
@@ -334,7 +417,8 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     _rx->SetMode(_vfoA.mode);
     _rx->SetAGC(_vfoA.agc);
     _rx->SetFilter(_vfoA.filter);
-    _rx->SetBFO(_vfoA.pbt);
+    _rx->SetPBT(_vfoA.pbt);
+    _rx->SetCWO(_vfoA.cwbfo);
 
 #if 0
     switch (_rx->GetMode()) {
@@ -366,6 +450,8 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
     SetWindowName("Ten-Tec RX-320");
     SetClassHints("XCLASS", "RX320");
 
+    SetWMSizeHints(_w, _h, _w * 4 / 3, _h, 1, 1);
+
     _dpanel->SetMuted(False);
     _dpanel->PowerOn();
 
@@ -393,7 +479,10 @@ int OXMain::CloseWindow() {
   while (_freqWindow) {
     if (!_freqWindow->CloseWindow()) return False;
   }
+  if (_helpWindow) _helpWindow->CloseWindow();
+  if (_scanWindow) _scanWindow->CloseWindow();
   if (_mute_on_exit) _rx->Mute(True);
+  _rx->CompressEvents(False);  // flushes output (ensure the receiver is muted)
   return OXMainFrame::CloseWindow();
 }
 
@@ -452,6 +541,9 @@ void OXMain::ReadIniFile() {
       if (ini.GetItem("filter", arg)) {
         _vfoA.filter = atoi(arg);
       }
+      if (ini.GetItem("cw offset", arg)) {
+        _vfoA.cwbfo = atoi(arg);
+      }
       if (ini.GetItem("pbt offset", arg)) {
         _vfoA.pbt = atoi(arg);
       }
@@ -486,6 +578,9 @@ void OXMain::ReadIniFile() {
       if (ini.GetItem("filter", arg)) {
         _vfoB.filter = atoi(arg);
       }
+      if (ini.GetItem("cw offset", arg)) {
+        _vfoB.cwbfo = atoi(arg);
+      }
       if (ini.GetItem("pbt offset", arg)) {
         _vfoB.pbt = atoi(arg);
       }
@@ -501,6 +596,27 @@ void OXMain::ReadIniFile() {
         _spoll = atoi(arg);
         if (_spoll < 20) _spoll = 20;
         if (_spoll > 10000) _spoll = 10000;
+      }
+
+    } else if (strcasecmp(line, "scan") == 0) {
+      if (ini.GetItem("range", arg)) {
+        _scanSettings.range = atoi(arg);
+        if (_scanSettings.range < 3000)
+          _scanSettings.range = 3000;
+        else if (_scanSettings.range > 1500000)
+          _scanSettings.range = 1500000;
+      }
+      if (ini.GetItem("mode", arg)) {
+        if (strcasecmp(arg, "lin") == 0)
+          _scanSettings.ymode = SCOPE_LIN;
+        else
+          _scanSettings.ymode = SCOPE_LOG;
+      }
+      if (ini.GetItem("style", arg)) {
+        if (strcasecmp(arg, "line") == 0)
+          _scanSettings.style = SCOPE_LINE;
+        else
+          _scanSettings.style = SCOPE_BARS;
       }
 
     }
@@ -547,6 +663,8 @@ void OXMain::SaveIniFile() {
   ini.PutItem("agc", tmp);
   sprintf(tmp, "%d", _vfoA.filter);
   ini.PutItem("filter", tmp);
+  sprintf(tmp, "%d", _vfoA.cwbfo);
+  ini.PutItem("cw offset", tmp);
   sprintf(tmp, "%d", _vfoA.pbt);
   ini.PutItem("pbt offset", tmp);
   ini.PutNewLine();
@@ -571,6 +689,8 @@ void OXMain::SaveIniFile() {
   ini.PutItem("agc", tmp);
   sprintf(tmp, "%d", _vfoB.filter);
   ini.PutItem("filter", tmp);
+  sprintf(tmp, "%d", _vfoB.cwbfo);
+  ini.PutItem("cw offset", tmp);
   sprintf(tmp, "%d", _vfoB.pbt);
   ini.PutItem("pbt offset", tmp);
   ini.PutNewLine();
@@ -583,6 +703,28 @@ void OXMain::SaveIniFile() {
   sprintf(tmp, "%d", _spoll);
   ini.PutItem("sample interval", tmp);
   ini.PutNewLine();
+
+  ini.PutNext("scan");
+  sprintf(tmp, "%ld", _scanSettings.range);
+  ini.PutItem("range", tmp);
+  strcpy(tmp, (_scanSettings.ymode == SCOPE_LIN) ? "lin" : "log");
+  ini.PutItem("mode", tmp);
+  strcpy(tmp, (_scanSettings.style == SCOPE_LINE) ? "line" : "bars");
+  ini.PutItem("style", tmp);
+  ini.PutNewLine();
+
+  if (_bands) {
+    char name[20];
+
+    ini.PutNext("bands");
+    for (int i = 0; _bands[i].name != 0; ++i) {
+      sprintf(name, "band%d", i+1);
+      sprintf(tmp, "\"%s\",%ld,%ld", _bands[i].name,
+                   _bands[i].lofreq, _bands[i].hifreq);
+      ini.PutItem(name, tmp);
+    }
+    ini.PutNewLine();
+  }
 
   delete[] inipath;
 }
@@ -631,7 +773,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
             case 801:
             case 802:
             case 803:
-              for (i = 0;  i < 3; ++i)
+              for (i = 0; i < 3; ++i)
                 if (_agc[i]->WidgetID() != wmsg->id)
                   _agc[i]->SetState(BUTTON_UP);
               switch (wmsg->id) {
@@ -647,7 +789,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
             case 812:
             case 813:
             case 814:
-              for (i = 0;  i < 4; ++i)
+              for (i = 0; i < 4; ++i)
                 if (_mode[i]->WidgetID() != wmsg->id)
                   _mode[i]->SetState(BUTTON_UP);
               switch (wmsg->id) {
@@ -657,19 +799,18 @@ int OXMain::ProcessMessage(OMessage *msg) {
                 case 814: _rx->SetMode(i = RX320_CW); break;
               }
               _dpanel->SetMode(VFO_A, _vfoA.mode = i);
+              _dpanel->SetCWO(_vfoA.cwbfo, (i == RX320_CW));
               break;
 
-            case 851: _vfoA.step = 1; break;
-            case 852: _vfoA.step = 10; break;
-            case 853: _vfoA.step = 100; break;
-            case 854: _vfoA.step = 1000; break;
-            case 855: _vfoA.step = 5000; break;
-            case 856: _vfoA.step = 10000; break;
+            case 851: SetStep(1); break;
+            case 852: SetStep(10); break;
+            case 853: SetStep(100); break;
+            case 854: SetStep(1000); break;
+            case 855: SetStep(5000); break;
+            case 856: SetStep(10000); break;
 
             case 901:
-              _muted = !_muted;
-              _rx->Mute(_muted);
-              _dpanel->SetMuted(_muted);
+              ToggleMuted();
               break;
 
             default:
@@ -709,11 +850,19 @@ int OXMain::ProcessMessage(OMessage *msg) {
               _rx->SetFilter(filtno[slmsg->pos]);
               _vfoA.filter = _rx->GetFilter()->filter;
               _dpanel->SetBW(_rx->GetFilter()->bandwidth);
+              if (_scanWindow) _scanWindow->UpdateDisplay();
               break;
 
             case 304:
-              _rx->SetBFO(100 * slmsg->pos);
-              _dpanel->SetPBT(_rx->GetBFO());
+              _rx->SetPBT(100 * -slmsg->pos);
+              _vfoA.pbt = _rx->GetPBT();
+              _dpanel->SetPBT(_rx->GetPBT());
+              break;
+
+            case 305:
+              _rx->SetCWO(100 * -slmsg->pos);
+              _vfoA.cwbfo = _rx->GetCWO();
+              _dpanel->SetCWO(_rx->GetCWO(), (_rx->GetMode() == RX320_CW));
               break;
           }
           break;
@@ -723,12 +872,8 @@ int OXMain::ProcessMessage(OMessage *msg) {
     case MSG_RX320:
       switch (msg->action) {
         case MSG_SIGNAL:
-          i = wmsg->id;
-#if 0
-          _dpanel->SetS(i/100);  // * 100/10000
-#else
-          _dpanel->SetS(i > 0 ? (int) (20.0 * log10(i)) : 0);  // * 100/10000
-#endif
+          _dpanel->SetS(wmsg->id);
+          if (_scanning) ScanStep(wmsg->id);
           break;
 
         case MSG_POWERON:
@@ -738,6 +883,10 @@ int OXMain::ProcessMessage(OMessage *msg) {
         default:
           break;
       }
+      break;
+
+    case MSG_HELP:
+      if (msg->action == MSG_CLOSE) _helpWindow = 0;
       break;
 
     default:
@@ -759,7 +908,8 @@ void OXMain::SwapVFO() {
   _rx->SetMode(_vfoA.mode);
   _rx->SetAGC(_vfoA.agc);
   _rx->SetFilter(_vfoA.filter);
-  _rx->SetBFO(_vfoA.pbt);
+  _rx->SetPBT(_vfoA.pbt);
+  _rx->SetCWO(_vfoA.cwbfo);
 
   UpdateDisplay();
   UpdateSliders();
@@ -767,6 +917,28 @@ void OXMain::SwapVFO() {
 
 void OXMain::CopyVFO() {
   _vfoB = _vfoA;
+  UpdateDisplay();
+}
+
+void OXMain::SetStep(int step) {
+  _vfoA.step = step;
+  _ruler->SetStep(step);
+}
+
+// This function is called from OXScanWindow
+
+void OXMain::TuneTo(long freq, int knob_step) {
+
+  if (_scanning) return;
+
+  if (freq < 0) freq = 0;
+  if (freq > 30000000) freq = 30000000;
+
+  _vfoA.freq = freq;
+  _rx->SetFrequency(_vfoA.freq);
+
+  if (knob_step) _knob->StepKnob(knob_step);
+
   UpdateDisplay();
 }
 
@@ -780,14 +952,15 @@ void OXMain::TuneTo(OFreqRecord *frec) {
   _vfoA.agc = frec->agc;
   // TODO: use closest filter
   _vfoA.filter = frec->filter_bw;
-  _vfoA.cwbfo = 0; // ???
+  _vfoA.cwbfo = 1000;
   _vfoA.pbt = frec->pbt_offset;
 
   _rx->SetFrequency(_vfoA.freq);
   _rx->SetMode(_vfoA.mode);
   _rx->SetAGC(_vfoA.agc);
   _rx->SetFilter(_vfoA.filter);
-  _rx->SetBFO(_vfoA.pbt);
+  _rx->SetPBT(_vfoA.pbt);
+  _rx->SetCWO(_vfoA.cwbfo);
 
   UpdateDisplay();
   UpdateSliders();
@@ -798,15 +971,19 @@ void OXMain::TuneUp(int steps, int move_knob) {
   if (_vfoA.freq > 30000000) _vfoA.freq = 30000000;
   _rx->SetFrequency(_vfoA.freq);
   _dpanel->SetFreq(VFO_A, _vfoA.freq);
+  _ruler->SetFreq(_vfoA.freq);
   if (move_knob) _knob->StepKnob(1);
+  if (_scanWindow) _scanWindow->UpdateDisplay();
 }
 
 void OXMain::TuneDown(int steps, int move_knob) {
   _vfoA.freq = _rx->GetFrequency() - steps * _vfoA.step;
-  if (_vfoA.freq < 50000) _vfoA.freq = 50000;
+  if (_vfoA.freq < 0) _vfoA.freq = 0;
   _rx->SetFrequency(_vfoA.freq);
   _dpanel->SetFreq(VFO_A, _vfoA.freq);
+  _ruler->SetFreq(_vfoA.freq);
   if (move_knob) _knob->StepKnob(-1);
+  if (_scanWindow) _scanWindow->UpdateDisplay();
 }
 
 void OXMain::VolumeUp(int steps, int channel) {
@@ -831,6 +1008,12 @@ void OXMain::VolumeDown(int steps, int channel) {
   _linevol->SetPosition(_rx->GetVolume(RX320_LINE));
 }
 
+void OXMain::ToggleMuted() {
+  _muted = !_muted;
+  _rx->Mute(_muted);
+  _dpanel->SetMuted(_muted);
+}
+
 void OXMain::UpdateDisplay() {
 
   _dpanel->SetFreq(VFO_A, _vfoA.freq);
@@ -840,10 +1023,16 @@ void OXMain::UpdateDisplay() {
   _dpanel->SetMode(VFO_B, _vfoB.mode);
 
   _dpanel->SetAGC(_vfoA.agc);
-  _dpanel->SetPBT(_rx->GetBFO());
+  _dpanel->SetPBT(_rx->GetPBT());
   _dpanel->SetBW(_rx->GetFilter()->bandwidth);
+  _dpanel->SetCWO(_rx->GetCWO(), (_rx->GetMode() == RX320_CW));
 
-// tuning step
+  _ruler->SetFreq(_vfoA.freq);
+  _ruler->SetStep(_vfoA.step);
+
+  // TODO: show tuning step
+
+  if (_scanWindow) _scanWindow->UpdateDisplay();
 }
 
 void OXMain::UpdateSliders() {
@@ -859,17 +1048,20 @@ void OXMain::UpdateSliders() {
     }
   }
 
-  _bfo->SetPosition(_rx->GetBFO() / 100);
+  _pbt->SetPosition(-_rx->GetPBT() / 100);
+  _cwo->SetPosition(-_rx->GetCWO() / 100);
 }
 
 void OXMain::GrabKeys() {
   static int keys[] = { XK_KP_0, XK_KP_1, XK_KP_2, XK_KP_3, XK_KP_4,
                         XK_KP_5, XK_KP_6, XK_KP_7, XK_KP_8, XK_KP_9,
-                        XK_KP_Enter, XK_Escape, XK_Execute, XK_Return,
-                        XK_0, XK_1, XK_2, XK_3, XK_4, XK_5, XK_6,
-                        XK_7, XK_8, XK_9, XK_comma, XK_period,
+                        XK_KP_Enter, XK_Escape, XK_Return, XK_space,
+                        XK_0, XK_1, XK_2, XK_3, XK_4, XK_5, XK_6, XK_7,
+                        XK_8, XK_9, XK_comma, XK_period, XK_KP_Decimal,
                         XK_Up, XK_Down, XK_Page_Up, XK_Page_Down,
-                        XK_Left, XK_Right, XK_KP_Decimal };
+                        XK_Left, XK_Right, XK_KP_Decimal, XK_F1,
+                        XK_a, XK_c, XK_d, XK_l, XK_m, XK_u, XK_x,
+                        XK_plus, XK_KP_Add, XK_minus, XK_KP_Subtract };
 
   for (int i = 0; i < sizeof(keys) / sizeof(keys[0]); ++i) {
     int keycode = XKeysymToKeycode(GetDisplay(), keys[i]);
@@ -879,7 +1071,7 @@ void OXMain::GrabKeys() {
 }
 
 int OXMain::HandleKey(XKeyEvent *event) {
-  int  n;
+  int  n, step;
   char tmp[10];
   KeySym keysym;
   XComposeStatus compose = { NULL, 0 };
@@ -922,13 +1114,69 @@ int OXMain::HandleKey(XKeyEvent *event) {
         UpdateDisplay();
         break;
 
-      case XK_Execute:
+      case XK_plus:
+      case XK_KP_Add:
+        step = _vfoA.step;
+        if (step < 1000)
+          step *= 10;
+        else if (step == 1000)
+          step = 5000;
+        else if (step = 5000)
+          step = 10000;
+        SetStep(step);
+        break;
+
+      case XK_minus:
+      case XK_KP_Subtract:
+        step = _vfoA.step;
+        if (step == 10000)
+          step = 5000;
+        else if (step == 5000)
+          step = 1000;
+        else if (step > 1)
+          step /= 10;
+        SetStep(step);
+        break;
+
       case XK_KP_Enter:
       case XK_Return:
+        if (_tfreq < 0)
+          _tfreq = 0;
+        else if (_tfreq > 30000000)
+          _tfreq = 30000000;
         _vfoA.freq = _tfreq;
         _rx->SetFrequency(_vfoA.freq);
         _typing = False;
         UpdateDisplay();
+        break;
+
+      case XK_a:  // Execute the action through the button grab-key
+      case XK_u:  // mechanism without having to press the Alt key
+      case XK_l:  // (note that we do not need to fake the Mod1Mask bit
+      case XK_c:  // in event->state)
+        return OXMainFrame::HandleKey(event);
+
+      case XK_m:
+        if (event->state == 0)
+          ToggleMuted();
+        else
+          return OXMainFrame::HandleKey(event);
+        break;
+
+      case XK_d:
+        if (event->state & Mod1Mask) OpenFreqDB();
+        break;
+
+      case XK_x:
+        if (event->state & Mod1Mask) CloseWindow();
+        break;
+
+      case XK_F1:
+        ShowHelp();
+        break;
+
+      case XK_space:
+        SwapVFO();
         break;
 
       default:
@@ -973,13 +1221,14 @@ int OXMain::HandleButton(XButtonEvent *event) {
     int retc, mute = _mute_on_exit;
     int menu_id = _menu->PopupMenu(event->x_root, event->y_root);
     OString sdev(_device);
-    OXFreqDB *fdb;
 
     switch (menu_id) {
       case M_FREQDB:
-        fdb = new OXFreqDB(_client->GetRoot(), this, 100, 100);
-        fdb->Associate(this);
-        AddFreqDBwindow(fdb);
+        OpenFreqDB();
+        break;
+
+      case M_SCAN:
+        OpenScan();
         break;
 
       case M_CONFIG:
@@ -1000,6 +1249,14 @@ int OXMain::HandleButton(XButtonEvent *event) {
         }
         break;
 
+      case M_HELP:
+        ShowHelp();
+        break;
+
+      case M_ABOUT:
+        ShowAbout(this);
+        break;
+
       case M_EXIT:
         CloseWindow();
         break;
@@ -1007,6 +1264,14 @@ int OXMain::HandleButton(XButtonEvent *event) {
   }
 
   return True;
+}
+
+void OXMain::OpenFreqDB() {
+  OXFreqDB *fdb;
+
+  fdb = new OXFreqDB(_client->GetRoot(), this, 100, 100);
+  fdb->Associate(this);
+  AddFreqDBwindow(fdb);
 }
 
 void OXMain::AddFreqDBwindow(OXFreqDB *fdb) {
@@ -1021,6 +1286,99 @@ void OXMain::RemoveFreqDBwindow(OXFreqDB *fdb) {
   if (_freqWindow == fdb) _freqWindow = fdb->next;
   if (fdb->next) fdb->next->prev = fdb->prev;
   if (fdb->prev) fdb->prev->next = fdb->next;
+}
+
+void OXMain::OpenScan() {
+  if (!_scanWindow) {
+    _scanWindow = new OXScanWindow(_client->GetRoot(), this, &_scanSettings);
+  }
+  _scanWindow->MapRaised();
+}
+
+void OXMain::CloseScan() {
+  _scanWindow = 0;
+  StopScan();
+}
+
+void OXMain::StartScan() {
+  if (_scanWindow) {  // this is superfluous, but just in case...
+    _scanWindow->InitScan();
+    _rx->CompressEvents(False);
+    long freq = _scanWindow->GetStartFreq();
+    _rx->SetFrequency(freq);
+    //_rx->SetAGC(RX320_AGC_FAST);
+    //_rx->RequestSignal(...)
+    //mute?, etc...
+    _dpanel->Scanning(True);
+#if 1
+    _dpanel->SetFreq(VFO_A, freq);
+    _ruler->SetFreq(freq);
+    _knob->StepKnob(1);
+#endif
+    _scanning = True;
+  }
+}
+
+void OXMain::StopScan() {
+  if (_scanning) {
+    _dpanel->Scanning(False);
+    _dpanel->SetFreq(VFO_A, _vfoA.freq);
+    //_rx->RequestSignal(_spoll);
+    //unmute, restore filters, mode, etc...
+    _rx->SetAGC(_vfoA.agc);
+    _rx->SetFrequency(_vfoA.freq);
+    _rx->CompressEvents(True);
+#if 1
+    _dpanel->SetFreq(VFO_A, _vfoA.freq);
+    _ruler->SetFreq(_vfoA.freq);
+#endif
+    _scanning = False;
+  }
+}
+
+void OXMain::ScanStep(int sval) {
+  if (_scanWindow) {
+    _scanWindow->AddPoint(sval);
+    long freq = _scanWindow->GetNextFreq();
+    if (freq >= 0) {
+      _rx->SetFrequency(freq);
+#if 1
+      _dpanel->SetFreq(VFO_A, freq);
+      _ruler->SetFreq(freq);
+      _knob->StepKnob(1);
+#endif
+    } else {
+      StopScan();
+    }
+  } else {
+    StopScan();
+  }
+}
+
+void OXMain::ShowHelp() {
+  if (!_helpWindow) {
+    _helpWindow = new OXHelpWindow(_client->GetRoot(), NULL, 600, 650,
+                                   "index.html", NULL, "rx320");
+    _helpWindow->Associate(this);
+  }
+  _helpWindow->MapRaised();
+}
+
+void OXMain::ShowAbout(const OXWindow *t) {
+  OAboutInfo info;
+  
+  info.wname = "About RX320";
+  info.title = "RX320 version "RX320_VERSION"\n"
+               "A control program for the Ten-Tec RX320\n"
+               "Shortwave Receiver\n"
+               "Compiled with xclass version "XCLASS_VERSION;
+  info.copyright = "Copyright © 2000-2004, Hector Peraza.";
+  info.text = "This program is free software; you can redistribute it "
+              "and/or modify it under the terms of the GNU "
+              "General Public License.\n\n"
+              "http://xclass.sourceforge.net";
+
+  new OXAboutDialog(_client->GetRoot(), t, &info);
 }
 
 

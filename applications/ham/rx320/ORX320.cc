@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza. Portions
+    receiver. Copyright (C) 2000-2004, Hector Peraza. Portions
     Copyright (C) 2000, A. Maitland Bottoms.
 
     This program is free software; you can redistribute it and/or modify
@@ -55,15 +55,17 @@ ORX320::ORX320(OXClient *c, const char *dev) : OComponent() {
   _msgObject = NULL;
 
   Mcor = 0;
-  Fcor = 0.0;
-  Cbfo = 0;
 
   _fd = -1;
   _fh = NULL;
   _ix = 0;
   _count = 0;
 
-  _t = NULL;
+  _compress = False;
+  _queue.clear();
+  _tqueue = NULL;
+
+  _tsignal = NULL;
   _rate = 0;
 
   _muted = True;
@@ -72,6 +74,8 @@ ORX320::ORX320(OXClient *c, const char *dev) : OComponent() {
   _filter = &Filters[0];
   _agc = RX320_AGC_MEDIUM;
   _freq = 930000;  // Hz
+  _pbt = 0;
+  _cwo = 1000;
 
   strcpy(_errmsg, "");
 
@@ -84,7 +88,10 @@ ORX320::ORX320(OXClient *c, const char *dev) : OComponent() {
 
 ORX320::~ORX320() {
   CloseSerial();
-  if (_t) delete _t;
+  if (_tsignal) delete _tsignal;
+  if (_tqueue) delete _tqueue;
+  for (int i = 0; i < _queue.size(); ++i) delete[] _queue[i].cmd;
+  _queue.clear();
 }
 
 //----------------------------------------------------------------------
@@ -105,67 +112,80 @@ int ORX320::SetSerial(const char *dev) {
 }
 
 int ORX320::HandleTimer(OTimer *t) {
-  if (t == _t) {
+  if (t == _tsignal) {
     char scmd[2];
     scmd[0] = 'X';
     scmd[1] = 0x0D;
     SendCommand(scmd, 2);
-    delete _t;
-    _t = new OTimer(this, _rate);
+    delete _tsignal;
+    _tsignal = new OTimer(this, _rate);
     return True;
+  } else if (t == _tqueue) {
+    delete _tqueue;
+    _tqueue = NULL;
+    if (_queue.size() > 0) {
+      _tqueue = new OTimer(this, _queue[0].len * 10);
+      if (_fd >= 0) write(_fd, _queue[0].cmd, _queue[0].len);
+      delete[] _queue[0].cmd;
+      _queue.erase(_queue.begin());
+    }
   }
   return False;
 }
 
 int ORX320::HandleFileEvent(OFileHandler *f, unsigned int evmask) {
-  char c;
 
-  read(_fd, &c, 1);
+  if (evmask & XCM_READABLE) {
+    char c;
 
-  if (_count == 0) {
-    _ix = 1;
-    if (c == 'X') {
-      _count = 3;
-      _inbuf[0] = c;
-    } else if (c == 'Z') {
-      _count = 1;
-      _inbuf[0] = c;
-    } else if (c == 'V') {
-      _count = 6;
-      _inbuf[0] = c;
-    } else if (c == 'D') {
-      _count = 10;
-      _inbuf[0] = c;
-    } else if (c == ' ') {
-      _count = 0;
-    } else {
-      //must be some RS232 noise...
-      //sprintf(_errmsg, "ORX320: unexpected response %02x (%c)\n", (unsigned) c, c);
-    }
-  } else {
-    _inbuf[_ix++] = c;
-    if (--_count == 0) {
-      c = _inbuf[0];
+    read(_fd, &c, 1);
+
+    if (_count == 0) {
+      _ix = 1;
       if (c == 'X') {
-        unsigned int val, lo, hi;
-        hi = _inbuf[1]; hi &= 0xFF;
-        lo = _inbuf[2]; lo &= 0xFF;
-        val = (hi << 8) | lo;
-        val &= 0xFFFF;
-        OWidgetMessage msg(MSG_RX320, MSG_SIGNAL, val);
-        SendMessage(_msgObject, &msg);
+        _count = 3;
+        _inbuf[0] = c;
       } else if (c == 'Z') {
-        OWidgetMessage msg(MSG_RX320, MSG_ERROR);
-        SendMessage(_msgObject, &msg);
-      } else if (strncmp(_inbuf, "VER", 3) == 0) {
-        OWidgetMessage msg(MSG_RX320, MSG_VERSION, 103);
-        SendMessage(_msgObject, &msg);
-      } else if (strncmp(_inbuf, "DSP START", 9) == 0) {
-        Reset();
-        OWidgetMessage msg(MSG_RX320, MSG_POWERON, 1);
-        SendMessage(_msgObject, &msg);
+        _count = 1;
+        _inbuf[0] = c;
+      } else if (c == 'V') {
+        _count = 6;
+        _inbuf[0] = c;
+      } else if (c == 'D') {
+        _count = 10;
+        _inbuf[0] = c;
+      } else if (c == ' ') {
+        _count = 0;
+      } else {
+        //must be some RS232 noise... (e.g. unplugging the connector)
+        //sprintf(_errmsg, "ORX320: unexpected response %02x (%c)\n", (unsigned) c, c);
+      }
+    } else {
+      _inbuf[_ix++] = c;
+      if (--_count == 0) {
+        c = _inbuf[0];
+        if (c == 'X') {
+          unsigned int val, lo, hi;
+          hi = _inbuf[1]; hi &= 0xFF;
+          lo = _inbuf[2]; lo &= 0xFF;
+          val = (hi << 8) | lo;
+          val &= 0xFFFF;
+          OWidgetMessage msg(MSG_RX320, MSG_SIGNAL, val);
+          SendMessage(_msgObject, &msg);
+        } else if (c == 'Z') {
+          OWidgetMessage msg(MSG_RX320, MSG_ERROR);
+          SendMessage(_msgObject, &msg);
+        } else if (strncmp(_inbuf, "VER", 3) == 0) {
+          OWidgetMessage msg(MSG_RX320, MSG_VERSION, 103);
+          SendMessage(_msgObject, &msg);
+        } else if (strncmp(_inbuf, "DSP START", 9) == 0) {
+          Reset();
+          OWidgetMessage msg(MSG_RX320, MSG_POWERON, 1);
+          SendMessage(_msgObject, &msg);
+        }
       }
     }
+
   }
 
   return True;
@@ -184,6 +204,7 @@ int ORX320::Mute(int onoff) {
   _muted = onoff;
   SetVolume(RX320_SPEAKER, _spkvol);
   SetVolume(RX320_LINE, _linevol);
+  return 0;
 }
 
 
@@ -200,19 +221,16 @@ int ORX320::SetMode(int mode) {
   switch (mode) {
     case RX320_USB:
       Mcor = 1;
-      Cbfo = 0;
       mcmd[1] = '1';
       break;
 
     case RX320_LSB:
       Mcor = -1;
-      Cbfo = 0;
       mcmd[1] = '2';
       break;
 
     case RX320_CW:
       Mcor = -1;
-      Cbfo = 1000;
       mcmd[1] = '3';
       break;
 
@@ -243,10 +261,7 @@ int ORX320::SetFilter(int filt) {
   fcmd[1] = filt;
   fcmd[2] = 0x0D;
 
-  // need to set Fcor
   for (fe = Filters; filt != fe->filter; fe++);
-  Fcor = ((float) fe->bandwidth / 2.0) + 200.0;
-
   _filter = fe;
 
   SendCommand(fcmd, 3);
@@ -330,8 +345,16 @@ int ORX320::SetAGC(int agc) {
   return SendCommand(agccmd, 3);
 }
 
-int ORX320::SetBFO(int bfo) {
-  Cbfo = bfo;
+int ORX320::SetCWO(int cwo) {
+  _cwo = cwo;
+  if (_mode == RX320_CW)
+    return SetFrequency(_freq);
+  else
+    return 0;
+}
+
+int ORX320::SetPBT(int pbt) {
+  _pbt = pbt;
   return SetFrequency(_freq);
 }
 
@@ -340,16 +363,25 @@ int ORX320::SetBFO(int bfo) {
 int ORX320::SetFrequency(long freq) {
   char fcmd[8];
   long AdjTfreq;		// Adjusted Tuned Frequency
+  float Fcor, Cbfo;
   int Ctf;			// Coarse tuning factor
   int Ftf;			// Fine Tuning Factor
   int Btf;			// BFO Tuning factor
 
   _freq = freq;
 
-  AdjTfreq = freq - 1250 + (int) (Mcor * (Fcor + Cbfo));
+  if (_mode == RX320_CW) {
+    Fcor = 0.0;
+    Cbfo = (float) _cwo;
+  } else {
+    Fcor = ((float) _filter->bandwidth / 2.0) + 200.0;
+    Cbfo = 0.0;
+  }
+
+  AdjTfreq = freq - 1250 + (int) (Mcor * (Fcor + _pbt));
   Ctf = (int) AdjTfreq / 2500 + 18000;
   Ftf = (int) ((float) (AdjTfreq % 2500) * 5.46);
-  Btf = (int) ((Fcor + (float) Cbfo + 8000.0) * 2.73);
+  Btf = (int) ((Fcor + (float) _pbt + Cbfo + 8000.0) * 2.73);
 
   fcmd[0] = 'N';
   fcmd[1] = 0xFF & (Ctf >> 8);
@@ -374,18 +406,11 @@ int ORX320::GetSignal() {
 
   scmd[0] = 'X';
   scmd[1] = 0x0D;
-  SendCommand(scmd, 2);
+  SendCommand(scmd, 2, True);
 
   for (i = 0; i < 4; ++i) {
     read(_fd, &response[i], 1);
   }
-
-#if 0
-  printf("[%c]: %02x %02x %02x %02x %02x\n",
-         response[0], (int) response[0], (int) response[1], 
-                      (int) response[2], (int) response[3],
-                      (int) response[4]);
-#endif
 
   response[4] = 0;
   if (response[0] == 'X') {
@@ -399,10 +424,10 @@ int ORX320::GetSignal() {
 void ORX320::RequestSignal(int rate) {
   _rate = rate;
   if (_rate == 0) {
-    delete _t;
-    _t = NULL;
-  } else if (_t == NULL) {
-    _t = new OTimer(this, _rate);
+    if (_tsignal) delete _tsignal;
+    _tsignal = NULL;
+  } else if (_tsignal == NULL) {
+    _tsignal = new OTimer(this, _rate);
   }
 }
 
@@ -414,18 +439,66 @@ char *ORX320::GetFirmwareVersion() {
 
   vcmd[0] = '?';
   vcmd[1] = 0x0D;
-  SendCommand(vcmd, 2);
+  SendCommand(vcmd, 2, True);
   GetResponse(vers, 80, 0x0D);
 
   return vers;
 }
 
+void ORX320::CompressEvents(int onoff) {
+  if (onoff) {
+    _compress = True;
+  } else {
+    // flush the queue before turning off _compress
+    for (int i = 0; i < _queue.size(); ++i) {
+      if (_fd >= 0) write(_fd, _queue[i].cmd, _queue[i].len);
+      delete[] _queue[i].cmd;
+    }
+    _queue.clear();
+    _compress = False;
+    if (_tqueue) delete _tqueue;
+    _tqueue = 0;
+  }
+}
+
 // Send command
 
-int ORX320::SendCommand(char *cmd, int len) {
+int ORX320::SendCommand(char *cmd, int len, int now) {
   if (_fd < 0) return -1;
-  write(_fd, cmd, len);
-  return 0;
+  if (now || !_compress) {
+    write(_fd, cmd, len);
+    return 0;
+  } else {
+    // special case: mode (M) or filter (W) commands are always followed by
+    // a tunning (N) command, arrange thing so they are sent together. This
+    // minimizes clicking noises when operating the BW slider and prevents
+    // the N command replacing an N queued *before* the M or W.
+    if ((cmd[0] == 'N') && (_queue.size() > 0)) {
+      int last = _queue.size() - 1;
+      if (_queue[last].cmd[0] == 'M' || _queue[last].cmd[0] == 'W') {
+        char *oldcmd = _queue[last].cmd;
+        _queue[last].cmd = new char[_queue[last].len + len];
+        memcpy(_queue[last].cmd, oldcmd, _queue[last].len);
+        memcpy(_queue[last].cmd + _queue[last].len, cmd, len);
+        _queue[last].len += len;
+        delete[] oldcmd;
+        return 0;  // we *know* _tqueue already exists
+      }
+    }
+    for (int i = 0; i < _queue.size(); ++i) {
+      if (_queue[i].cmd[0] == cmd[0]) {
+        memcpy(_queue[i].cmd, cmd, len);
+        _queue[i].len = len;   // this is not redundant: we need it
+                               // as a consequence of the above
+        return 0;
+      }
+    }
+    _qelem q;
+    q.cmd = new char[q.len = len];
+    memcpy(q.cmd, cmd, len);
+    _queue.push_back(q);
+    if (!_tqueue) _tqueue = new OTimer(this, len * 10);
+  }
 }
 
 int ORX320::GetResponse(char *buf, int n, char term) {

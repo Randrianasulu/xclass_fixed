@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 
 #ifndef __ORX320_H
 #define __ORX320_H
+
+#include <vector>
 
 #include <xclass/OComponent.h>
 #include <xclass/OFileHandler.h>
@@ -84,8 +86,11 @@ public:
   int SetAGC(int agc);
   int GetAGC() const { return _agc; }
   
-  int SetBFO(int bfo);
-  int GetBFO() const { return Cbfo; }
+  int SetCWO(int cwo);
+  int GetCWO() const { return _cwo; }
+  
+  int SetPBT(int pbt);
+  int GetPBT() const { return _pbt; }
   
   int SetFrequency(long freq);  // in Hz
   long GetFrequency() const { return _freq; }
@@ -93,24 +98,28 @@ public:
   int GetSignal();
   void RequestSignal(int rate);
   char *GetFirmwareVersion();
+
+  void CompressEvents(int onoff);
   
   const char *GetLastError() const { return _errmsg; }
   
 protected:
   int OpenSerial(const char *dev);
   int CloseSerial();
-  int SendCommand(char *cmd, int len);
+  int SendCommand(char *cmd, int len, int now = False);
   int GetResponse(char *buf, int n, char term);
 
-  int _fd, _ix, _count, _muted;
-  int _mode, _agc, _spkvol, _rate, _linevol;
+  int _fd, _ix, _count, _muted, _compress;
+  int _mode, _cwo, _pbt, _agc, _spkvol, _rate, _linevol;
   long _freq;
   SFilter *_filter;
-  int Mcor, Cbfo;
-  float Fcor;
+  int Mcor;
   OFileHandler *_fh;
   char _inbuf[20], _errmsg[1024];
-  OTimer *_t;
+  OTimer *_tsignal, *_tqueue;
+
+  struct _qelem { char *cmd; int len; };
+  std::vector<_qelem> _queue;
 };
 
 

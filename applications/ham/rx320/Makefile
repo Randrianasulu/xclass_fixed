@@ -6,6 +6,7 @@ LIBS=`xc-config --libs`
 LDFLAGS=
 INSTALL=install -c
 BINDIR=`xc-config --exec-prefix`/bin
+HELPDIR=`xc-config --prefix`/xclass/docs/rx320
 
 # Rules for compiling .cc sources
 .SUFFIX: .cc .o
@@ -15,11 +16,13 @@ BINDIR=`xc-config --exec-prefix`/bin
 SRCS = main.cc \
 	ORX320.cc \
 	OFreqRecord.cc \
-	OXFreqDB.cc \
+	OXSlideRuler.cc \
 	OXDisplayPanel.cc \
 	OXSMeter.cc \
 	OXTuningKnob.cc \
-	OXDialogs.cc
+	OXFreqDB.cc \
+	OXDialogs.cc \
+	OXScan.cc
 
 OBJS = $(SRCS:.cc=.o)
 
@@ -34,6 +37,14 @@ ${PROG}: ${OBJS}
 install: ${PROG}
 	mkdir -p ${BINDIR}
 	${INSTALL} ${PROG} ${BINDIR}
+	mkdir -p ${HELPDIR}
+	${INSTALL} -m 0644 help/* ${HELPDIR}
+
+install_user:
+	mkdir -p ${HOME}/.xclass/bin
+	${INSTALL} ${PROG} ${HOME}/.xclass/bin
+	mkdir -p ${HOME}/.xclass/docs/rx320
+	${INSTALL} -m 0644 help/* ${HOME}/.xclass/docs/rx320
 
 clean:
 	rm -f ${OBJS} $(PROG) *~ core *.bak

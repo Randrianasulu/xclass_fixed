@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+
+#include <vector>
 
 #include "OFreqRecord.h"
 #include "ORX320.h"

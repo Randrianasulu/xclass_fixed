@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ public:
   
   OFreqRecord *GetFreqRecord() const { return _freqRec; }
   void ChangeFreqRecord(OFreqRecord *fr);
-  
+
 protected:
   OFreqRecord *_freqRec;
 };
@@ -54,7 +54,7 @@ protected:
 class OXFreqDB : public OXMainFrame {
 public:
   OXFreqDB(const OXWindow *p, OXMain *m, int w, int h);
-  ~OXFreqDB();
+  virtual ~OXFreqDB();
 
   virtual int ProcessMessage(OMessage *msg);
   virtual int CloseWindow();

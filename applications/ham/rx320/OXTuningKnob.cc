@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -113,7 +113,7 @@ void OXTuningKnob::_DoRedraw() {
   int r = (_knob->GetWidth() - _hole->GetWidth()) / 2 - 7;
 
   int xch = (int) ((double) xc + r * sin(_a * M_PI / 180) + 0.5);
-  int ych = (int) ((double) xc - r * cos(_a * M_PI / 180) + 0.5);
+  int ych = (int) ((double) yc - r * cos(_a * M_PI / 180) + 0.5);
 
   int hx = xch - (_hole->GetWidth() + 1) / 2;
   int hy = ych - (_hole->GetHeight() + 1) / 2;

@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,19 +47,23 @@ public:
   void SetS(int sval) { _Smeter->SetS(sval); }
   void SetAGC(int agc);
   void SetPBT(int pbt);
+  void SetCWO(int cwo, int onoff);
   void SetBW(int bw);
   void PowerOn();
+  void Scanning(int onoff);
   void SetMuted(int onoff);
   
   OXSMeter *Smeter() const { return _Smeter; }
   
 protected:
   OXHorizontalFrame *hfA, *hfB;
+  OXVerticalFrame *vfL;
   OXLabel *_freqA, *_freqB, *_modeA, *_modeB;
-  OXLabel *_agc, *_tstep, *_pbt, *_bw, *_pwr;
+  OXLabel *_agc, *_tstep, *_pbt, *_cwo, *_bw, *_pwr;
   OXIcon *_muted;
   OXSMeter *_Smeter;
-  OTimer *_t;
+  OTimer *_pwrt, *_scant;
+  int _scanstat;
 };
 
 

@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,10 +19,14 @@
 
 **************************************************************************/
 
+#include <math.h>
+
 #include "OXSMeter.h"
 
 
-#define S_MAX       80
+#define S_MAX       10000
+#define S_MAXDB     80
+
 #define BAR_WIDTH   7    // bar thickness
 #define PEAK_SIZE   4    // size of the peak mark
 
@@ -34,8 +38,12 @@
 
 OXSMeter::OXSMeter(const OXWindow *p, int orientation) :
   OXFrame(p, 1, 1) {
+    XWindowAttributes wa;
     XGCValues gcval;
     unsigned int gm;
+
+    XGetWindowAttributes(GetDisplay(), _id, &wa);
+    _backPixel = wa.backing_pixel;
 
     _orien = orientation;
 
@@ -54,16 +62,25 @@ OXSMeter::OXSMeter(const OXWindow *p, int orientation) :
     gcval.foreground = _client->GetColorByName("#ff0000");
     _maxGC = new OXGC(GetDisplay(), _id, gm, &gcval);
 
-    _sval = _smax = S_MAX;
+    gcval.foreground = _backPixel;
+    _clrGC = new OXGC(GetDisplay(), _id, gm, &gcval);
+
+    _sval = _smax = S_MAXDB;
     _hold = 0;
     _avg = PEAK_AVG;
     _pkhold = PEAK_HOLD;
+
+    _pix = None;
+    _pixw = 0;
+    _pixh = 0;
 }
 
 OXSMeter::~OXSMeter() {
   delete _barGC;
   delete _maxGC;
+  delete _clrGC;
   _client->FreeFont(_sfont);
+  if (_pix != None) XFreePixmap(GetDisplay(), _pix);
 }
 
 ODimension OXSMeter::GetDefaultSize() const {
@@ -94,8 +111,11 @@ void OXSMeter::SetPeakAverage(unsigned int avg) {
 // 0..S_MAX
 
 void OXSMeter::SetS(unsigned int sval) {
-  _sval = sval;
-  if (_sval > S_MAX) _sval = S_MAX;
+
+  _sval = (sval > 0) ? (int) (20.0 * log10(sval)) : 0;
+
+  if (_sval > S_MAXDB) _sval = S_MAXDB;
+
   if (_sval > _smax) {
     _smax = _sval;
     _hold = _pkhold;
@@ -105,14 +125,22 @@ void OXSMeter::SetS(unsigned int sval) {
     else
       --_hold;
   }
-  NeedRedraw(True);
+
+  _Draw();
 }
 
-//static char *label[6] = { "0", "36", "50", "60", "72", "80" };
 static char *label[6] = { "0", "16", "32", "48", "64", "80" };
 
-void OXSMeter::_DoRedraw() {
-  OXFrame::_DoRedraw();
+void OXSMeter::_Draw() {
+  Drawable dst;
+
+  if (_pix != None) {
+    dst = _pix;
+  } else {
+    dst = _id;
+  }
+
+  XFillRectangle(GetDisplay(), dst, _clrGC->GetGC(), 0, 0, _w, _h);
 
   OFontMetrics fm;
   _sfont->GetFontMetrics(&fm);
@@ -123,19 +151,21 @@ void OXSMeter::_DoRedraw() {
     int hm = PEAK_SIZE;
     int hs = _h - 20 - (hm + 1);  // height of the "S" scale
 
-    int sp = _sval * hs / S_MAX;
-    int mp = _smax * hs / S_MAX;
+    int sp = _sval * hs / S_MAXDB;
+    int mp = _smax * hs / S_MAXDB;
 
-    FillRectangle(_barGC->GetGC(), 20, _h-10-sp, BAR_WIDTH, sp+1);
-    FillRectangle(_maxGC->GetGC(), 20, _h-10-mp-(hm+1), BAR_WIDTH, hm);
+    XFillRectangle(GetDisplay(), dst, _barGC->GetGC(),
+                   20, _h-10-sp, BAR_WIDTH, sp+1);
+    XFillRectangle(GetDisplay(), dst, _maxGC->GetGC(),
+                   20, _h-10-mp-(hm+1), BAR_WIDTH, hm);
 
     int n = 6;
     for (int i = 0; i < n; ++i) {
       int y = _h-10 - i * (_h-20) / (n-1);
-      DrawLine(_barGC->GetGC(), 15, y, 17, y);
-      DrawString(_barGC->GetGC(),
-                 14 - _sfont->XTextWidth(label[i]), y + fm.ascent / 2,
-                 label[i], strlen(label[i]));
+      XDrawLine(GetDisplay(), dst, _barGC->GetGC(), 15, y, 17, y);
+      XDrawString(GetDisplay(), dst, _barGC->GetGC(),
+                  14 - _sfont->XTextWidth(label[i]), y + fm.ascent / 2,
+                  label[i], strlen(label[i]));
     }
   } else {
     int dbw = _dBfont->XTextWidth("dB");
@@ -143,23 +173,50 @@ void OXSMeter::_DoRedraw() {
     int w = _w - 20 - dbw;
     int ws = w - (wm + 1);  // width of the "S" scale
 
-    int sp = _sval * ws / S_MAX;
-    int mp = _smax * ws / S_MAX;
+    int sp = _sval * ws / S_MAXDB;
+    int mp = _smax * ws / S_MAXDB;
 
-    FillRectangle(_barGC->GetGC(), 5, 5, sp+1, BAR_WIDTH);
-    FillRectangle(_maxGC->GetGC(), 5+mp+2, 5, wm, BAR_WIDTH);
+    XFillRectangle(GetDisplay(), dst, _barGC->GetGC(),
+                   5, 5, sp+1, BAR_WIDTH);
+    XFillRectangle(GetDisplay(), dst, _maxGC->GetGC(),
+                   5+mp+2, 5, wm, BAR_WIDTH);
 
     int n = 6;
     int y = 5 + BAR_WIDTH + 2;
     for (int i = 0; i < n; ++i) {
       int x = 5 + i * w / (n-1);
-      DrawLine(_barGC->GetGC(), x, y, x, y+2);
-      DrawString(_barGC->GetGC(),
-                 x - _sfont->XTextWidth(label[i]) / 2, y+2 + fm.ascent,
-                 label[i], strlen(label[i]));
+      XDrawLine(GetDisplay(), dst, _barGC->GetGC(), x, y, x, y+2);
+      XDrawString(GetDisplay(), dst, _barGC->GetGC(),
+                  x - _sfont->XTextWidth(label[i]) / 2, y+2 + fm.ascent,
+                  label[i], strlen(label[i]));
     }
 
     _barGC->SetFont(_dBfont->GetId());
-    DrawString(_barGC->GetGC(), _w - dbw, y+2 + fm.ascent, "dB", 2);
+    XDrawString(GetDisplay(), dst, _barGC->GetGC(),
+                _w - dbw, y+2 + fm.ascent, "dB", 2);
+  }
+
+  if (_pix != None) NeedRedraw(False);  //True
+}
+
+void OXSMeter::_DoRedraw() {
+  OXFrame::_DoRedraw();
+
+  if ((_pixw != _w) || (_pixh != _h)) {
+    _pixw = _w;
+    _pixh = _h;
+
+    if (_pix != None) XFreePixmap(GetDisplay(), _pix);
+
+    _pix = XCreatePixmap(GetDisplay(), _id, _pixw, _pixh,
+                         _client->GetDisplayDepth());
+    _Draw();
+  }
+
+  if (_pix != None) {
+    XCopyArea(GetDisplay(), _pix, _id, _barGC->GetGC(), 
+              0, 0, _pixw, _pixh, 0, 0);
+  } else {
+    _Draw();
   }
 }

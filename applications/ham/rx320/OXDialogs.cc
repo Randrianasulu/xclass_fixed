@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -178,7 +178,7 @@ OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
                              unsigned long options) :
   OXTransientFrame(p, main, 400, 200, options) {
     int  width;
-    char name[1024], tmp[1024];
+    char name[1024];
 
     _freqRec = frec;
 
@@ -387,7 +387,6 @@ void OXEditStation::InitControls() {
 }
 
 void OXEditStation::UpdateRecord() {
-  char string[256];
 
   if (!_freqRec) return;
 

@@ -19,46 +19,56 @@
 
 **************************************************************************/
 
-#ifndef __OXSMETER_H
-#define __OXSMETER_H
+#ifndef __OXSLIDERULER_H
+#define __OXSLIDERULER_H
 
+#include <xclass/utils.h>
 #include <xclass/OXFrame.h>
-#include <xclass/OXLabel.h>
+#include <xclass/ODimension.h>
 #include <xclass/OXFont.h>
 #include <xclass/OGC.h>
 
+#include "ORX320.h"
+#include "main.h"
 
-#define S_HORIZONTAL  1
-#define S_VERTICAL    2
 
+//----------------------------------------------------------------------
 
-class OXSMeter : public OXFrame {
+class OXSlideRuler : public OXFrame {
 public:
-  OXSMeter(const OXWindow *p, int orientation = S_HORIZONTAL);
-  virtual ~OXSMeter();
+  OXSlideRuler(const OXWindow *p, OXMain *m, int w, int h,
+               unsigned int options = SUNKEN_FRAME | DOUBLE_BORDER);
+  virtual ~OXSlideRuler();
+  
+  virtual int HandleButton(XButtonEvent *event);
+  virtual int HandleMotion(XMotionEvent *event);
+
+  void SetFreq(long freq);
+  void SetStep(long fstep);
   
   virtual ODimension GetDefaultSize() const;
   
-  void SetS(unsigned int sval);
-  void SetPeakHold(unsigned int hold);
-  void SetPeakAverage(unsigned int avg);
-  
-  unsigned int GetPeakHold() const { return _pkhold; }
-  unsigned int GetPeakAverage() const { return _avg; }
-
 protected:
   virtual void _DoRedraw();
 
-  void _Draw();
+  void CreatePixmap();
+  void ClearPixmap();
+  void Draw();
+  void DoDraw();
+  void DrawTicks();
+  void DrawBands();
+  void DrawCursor();
   
-  int _orien;
-  unsigned int _sval, _smax, _avg, _hold, _pkhold;
-  OXGC *_clrGC, *_barGC, *_maxGC;
-  OXFont *_sfont, *_dBfont;
-  
+  OXGC *_gc;
   Pixmap _pix;
   int _pixw, _pixh;
+  
+  int _bdown, _lastx, _draw_pending;
+  OXFont *_sfont;
+  long _freq, _tickval;
+
+  OXMain *_rxmain;
 };
 
 
-#endif  // __OXSMETER_H
+#endif  // __OXSLIDERULER_H

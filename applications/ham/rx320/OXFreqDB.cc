@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of rx320, a control program for the Ten-Tec RX320
-    receiver. Copyright (C) 2000, 2001, Hector Peraza.
+    receiver. Copyright (C) 2000-2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,18 +25,15 @@
 #include <errno.h>
 
 #include <xclass/utils.h>
-#include <xclass/version.h>
 #include <xclass/OXMsgBox.h>
 #include <xclass/OX3dLines.h>
 #include <xclass/OXMainFrame.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXFileDialog.h>
-#include <xclass/OXAboutDialog.h>
 #include <xclass/OXListView.h>
 
 #include "menudef.h"
 #include "toolbardef.h"
-#include "versiondef.h"
 
 #include "OXFreqDB.h"
 #include "OXDialogs.h"
@@ -142,6 +139,7 @@ void OFDBitem::ChangeFreqRecord(OFreqRecord *fr) {
   // 13: lockout
   sprintf(string, "%d", _freqRec->lockout);
   _names.push_back(new OString(string));
+
 
   Resize(GetDefaultSize());
   int vm = _viewMode; ++_viewMode;
@@ -441,6 +439,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
             //--------------------------------------- Help
 
             case M_HELP_CONTENTS:
+              _rxmain->ShowHelp();
               break;
 
             case M_HELP_SEARCH:
@@ -511,7 +510,7 @@ void OXFreqDB::SetWindowTitle(char *title) {
     char *wname = new char[strlen(title) + strlen(pname) + 10];
     sprintf(wname, "%s - %s%s", pname, title, _changed ? " *" : "");
     SetWindowName(wname);
-    delete wname;
+    delete[] wname;
   } else {
     SetWindowName(pname);
   }
@@ -552,32 +551,17 @@ void OXFreqDB::DoToggleStatusBar() {
 }
 
 void OXFreqDB::DoAbout() {
-  OAboutInfo info;
-  
-  info.wname = "About RX320";
-  info.title = "RX320 version "RX320_VERSION"\n"
-               "A control program for the Ten-Tec RX320\n"
-               "Shortwave Receiver\n";
-               "Compiled with xclass version "XCLASS_VERSION;
-  info.copyright = "Copyright © 2000-2002, Hector Peraza.";
-  info.text = "This program is free software; you can redistribute it "
-              "and/or modify it under the terms of the GNU "
-              "General Public License.\n\n"
-              "http://xclass.sourceforge.net";
-
-  new OXAboutDialog(_client->GetRoot(), this, &info);
+  _rxmain->ShowAbout(this);
 }
+
 
 //----------------------------------------------------------------------
 
 void OXFreqDB::DoOpen() {
   OFileInfo fi;
-  struct stat sbuf;
-  FILE *fp;
 
-  fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
   fi.file_types = filetypes;
-  fi.ini_dir = _path;
+  fi.ini_dir = _path ? StrDup(_path) : NULL;
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
   if (fi.filename) {
     ReadFile(fi.filename);
@@ -594,12 +578,10 @@ void OXFreqDB::DoOpen() {
 void OXFreqDB::DoSave(char *fname) {
   int retc, newfile = False;
   OFileInfo fi;
-  FILE *fp;
 
   if (_path) chdir(_path);
 
   if (!fname) {
-    fi.MimeTypesList = _client->GetResourcePool()->GetMimeTypes();
     fi.file_types = filetypes;
     new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
     fname = fi.filename;
@@ -634,16 +616,16 @@ void OXFreqDB::DoPrint() {
 
 void OXFreqDB::SetChanged(int onoff) {
   if (onoff) {
-   if (_filename) _menuFile->EnableEntry(M_FILE_SAVE);
-   _menuFile->EnableEntry(M_FILE_SAVEAS);
-   _changed = True;
+    if (_filename) _menuFile->EnableEntry(M_FILE_SAVE);
+    _menuFile->EnableEntry(M_FILE_SAVEAS);
+    _changed = True;
   } else {
-   _menuFile->DisableEntry(M_FILE_SAVE);
-   if (_listView->GetNumberOfItems() == 0)
-     _menuFile->DisableEntry(M_FILE_SAVEAS);
-   else
-     _menuFile->EnableEntry(M_FILE_SAVEAS);
-   _changed = False;
+    _menuFile->DisableEntry(M_FILE_SAVE);
+    if (_listView->GetNumberOfItems() == 0)
+      _menuFile->DisableEntry(M_FILE_SAVEAS);
+    else
+      _menuFile->EnableEntry(M_FILE_SAVEAS);
+    _changed = False;
   }
   SetWindowTitle(_filename);
 }
@@ -663,7 +645,7 @@ int OXFreqDB::IsSaved() {
                    "Do you want to save the changes?");
     }
     MapRaised();
-    new OXMsgBox(_client->GetRoot(), this, new OString("ORX320"),
+    new OXMsgBox(_client->GetRoot(), this, new OString("RX320"),
                  new OString(tmp), MB_ICONEXCLAMATION,
                  ID_YES | ID_NO | ID_CANCEL, &ret);
     return ret;
@@ -677,7 +659,6 @@ void OXFreqDB::ClearFreqList() {
 void OXFreqDB::ReadFile(char *fname) {
   FILE *f;
   char *p, str[256];
-  OFreqRecord *frec;
   int format;
 
   f = fopen(fname, "r");
