@@ -429,8 +429,7 @@ void OXSiteView::UpdateTree(const char *path) {
   }
   root = _lt->GetFirstItem();
   while (root) {
-    if (strcmp(root->text, buf2) == 0)
-      break;
+    if (strcmp(root->text, buf2) == 0) break;
     root = root->nextsibling;
   }
   if (root == NULL) {
@@ -447,13 +446,11 @@ void OXSiteView::UpdateTree(const char *path) {
       if (!i2) {
         i2 = _lt->AddItem(i1, p, NULL, NULL);
         i2->open = true;
-        _lt->SortChildren(i1);
       }
-     i1 = i2;
+      i1 = i2;
     } while ((p = strtok(NULL, "/\\")) != NULL);
   }
-  _lt->SortChildren(root);
-  _lt->Sort(root);
+  _lt->SortChildren(NULL);
   _client->NeedRedraw(_lt);
 }
 
