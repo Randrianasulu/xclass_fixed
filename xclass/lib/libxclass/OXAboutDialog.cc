@@ -99,7 +99,7 @@ OXAboutDialog::OXAboutDialog(const OXWindow *p, const OXWindow *main,
     AddFrame(f1, _lhf);
 
     SetWindowName(info->wname ? info->wname : (char *) "About fOX");
-    SetClassHints("MsgBox", "MsgBox");
+    SetClassHints("XCLASS", "dialog");
 
     MapSubwindows();
 

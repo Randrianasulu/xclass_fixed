@@ -24,8 +24,10 @@
   
 //--------------------------------------------------------------------
 
-OXShutter::OXShutter(const OXWindow* p, unsigned int options) :
-  OXCompositeFrame(p, 10, 10, options) {
+OXShutter::OXShutter(const OXWindow* p, int id, unsigned int options) :
+  OXCompositeFrame(p, 10, 10, options), OXWidget(id, "OXShutter") {
+
+    _msgObject = p;
 
     _selectedItem = NULL;
     _closingItem  = NULL;
@@ -46,36 +48,135 @@ void OXShutter::AddItem(OXShutterItem *item) {
   AddFrame(item, _lh);
 }
 
-int OXShutter::ProcessMessage(OMessage *msg) {
-  register SListFrameElt *ptr;
+void OXShutter::InsertItem(OXShutterItem *item, int afterID) {
+  OXShutterItem *i;
+  SListFrameElt *nw, *ptr;
+
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
+    i = (OXShutterItem *) ptr->frame;
+    if (i->WidgetID() == afterID) break;
+  }
+
+  if (ptr == NULL) {
+    AddFrame(item, _lh);
+  } else {
+    nw = new SListFrameElt;
+    nw->frame = item;
+    nw->layout = _lh;
+    if (afterID == -1) {
+      _flist->prev = nw;
+      nw->next = _flist;
+      nw->prev = NULL;
+      _flist = nw;
+    } else {
+      nw->next = ptr->next;
+      ptr->next = nw;
+      nw->prev = ptr;
+      if (nw->next == NULL) _ftail = nw;
+    }
+  }
+  //item->MapWindow();
+  //Layout();
+}
+
+void OXShutter::RemoveItem(int id) {
+#if 0
+  int update;
+  OXShutterItem *item;
+
+  item = FindItem(id);
+  if (!item) return;
+
+  update = (item == _selectedItem);
+
+  RemoveFrame(item);
+  item->DestroyWindow();
+  delete item;
+
+  if (update) _selectedItem = NULL;
+
+  Layout();
+#else
+  register SListFrameElt *ptr, *prev = NULL;
   OXShutterItem *child, *item = NULL;
 
-  if (!_flist) return 1;
-
-  if (msg->type != MSG_BUTTON) return 0;
-  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+  for (ptr = _flist; ptr != NULL; prev = ptr, ptr = ptr->next) {
     child = (OXShutterItem *) ptr->frame;
-    if (wmsg->id == child->WidgetID()) {
+    if (child->WidgetID() == id) {
       item = child;
       break;
     }
   }
 
-  if (!item) return 0;
+  if (!item) return;
 
-  if (!_selectedItem) _selectedItem = (OXShutterItem*) _flist->frame;
-  if (_selectedItem == item) return 1;
+  int update = (item == _selectedItem);
 
-  _heightIncrement = 1;
-  _closingItem = _selectedItem;
-  _closingHeight = _closingItem->GetHeight();
-  _closingHeight -= _closingItem->_button->GetDefaultHeight();
-  _selectedItem = item;
-  _timer = new OTimer(this, 6); //10);
+  RemoveFrame(item);
+  item->DestroyWindow();
+  delete item;
 
-  return 1;
+  if (update) {
+    if (prev)
+      _selectedItem = (OXShutterItem *) prev->frame;
+    else
+      _selectedItem = NULL;
+  }
+
+  Layout();
+#endif
+}
+
+OXShutterItem *OXShutter::Select(int id, int animate) {
+  OXShutterItem *item;
+
+  item = FindItem(id);
+  if (!item) return NULL;
+
+  if (!_selectedItem) _selectedItem = (OXShutterItem *) _flist->frame;
+  if (_selectedItem == item) return item;
+
+  if (animate) {
+    _heightIncrement = 1;
+    _closingItem = _selectedItem;
+    _closingHeight = _closingItem->GetHeight();
+    _closingHeight -= _closingItem->_button->GetDefaultHeight();
+    _selectedItem = item;
+    _timer = new OTimer(this, 6); //10);
+  } else {
+    _closingItem = NULL;
+    _closingHeight = 0;
+    _selectedItem = item;
+    Layout();
+  }
+
+  return item;
+}
+
+OXShutterItem *OXShutter::FindItem(int id) {
+  register SListFrameElt *ptr;
+  OXShutterItem *child;
+
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
+    child = (OXShutterItem *) ptr->frame;
+    if (child->WidgetID() == id) return child;
+  }
+
+  return NULL;
+}
+
+int OXShutter::ProcessMessage(OMessage *msg) {
+  OXShutterItem *item;
+
+  if (msg->type != MSG_BUTTON) return False;
+  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
+
+  Select(wmsg->id);
+
+  OShutterMessage smsg(MSG_SHUTTER, MSG_TABCHANGED, _widgetID, wmsg->id);
+  SendMessage(_msgObject, &smsg);
+
+  return True;
 }
 
 
@@ -107,14 +208,14 @@ void OXShutter::Layout() {
   if (_selectedItem == NULL) _selectedItem = (OXShutterItem*) _flist->frame;
 
   exh = _h - (_bw << 1);
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     child = (OXShutterItem *) ptr->frame;
     bh = child->_button->GetDefaultHeight();
     exh -= bh;
   }
 
   y = _bw;
-  for (ptr=_flist; ptr != NULL; ptr=ptr->next) {
+  for (ptr = _flist; ptr != NULL; ptr = ptr->next) {
     child = (OXShutterItem *) ptr->frame;
     bh = child->_button->GetDefaultHeight();
     if (child == _selectedItem) {
@@ -160,4 +261,11 @@ OXShutterItem::OXShutterItem(const OXWindow *p, OString *s, int ID,
 OXShutterItem::~OXShutterItem() {
   delete _l1;
   delete _l2;
+}
+
+void OXShutterItem::SetContainer(OXCompositeFrame *c) {
+  _container = c;
+  _canvas->SetContainer(_container);
+  _container->ChangeOptions(_container->GetOptions() | OWN_BKGND);
+  _container->SetBackgroundColor(_client->GetShadow(_defaultFrameBackground)); 
 }

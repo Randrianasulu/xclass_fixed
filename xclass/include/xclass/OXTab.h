@@ -81,7 +81,7 @@ protected:
   static int _init;
 
 public:
-  OXTab(const OXWindow *p, int w, int h,
+  OXTab(const OXWindow *p, int w, int h, int ID = -1,
         unsigned int options = CHILD_FRAME,
         unsigned long back = _defaultFrameBackground);
   virtual ~OXTab();

@@ -25,7 +25,7 @@ The application becomes the source of the dnd operation when the user
 selects an element in the application by clicking on it and drags it into
 another application, eventually dropping the element there. The classic
 example is clicking a document icon in a filemanager and dragging it into
-another filemanager window. When the opposite opperation is performaed (i.e.
+another filemanager window. When the opposite opperation is performed (i.e.
 dragging an icon from another application and dropping it in the current
 one), the current application becomes the target. There are cases, of
 course, when the same application acts as both source and target.
@@ -35,10 +35,10 @@ course, when the same application acts as both source and target.
 To become the source of a dnd operation, an xclass application must call the
 ODNDmanager's StartDrag() in response to the user action
 
-When the application reveives dnd events from another application, the
+When the application receives dnd events from another application, the
 ODNDmanager object processes those events and calls the appropiate OXFrame
 methods. Thus, the processing of dnd events is done in a way similar to
-
+message or window event processing.
 
 Atom HandleDNDenter(Atom *typelist)
 

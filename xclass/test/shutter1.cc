@@ -35,7 +35,7 @@ public:
   OXMain(const OXWindow *p, int w, int h);
   virtual ~OXMain();
 
-//  virtual int ProcessMessage(long msg, long parm1, long parm2);
+//  virtual int ProcessMessage(OMessage *msg);
   void AddShutterItem(char *name, struct _sdata data[]);
 
 protected:
@@ -120,7 +120,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
 
   if (!_defaultpic) FatalError("Failed to load default pixmap");
 
-  _shutter = new OXShutter(this, SUNKEN_FRAME);
+  _shutter = new OXShutter(this);
 
   AddShutterItem("Shells",   shells_data);
   AddShutterItem("Editors",  editors_data);

@@ -41,8 +41,12 @@ ODList *OExec::_childList = NULL;
 //    will survive parent's death).
 
 OExec::OExec(OXClient *client, const char *prog, char *argv[],
-             int pipe_io, int persistent) : OComponent(client) {
+             const char *start_dir, int pipe_io, int persistent) :
+  OComponent(client) {
+
   int fd0[2], fd1[2], fd2[2];
+
+  _prog = StrDup(prog);
 
   if (!_childList) {
     _childList = new ODList("Application Children");
@@ -68,6 +72,7 @@ OExec::OExec(OXClient *client, const char *prog, char *argv[],
       dup2(fd2[1], fileno(stderr));
       close(fd2[0]);
     }
+    if (start_dir && *start_dir) chdir(start_dir);
     execvp(prog, argv);
     fprintf(stderr, "OExec: failed to execute %s\n", prog);
     exit(_status = 255);
@@ -103,6 +108,7 @@ OExec::~OExec() {
     Kill();
     //if (_pid > 0) waitpid(_pid, &_status, WNOHANG);
   }
+  delete[] _prog;
 }
 
 int OExec::HandleIdleEvent(OIdleHandler *idle) {

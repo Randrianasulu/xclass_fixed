@@ -24,7 +24,7 @@ public:
   OXMain(const OXWindow *p, int w, int h);
   virtual ~OXMain();
 
-//  virtual int ProcessMessage(long msg, long parm1, long parm2);
+//  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OXShutter *_shutter;
@@ -68,7 +68,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
 
   _gframe = new OXGroupFrame(this, new OString("Shutter"));
 
-  _shutter = new OXShutter(_gframe, SUNKEN_FRAME);
+  _shutter = new OXShutter(_gframe);
 
   _l1 = new OLayoutHints(LHINTS_TOP | LHINTS_CENTER_X, 5, 5, 5, 0);
 

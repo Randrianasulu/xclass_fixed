@@ -237,11 +237,13 @@ void OXMainFrame::SetFocusOwner(OXFrame *f) {
     keycode = XKeysymToKeycode(GetDisplay(), XK_KP_Enter);
     XUngrabKey(GetDisplay(), keycode, AnyModifier, _id);
   }
-  const OXSNode *e = _buttonlist->GetNode(f->GetId());
+
+  const OXSNode *e = f ? _buttonlist->GetNode(f->GetId()) : NULL;
   if (e)
     _currentAccept = (OXButton *) e->data;
   else
     _currentAccept = _defaultAccept;
+
   if (_currentAccept) {
     _currentAccept->SetDefault();
     int keycode = XKeysymToKeycode(GetDisplay(), XK_Return);
@@ -252,6 +254,13 @@ void OXMainFrame::SetFocusOwner(OXFrame *f) {
              GrabModeAsync, GrabModeAsync);
   }
 
+}
+
+int OXMainFrame::HandleConfigureNotify(XConfigureEvent *event) {
+  _x = event->x;
+  _y = event->y;
+  OXCompositeFrame::HandleConfigureNotify(event);
+  return True;
 }
 
 int OXMainFrame::HandleClientMessage(XClientMessageEvent *event) {
@@ -402,6 +411,14 @@ void OXMainFrame::SetWMSizeHints(int wmin, int hmin, int wmax, int hmax,
   _sizeHints.max_height = hmax;
   _sizeHints.width_inc  = winc;
   _sizeHints.height_inc = hinc;
+
+  XSetWMNormalHints(GetDisplay(), _id, &_sizeHints);
+}
+
+void OXMainFrame::SetWMGravity(int gravity) {
+
+  _sizeHints.flags |= PWinGravity;
+  _sizeHints.win_gravity = gravity;
 
   XSetWMNormalHints(GetDisplay(), _id, &_sizeHints);
 }

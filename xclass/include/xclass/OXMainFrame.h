@@ -78,6 +78,7 @@ public:
   virtual ~OXMainFrame();
 
   virtual int HandleKey(XKeyEvent *event);
+  virtual int HandleConfigureNotify(XConfigureEvent *event);
   virtual int HandleClientMessage(XClientMessageEvent *event);
   virtual int HandleSelection(XSelectionEvent *event);
   virtual int HandleSelectionRequest(XSelectionRequestEvent *event);
@@ -97,6 +98,7 @@ public:
   void SetWMResizeIncrement(int winc, int hinc);
   void SetWMSizeHints(int wmin, int hmin, int wmax, int hmax, 
                       int winc, int hinc);
+  void SetWMGravity(int gravity);
   void SetWMState(int state);
 
   int  RegisterTransient(OXWindow *w);

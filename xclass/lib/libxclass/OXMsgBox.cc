@@ -210,7 +210,7 @@ void OXMsgBox::_MsgBox(const OXWindow *main,
 
   SetWindowName((char *) title->GetString());
   SetIconName((char *) title->GetString());
-  SetClassHints("MsgBox", "MsgBox");
+  SetClassHints("XCLASS", "MsgBox");
 
   SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
                               MWM_DECOR_MINIMIZE | MWM_DECOR_MENU,

@@ -2072,4 +2072,45 @@ OPicture.cc
   with existing applications, but these shouldn't be difficult to update.
   Right now the xclass library does not make any use of the return value,
   but it can be useful to applications that manage several top-level
-  windows (like rx320).
+  windows (like rx320 and foxirc).
+
+
+23/06/02
+
+- OMime: call regfree only if a regular expression has been previously
+  compiled.
+
+- OIniFile::PutItem(): second argument is now const.
+
+
+26/02/02
+
+- OExec: keep program name, the application might want to request it.
+
+
+27/06/02
+
+- OXShutter widget now sends OShutterMessages when tabs are changed.
+
+- OXShutterItem: added GetCanvas(), GetButton() and SetContainer() methods.
+
+- OXTab now uses a valid widget ID.
+
+- OXCanvas: OXViewPort now deletes the old frame on SetContainer().
+
+
+28/06/02
+
+- OExec: added an optional start directory argument to the constructor.
+
+- Corrected a bug in OXMainFrame::SetFocusOwner() that caused it to crash
+  when NULL was passed as argument.
+
+- OXShutter: added RemoveItem() and InsertItem() methods.
+
+
+30/06/02
+
+- Added OXMainFrame::HandleConfigureNotify() to properly track window moves.
+
+- Added OXMainFrame::SetWMGravity() method.

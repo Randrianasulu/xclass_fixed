@@ -160,7 +160,7 @@ OXPropertiesDialog::OXPropertiesDialog(const OXWindow *p, const OXWindow *main,
     sprintf(wname, "%s Properties", name);
     SetWindowName(wname);
     SetIconName("Properties");
-    SetClassHints("Explorer", "Explorer");
+    SetClassHints("XCLASS", "dialog");
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE /*|
                                 MWM_DECOR_MINIMIZE*/ | MWM_DECOR_MENU,

@@ -89,7 +89,7 @@ OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
 
     SetWindowName(_windowNameString);
     SetIconName(_windowNameString);
-    SetClassHints("FileDialog", "FileDialog");
+    SetClassHints("XCLASS", "dialog");
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
                                 MWM_DECOR_MINIMIZE | MWM_DECOR_MENU,

@@ -259,7 +259,7 @@ OXFontDialog::OXFontDialog(const OXWindow *p, const OXWindow *t,
 
     SetWindowName("Font Selection");
     SetIconName("Font Selection");
-    SetClassHints("xclass", "xclass");
+    SetClassHints("XCLASS", "dialog");
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE /*|
                                 MWM_DECOR_MINIMIZE*/ | MWM_DECOR_MENU,

@@ -35,7 +35,19 @@
 
 
 //---------------------------------------------------------------------
-// Shutter item object
+// Class for shutter messages
+
+class OShutterMessage : public OWidgetMessage {
+public:
+  OShutterMessage(int typ, int act, int wid, int t) :
+    OWidgetMessage(typ, act, wid) { tab = t; }
+      
+  int tab;
+};
+        
+
+//---------------------------------------------------------------------
+// Shutter item object (shutter tab)
 
 class OXShutterItem : public OXVerticalFrame, public OXWidget {
 public:
@@ -43,7 +55,10 @@ public:
                 unsigned int options = 0);
   virtual ~OXShutterItem();
 
-  OXFrame* GetContainer() const { return _canvas->GetContainer(); }
+  OXFrame *GetContainer() const { return _canvas->GetContainer(); }
+  OXCanvas *GetCanvas() const { return _canvas; }
+  OXButton *GetButton() const { return _button; }
+  void SetContainer(OXCompositeFrame *c);
 
   friend class OXShutter;  
 
@@ -58,19 +73,26 @@ protected:
 //---------------------------------------------------------------------
 // Shutter widget
 
-class OXShutter : public OXCompositeFrame {
+class OXShutter : public OXCompositeFrame, public OXWidget {
 public:
-  OXShutter(const OXWindow *p, unsigned int options = SUNKEN_FRAME);
+  OXShutter(const OXWindow *p, int id = -1,
+            unsigned int options = SUNKEN_FRAME);
   virtual ~OXShutter();
 
-  virtual void AddItem(OXShutterItem *item);
   virtual int  HandleTimer(OTimer *t);
+  virtual int  ProcessMessage(OMessage *msg);
   virtual void Layout();
 
-  virtual int ProcessMessage(OMessage *msg);
+  virtual void AddItem(OXShutterItem *item);
+  virtual void InsertItem(OXShutterItem *item, int afterID);
+  virtual void RemoveItem(int id);
 
-  friend class OXShutterItem;  
+  OXShutterItem *GetCurrentTab() const { return _selectedItem; }
+  OXShutterItem *FindItem(int id);
+  OXShutterItem *Select(int id, int animate = True);
 
+  friend class OXShutterItem;
+  
 protected:
   OLayoutHints *_lh;
   OTimer *_timer;                   // Timer for animation

@@ -44,9 +44,9 @@ protected:
   static void CatchExit(int signo);
 
 public:
-  OExec(OXClient *c, const char *prog, char *argv[], int pipe_io = True,
-        int persistent = False);
-  ~OExec();
+  OExec(OXClient *c, const char *prog, char *argv[], const char *sdir = NULL,
+        int pipe_io = True, int persistent = False);
+  virtual ~OExec();
 
   virtual int HandleIdleEvent(OIdleHandler *);
 
@@ -64,6 +64,8 @@ public:
   int GetStatus() const { return _status; }
   int GetExitCode();
   
+  const char *GetProgramName() const { return _prog; }
+  
 protected:
   int _Exited(int status);
 
@@ -71,6 +73,7 @@ protected:
   int _pid, _status, _persistent;
   
   OIdleHandler *_idle;
+  char *_prog;
 };
 
 

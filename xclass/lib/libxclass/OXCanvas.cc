@@ -177,3 +177,13 @@ OXViewPort::OXViewPort(const OXWindow *p, int w, int h,
     _x0 = _y0 = 0;
     MapSubwindows();
 }
+
+void OXViewPort::SetContainer(OXFrame *f) { 
+  if (_container) {
+    RemoveFrame(_container);
+    _container->DestroyWindow();
+    delete _container;
+  }
+  _container = f;
+  if (_container) AddFrame(_container, NULL);
+}

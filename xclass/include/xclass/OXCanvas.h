@@ -68,12 +68,7 @@ public:
            unsigned long back = _defaultFrameBackground);
 
   OXFrame *GetContainer() const { return _container; }
-  void SetContainer(OXFrame *f) { 
-    if (!_container) {
-      _container = f;
-      AddFrame(f, NULL);
-    }
-  }
+  void SetContainer(OXFrame *f);
 
   virtual void DrawBorder() {};
   virtual void Reconfig() { OXCompositeFrame::Reconfig(); _container->Reconfig(); }

@@ -1080,8 +1080,8 @@ OXColorDialog::OXColorDialog(const OXWindow *p, const OXWindow *m,
     SetWMSizeHints(_w, _h, _w, _h, 0, 0);
 
     SetWindowName("Select color");
-    SetIconName("Select color");  
-    SetClassHints("xclass", "xclass");
+    SetIconName("Select color");
+    SetClassHints("XCLASS", "dialog");
 
     SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
                                 MWM_DECOR_MINIMIZE | MWM_DECOR_MENU,

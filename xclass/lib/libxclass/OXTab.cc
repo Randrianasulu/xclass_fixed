@@ -156,9 +156,9 @@ ODimension OTabLayout::GetDefaultSize() const {
 
 //-----------------------------------------------------------------
 
-OXTab::OXTab(const OXWindow *p, int w, int h,
+OXTab::OXTab(const OXWindow *p, int w, int h, int ID,
              unsigned int options, unsigned long back) :
-  OXCompositeFrame(p, w, h, options, back) {
+  OXCompositeFrame(p, w, h, options, back), OXWidget(ID, "OXTab") {
 
     if (!_init) {
       _defaultFont = GetResourcePool()->GetDefaultFont();
@@ -166,8 +166,6 @@ OXTab::OXTab(const OXWindow *p, int w, int h,
       _init = True;
     }
 
-//    _widgetID = ID;
-    _widgetType = "OXTab";
     _msgObject = p;
 
     _bw = 2;
