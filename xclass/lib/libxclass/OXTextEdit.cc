@@ -614,7 +614,7 @@ int OXTextEdit::HandleKey(XKeyEvent *event) {
         break;
 
       case XK_Return:
-      case XK_Execute:
+      //case XK_Execute:
       case XK_KP_Enter:
         if (_readOnly) break;
         if (_hasSelection) {

@@ -1938,3 +1938,15 @@ OPicture.cc
 - Added OExec class.
 
 - Removed call to ReapChildren() from OXClient.
+
+
+06/11/01
+
+- OExec: postpone sending MSG_APPEXITED message until we exit from the
+  signal handler.
+
+- Added Associate() method to OComponent, removed it from OXWidget().
+
+- Removed XK_Execute from key handling methods, since it seems to give
+  problems with newer versions of XFree86
+

@@ -509,7 +509,7 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
     case XK_Up:
     case XK_Down:
     case XK_Escape:
-    case XK_Execute:
+    //case XK_Execute:
     case XK_KP_Enter:
     case XK_Return:
     case XK_Tab:     // ==!== this is temp here!

@@ -151,8 +151,8 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
               break;
 
             case XK_Escape:
-            case XK_Execute:
             case XK_Tab:
+            //case XK_Execute:
             case XK_Return:
             case XK_KP_Enter:
               // TODO: transform this into an OComboBox message

@@ -809,8 +809,8 @@ int OXPopupMenu::HandleKey(XKeyEvent *event) {
 /**/
     if (keysym == XK_Escape) { Activate(NULL); return 2; }
 
-    if (keysym == XK_Execute ||
-        keysym == XK_Return  ||
+    if (keysym == XK_Return ||
+        //keysym == XK_Execute ||
         keysym == XK_KP_Enter) ptr = _current;
 
     if (ptr && _hasgrab) {

@@ -36,6 +36,25 @@ class OIdleHandler;
 class OXClient;
 
 class OComponent : public OBaseObject {
+public:
+  OComponent() : _client(0), _msgObject(0) {}
+  OComponent(OXClient *c) : _client(c), _msgObject(0) {}
+  OComponent(const OComponent *p) : _client(p->_client), _msgObject(p) {}
+
+  void Associate(const OComponent *c) { _msgObject = c; }
+
+  virtual void SendMessage(OMessage *msg) {
+    SendMessage(_msgObject, msg);
+  }
+  virtual void SendMessage(const OComponent *obj, OMessage *msg) {
+    if (obj) ((OComponent *)obj)->ProcessMessage(msg);
+  }
+  virtual int ProcessMessage(OMessage *msg) { return False; }
+
+  virtual int HandleTimer(OTimer *) { return False; }
+  virtual int HandleFileEvent(OFileHandler *, unsigned int) { return False; }
+  virtual int HandleIdleEvent(OIdleHandler *) { return False; }
+
 protected:
   OXClient *_client;           // pointer to the X client
 
@@ -44,17 +63,7 @@ protected:
   friend class OFileHandler;
   friend class OIdleHandler;
 
-public:
-  OComponent() : _client(0) {}
-
-  virtual void SendMessage(const OComponent *obj, OMessage *msg) {
-    if (obj) ((OComponent*)obj)->ProcessMessage(msg);
-  }
-  virtual int ProcessMessage(OMessage *msg) { return False; }
-
-  virtual int HandleTimer(OTimer *) { return False; }
-  virtual int HandleFileEvent(OFileHandler *, unsigned int) { return False; }
-  virtual int HandleIdleEvent(OIdleHandler *) { return False; }
+  const OComponent *_msgObject;
 };
 
 

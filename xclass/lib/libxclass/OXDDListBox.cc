@@ -71,7 +71,7 @@ int OXDDPopup::HandleKey(XKeyEvent *event) {
   if (event->type == KeyPress) {
     switch (keysym) {
       case XK_F4:
-      case XK_Execute:
+      //case XK_Execute:
       case XK_Return:
       case XK_KP_Enter:
       case XK_Escape:
@@ -356,7 +356,7 @@ int OXDDListBox::HandleKey(XKeyEvent *event) {
       break;
 
     case XK_Escape:
-    case XK_Execute:
+    //case XK_Execute:
     case XK_Return:
     case XK_KP_Enter:
     case XK_Tab:

@@ -54,13 +54,11 @@ public:
     _widgetID = ID;
     _widgetType = type;
     _widgetFlags = 0;
-    _msgObject = NULL;
     _msgType = MSG_EMPTY;
   }
 
   int  WidgetID() const { return _widgetID; }
   char *WidgetType() const { return _widgetType; }
-  void Associate(const OComponent *w) { _msgObject = w; }
 
 protected:
   int _SetFlags(int flags) { return _widgetFlags |= flags; }
@@ -70,7 +68,6 @@ protected:
   int _widgetFlags;
   int _msgType;
   char *_widgetType;
-  const OComponent *_msgObject;
 };
 
 

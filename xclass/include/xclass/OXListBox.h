@@ -122,7 +122,6 @@ public:
   virtual void RemoveEntries(int from_ID, int to_ID);
   virtual void RemoveAllEntries();
 
-  virtual void Associate(const OComponent *w) { _msgObject = w; }
   virtual int  HandleKey(XKeyEvent *event);
   virtual int  HandleButton(XButtonEvent *event);
   virtual int  HandleMotion(XMotionEvent *event);
@@ -141,7 +140,6 @@ public:
 
 protected:
   OXLBEntry *_last_active;  // also anchor during multiple selects
-  const OComponent *_msgObject;
   int _focused, _dragging, _multipleSelect;
 };
 

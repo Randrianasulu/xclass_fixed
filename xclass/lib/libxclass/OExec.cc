@@ -28,10 +28,20 @@
 
 ODList *OExec::_childList = NULL;
 
+// TODO:
+// - signal handler can be called when application exits or is stopped,
+//   currently we assume only the first case. Need to implement the second.
+
 
 //----------------------------------------------------------------------
 
-OExec::OExec(const char *prog, char *argv[], int pipe_io, int persistent) {
+// pipe_io - set this to True if you want to redirect the program's I/O
+// persistent - set this to True if you do not want the application to
+//    be killed when the corresponding OExec object is deleted (children
+//    will survive parent's death).
+
+OExec::OExec(OXClient *client, const char *prog, char *argv[],
+             int pipe_io, int persistent) : OComponent(client) {
   int fd0[2], fd1[2], fd2[2];
 
   if (!_childList) {
@@ -80,9 +90,11 @@ OExec::OExec(const char *prog, char *argv[], int pipe_io, int persistent) {
 
   _status = 0;
   _persistent = persistent;
+  _idle = NULL;
 }
 
 OExec::~OExec() {
+  if (_idle) delete _idle;
   if (_input_fd  >= 0) close(_input_fd);
   if (_output_fd >= 0) close(_output_fd);
   if (_error_fd  >= 0) close(_error_fd);
@@ -91,6 +103,18 @@ OExec::~OExec() {
     //if (_pid > 0) waitpid(_pid, &_status, WNOHANG);
   }
   _childList->Remove(_pid);
+}
+
+int OExec::HandleIdleEvent(OIdleHandler *idle) {
+  if (idle != _idle) return False;
+
+  OExecMessage msg(MSG_EXEC, MSG_APPEXITED, _pid);
+  SendMessage(_msgObject, &msg);
+
+  delete _idle;
+  _idle = NULL;
+
+  //_pid = -1;
 }
 
 int OExec::Read(char *buf, int len) {
@@ -147,9 +171,14 @@ void OExec::CatchExit(int signo) {
 int OExec::_Exited(int status) {
   _status = status;
 
-  OExecMessage msg(MSG_EXEC, MSG_APPEXITED, _pid);
-  SendMessage(_msgObject, &msg);
+  // Do not send the MSG_APPEXITED at this point, since we're still
+  // inside the signal handler and the application might generate
+  // Xlib requests in response to the message that would conflict with
+  // interrupted Xlib calls. Instead, schedule an idle event and then
+  // send the message when it is safe to do so.
 
-  //_pid = -1;
+  if (_idle) delete _idle;
+  _idle = _client ? new OIdleHandler(this) : NULL;
+
   return 0;
 }

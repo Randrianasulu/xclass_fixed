@@ -29,6 +29,7 @@
 
 #include <xclass/utils.h>
 #include <xclass/OComponent.h>
+#include <xclass/OIdleHandler.h>
 #include <xclass/OMessage.h>
 #include <xclass/OXSList.h>
 
@@ -43,9 +44,11 @@ protected:
   static void CatchExit(int signo);
 
 public:
-  OExec(const char *prog, char *argv[], int pipe_io = True,
+  OExec(OXClient *c, const char *prog, char *argv[], int pipe_io = True,
         int persistent = False);
   ~OExec();
+
+  virtual int HandleIdleEvent(OIdleHandler *);
 
   int Read(char *buf, int len);
   int ReadError(char *buf, int len);
@@ -61,15 +64,13 @@ public:
   int GetStatus() const { return _status; }
   int GetExitCode();
   
-  void Associate(OComponent *obj) { _msgObject = obj; }
-
 protected:
   int _Exited(int status);
 
   int _input_fd, _output_fd, _error_fd;
   int _pid, _status, _persistent;
   
-  OComponent *_msgObject;
+  OIdleHandler *_idle;
 };
 
 

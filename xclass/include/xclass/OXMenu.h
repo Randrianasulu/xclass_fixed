@@ -110,7 +110,6 @@ public:
   virtual int  HandleCrossing(XCrossingEvent *event);
   virtual int  HandleKey(XKeyEvent *event);
   virtual int  HandleTimer(OTimer *t);
-  virtual void Associate(const OComponent *w) { _msgObject = w; }
   virtual ODimension GetDefaultSize() const;
 
   friend class OXMenuTitle;
@@ -128,7 +127,6 @@ protected:
   OMenuEntry *_first, *_last, *_current;
   OXGC *_normGC, *_selGC, *_selbackGC;
   const OXFont *_font, *_hifont;
-  const OComponent *_msgObject;
   int _stick;
   int _hasgrab, _popdown;
   int _xl, _xr;

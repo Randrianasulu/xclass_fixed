@@ -48,7 +48,6 @@ public:
             unsigned int options = CHILD_FRAME);
   virtual ~OXToolBar();
 
-  void Associate(const OComponent *w) { _msgObject = w; }
   void AddButton(OXButton *b, char *tip_text = NULL);
   OXButton *AddButton(const OPicture *pic, char *tip_text, int type, int id);
   void AddButtons(SToolBarData *data);
@@ -57,7 +56,6 @@ public:
   OXButton *GetButtonById(int id);
 
 protected:
-  const OComponent *_msgObject;
   int _spacing;
 };
 

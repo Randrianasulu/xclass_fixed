@@ -45,7 +45,6 @@ public:
 
   virtual int ProcessMessage(OMessage *msg);
 
-  void Associate(OComponent *c) { _msgObject = c; }
   void PlacePopup(int x, int y, int w, int h);
   void EndPopup();
   
@@ -53,7 +52,6 @@ public:
 
 protected:
   int _isDown, _kev;
-  OComponent *_msgObject;
 };
 
 
