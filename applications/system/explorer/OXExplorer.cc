@@ -119,7 +119,7 @@ void strip_trailing_slashes(char *path) {
 
 char *basename(char *name, char *suffix = NULL) {
   strip_trailing_slashes(name);
-  char *base = rindex(name, '/');
+  char *base = strrchr(name, '/');
   if (base) base++; else base = name;
   if (suffix) remove_suffix(base, suffix);
 
@@ -128,7 +128,7 @@ char *basename(char *name, char *suffix = NULL) {
 
 char *dirname(char *name) {
   strip_trailing_slashes(name);
-  char *line = rindex(name, '/');
+  char *line = strrchr(name, '/');
   if (line) {
     while (line > name && *line == '/') --line;
     line[1] = 0;
@@ -572,10 +572,10 @@ void OXExplorer::SaveIniFile() {
 
   rcfile.PutNext("defaults");
 
-  rcfile.PutItem("DisplayFullPath", DispFullPath ? "True" : "False");
-  rcfile.PutItem("NewBrowser", NewBrowser ? "True" : "False");
-  rcfile.PutItem("ShowToolBar", _toolBar->IsVisible() ? "True" : "False");
-  rcfile.PutItem("ShowStatusBar", _statusBar->IsVisible() ? "True" : "False");
+  rcfile.PutBool("DisplayFullPath", DispFullPath);
+  rcfile.PutBool("NewBrowser", NewBrowser);
+  rcfile.PutBool("ShowToolBar", _toolBar->IsVisible());
+  rcfile.PutBool("ShowStatusBar", _statusBar->IsVisible());
 
   switch (_viewMode) {
     default:
