@@ -29,3 +29,4 @@ TODO
 - Horizontal scroll of the view panes
 - CVS revision diff
 - Code cleanup
+- Capture diff stderr
