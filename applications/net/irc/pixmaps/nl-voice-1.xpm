@@ -1,5 +1,5 @@
 /* XPM */
-static char * nl_voice_xpm[] = {
+static char * nl_voice[] = {
 "14 14 4 1",
 " 	s None	m none	c None",
 ".	s iconColor1	m black	c black",
@@ -7,13 +7,13 @@ static char * nl_voice_xpm[] = {
 "o	c #808080",
 "    .....     ",
 "  ..XXXXX..   ",
-" .oXXXXXXXo.  ",
-" .XXX..XXXX.o ",
-".XXXX..XXXXX. ",
-".XXXX..XXXX.  ",
+" .oX..XXXXo.  ",
+" .XX..XXXXX.o ",
+".XXX..XXX..   ",
+".XXXXXX..     ",
+".XXXXX.       ",
+".XXXXXX..     ",
 ".XXXXXXXX..   ",
-".XXXXXX.o     ",
-".XXXXX.....o  ",
 " .XXXXXXXXX.o ",
 " .oXXXXXXXo.  ",
 "  ..XXXXX..   ",

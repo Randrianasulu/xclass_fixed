@@ -1,5 +1,5 @@
 /* XPM */
-static char * tb_join[] = {
+static char * tb_leave_xpm[] = {
 "16 16 3 1",
 " 	s None	m none	c None",
 ".	s iconColor1	m black	c black",
@@ -10,9 +10,9 @@ static char * tb_join[] = {
 "    .  X  X   . ",
 "       X  X   . ",
 "  .   XXXXXX  . ",
-"  ..   X  X   . ",
+" ..    X  X   . ",
 ".....  X  X   . ",
-"  ..   X  X   . ",
+" ..    X  X   . ",
 "  .   XXXXXX  . ",
 "       X  X   . ",
 "    .  X  X   . ",
