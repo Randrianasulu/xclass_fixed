@@ -319,7 +319,7 @@ int OXTestMainFrame::ProcessMessage(OMessage *msg) {
 
     case MSG_BUTTON:
     case MSG_MENU:
-      switch(msg->action) {
+      switch (msg->action) {
 
         case MSG_SELECT:
           Debug(DBG_INFO, "Pointer over menu entry, ID=%d\n", wmsg->id);
@@ -332,7 +332,7 @@ int OXTestMainFrame::ProcessMessage(OMessage *msg) {
               new OXTestMsgBox(clientX->GetRoot(), this, 400, 200);
             break;
           }
-          switch(wmsg->id) {
+          switch (wmsg->id) {
 
             case M_FILE_OPEN:
               {
@@ -361,9 +361,7 @@ int OXTestMainFrame::ProcessMessage(OMessage *msg) {
 
             case M_FILE_EXIT:
               Debug(DBG_INFO, "\nM_FILE_EXIT\n");
-              delete this; // mainWindow;
-              delete clientX;
-              exit(0);
+              CloseWindow();
               break;
 
             case M_TEST_MSGBOX:
@@ -412,19 +410,19 @@ int OXTestMainFrame::ProcessMessage(OMessage *msg) {
             default:
               Debug(DBG_INFO, "\nID: %d\n", wmsg->id);
               break;
-          } // switch(msg->id)
+          } // switch (msg->id)
           break;
 
         default:
           break;
 
-      } // switch(msg->action)
+      } // switch (msg->action)
       break;
 
     default:
       break;
 
-  } // switch(msg->type)
+  } // switch (msg->type)
 
   return True;
 }
@@ -535,12 +533,12 @@ OXTestDialog::~OXTestDialog() {
 int OXTestDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch(msg->type) {
+  switch (msg->type) {
 
     case MSG_BUTTON:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case 1:
               _tab->RemoveTab(1);
               break;
@@ -557,9 +555,9 @@ int OXTestDialog::ProcessMessage(OMessage *msg) {
       break;
 
     case MSG_RADIOBUTTON:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case 81:
               rad2->SetState(BUTTON_UP);
               break;
@@ -724,12 +722,12 @@ int OXTestMsgBox::ProcessMessage(OMessage *msg) {
   OString stitle(tbtitle->GetString());
   OString smsg(tbmsg->GetString());
 
-  switch(msg->action) {
+  switch (msg->action) {
     case MSG_CLICK:
 
-      switch(msg->type) {
+      switch (msg->type) {
         case MSG_BUTTON:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case 1:
               buttons = 0;
               for (i=0; i<10; ++i)
@@ -877,12 +875,12 @@ int OXTestSliders::ProcessMessage(OMessage *msg) {
   OTextEntryMessage *temsg;
   OSliderMessage *slmsg;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_TEXTENTRY:
       temsg = (OTextEntryMessage *) msg;
-      switch(temsg->action) {
+      switch (temsg->action) {
         case MSG_TEXTCHANGED:
-	  switch(temsg->id) {
+	  switch (temsg->id) {
 	    case HId1:
 		hslider1->SetPosition(atoi(tbh1->GetString()));
 		break;
@@ -903,7 +901,7 @@ int OXTestSliders::ProcessMessage(OMessage *msg) {
     case MSG_VSLIDER:
     case MSG_HSLIDER:
       slmsg = (OSliderMessage *) msg;
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_SLIDERPOS:
 	  sprintf(buf, "%d", slmsg->pos);
 	  switch (slmsg->id) {

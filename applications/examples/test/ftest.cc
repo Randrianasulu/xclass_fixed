@@ -190,9 +190,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
               break;
 
             case M_FILE_EXIT:
-              delete this; // mainWindow;
-              delete clientX;
-              exit(0);
+              CloseWindow();
               break;
 
             default:
