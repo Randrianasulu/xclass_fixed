@@ -15,10 +15,12 @@ SRCS = btest.cc \
 	colorsel.cc \
 	combotest.cc \
 	docktest.cc \
+	exception.cc \
 	exec.cc \
 	favordlg.cc \
 	flies.cc \
 	ftest.cc \
+	htmltest.cc \
 	listview.cc \
 	mditest.cc \
 	progbar.cc \
