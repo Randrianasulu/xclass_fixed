@@ -2435,7 +2435,7 @@ OPicture.cc
   focused while a modal dialog box is being displayed).
 
 
-27/06/04  (0.8.4)
+27/06/04
 
 - Added OXToolBarButton from foxftp to the core lib.
 
