@@ -105,7 +105,7 @@ protected:
   OXDDPopup *_ddframe;
   OXListBox *_lb;
   OLayoutHints *_lhs, *_lhb, *_lhdd;
-  OMessage *message;
+  OMessage *_message;
 };
 
 

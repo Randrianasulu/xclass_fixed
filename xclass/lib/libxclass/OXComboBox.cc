@@ -84,6 +84,7 @@ OXComboBox::OXComboBox(const OXWindow *p, const char *text, int id,
     // combo box have the default focus. (Perhaps we should derivate
     // OXComboBox directly from OXTextEntry?)
 
+    _message = NULL;
     TakeFocus(False);
 }
 
@@ -91,6 +92,7 @@ OXComboBox::~OXComboBox() {
   delete _dd;
   delete _l1;
   delete _l2;
+  if (_message) delete _message;
 }
 
 ODimension OXComboBox::GetDefaultSize() const {
@@ -119,6 +121,11 @@ void OXComboBox::_PopDown() {
   XTranslateCoordinates(GetDisplay(), _id, (_dd->GetParent())->GetId(),
                         0, _h, &ax, &ay, &wdummy);
   _dd->PlacePopup(ax, ay, _w-2, _dd->GetDefaultHeight());
+  if (_message) {
+    SendMessage(_msgObject, _message);
+    delete _message;
+    _message = NULL;
+  }
 }
 
 OXLBEntry *OXComboBox::Select(int ID) {
@@ -139,6 +146,9 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
   OXLBEntry *e;
   OTextEntryMessage *temsg;
   OListBoxMessage *lbmsg;
+
+  if (_message) delete _message;
+  _message = NULL;
 
   switch (msg->type) {
     case MSG_TEXTENTRY:
@@ -190,11 +200,22 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
           e = _lb->GetSelectedEntry();
           if (e && lbmsg->id) {
             _UpdateText(e);
+
+            // We can have a potential problem here if we send a message as
+            // this point and if, as a result of that action, the destination
+            // widget creates some transient window which in order issues a
+            // call to WaitFor (like an OXMessageBox). At this point we're
+            // still inside a WaitForUnmap loop, and the WaitFor call will
+            // cause OXClient to miss the UnmapNotify event for the OXDDPopup
+            // window, looping here forever. So, as a solution, we create
+            // the message here and defer the send operation until we just
+            // exit the WaitForUnmap loop (i.e. after returning from
+            // PlacePopup).
+
             // TODO: update total/selected fields
-            // also send messages on MSG_SELCHANGED
-            OComboBoxMessage cmsg(MSG_COMBOBOX, msg->action, _widgetID,
-                                  e->ID(), 0, 0, 0);
-            SendMessage(_msgObject, &cmsg);
+            // (also send messages on MSG_SELCHANGED?)
+            _message = new OComboBoxMessage(MSG_COMBOBOX, msg->action,
+                                            _widgetID, e->ID(), 0, 0, 0);
           }
           break;
       }

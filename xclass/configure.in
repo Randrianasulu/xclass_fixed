@@ -7,7 +7,7 @@ XCLASS_MAJOR_VERSION=0
 XCLASS_MINOR_VERSION=8
 XCLASS_PATCH_LEVEL=2
 XCLASS_VERSION=$XCLASS_MAJOR_VERSION.$XCLASS_MINOR_VERSION.$XCLASS_PATCH_LEVEL
-XCLASS_RELEASE_DATE=15-May-2003
+XCLASS_RELEASE_DATE=16-May-2003
 
 AC_SUBST(XCLASS_MAJOR_VERSION)
 AC_SUBST(XCLASS_MINOR_VERSION)
@@ -147,11 +147,33 @@ if test "${CXX}" = "g++" ; then
   CXXFLAGS="${CXXFLAGS} -Wall"
 fi
 
+# gcc 3.x series complain about adding include directories that they already
+# know about, so we will take those off from the include path.
+
+if test "$prefix" = "NONE" ; then
+    xclass_include=${ac_default_prefix}/include
+else
+    xclass_include=${prefix}/include
+fi
+
+echo -n "checking for $xclass_include in ${CXX} include path... "
+
+echo "int main() { return 0; }" > try.cc
+warn=`${CXX} -I$xclass_include -c try.cc 2>&1 | grep 'warning: changing search order '`
+if test "$warn" != ""; then
+    echo "yes"
+    xclass_include=""
+else
+    echo "no"
+fi
+rm -f try try.*
+
 AC_SUBST(x_lib_path)
 AC_SUBST(x_libraries)
 AC_SUBST(x_inc_path)
 AC_SUBST(x_includes)
 AC_SUBST(xclass_cflags)
+AC_SUBST(xclass_include)
 AC_SUBST(xclass_libs)
 # AC_SUBST(R6libs)
 

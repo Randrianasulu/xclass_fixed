@@ -202,7 +202,7 @@ OXDDListBox::OXDDListBox(const OXWindow *p, int ID,
                 ButtonPressMask | ButtonReleaseMask,
                 GrabModeAsync, GrabModeAsync, None, None);
 
-    message = NULL;
+    _message = NULL;
     AddInput(FocusChangeMask);
 }
 
@@ -211,7 +211,7 @@ OXDDListBox::~OXDDListBox() {
   delete _lhs;
   delete _lhb;
   delete _lhdd;
-  if (message) delete message;
+  if (_message) delete _message;
 }
 
 ODimension OXDDListBox::GetDefaultSize() const {
@@ -255,8 +255,8 @@ int OXDDListBox::ProcessMessage(OMessage *msg) {
   OXLBEntry *e;
   OListBoxMessage *lbmsg;
 
-  if (message) delete message;
-  message = NULL;
+  if (_message) delete _message;
+  _message = NULL;
 
   switch (msg->type) {
     case MSG_DDLISTBOX:
@@ -279,8 +279,8 @@ int OXDDListBox::ProcessMessage(OMessage *msg) {
           // defer the send operation until we just exit the WaitForUnmap
           // loop (i.e. after returning from PlacePopup).
 
-	  message = new OListBoxMessage(MSG_DDLISTBOX, MSG_CLICK,
-                                        _widgetID, e->ID());
+	  _message = new OListBoxMessage(MSG_DDLISTBOX, MSG_CLICK,
+                                         _widgetID, e->ID());
           break;
       }
       break;
@@ -297,8 +297,8 @@ void OXDDListBox::_LostFocus() {
   // Shouldn't have to send a listbox msg for this..
   // maybe a focus message would be better..
   
-  OListBoxMessage message(MSG_DDLISTBOX, MSG_FOCUSLOST, _widgetID, -1);
-  SendMessage(_msgObject, &message);
+  OListBoxMessage msg(MSG_DDLISTBOX, MSG_FOCUSLOST, _widgetID, -1);
+  SendMessage(_msgObject, &msg);
 }
 
 void OXDDListBox::_GotFocus() {
@@ -317,10 +317,10 @@ void OXDDListBox::_PopDown() {
                         0, _h, &ax, &ay, &wdummy);
 
   _ddframe->PlacePopup(ax, ay, _w-2, _ddframe->GetDefaultHeight());
-  if (message) {
-    SendMessage(_msgObject, message);
-    delete message;
-    message = NULL;
+  if (_message) {
+    SendMessage(_msgObject, _message);
+    delete _message;
+    _message = NULL;
   }
 }
 

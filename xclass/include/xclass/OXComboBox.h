@@ -96,6 +96,7 @@ protected:
   OXDDPopup *_dd;
   OXListBox *_lb;
   OLayoutHints *_l1, *_l2;
+  OMessage *_message;
 };
 
 

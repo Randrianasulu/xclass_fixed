@@ -2398,3 +2398,10 @@ OPicture.cc
 - Corrected 'std::' namespace and C++ standard header problems, xclass
   should compile now with g++ 3.2.
 
+- Added a test to the configure script to check whether ${prefix}/include
+  is already in the compiler's search path (g++ 3 series are very picky
+  about that).
+
+- OXComboBox: defer sending messages until the popdown listbox is unmapped
+  (like OXDDListBox does).
+  
