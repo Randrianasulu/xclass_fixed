@@ -1,0 +1,520 @@
+/**************************************************************************
+
+    This file is part of a xclass desktop manager.
+    Copyright (C) 1996-2000 David Barth, Hector Peraza.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+**************************************************************************/
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <assert.h>
+
+#include <X11/Xatom.h>
+
+#include <xclass/utils.h>
+#include <xclass/OXFrame.h>
+#include <xclass/OXClient.h>
+#include <xclass/OString.h>
+#include <xclass/OXListView.h>
+#include <xclass/OResourcePool.h>
+#include <xclass/OGC.h>
+#include <xclass/OXFont.h>
+#include <xclass/ODNDmanager.h>
+
+#include "URL.h"
+#include "OXDesktopIcon.h"
+#include "OXDesktopContainer.h"
+
+#include <X11/cursorfont.h>
+#include <X11/extensions/shape.h>
+
+
+/**********************************************/
+/*  WARNING: Weird things are going on here!  */
+/**********************************************/
+
+
+Cursor OXDesktopIcon::_defaultCursor = None;
+unsigned int OXDesktopIcon::_selPixel;
+OXGC *OXDesktopIcon::_defaultGC;
+const OXFont *OXDesktopIcon::_defaultFont = NULL;
+
+extern ODNDmanager *dndManager;
+extern Atom URI_list;
+
+//---------------------------------------------------------------------------
+
+OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
+                             const OPicture *lpic, OString *text,
+                             int type, unsigned long size,
+                             unsigned int options, unsigned long back) :
+  OXFrame(p, 32, 32, options, back) {
+
+  if (!_defaultFont) {
+    XGCValues gval;
+    unsigned long gmask;
+
+    _defaultFont = GetResourcePool()->GetIconFont();
+    _selPixel = GetResourcePool()->GetSelectedFgndColor();
+
+    gmask = GCForeground | GCBackground | GCFont |
+            GCFillStyle | GCGraphicsExposures;
+    gval.fill_style = FillSolid;
+    gval.graphics_exposures = False;
+    gval.font = _defaultFont->GetId();
+    gval.background = GetResourcePool()->GetFrameBgndColor();
+    gval.foreground = GetResourcePool()->GetFrameFgndColor();
+    _defaultGC = new OXGC(GetDisplay(), _id, gmask, &gval);
+
+    _defaultCursor = XCreateFontCursor(GetDisplay(), XC_top_left_arrow);
+  }
+
+  _pic  = pic;
+  _lpic = lpic;
+  _name = text;
+  _selpic = NULL;
+  _type = type;
+  _size = size;
+  _is_link = (_lpic != NULL);
+
+  _active = _last_state = False;
+  _bdown = False;
+  _dragging = False;
+
+  _normGC = _defaultGC;
+  _font = _defaultFont;
+
+  OFontMetrics fm;
+
+  _tw = _font->TextWidth(_name->GetString(), _name->GetLength());
+  _th = _font->TextHeight();
+  _font->GetFontMetrics(&fm);
+  _ta = fm.ascent;
+
+  XSetWindowAttributes wattr;
+  unsigned long mask;
+
+  bx = by = -1;
+
+  mask = CWOverrideRedirect | CWBackPixmap;
+  wattr.background_pixmap = ParentRelative;
+  wattr.override_redirect = True;
+    
+  XChangeWindowAttributes(GetDisplay(), _id, mask, &wattr);
+
+  Resize(GetDefaultSize());
+
+  AddInput(ButtonPressMask | ButtonReleaseMask | PointerMotionMask);
+
+  XDefineCursor(GetDisplay(), _id, _defaultCursor);
+
+  int _version = 4; //XDND_PROTOCOL_VERSION;
+
+  XChangeProperty(GetDisplay(), _id, ODNDmanager::DNDaware, XA_ATOM, 32,
+                  PropModeReplace, (unsigned char *) &_version, 1);
+
+/*
+  if (typelist) {
+    int n = _ArrayLength(typelist);
+    if (n > 0) {
+      XChangeProperty(GetDisplay(), _id, ODNDmanager::DNDaware, XA_ATOM, 32,
+                      PropModeAppend, (unsigned char *) typelist, n);
+    }
+  }
+*/
+
+#if 0
+  _dndManager = dndManager;
+#else
+  static Atom dndTypeList[2];
+
+  dndTypeList[0] = URI_list;
+  dndTypeList[1] = NULL;
+
+  ////////////////////////////////////// vvvvvvvvvvvvvvv WOW!!!  
+  _dndManager = new ODNDmanager(_client, (OXMainFrame *) this, dndTypeList);
+#endif
+}
+
+OXDesktopIcon::~OXDesktopIcon() {
+  if (_name) delete _name;
+  if (_selpic) delete _selpic;
+  if (_normGC != _defaultGC) delete _normGC;
+  if (_font != _defaultFont) _client->FreeFont((OXFont *) _font);
+}
+
+void OXDesktopIcon::Activate(int a) {
+  if (_active == a) return;
+  _active = a;
+  
+  if (_active) {
+    _selpic = new OSelectedPicture(_client, _pic);
+  } else {
+    if (_selpic) delete _selpic;
+    _selpic = NULL;
+  }
+
+  _DoRedraw();
+}
+
+void OXDesktopIcon::Layout() {
+  int ix, iy, lx, ly;
+  XRectangle rect;
+
+  ix = (_w - _pic->GetWidth()) >> 1;
+  iy = 0;
+  lx = (_w - _tw) >> 1;
+  ly = _h - (_th+1) - 2;
+
+  OXFrame::Layout();
+  
+  if (_pic->GetMask() != None) {
+    XShapeCombineMask(GetDisplay(), _id, ShapeBounding,
+                      ix, iy, _pic->GetMask(), ShapeSet);
+  } else {
+    rect.x = 0;
+    rect.y = 0;
+    rect.width  = _pic->GetWidth();
+    rect.height = _pic->GetHeight();
+    XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
+                            ix, iy, &rect, 1, ShapeSet, Unsorted);
+  }
+
+  if (_lpic && _lpic->GetMask() != None) {
+    XShapeCombineMask(GetDisplay(), _id, ShapeBounding,
+                      ix, iy, _lpic->GetMask(), ShapeUnion);
+  }
+
+  rect.x = 0;
+  rect.y = 0;
+  rect.width  = _tw;
+  rect.height = _th+1;
+  XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
+                          lx, ly, &rect, 1, ShapeUnion, Unsorted);
+}
+
+void OXDesktopIcon::_DoRedraw() {
+  int ix, iy, lx, ly;
+
+  ix = (_w - _pic->GetWidth()) >> 1;
+  iy = 0;
+  lx = (_w - _tw) >> 1;
+  ly = _h - (_th+1) - 2;
+
+  if (_active) {
+    if (_selpic) _selpic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
+    _normGC->SetForeground(_defaultSelectedBackground);
+    FillRectangle(_normGC->GetGC(), lx, ly, _tw, _th+1);
+    _normGC->SetForeground(_selPixel);
+  } else {
+    _pic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
+//    _normGC->SetForeground(GetResourcePool()->GetDocumentBgndColor());
+    _normGC->SetForeground(_client->GetColorByName("turquoise4"));
+    FillRectangle(_normGC->GetGC(), lx, ly, _tw, _th+1);
+//    _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
+    _normGC->SetForeground(_whitePixel);
+  }
+
+  if (_lpic) _lpic->Draw(GetDisplay(), _id, _normGC->GetGC(), ix, iy);
+
+  _name->Draw(GetDisplay(), _id, _normGC->GetGC(), lx, ly + _ta);
+  _normGC->SetForeground(GetResourcePool()->GetDocumentFgndColor());
+}
+
+ODimension OXDesktopIcon::GetDefaultSize() const {
+  ODimension size;
+
+  size.w = max(_pic->GetWidth(), _tw);
+  size.h = _pic->GetHeight() + _th+1 + 6;
+
+  return size;
+}
+
+
+int OXDesktopIcon::HandleButton(XButtonEvent *event) {
+
+  event->window = _fw->GetId();
+  event->subwindow = _id;
+
+  _fw->HandleButton(event);
+
+  if (event->button == Button1) {
+    if (event->type == ButtonPress) {
+      _bdown = True;
+      bx = _x;
+      by = _y;
+      x0 = event->x;
+      y0 = event->y;
+    } else {  // ButtonRelease
+      if (_dragging) _dndManager->Drop();
+      _bdown = False;
+      _dragging = False;
+      if ((bx != _x) || (by != _y)) {
+//        PlaceIcon();
+      }
+    }
+  }
+
+  return True;
+}
+
+int OXDesktopIcon::HandleDoubleClick(XButtonEvent *event) {
+
+  event->window = _fw->GetId();
+  event->subwindow = _id;
+
+  _fw->HandleDoubleClick(event);
+
+  return True;
+}
+
+int OXDesktopIcon::HandleMotion(XMotionEvent *event) {
+
+  bx = event->x_root;
+  by = event->y_root;
+
+  if (!_dragging) {
+    if (_bdown && ((abs(event->x - x0) > 3) || (abs(event->y - y0) > 3))) {
+      if (_dndManager) {
+        _SetDragPixmap();
+        _dragging = _dndManager->StartDrag(this, event->x_root, event->y_root, _id);
+      }
+    }
+  }
+
+  if (_dragging) {
+    _dndManager->Drag(event->x_root, event->y_root,
+                      ODNDmanager::DNDactionCopy, event->time);
+  }
+
+  return True;
+}  
+
+void OXDesktopIcon::InitPos() {
+  if (bx != -1) Move(bx, by);
+  MapWindow();
+  LowerWindow();
+}
+
+void OXDesktopIcon::PlaceIcon(int x, int y) {
+  Move((x|1)-_w/2, (y|1)-(2+_pic->GetHeight()/2));
+  ((OXDesktopContainer *)_fw)->Save();
+}
+
+void OXDesktopIcon::_SetDragPixmap() {
+  Pixmap pic, mask;
+  XGCValues gcval;
+  unsigned long gcmask;
+  GC _picGC, _maskGC;
+  int ix, iy, lx, ly;
+  OFontMetrics fm;
+
+  const OResourcePool *res = _client->GetResourcePool();
+
+  ix = (_w - _pic->GetWidth()) >> 1;
+  iy = 0;
+  lx = (_w - _tw) >> 1;
+  ly = _h - (_th+1) - 2;
+
+  pic  = XCreatePixmap(GetDisplay(), _id, _w, _h, _client->GetDisplayDepth());
+  mask = XCreatePixmap(GetDisplay(), _id, _w, _h, 1);
+
+  gcmask = GCForeground | GCFont;
+  gcval.font = _font->GetId();
+  gcval.foreground = _blackPixel; //_whitePixel;
+  _picGC = XCreateGC(GetDisplay(), _id, gcmask, &gcval);
+
+  gcmask = GCForeground | GCBackground;
+  gcval.foreground = 0;
+  gcval.background = 0;
+  _maskGC = XCreateGC(GetDisplay(), mask, gcmask, &gcval);
+
+  // Draw the pixmap...
+
+  if (_pic)
+    _pic->Draw(GetDisplay(), pic, _picGC, ix, iy);
+
+  if (_lpic)
+    _lpic->Draw(GetDisplay(), pic, _picGC, ix, iy);
+
+  XDrawString(GetDisplay(), pic, _picGC, lx, ly + _ta,
+              _name->GetString(), _name->GetLength());
+
+
+  // Now draw the mask: first clear the pixmap...
+  XFillRectangle(GetDisplay(), mask, _maskGC, 0, 0, _w, _h);
+
+  // ...then draw the icon mask
+  gcmask = GCForeground | GCFillStyle | GCStipple |
+           GCClipMask | GCClipXOrigin | GCClipYOrigin |
+           GCTileStipXOrigin | GCTileStipYOrigin;
+  gcval.foreground = 1;
+  gcval.fill_style = FillStippled;
+  gcval.stipple = res->GetCheckeredBitmap();
+  gcval.clip_mask = _pic->GetMask();
+  gcval.clip_x_origin = ix;
+  gcval.clip_y_origin = iy;
+  gcval.ts_x_origin = ix;
+  gcval.ts_y_origin = iy;
+  XChangeGC(GetDisplay(), _maskGC, gcmask, &gcval);
+
+  XFillRectangle(GetDisplay(), mask, _maskGC, ix, iy,
+                 _pic->GetWidth(), _pic->GetHeight());
+
+  if (_lpic) {
+    gcmask = GCClipMask;
+    gcval.clip_mask = _lpic->GetMask();
+    XChangeGC(GetDisplay(), _maskGC, gcmask, &gcval);
+
+    XFillRectangle(GetDisplay(), mask, _maskGC, ix, iy,
+                   _lpic->GetWidth(), _lpic->GetHeight());
+  }
+
+  // ...then draw the label
+  gcmask = GCFillStyle | GCClipMask | GCFont;
+  gcval.fill_style = FillSolid;
+  gcval.clip_mask = None;
+  gcval.font = _font->GetId();
+  XChangeGC(GetDisplay(), _maskGC, gcmask, &gcval);
+
+  XDrawString(GetDisplay(), mask, _maskGC, lx, ly + _ta,
+              _name->GetString(), _name->GetLength());
+
+  XFreeGC(GetDisplay(), _picGC);
+  XFreeGC(GetDisplay(), _maskGC);
+
+  if (_dndManager) {
+    _dndManager->SetDragPixmap(pic, mask, _w/2, 2+_pic->GetHeight()/2);
+  } else {
+    XFreePixmap(GetDisplay(), pic);
+    XFreePixmap(GetDisplay(), mask);
+  }
+}
+
+//----------------------------------------------------------------------
+
+// The following routines are required by the DND manager.
+
+int OXDesktopIcon::HandleClientMessage(XClientMessageEvent *event) {
+  if (_dndManager) {
+    if (_dndManager->HandleClientMessage(event)) return True;
+  }
+  return OXFrame::HandleClientMessage(event);
+}
+
+int OXDesktopIcon::HandleSelection(XSelectionEvent *event) {
+  if (event->selection == ODNDmanager::DNDselection) {
+    if (_dndManager)
+      return _dndManager->HandleSelection(event);
+  }
+  return OXFrame::HandleSelection(event);
+}
+
+int OXDesktopIcon::HandleSelectionRequest(XSelectionRequestEvent *event) {
+  if (event->selection == ODNDmanager::DNDselection) {
+    if (_dndManager)
+      return _dndManager->HandleSelectionRequest(event);
+  }
+  return OXFrame::HandleSelectionRequest(event);
+}
+
+//----------------------------------------------------------------------
+
+Atom OXDesktopIcon::HandleDNDenter(Atom *typelist) {
+  _last_state = _active;
+  Activate(True);
+
+  for (int i = 0; typelist[i] != NULL; ++i)
+    if (typelist[i] == URI_list) return typelist[i];
+
+  return None;
+}
+
+int OXDesktopIcon::HandleDNDleave() {
+  Activate(_last_state);
+  return True;
+}
+
+Atom OXDesktopIcon::HandleDNDposition(int x, int y, Atom action,
+                                      int xroot, int yroot) {
+//printf("OXDesktopIcon: dnd position (%#x)\n", action);
+  // _dndAction = action;
+
+  // directories usually would accept any of the standard xdnd actions...
+  if (S_ISDIR(_type)) return action;
+
+  // for executable files we should return XdndActionPrivate
+  // but remember if the source requested XdndActionAsk in order
+  // to give the user a choice using a context menu...
+  if ((_type & S_IXUSR) || (_type & S_IXGRP) || (_type & S_IXOTH))
+    return ODNDmanager::DNDactionPrivate;
+
+  // otherwise refuse the drop
+  return None;
+}
+
+int OXDesktopIcon::HandleDNDdrop(ODNDdata *data) {
+printf("OXDesktopIcon: dnd drop (%s)\n", (char *) data->data);
+  Activate(_last_state);
+  if (_dndManager->GetTarget() == _id) {
+    PlaceIcon();
+  } else {
+    // do action here...
+    char *str = (char *) data->data;
+    if (str) {
+      URL url(str);
+
+      // fork() -> exec(_name->GetString(), url.full_path)
+
+printf("exec %s %s\n", _name->GetString(), url.full_path);
+
+// if we're a folder we should move the file instead
+
+    }
+  }
+  return True;
+}
+
+int OXDesktopIcon::HandleDNDfinished() {
+printf("OXDesktopIcon: dnd finished\n");
+  Activate(_last_state);
+  return True;
+}
+
+ODNDdata *OXDesktopIcon::GetDNDdata(Atom dataType) {
+  static ODNDdata data;
+  static char str[1024];
+
+  if (dataType == URI_list) {
+    char cwd[PATH_MAX];
+
+    sprintf(str, "file://localhost/%s/%s\r\n", getcwd(cwd, PATH_MAX), _name->GetString());
+    data.data = (void *) str;
+    data.dataLength = strlen(str);
+    data.dataType = dataType;
+
+    return &data;
+
+  } else {
+
+    return NULL;
+
+  }
+}
