@@ -391,7 +391,41 @@ int OXListTree::HandleKey(XKeyEvent *event) {
         // fully expand this node
         break;
 
-      default:
+      default: {
+          char input[2] = { 0, 0 };
+          int  charcount;
+          KeySym keysym;
+          XComposeStatus compose = { NULL, 0 };
+          charcount = XLookupString(event, input, sizeof(input)-1,
+                                    &keysym, &compose);
+          if (charcount > 0) {
+            int passes = 0;
+            next = _selected;
+            while (passes < 2) {
+              if (next->open && next->firstchild) {
+                next = next->firstchild;
+              } else if (next->nextsibling) {
+                next = next->nextsibling;
+              } else {
+                while (next != _first) {
+                  next = next->parent;
+                  if (next->nextsibling) {
+                    next = next->nextsibling;
+                    break;
+                  }
+                }
+                if (next == _first) ++passes;
+              }
+              if (next->text[0] == input[0]) break;
+            }
+            if (passes < 2) {
+              if (_timer) delete _timer;
+              _timer = new OTimer(this, KBD_DELAY);
+            } else {
+              next = _selected;
+            }
+          }
+        }
         break;
     }
 

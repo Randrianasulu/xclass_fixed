@@ -412,14 +412,11 @@ int OXFileDialog::HandleMapNotify(XMapEvent *event) {
 }
 
 int OXFileDialog::ProcessMessage(OMessage *msg) {
-  int sel;
   OWidgetMessage *wmsg;
-  OContainerMessage *cmsg;
+  OItemViewMessage *cmsg;
   OXTreeLBEntry *e;
   OXTextLBEntry *te;
   OFileItem *f;
-  char path[PATH_MAX], tmp[256];
-  void *p = NULL;
   struct stat sbuf;
   vector<OItem *> items;
 
@@ -434,20 +431,18 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
       //---- buttons
 
       case ID_OK:
-        if (stat(_fname->GetString(), &sbuf) == 0 && S_ISDIR(sbuf.st_mode)) {
-          DefineCursor(GetResourcePool()->GetWaitCursor());
-          XFlush(GetDisplay());
-          if (_fv->ChangeDirectory(_fname->GetString()) != 0) {
-            sprintf(tmp, "Can't read directory \"%s\": %s.",
-                    _fname->GetString(), strerror(errno));
-            new OXMsgBox(_client->GetRoot(), _toplevel,
-                         new OString("Error"), new OString(tmp),
-                         MB_ICONSTOP, ID_OK);
+#if 0
+        if (_fv->HasFocus() && (_fv->NumSelected() == 1)) {
+          items = _fv->GetSelectedItems();
+          f = (OFileItem *) items[0];
+          if (S_ISDIR(f->GetFileType())) {
+            _ChangeDirectory(f->GetName()->GetString());
+            break;
           }
-          _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
-          if (_file_info->ini_dir) delete[] _file_info->ini_dir;
-          _file_info->ini_dir = StrDup(path);
-          DefineCursor(None);
+        }
+#endif
+        if (stat(_fname->GetString(), &sbuf) == 0 && S_ISDIR(sbuf.st_mode)) {
+          _ChangeDirectory(_fname->GetString());
         } else if (strspn(_fname->GetString(), "?*") > 0) {
           _fv->SetFileFilter(_fname->GetString());
         } else {
@@ -464,13 +459,7 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
         break;
 
       case IDF_CDUP:
-        DefineCursor(GetResourcePool()->GetWaitCursor());
-        XFlush(GetDisplay());
-        _fv->ChangeDirectory("..");
-        _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
-        if (_file_info->ini_dir) delete[] _file_info->ini_dir;
-        _file_info->ini_dir = StrDup(path);
-        DefineCursor(None);
+        _ChangeDirectory("..");
         break;
 
       case IDF_NEW_FOLDER:
@@ -488,41 +477,28 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
 
       case IDF_FAVOR:
         if (_dlg_type & FDLG_FAVOURITES) {  // paranoia check
-          DefineCursor(GetResourcePool()->GetWaitCursor());
-          XFlush(GetDisplay());
-          if (_fv->ChangeDirectory(_favorDir) != 0) {
-            sprintf(tmp, "Can't read directory \"%s\": %s.",
-                    _favorDir, strerror(errno));
-            new OXMsgBox(_client->GetRoot(), _toplevel,
-                         new OString("Error"), new OString(tmp),
-                         MB_ICONSTOP, ID_OK);
-          }
-          _tree_lb->UpdateContents(getcwd(_favorDir, PATH_MAX));
-          if (_file_info->ini_dir) delete[] _file_info->ini_dir;
-          _file_info->ini_dir = StrDup(_favorDir);
-          DefineCursor(None);
+          _ChangeDirectory(_favorDir);
         }
         break;
 
       case IDF_ADDFAVOR:
         if (_dlg_type & FDLG_FAVOURITES) {  // paranoia check
-          if ((sel = _fv->NumSelected()) == 1) { // otherwise use current dir?
-            char pathold[PATH_MAX];
+          if (_fv->NumSelected() == 1) { // otherwise use current dir?
+            char path[PATH_MAX], oldpath[PATH_MAX], tmp[256];
 
             items = _fv->GetSelectedItems();
             f = (OFileItem *) items[0];
 
-            sprintf(pathold, "%s/%s", _file_info->ini_dir,
+            sprintf(oldpath, "%s/%s", _file_info->ini_dir,
                     f->GetName()->GetString());
-            p = NULL;
             sprintf(path, "%s/%s", _favorDir, f->GetName()->GetString());
-            if (symlink(pathold, path) != 0) {
+            if (symlink(oldpath, path) != 0) {
               sprintf(tmp, "Error adding \"%s\" to favourites:\n%s.",
-                      pathold, strerror(errno));
+                      oldpath, strerror(errno));
               new OXMsgBox(_client->GetRoot(), _toplevel,
                            new OString("Error"), new OString(tmp),
                            MB_ICONSTOP, ID_OK);
-             return False;
+              return False;
             }
           }
         }
@@ -532,21 +508,7 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
 
       case IDF_FSLB:
         e = (OXTreeLBEntry *) _tree_lb->GetSelectedEntry();
-        if (e) {
-          DefineCursor(GetResourcePool()->GetWaitCursor());
-          XFlush(GetDisplay());
-          if (_fv->ChangeDirectory(e->GetPath()->GetString()) != 0) {
-            sprintf(tmp, "Can't read directory \"%s\": %s.",
-                    e->GetPath()->GetString(), strerror(errno));
-            new OXMsgBox(_client->GetRoot(), _toplevel,
-                         new OString("Error"), new OString(tmp),
-                         MB_ICONSTOP, ID_OK);
-          }
-          _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
-          if (_file_info->ini_dir) delete[] _file_info->ini_dir;
-          _file_info->ini_dir = StrDup(path);
-          DefineCursor(None);
-        }
+        if (e) _ChangeDirectory(e->GetPath()->GetString());
         break;
 
       case IDF_FTYPESLB:
@@ -569,11 +531,11 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
     break;
 
   case MSG_LISTVIEW:
-    cmsg = (OContainerMessage *) msg;
+    cmsg = (OItemViewMessage *) msg;
     switch(cmsg->action) {
     case MSG_CLICK:
       if (cmsg->button == Button1) {
-        if ((sel = _fv->NumSelected()) == 1) {
+        if (_fv->NumSelected() == 1) {
           items = _fv->GetSelectedItems();
 	  f = (OFileItem *) items[0];
           if (/*(_dlg_type & TYPE_MASK) == FDLG_SAVE && */S_ISDIR(f->GetFileType()))
@@ -587,23 +549,11 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
 
     case MSG_DBLCLICK:
       if (cmsg->button == Button1) {
-        if ((sel = _fv->NumSelected()) == 1) {
+        if (_fv->NumSelected() == 1) {
           items = _fv->GetSelectedItems();
           f = (OFileItem *) items[0];
           if (S_ISDIR(f->GetFileType())) {
-            DefineCursor(GetResourcePool()->GetWaitCursor());
-            XFlush(GetDisplay());
-            if (_fv->ChangeDirectory(f->GetName()->GetString()) != 0) {
-              sprintf(tmp, "Can't read directory \"%s\": %s.",
-                      f->GetName()->GetString(), strerror(errno));
-              new OXMsgBox(_client->GetRoot(), _toplevel,
-                           new OString("Error"), new OString(tmp),
-                           MB_ICONSTOP, ID_OK);
-            }
-            _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
-            if (_file_info->ini_dir) delete[] _file_info->ini_dir;
-            _file_info->ini_dir = StrDup(path);
-            DefineCursor(None);
+            _ChangeDirectory(f->GetName()->GetString());
           } else {
             if (_file_info->filename) delete[] _file_info->filename;
             _file_info->filename = StrDup(f->GetName()->GetString());
@@ -625,6 +575,26 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
   } // switch(msg->type)
 
   return True;
+}
+
+void OXFileDialog::_ChangeDirectory(const char *path) {
+  char tmp[PATH_MAX];
+
+  DefineCursor(GetResourcePool()->GetWaitCursor());
+  XFlush(GetDisplay());
+
+  if (_fv->ChangeDirectory(path) != 0) {
+    sprintf(tmp, "Can't read directory \"%s\": %s.", path, strerror(errno));
+    new OXMsgBox(_client->GetRoot(), _toplevel, new OString("Error"),
+                 new OString(tmp), MB_ICONSTOP, ID_OK);
+  }
+
+  _tree_lb->UpdateContents(getcwd(tmp, PATH_MAX));
+  if (_file_info->ini_dir) delete[] _file_info->ini_dir;
+  _file_info->ini_dir = StrDup(tmp);
+
+  DefineCursor(None);
+  XFlush(GetDisplay());
 }
 
 void OXFileDialog::_GrabAltKey(int keysym) {

@@ -136,6 +136,7 @@ public:
   char *TimeString(time_t tm);
 
   int FileMatch(const char *filename);
+  int IsEmptyDir(const char *dir);
 
 protected:
   void _CreateFileList();
@@ -146,12 +147,16 @@ protected:
   OTimer *_refresh;
   unsigned long _st_mtime;
   OMimeTypes *MimeTypesList;
-  const OPicture *_folder_t, *_folder_s;
-  const OPicture *_app_t,    *_app_s;
-  const OPicture *_doc_t,    *_doc_s;
-  const OPicture *_slink_t,  *_slink_s;
+  const OPicture *_folder_t,  *_folder_s;
+  const OPicture *_app_t,     *_app_s;
+  const OPicture *_doc_t,     *_doc_s;
+  const OPicture *_slink_t,   *_slink_s;
+  const OPicture *_desktop_t, *_desktop_s;
+  const OPicture *_rbempty_t, *_rbempty_s;
+  const OPicture *_rbfull_t,  *_rbfull_s;
   Atom _dndAction;
   ODNDmanager *_dndManager;
+  char *_recyclePath, *_desktopPath;
 
   int _autoRefresh, _dragging, _dragOverPrevState;
   OFileItem *_dragOver;

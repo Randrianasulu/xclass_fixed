@@ -317,22 +317,42 @@ OXFileList::OXFileList(const OXWindow *p, int id,
     _autoRefresh = True;
     _refresh = new OTimer(this, REFRESH_TIME);
 
-    _folder_s = _client->GetPicture("folder.s.xpm");
-    _folder_t = _client->GetPicture("folder.t.xpm");
-    _app_s    = _client->GetPicture("app.s.xpm");
-    _app_t    = _client->GetPicture("app.t.xpm");
-    _doc_s    = _client->GetPicture("doc.s.xpm");
-    _doc_t    = _client->GetPicture("doc.t.xpm");
-    _slink_s  = _client->GetPicture("slink.s.xpm");
-    _slink_t  = _client->GetPicture("slink.t.xpm");
+    _folder_s  = _client->GetPicture("folder.s.xpm");
+    _folder_t  = _client->GetPicture("folder.t.xpm");
+    _app_s     = _client->GetPicture("app.s.xpm");
+    _app_t     = _client->GetPicture("app.t.xpm");
+    _doc_s     = _client->GetPicture("doc.s.xpm");
+    _doc_t     = _client->GetPicture("doc.t.xpm");
+    _slink_s   = _client->GetPicture("slink.s.xpm");
+    _slink_t   = _client->GetPicture("slink.t.xpm");
+    _desktop_s = _client->GetPicture("desktop.s.xpm");
+    _desktop_t = _client->GetPicture("desktop.t.xpm");
+    _rbempty_s = _client->GetPicture("recycle-empty.s.xpm");
+    _rbempty_t = _client->GetPicture("recycle-empty.t.xpm");
+    _rbfull_s  = _client->GetPicture("recycle-full.s.xpm");
+    _rbfull_t  = _client->GetPicture("recycle-full.t.xpm");
 
     _compileFilter(filter);
 
-    if (!_folder_s || !_folder_t ||
-        !_app_s    || !_app_t    ||
-        !_doc_s    || !_doc_t    ||
-        !_slink_s  || !_slink_t)
+    if (!_folder_s  || !_folder_t ||
+        !_app_s     || !_app_t    ||
+        !_doc_s     || !_doc_t    ||
+        !_slink_s   || !_slink_t  ||
+        !_desktop_s || !_desktop_t ||
+        !_rbempty_s || !_rbempty_t ||
+        !_rbfull_s  || !_rbfull_t)
       FatalError("OXFileList: Missing required pixmap(s)\n");
+
+    const char *uroot = _client->GetResourcePool()->GetUserRoot();
+    if (uroot) {
+      _desktopPath = new char[strlen(uroot)+strlen("/desktop")+1];
+      sprintf(_desktopPath, "%s/desktop", uroot);
+      _recyclePath = new char[strlen(uroot)+strlen("/recycle")+1];
+      sprintf(_recyclePath, "%s/recycle", uroot);
+    } else {
+      _desktopPath = NULL;
+      _recyclePath = NULL;
+    }
 
     AddColumn(new OString("Name"), 0, TEXT_LEFT);
     AddColumn(new OString("Attributes"), 2);
@@ -363,6 +383,14 @@ OXFileList::~OXFileList() {
   _client->FreePicture(_doc_t);
   _client->FreePicture(_slink_s);
   _client->FreePicture(_slink_t);
+  _client->FreePicture(_desktop_s);
+  _client->FreePicture(_desktop_t);
+  _client->FreePicture(_rbempty_s);
+  _client->FreePicture(_rbempty_t);
+  _client->FreePicture(_rbfull_s);
+  _client->FreePicture(_rbfull_t);
+  if (_recyclePath) delete[] _recyclePath;
+  if (_desktopPath) delete[] _desktopPath;
 }
 
 void OXFileList::AutoRefresh(int onoff) {
@@ -492,6 +520,7 @@ void OXFileList::_CreateFileList() {
   struct stat sbuf, lbuf;
   struct dirent *dp;
   int type, is_link, uid, gid;
+  bool in_userRoot;
   unsigned long size;
   char *name, filename[PATH_MAX];
   const OPicture *pic, *lpic, *spic, *slpic;
@@ -499,6 +528,9 @@ void OXFileList::_CreateFileList() {
   if (stat(".", &sbuf) == 0) _st_mtime = sbuf.st_mtime;
 
   if ((dirp = opendir(".")) == NULL) return;
+
+  getcwd(filename, PATH_MAX);
+  in_userRoot = (strcmp(filename, _client->GetResourcePool()->GetUserRoot()) == 0);
 
   int i = 0;
   vector<OString *> names;
@@ -534,8 +566,30 @@ void OXFileList::_CreateFileList() {
                      new OString("Error"), new OString(msg),
                      MB_ICONSTOP, ID_OK);
       }
-      GetFilePictures(&pic, &lpic, type, is_link, filename, False);
-      GetFilePictures(&spic, &slpic, type, is_link, filename, True);
+
+      pic = spic = NULL;
+
+      if (in_userRoot && _desktopPath && _recyclePath) {
+        if (strcmp(filename, "desktop") == 0) {
+          pic  = _desktop_s;
+          spic = _desktop_t;
+        } else if (strcmp(filename, "recycle") == 0) {
+          if (IsEmptyDir(filename)) {
+            pic  = _rbempty_s;
+            spic = _rbempty_t;
+          } else {
+            pic  = _rbfull_s;
+            spic = _rbfull_t;
+          }
+        }
+        lpic  = is_link ? _slink_s : NULL;
+        slpic = is_link ? _slink_s : NULL;
+      }
+
+      if (!pic || !spic) {
+        GetFilePictures(&pic, &lpic, type, is_link, filename, False);
+        GetFilePictures(&spic, &slpic, type, is_link, filename, True);
+      }
 
       names.push_back(new OString(filename));
       names.push_back(new OString("")); // this is a dummy column
@@ -590,6 +644,24 @@ int OXFileList::FileMatch(const char *filename) {
     }
   }
   return 0;
+}
+
+int OXFileList::IsEmptyDir(const char *dir) {
+  DIR *d;
+  struct dirent *dp;
+
+  d = opendir(dir);
+  if (!d) return True;
+
+  while ((dp = readdir(d)) != NULL) {
+    if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
+      closedir(d);
+      return False;
+    }
+  }
+
+  closedir(d);
+  return True;
 }
 
 char *OXFileList::AttributeString(int type, int is_link) {

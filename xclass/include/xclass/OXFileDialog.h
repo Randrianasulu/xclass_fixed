@@ -62,6 +62,7 @@ public:
   virtual int  HandleKey(XKeyEvent *event);
 
 protected:
+  void _ChangeDirectory(const char *path);
   void _GrabAltKey(int keysym);
 
   int _init;

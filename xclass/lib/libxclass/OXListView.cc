@@ -416,7 +416,7 @@ int OXListView::HandleKey(XKeyEvent *event) {
       case XK_Return:
         {
         // change this into a keypress message!
-        OItemViewMessage message(_msgType, MSG_DBLCLICK, _widgetID, 1,
+        OItemViewMessage message(_msgType, MSG_DBLCLICK, _widgetID, Button1,
                                  OPosition(0, 0));
         SendMessage(_msgObject, &message);
         }
@@ -425,7 +425,7 @@ int OXListView::HandleKey(XKeyEvent *event) {
       case XK_space:
         {
         // change this into a keypress message!
-        OItemViewMessage message(_msgType, MSG_CLICK, _widgetID, 1,
+        OItemViewMessage message(_msgType, MSG_CLICK, _widgetID, Button1,
                                  OPosition(0, 0));
         SendMessage(_msgObject, &message);
         }
