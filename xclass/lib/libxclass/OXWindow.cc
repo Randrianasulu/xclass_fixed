@@ -36,6 +36,7 @@ OXWindow::OXWindow(const OXWindow *p, int x, int y,
     _id = XCreateWindow(GetDisplay(), _parent->_id, x, y, 
                         max(w, 1), max(h, 1), max(border, 0),
     			depth, clss, visual, vmask, attr);
+    _windowExists = (_id != None);
     _client->RegisterWindow(this);
     _needRedraw = False;
     _clearBgnd = True;   // False;  OXScrollBarElt...

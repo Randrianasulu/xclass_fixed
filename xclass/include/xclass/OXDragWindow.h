@@ -47,16 +47,13 @@ public:
   virtual void LowerWindow();
   virtual void MapRaised();
 
-  virtual void Move(int x, int y);
-  virtual void Resize(int w, int h);
-  virtual void Resize(ODimension size) { OXFrame::Resize(size); }
-  virtual void MoveResize(int x, int y, int w, int h);
-
   virtual void Layout();
 
   int HasWindow(Window w) const { return (w == _id || w == _input); }
 
 protected:
+  virtual void _Moved();
+  virtual void _Resized();
   virtual void _DoRedraw();
 
   Window _input;

@@ -40,11 +40,14 @@
 #define FDLG_FAVOURITES   256
 
 
+//----------------------------------------------------------------------
+
 class OFileInfo : public OBaseObject {
 public:
   char *filename;
   char *ini_dir;
   char **file_types;
+  int  file_types_index;      // index into the file_types PAIR
   OMimeTypes *MimeTypesList;  // temp here...
   OFileInfo();
   ~OFileInfo();

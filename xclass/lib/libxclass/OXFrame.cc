@@ -289,6 +289,14 @@ int OXFrame::HandleEvent(XEvent *event) {
     HandleConfigureNotify((XConfigureEvent *) event);
     break;
 
+  case CreateNotify:
+    HandleCreateNotify((XCreateWindowEvent *) event);
+    break;
+
+  case DestroyNotify:
+    HandleDestroyNotify((XDestroyWindowEvent *) event);
+    break;
+
   case MapNotify:
     HandleMapNotify((XMapEvent *) event);
     break;
@@ -392,6 +400,7 @@ void OXFrame::Move(int x, int y) {
   if (x != _x || y != _y) {
     OXWindow::Move(x, y);
     _x = x; _y = y;
+    _Moved();
   }
 }
 
@@ -399,6 +408,7 @@ void OXFrame::Resize(int w, int h) {
   if (w != _w || h != _h) {
     OXWindow::Resize(w, h);
     _w = w; _h = h;
+    _Resized();
     Layout();
   }
 }
@@ -410,11 +420,23 @@ void OXFrame::Resize(ODimension size) {
 void OXFrame::MoveResize(int x, int y, int w, int h) {
   // we do it anyway as we don't know if it's only a move or only a resize
   OXWindow::MoveResize(x, y, w, h);
+#if 1  // OLayout wants this...
   _x = x; _y = y;
-//  if (w != _w || h != _h) {
+  _w = w; _h = h;
+  _Moved();
+  _Resized();
+  Layout();
+#else
+  if (x != _x || y != _y) {
+    _x = x; _y = y;
+    _Moved();
+  }
+  if (w != _w || h != _h) {
     _w = w; _h = h;
+    _Resized();
     Layout();
-//  }
+  }
+#endif
 }
 
 int OXFrame::HandleClientMessage(XClientMessageEvent *event) {
@@ -440,7 +462,7 @@ int OXFrame::HandleFocusChange(XFocusChangeEvent *event) {
       _GotFocus();
     } else {
       _flags &= ~HAS_FOCUS;
-      _LostFocus();
+      if (_windowExists) _LostFocus();
     }
     return True;
   }
@@ -473,6 +495,14 @@ int OXFrame::HandleButton(XButtonEvent *event) {
     return True;
   } else
     return False;
+}
+
+int OXFrame::HandleDestroyNotify(XDestroyWindowEvent *event) {
+  if (event->window == _id) {
+    _windowExists = False;
+    _needRedraw = False;
+  }
+  return True;
 }
 
 void OXFrame::SetTip(char *text) {

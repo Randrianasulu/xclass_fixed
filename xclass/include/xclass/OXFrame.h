@@ -116,6 +116,8 @@ public:
        { OXWindow::SetBackgroundColor(_backPixel = color); }
 
   virtual int HandleEvent(XEvent *event);
+  virtual int HandleCreateNotify(XCreateWindowEvent * /*event*/) { return False; }
+  virtual int HandleDestroyNotify(XDestroyWindowEvent *event);
   virtual int HandleConfigureNotify(XConfigureEvent *event);
   virtual int HandleMapNotify(XMapEvent * /*event */) { return False; }
   virtual int HandleUnmapNotify(XUnmapEvent * /*event */) { return False; }
@@ -216,6 +218,8 @@ protected:
   virtual void _Enable(int onoff) {}
   virtual void _GotFocus();
   virtual void _LostFocus() {}
+  virtual void _Moved() {}
+  virtual void _Resized() {}
 
   void _Draw3dRectangle(int type, int x, int y, int w, int h);
 

@@ -27,9 +27,9 @@
 #include <xclass/OXTextButton.h>
 #include <xclass/OXTextEntry.h>
 #include <xclass/ORectangle.h>
+#include <xclass/OColor.h>
 
 class OXGC;
-class OColor;
 
 
 //----------------------------------------------------------------------

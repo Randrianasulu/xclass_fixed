@@ -41,6 +41,7 @@ public:
             unsigned long back = _defaultDocumentBackground);
 
   virtual int HandleButton(XButtonEvent *);
+  virtual int HandleMotion(XMotionEvent *);
   virtual int HandleKey(XKeyEvent *);
 
   virtual int ProcessMessage(OMessage *msg);

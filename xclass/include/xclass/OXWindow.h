@@ -180,7 +180,7 @@ protected:
   virtual void _DoRedraw() {}
 
   const OXWindow *_parent, *_toplevel;
-  int _needRedraw, _clearBgnd;
+  int _needRedraw, _clearBgnd, _windowExists;
 };
 
 

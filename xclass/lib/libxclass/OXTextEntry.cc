@@ -357,7 +357,7 @@ int OXTextEntry::HandleButton(XButtonEvent *event) {
       _start_ix = _GetCharacterIndex(event->x - x +_vstart_x);
       _start_x  = _TextWidth(0, _start_ix);
       SetCursor(_start_ix);
-      _selection_on = False; 
+      _selection_on = False;
       _dragging = True;
       _DoRedraw();
    
@@ -412,6 +412,7 @@ int OXTextEntry::HandleMotion(XMotionEvent *event) {
   int x, y;   
    
   if (!IsEnabled()) return True;
+  if ((event->state & Button1Mask) == 0) return True;
 
   if (_dragging) {
     if (event->x < 0) {

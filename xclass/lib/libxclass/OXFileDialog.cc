@@ -66,6 +66,7 @@ OFileInfo::OFileInfo() {
   filename = NULL;
   ini_dir = NULL;
   file_types = NULL;
+  file_types_index = 0;
 }
   
 OFileInfo::~OFileInfo() { 
@@ -320,13 +321,20 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
   if (_file_info->file_types) {
     for (i = 0; _file_info->file_types[i] != NULL; i += 2)
       _ftypes->AddEntry(new OString(_file_info->file_types[i]), i);
-    _ftypes->Select(0);
+
+    int index = _file_info->file_types_index;
+    if (index < 0)
+      index = 0;
+    else if (index >= i / 2)
+      index = i / 2;
+
+    _ftypes->Select(index);
 
     _fname->Clear();
     switch (_dlg_type & TYPE_MASK) {
       case FDLG_OPEN:
       case FDLG_BROWSE:
-        _fname->AddText(0, _file_info->file_types[1]);
+        _fname->AddText(0, _file_info->file_types[2 * index + 1]);
         break;
 
       case FDLG_SAVE:
@@ -336,7 +344,7 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
         }
         break;
     }
-    _fv->SetFileFilter(_file_info->file_types[1], False);
+    _fv->SetFileFilter(_file_info->file_types[2 * index + 1], False);
   }
 
   _hftype->AddFrame(_lftypes, _lhl);
@@ -535,6 +543,7 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
             _fname->Clear();
             _fname->AddText(0, _file_info->file_types[te->ID()+1]);
           }
+          _file_info->file_types_index = te->ID();
           _fv->SetFileFilter(_file_info->file_types[te->ID()+1]);
           _client->NeedRedraw(_fname);
         }

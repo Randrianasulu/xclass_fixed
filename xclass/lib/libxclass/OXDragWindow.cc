@@ -90,19 +90,14 @@ OXDragWindow::~OXDragWindow() {
   XDestroyWindow(GetDisplay(), _input);
 }
 
-void OXDragWindow::Move(int x, int y) {
-  XMoveWindow(GetDisplay(), _input, x, y);
-  OXFrame::Move(x, y);
+void OXDragWindow::_Moved() {
+  OXFrame::_Moved();
+  XMoveWindow(GetDisplay(), _input, _x, _y);
 }
 
-void OXDragWindow::Resize(int w, int h) {
-  XResizeWindow(GetDisplay(), _input, max(w, 1), max(h, 1));
-  OXFrame::Resize(w, h);
-}
-
-void OXDragWindow::MoveResize(int x, int y, int w, int h) {
-  XMoveResizeWindow(GetDisplay(), _input, x, y, max(w, 1), max(h, 1));;
-  OXFrame::MoveResize(x, y, w, h);
+void OXDragWindow::_Resized() {
+  OXFrame::_Resized();
+  XResizeWindow(GetDisplay(), _input, _w, _h);
 }
 
 void OXDragWindow::MapWindow() {

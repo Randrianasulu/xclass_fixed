@@ -2464,3 +2464,37 @@ OPicture.cc
   these annoying "Fatal Error: missing required pixmaps" messages when an
   application cannot find the icon directory. Statically-linked xclass
   programs can now run on machines that do not have xclass installed.
+
+
+28/07/04
+
+- Added _Moved() and _Resized() virtual methods to OXFrame. They are called
+  after the frame has been moved and/or resized. It is easier to override
+  one of these methods than the bunch of Resize(x,y), Resize(ODimension(w,h)),
+  Move(x,y) and MoveResize(x,y,w,h).
+
+
+11/08/04
+
+- Added HandleCreateNotify() and HandleDestroyNotify() virtual methods to
+  OXFrame.
+
+
+06/09/04
+
+- OXTextEntry::HandleMotion: check event->state and make sure not to select
+  any text if no buttons are pressed.
+
+- OXDDPopup: set owner_events to False in XGrabPointer and propagate mouse
+  events manually. This should eliminate the effect of some windows eating
+  OXDDListBox clicks.
+
+
+08/09/04
+
+- OFileInfo: added file_types_index field. This makes possible to specify
+  a default initial value for the file types entry other than the first.
+  On return from OXFileDialog, file_types_index points to the latest file
+  type selected. Note that since file_types[] is arranged in pairs, a
+  file_type_index value of N actually points to the 2*N-th entry in
+  file_types[].

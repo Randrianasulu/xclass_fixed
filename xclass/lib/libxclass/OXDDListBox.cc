@@ -56,10 +56,63 @@ OXDDPopup::OXDDPopup(const OXWindow *p, int w, int h,
 }
 
 int OXDDPopup::HandleButton(XButtonEvent *event) {
+  if (Contains(event->x, event->y)) {
+    int evx = event->x;
+    int evy = event->y;
+    OXFrame *f = GetFrameFromPoint(evx, evy);
+
+    int i;
+    unsigned int u;
+    Window w, root;
+    XQueryPointer(GetDisplay(), f->GetId(), &root, &w, &i, &i, &i, &i, &u);
+    event->subwindow = w;
+
+    while (f && (f != this)) {
+      int x, y;
+
+      TranslateCoordinates(f, evx, evy, &x, &y);
+      event->window = f->GetId();
+      event->x = x;
+      event->y = y;
+      f->HandleButton(event);
+
+      event->subwindow = f->GetId();
+      f = (OXFrame *) f->GetParent();
+    }
+    return True;
+  }
   if (event->type == ButtonRelease) {
     EndPopup();
     OListBoxMessage msg(MSG_DDLISTBOX, MSG_CLICK, False, 0);
     SendMessage(_msgObject, &msg);
+  }
+  return True;
+}
+
+int OXDDPopup::HandleMotion(XMotionEvent *event) {
+  if (Contains(event->x, event->y)) {
+    int evx = event->x;
+    int evy = event->y;
+    OXFrame *f = GetFrameFromPoint(evx, evy);
+
+    int i;
+    unsigned int u;
+    Window w, root;
+    XQueryPointer(GetDisplay(), f->GetId(), &root, &w, &i, &i, &i, &i, &u);
+    event->subwindow = w;
+
+    while (f && (f != this)) {
+      int x, y;
+
+      TranslateCoordinates(f, evx, evy, &x, &y);
+      event->window = f->GetId();
+      event->x = x;
+      event->y = y;
+      f->HandleMotion(event);
+
+      event->subwindow = f->GetId();
+      f = (OXFrame *) f->GetParent();
+    }
   }
   return True;
 }
@@ -144,7 +197,7 @@ void OXDDPopup::PlacePopup(int x, int y, int w, int h) {
 
   AddInput(KeyPressMask | KeyReleaseMask);
 
-  XGrabPointer(GetDisplay(), _id, True,
+  XGrabPointer(GetDisplay(), _id, False, //True,
                ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                GrabModeAsync, GrabModeAsync, None,
                GetResourcePool()->GetGrabCursor(), CurrentTime);
