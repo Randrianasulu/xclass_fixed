@@ -177,6 +177,7 @@ protected:
   OXDDListBox *_ddlb;
 
   const OPicture *_cbkgnd;
+  int _exiting;
 };
 
 

@@ -1155,7 +1155,6 @@ void OXPaintCanvas::SetZoom(int zoom) {
 
 void OXPaintCanvas::RescaleImage(int width, int height) {
   XImage *image, *mask_image;
-  int resized;
 
   image = ScalePixmapImage(_image, 
 		       (double) width / (double) _image->width,
@@ -1184,7 +1183,6 @@ void OXPaintCanvas::RescaleImage(int width, int height) {
 
 void OXPaintCanvas::ResizeImage(int width, int height) {
   XImage *image, *mask_image;
-  int resized;
 
   image = CreatePixmapImage(width, height);
   mask_image = CreateMaskImage(width, height);

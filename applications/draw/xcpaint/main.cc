@@ -48,7 +48,7 @@
 
 #include "pbg.xpm"
 
-#define XCPAINT_VERSION "0.7.2"
+#define XCPAINT_VERSION "0.7.3"
 
 struct _popup file_popup = {
   { NULL }, {
@@ -152,8 +152,6 @@ struct _tb_data tb_data[] = {
   { NULL,              NULL,            NULL,               0,               0,    NULL }
 };
 
-OMimeTypes *MimeTypeList;  // currently we need this for OXFileDialog
-
 char *filetypes[] = { "All files",           "*",
                       "Bitmap files",        "*.xbm",
                       "Pixmap files",        "*.xpm",
@@ -169,17 +167,11 @@ OXAppMainFrame *mainWindow;
 int Grid, ZoomFactor;
 
 int main(int argc, char *argv[]) {
-  char mimerc[PATH_MAX];
 
   clientX = new OXClient;
 
   mainWindow = new OXAppMainFrame(clientX->GetRoot(), 400, 200);
-
-  sprintf(mimerc, "%s/.mime.types", getenv("HOME"));
-  MimeTypeList = new OMimeTypes(clientX, mimerc);
-
   if (argc > 1) mainWindow->LoadFile(argv[1]);
-
   mainWindow->MapWindow();
 
   clientX->Run();
@@ -191,6 +183,8 @@ OXAppMainFrame::OXAppMainFrame(const OXWindow *p, int w, int h) :
   OXMainFrame(p, w, h) {
   char tmp[BUFSIZ];
   int i;
+
+  _exiting = False;
 
   _menuBarLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT | LHINTS_EXPAND_X, 0, 0, 1, 1);
   _menuBarItemLayout = new OLayoutHints(LHINTS_TOP | LHINTS_LEFT, 0, 4, 0, 0);
@@ -344,7 +338,15 @@ OXAppMainFrame::~OXAppMainFrame() {
 }
 
 int OXAppMainFrame::CloseWindow() {
-  if (SaveIfChanged() == ID_CANCEL) return False;
+  if (_exiting) {
+    XBell(GetDisplay(), 0);
+    return False;
+  }
+  _exiting = True;
+  if (SaveIfChanged() == ID_CANCEL) {
+    _exiting = False;
+    return False;
+  }
   return OXMainFrame::CloseWindow();
 }
 
@@ -658,7 +660,7 @@ void OXAppMainFrame::DoLoad() {
   // check first for unsaved changes.
   if (SaveIfChanged() == ID_CANCEL) return;
 
-  fi.MimeTypesList = MimeTypeList;
+  fi.MimeTypesList = NULL;
   fi.file_types = filetypes;
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
   if (fi.filename) {
@@ -737,7 +739,7 @@ int OXAppMainFrame::DoSaveAs() {
   int retc;
   OFileInfo fi;
 
-  fi.MimeTypesList = MimeTypeList;
+  fi.MimeTypesList = NULL;
   fi.file_types = filetypes;
   new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
   if (fi.filename) {
@@ -792,7 +794,7 @@ int OXAppMainFrame::SaveIfChanged() {
     }
   }
 
-  return retc;
+  return (retc == ID_CLOSE) ? ID_CANCEL : retc;
 }
 
 

@@ -28,8 +28,6 @@ OXSizeDialog::OXSizeDialog(const OXWindow *p, const OXWindow *main,
                            int w, int h, unsigned long options,
                            int dlg_type, int *retw, int *reth) :
   OXTransientFrame(p, main, w, h, options) {
-    int i, ax, ay;
-    Window wdummy;  
 
     _dlgType = dlg_type;
 
@@ -98,13 +96,7 @@ OXSizeDialog::OXSizeDialog(const OXWindow *p, const OXWindow *main,
     MapSubwindows();
     Resize(GetDefaultSize());
     
-    // position relative to the parent's window
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                          (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                          &ax, &ay, &wdummy);
-    Move(ax, ay);
+    CenterOnParent();
 
     switch (_dlgType) {
       case DIALOG_RESIZE:    SetWindowName("Resize image to..."); break;
@@ -171,8 +163,6 @@ int OXSizeDialog::ProcessMessage(OMessage *msg) {
 OXTextDialog::OXTextDialog(const OXWindow *p, const OXWindow *main,
                            char *rtxt, unsigned long options) :
   OXTransientFrame(p, main, 10, 10, options) {
-    int i, ax, ay;
-    Window wdummy;  
 
     ret_text = rtxt;
 
@@ -222,13 +212,7 @@ OXTextDialog::OXTextDialog(const OXWindow *p, const OXWindow *main,
     MapSubwindows();
     Resize(GetDefaultSize());
     
-    // position relative to the parent's window
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                          (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                          &ax, &ay, &wdummy);
-    Move(ax, ay);
+    CenterOnParent();
 
     SetWindowName("Enter text...");
 

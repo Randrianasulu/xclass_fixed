@@ -48,7 +48,7 @@ OXPaletteFrame::~OXPaletteFrame() {
 }
 
 void OXPaletteFrame::UpdateColors(const OColorTable *ct) {
-  int i, color;
+  int i;
   const OColorInfo **ci = ct->GetTable();
 
   _RemoveEntries();
@@ -58,7 +58,7 @@ void OXPaletteFrame::UpdateColors(const OColorTable *ct) {
     _AddBTreeEntries(*ci);
   } else {
     // color table is an array
-    for (i=0; i<=256; ++i) if (ci[i]) _AddEntry(ci[i]);
+    for (i = 0; i <= 256; ++i) if (ci[i]) _AddEntry(ci[i]);
   }
 
   Layout();
@@ -79,7 +79,7 @@ void OXPaletteFrame::_AddEntry(const OColorInfo *ci) {
     if (ci->c_name)
       strcpy(tmp, ci->c_name);
     else
-      sprintf(tmp, "Pixel value = %d", ci->pixel);
+      sprintf(tmp, "Pixel value = %ld", ci->pixel);
     f->SetTip(tmp);
     AddFrame(f, NULL);
   }
