@@ -42,6 +42,7 @@
 #define M_EDIT_ADD         201
 #define M_EDIT_CHANGE      202
 #define M_EDIT_DELETE      203
+#define M_EDIT_TUNE        204
 
 #define M_VIEW_TOOLBAR     301
 #define M_VIEW_STATUSBAR   302
@@ -77,10 +78,11 @@ struct _popup file_popup = {
 
 struct _popup edit_popup = {
   { NULL }, {
-  { "&Change entry...",  M_EDIT_CHANGE,     MENU_DISABLED, NULL },
-  { "Add &new entry...", M_EDIT_ADD,        0,             NULL },
-  { "",                  -1,                0,             NULL },
-  { "&Delete selection", M_EDIT_DELETE,     MENU_DISABLED, NULL },
+  { "&Change entry...",    M_EDIT_CHANGE,     MENU_DISABLED, NULL },
+  { "Add &new station...", M_EDIT_ADD,        0,             NULL },
+  { "&Tune to station",    M_EDIT_TUNE,       MENU_DISABLED, NULL },
+  { "",                    -1,                0,             NULL },
+  { "&Delete selected station(s)",  M_EDIT_DELETE,  MENU_DISABLED, NULL },
   { NULL,                -1,                0,             NULL } } };
 
 struct _popup view_popup = {

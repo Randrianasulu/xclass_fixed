@@ -204,8 +204,8 @@ OXFreqDB::OXFreqDB(const OXWindow *p, OXMain *m, int w, int h) :
   _listView->AddColumn(new OString("Start time"), 9);
   _listView->AddColumn(new OString("End time"), 10);
   _listView->AddColumn(new OString("Notes"), 11, TEXT_LEFT);
-  _listView->AddColumn(new OString("Offset"), 12);
-  _listView->AddColumn(new OString("Lockout"), 13);
+//  _listView->AddColumn(new OString("Offset"), 12);
+//  _listView->AddColumn(new OString("Lockout"), 13);
   _listView->AddColumn(new OString(""), 14);  // end dummy
 
   OLayoutHints *layout = new OLayoutHints(LHINTS_EXPAND_ALL);
@@ -343,10 +343,6 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
 
             //--------------------------------------- Edit
 
-            case M_EDIT_DELETE:
-              _listView->DeleteSelection();
-              break;
-
             case M_EDIT_CHANGE:
               if (_listView->NumSelected() == 1) {
                 OFDBitem *f;
@@ -391,6 +387,23 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
                   delete frec;
                 }
               }
+              break;
+
+            case M_EDIT_TUNE:
+              if (_listView->NumSelected() == 1) {
+                const OFDBitem *f;
+                vector<OItem *> items;
+
+                items = _listView->GetSelectedItems();
+                f = (OFDBitem *) items[0];
+
+                _rxmain->TuneTo(f->GetFreqRecord());
+              }
+              break;
+
+            case M_EDIT_DELETE:
+              _listView->DeleteSelection();
+              SetChanged(True);
               break;
 
             //--------------------------------------- View
@@ -444,8 +457,10 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
 
         case MSG_SELCHANGED:
           if (_listView->NumSelected() == 1) {
+            _menuEdit->EnableEntry(M_EDIT_TUNE);
             _menuEdit->EnableEntry(M_EDIT_CHANGE);
           } else {
+            _menuEdit->DisableEntry(M_EDIT_TUNE);
             _menuEdit->DisableEntry(M_EDIT_CHANGE);
           }
           if (_listView->NumSelected() > 0) {

@@ -5,11 +5,10 @@ This is the alpha version 0.2 of rx320, a Linux control program for the
 Ten-Tec RX320 receiver with a graphical interface.
 
 Currently the program is capable of communicating with the receiver using
-one of the available serial ports. There is some support for managing
+one of the available serial ports. There is also support for managing
 frequency database files: the program can read and save files in Clifton
 Turner's *.320 format, and the receiver can be tuned to selected stations.
-However, new stations can be entered but existing ones cannot be edited (the
-edit dialog appears, but changes are not written back).
+New stations can be entered and existing ones can be edited.
 
 No frequency sweep modes are implemented yet.
 
@@ -18,10 +17,12 @@ frequencies, and restores them on startup. The receiver is also reinitialized
 every time a power-on is detected.
 
 Right-clicking on an empty space between buttons popups a menu which lets
-you to open the frequency database window. Note that you can have several
-of these windows open simultaneously. From the File menu of the database
-window you can then open a *.320 file. Double-click on station names to
-tune the receiver into that station.
+you to open the frequency database window. Note that you can have several of
+these windows open simultaneously. From the File menu of the database window
+you can then open a *.320 file. Double-click on station names to tune the
+receiver into that station. Select "Edit/Add new station" to enter a new
+station into the database. Select "Edit/Change entry" to edit the currently
+selected database entry.
 
 The main tuning knob works more like a real one (i.e. you click on the small
 hole and move the mouse around in circles), and not like the knob in the
