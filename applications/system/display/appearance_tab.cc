@@ -25,7 +25,8 @@
 // - fix fvwm95/98 bugs regarding window recoloring
 // - load/save schemes in some rc file
 // - get wm decoration geometry from fvwm95 if in module mode
-
+// - at startup, set the resource property only if it does not exist,
+//   to avoid all the apps to redraw themselves unneccessarily
 
 #define HAS_BG_COLOR        (1<<0)
 #define HAS_FG_COLOR        (1<<1)

@@ -926,7 +926,7 @@ UpdateTree();
                   argv[0] = to;
                   argv[1] = url.full_path;
                   argv[2] = NULL;
-                  OExec exec(_client, to, argv, False, True);
+                  OExec exec(_client, to, argv, NULL, False, True);
                   return True;
                 } else {
                   // drop on a regular document
@@ -1176,7 +1176,7 @@ void OXExplorer::DoOpen(const OFileItem *f) {
       argv[0] = AppPath;
       argv[1] = (char *) f->GetName()->GetString();
       argv[2] = NULL;
-      OExec exec(_client, AppPath, argv, False, True);
+      OExec exec(_client, AppPath, argv, NULL, False, True);
     } else {
       DoChangeDirectory(f->GetName()->GetString());
       UpdateListBox();
@@ -1196,7 +1196,7 @@ void OXExplorer::DoOpen(const OFileItem *f) {
     }
     argv[argc] = NULL;
 
-    OExec exec(_client, argv[0], argv, False, True);
+    OExec exec(_client, argv[0], argv, NULL, False, True);
 
     for (int i = 0; i < argc; i++) delete[] argv[i];
 
@@ -1209,7 +1209,7 @@ void OXExplorer::DoOpen(const OFileItem *f) {
     argv[0] = (char *) f->GetName()->GetString();
     argv[1] = NULL;
 
-    OExec exec(_client, filename, argv, False, True);
+    OExec exec(_client, filename, argv, NULL, False, True);
 
   }
 }
@@ -1235,7 +1235,7 @@ void OXExplorer::DoOpenWith(const OFileItem *f) {
   argv[1] = filename;
   argv[2] = NULL;
 
-  OExec exec(_client, progname.GetString(), argv, False, True);
+  OExec exec(_client, progname.GetString(), argv, NULL, False, True);
 }
 
 
