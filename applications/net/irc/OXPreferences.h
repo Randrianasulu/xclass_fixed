@@ -164,6 +164,7 @@ public:
   friend class OXNamesTab;
   friend class OXServersTab;
   friend class OXChannelTab;
+
 protected:
   OXSDList *_servers;
   OXSDList *_nicks;
@@ -191,7 +192,6 @@ public:
                       unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXPreferencesDialog();
 
-  virtual void CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
 protected:

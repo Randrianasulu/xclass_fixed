@@ -15,8 +15,7 @@ public:
   OXIconSelDialog(const OXWindow *p, const OXWindow *t, OString *ret);
   virtual ~OXIconSelDialog();
   
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
   
 protected:
   OXLabel *_name, *_size;

@@ -101,8 +101,8 @@ public:
             const char *ch, int init = True);
   virtual ~OXChannel();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
   virtual void Say(char *nick, char *message, int mode);
   virtual void Log(char *message);

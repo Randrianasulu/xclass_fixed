@@ -310,10 +310,10 @@ OXMain::~OXMain() {
   delete _magstepPopup;
 }
 
-void OXMain::CloseWindow() {
+int OXMain::CloseWindow() {
   _gv->DisableInterpreter();
   _SaveIniFile();
-  OXMainFrame::CloseWindow();
+  return OXMainFrame::CloseWindow();
 }
 
 OXPopupMenu *OXMain::_MakePopup(struct _popup *p) {

@@ -107,10 +107,6 @@ OXFolderDelete::OXFolderDelete(const OXWindow *p, const OXWindow *main,
 OXFolderDelete::~OXFolderDelete() {
 }
 
-void OXFolderDelete::CloseWindow() {
-  delete this;
-}
-
 int OXFolderDelete::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

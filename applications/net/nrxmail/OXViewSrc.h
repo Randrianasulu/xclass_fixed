@@ -61,8 +61,7 @@ public:
             unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXViewSrc();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   char *_printercommand, *_printer;

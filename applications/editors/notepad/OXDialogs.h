@@ -53,8 +53,7 @@ public:
 	    unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXGotoBox();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OXCompositeFrame *f1, *f2;
@@ -73,8 +72,7 @@ public:
 	      unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXSearchBox();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OXCompositeFrame *f1, *f2, *f3, *f4;
@@ -97,8 +95,7 @@ public:
 	     unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXPrintBox();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   char **pprinter, **pprintCommand;

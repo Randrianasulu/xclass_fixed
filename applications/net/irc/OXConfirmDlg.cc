@@ -145,9 +145,9 @@ OXConfirmDlg::~OXConfirmDlg() {
   delete L5;
 }
 
-void OXConfirmDlg::CloseWindow() {
+int OXConfirmDlg::CloseWindow() {
   if (_ret_code) *_ret_code = ID_NO;
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXConfirmDlg::ProcessMessage(OMessage *msg) {

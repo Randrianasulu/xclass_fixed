@@ -14,8 +14,8 @@ public:
                   int *rt);
   virtual ~OXChannelEditor();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
 
 protected:
   void _LoadInfo();

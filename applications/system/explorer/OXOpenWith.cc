@@ -175,10 +175,6 @@ OXOpenWithDialog::~OXOpenWithDialog() {
   delete ly3;
 }
 
-void OXOpenWithDialog::CloseWindow() {
-  delete this;
-}
-
 struct LBSortAscending : public binary_function<OString*, OString*, bool> {
 public:
   bool operator()(const OString* item1, const OString* item2) const {

@@ -122,10 +122,10 @@ OXSizeDialog::~OXSizeDialog() {
   delete _l3;
 }
 
-void OXSizeDialog::CloseWindow() {
+int OXSizeDialog::CloseWindow() {
   if (ret_width) *ret_width = -1;
   if (ret_height) *ret_height = -1;
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXSizeDialog::ProcessMessage(OMessage *msg) {
@@ -242,9 +242,9 @@ OXTextDialog::~OXTextDialog() {
   delete _l3;
 }
 
-void OXTextDialog::CloseWindow() {
+int OXTextDialog::CloseWindow() {
   if (ret_text) *ret_text = '\0';
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXTextDialog::ProcessMessage(OMessage *msg) {

@@ -29,7 +29,7 @@
 
 #include "OFolder.h"
 
-#define NRX_VERSION  "0.92dev"
+#define NRX_VERSION  "0.93dev"
 
 
 //----------------------------------------------------------------------

@@ -28,8 +28,8 @@ public:
   OXChannelDialog(const OXWindow *p, OXIrc *main,
                   unsigned long options = MAIN_FRAME | HORIZONTAL_FRAME);
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   void _DoJoin();

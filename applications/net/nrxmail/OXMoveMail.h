@@ -41,8 +41,7 @@ public:
              unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXMoveMail();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   int *ret; 

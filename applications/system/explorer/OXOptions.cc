@@ -356,10 +356,6 @@ OXOptionsDialog::~OXOptionsDialog() {
   delete Ltab;
 }
 
-void OXOptionsDialog::CloseWindow() {
-  delete this;
-}
-
 void OXOptionsDialog::UpdateListBox() {
   OMime *MimeRunner;
   int i;

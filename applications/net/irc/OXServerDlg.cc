@@ -242,17 +242,17 @@ OXServerDlg::~OXServerDlg() {
   delete L5;
 }
 
-void OXServerDlg::CloseWindow() {
+int OXServerDlg::CloseWindow() {
   if (_ret_code) *_ret_code = ID_NO;
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXServerDlg::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch(msg->action) {
+  switch (msg->action) {
   case MSG_CLICK:
-    switch(msg->type) {
+    switch (msg->type) {
     case MSG_DDLISTBOX:
       {
       OListBoxMessage *lbmsg = (OListBoxMessage *) msg;

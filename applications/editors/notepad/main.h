@@ -32,7 +32,7 @@
 #include <xclass/OXTextEdit.h>
 #include <xclass/OString.h>
 
-#define NOTEPAD_VERSION    "0.8.1"
+#define NOTEPAD_VERSION    "0.8.2"
 
 #define M_FILE_NEW         101
 #define M_FILE_OPEN        102
@@ -78,10 +78,10 @@ public:
 
   int IsSaved();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual int  HandleKey(XKeyEvent *event);
-  virtual void CloseWindow();
-  virtual int  HandleTimer(OTimer *t);
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int HandleKey(XKeyEvent *event);
+  virtual int CloseWindow();
+  virtual int HandleTimer(OTimer *t);
 
 protected:
   char *filename;

@@ -385,11 +385,13 @@ OXMain::~OXMain() {
   delete _menu;
 }
 
-void OXMain::CloseWindow() {
+int OXMain::CloseWindow() {
   SaveIniFile();
-  while (_freqWindow) _freqWindow->CloseWindow();
+  while (_freqWindow) {
+    if (!_freqWindow->CloseWindow()) return False;
+  }
   if (_mute_on_exit) _rx->Mute(True);
-  OXMainFrame::CloseWindow();
+  return OXMainFrame::CloseWindow();
 }
 
 void OXMain::ReadIniFile() {

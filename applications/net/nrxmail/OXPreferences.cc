@@ -192,10 +192,6 @@ OXPreferences::OXPreferences(const OXWindow *p, const OXWindow *main,
 OXPreferences::~OXPreferences() {
 }
 
-void OXPreferences::CloseWindow() {
-  delete this;
-}
-
 int OXPreferences::ProcessMessage(OMessage *msg) {
   switch (msg->type) {
   case MSG_BUTTON:

@@ -150,10 +150,6 @@ OXEditPlayListFrame::OXEditPlayListFrame(const OXWindow *p,
 OXEditPlayListFrame::~OXEditPlayListFrame() {
 }
 
-void OXEditPlayListFrame::CloseWindow() {
-  delete this;
-}
-
 int OXEditPlayListFrame::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

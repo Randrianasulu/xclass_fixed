@@ -479,10 +479,6 @@ OXExplorer::~OXExplorer() {
   delete _recycled;
 }
 
-void OXExplorer::CloseWindow() {
-  delete this;
-}
-
 int OXExplorer::HandleMapNotify(XMapEvent *event) {
 
   DoChangeDirectory(_startDir);

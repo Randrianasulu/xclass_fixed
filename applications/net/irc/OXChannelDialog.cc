@@ -137,9 +137,9 @@ OXChannelDialog::OXChannelDialog(const OXWindow *p, OXIrc *main,
     MapWindow();
 }
 
-void OXChannelDialog::CloseWindow() {
+int OXChannelDialog::CloseWindow() {
   foxircSettings->Save();
-  OXTransientFrame::CloseWindow();
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXChannelDialog::ProcessMessage(OMessage *msg) {

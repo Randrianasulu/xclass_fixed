@@ -91,10 +91,6 @@ OXViewSrc::~OXViewSrc() {
   delete _menuBarLayout;
 }
 
-void OXViewSrc::CloseWindow() {
-  delete this;
-}
-
 void OXViewSrc::InitMenu() {
 
   _menuBarLayout = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 1, 1);

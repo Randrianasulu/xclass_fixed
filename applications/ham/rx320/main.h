@@ -50,10 +50,10 @@ public:
   OXMain(const OXWindow *p, int w, int h);
   virtual ~OXMain();
 
-  virtual int  HandleButton(XButtonEvent *event);
-  virtual int  HandleKey(XKeyEvent *event);
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int HandleButton(XButtonEvent *event);
+  virtual int HandleKey(XKeyEvent *event);
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
 
   void GrabKeys();
   void ReadIniFile();

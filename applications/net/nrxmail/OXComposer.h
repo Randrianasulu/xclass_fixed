@@ -80,9 +80,8 @@ public:
              OSession *session, int state, OMail *mail = NULL);
   virtual ~OXComposer();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
-  virtual int  HandleTimer(OTimer *t);
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int HandleTimer(OTimer *t);
 
 protected:
   OXPopupMenu *attachPopUp;

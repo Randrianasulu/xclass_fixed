@@ -23,8 +23,8 @@ public:
                 const char *ch);
   virtual ~OXChatChannel();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
   int  ProcessCommand(char *cmd);
   void SetChannelMode(char *mode_str);
@@ -48,7 +48,7 @@ public:
   void DoToggleToolBar();
   void DoToggleStatusBar();
   void DoToggleTopicBar();
-  void DoLeave();
+  int  DoLeave();
 
 protected:
   OXCanvas *_canvas;

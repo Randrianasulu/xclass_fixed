@@ -77,8 +77,8 @@ public:
            unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXCmdDlg();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OLayoutHints *L1, *L2, *L4, *L5;
@@ -442,9 +442,9 @@ OXCmdDlg::~OXCmdDlg() {
   delete L5;
 }
 
-void OXCmdDlg::CloseWindow() {
+int OXCmdDlg::CloseWindow() {
   if (_ret_code) *_ret_code = ID_CANCEL;
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXCmdDlg::ProcessMessage(OMessage *msg) {

@@ -20,7 +20,7 @@
 
 //----------------------------------------------------------------------
 
-#define XCGVIEW_VERSION   "0.7.5"
+#define XCGVIEW_VERSION   "0.7.6"
 #define XCGVIEW_INI       "xcgviewrc"
 
 
@@ -101,9 +101,9 @@ public:
   OXMain(const OXWindow *p, int w, int h);
   virtual ~OXMain();
 
-  virtual int  HandleKey(XKeyEvent *event);
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int HandleKey(XKeyEvent *event);
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
 
   void SetWindowTitle(char *title);
   void UpdateStatus();

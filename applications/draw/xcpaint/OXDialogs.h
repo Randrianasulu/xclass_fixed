@@ -52,8 +52,8 @@ public:
                int *retw = NULL, int *reth = NULL);
   virtual ~OXSizeDialog();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OXCompositeFrame *_f1, *_f2;
@@ -75,8 +75,8 @@ public:
                unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXTextDialog();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OXCompositeFrame *_f1, *_f2;

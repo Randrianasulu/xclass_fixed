@@ -84,10 +84,6 @@ OXMoveMail::OXMoveMail(const OXWindow *p, const OXWindow *main, int w,
 OXMoveMail::~OXMoveMail() {
 }
 
-void OXMoveMail::CloseWindow() {
-  delete this;
-}
-
 int OXMoveMail::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

@@ -414,10 +414,6 @@ OXComposer::~OXComposer() {
   }
 }
 
-void OXComposer::CloseWindow() {
-  delete this;
-}
-
 void OXComposer::Search(int ret) {
   char tmp[1024];
   if ((ret == False) || (search.buffer == NULL))

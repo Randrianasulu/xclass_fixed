@@ -39,8 +39,7 @@ public:
                 unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXPreferences();
   
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   int *_ret;

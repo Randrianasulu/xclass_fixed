@@ -165,10 +165,6 @@ OXMain::~OXMain() {
   delete[] _tabs;
 }
 
-void OXMain::CloseWindow() {
-  delete this;
-}
-
 void OXMain::AddTabs() {
   OXCompositeFrame *f, *vf;
 

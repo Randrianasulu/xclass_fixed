@@ -175,9 +175,9 @@ OXChannelEditor::OXChannelEditor(const OXWindow *p,const OXWindow *main,
     _client->WaitFor(this);
 }
 
-void OXChannelEditor::CloseWindow() {
+int OXChannelEditor::CloseWindow() {
   if (ret) *ret = false;
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 int OXChannelEditor::ProcessMessage(OMessage *msg) {

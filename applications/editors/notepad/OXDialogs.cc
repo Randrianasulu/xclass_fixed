@@ -99,10 +99,6 @@ OXGotoBox::~OXGotoBox() {
   delete L21;
 }
                           
-void OXGotoBox::CloseWindow() {
-  delete this;
-}
-
 int OXGotoBox::ProcessMessage(OMessage *msg) {
  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
  const char *string;
@@ -271,10 +267,6 @@ OXSearchBox::~OXSearchBox() {
   delete L21; delete L9; delete L10;
 }
                           
-void OXSearchBox::CloseWindow() {
-  delete this;
-}
-
 int OXSearchBox::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
   const char *string;
@@ -439,10 +431,6 @@ OXPrintBox::OXPrintBox(const OXWindow *p, const OXWindow *main, int w, int h,
 OXPrintBox::~OXPrintBox() {
   delete L1; delete L2; delete L3; delete L5; delete L6;
   delete L21;
-}
-                          
-void OXPrintBox::CloseWindow() {
-  delete this;
 }
 
 int OXPrintBox::ProcessMessage(OMessage *msg) { 

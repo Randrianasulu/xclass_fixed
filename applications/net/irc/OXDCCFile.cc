@@ -173,10 +173,6 @@ DCCFileConfirm::~DCCFileConfirm() {
   delete L1;
   delete L2;
 }
-//----------------------
-void DCCFileConfirm::CloseWindow() {
-  delete this;
-}
 
 //--------------
 //-----------------------------------------------------------------------------
@@ -466,7 +462,6 @@ bool OXDCCFile::_FetchSomeData(){
 		_fh = 0;
 	        _tcp->Close();
 		CloseWindow();
-//		delete this;
 		return true;
 		}
 return true;

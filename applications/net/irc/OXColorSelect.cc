@@ -19,7 +19,7 @@ OXColorFrame::OXColorFrame(const OXWindow *p,unsigned long c,int n ):
 		ButtonPressMask | ButtonReleaseMask |
 		EnterWindowMask | LeaveWindowMask,
 		GrabModeAsync, GrabModeAsync, None, None);
-_msgCom = p;
+_msgObject = p;
 _active= false;
 grayGC=_client->GetResourcePool()->GetFrameBckgndGC()->GetGC();
 }
@@ -27,12 +27,12 @@ grayGC=_client->GetResourcePool()->GetFrameBckgndGC()->GetGC();
 int OXColorFrame::HandleButton(XButtonEvent *event) {
     if (event->type == ButtonPress) {
      OContainerMessage msg(MSG_CONTAINER,MSG_CLICK,id,event->button);
-     SendMessage(_msgCom, &msg);
+     SendMessage(_msgObject, &msg);
      return True;
     }
     if (event->type == ButtonRelease) {
      OContainerMessage msg(MSG_CONTAINER,MSG_SELCHANGED,id,event->button);
-     SendMessage(_msgCom, &msg);
+     SendMessage(_msgObject, &msg);
      return True;
     }
     return False;
@@ -82,7 +82,7 @@ OX16ColorSelector::OX16ColorSelector(const OXWindow *p):
 //fg=_client->GetPicture("fg.xpm",fg_xpm);
 //bg=_client->GetPicture("bg.xpm",bg_xpm);
 //fb=_client->GetPicture("fb.xpm",fb_xpm);
-_msgwin = p;
+_msgObject = p;
 active=-1;
 }
 
@@ -112,7 +112,7 @@ switch(msg->type){
 				switch(cmsg->button){
 					case Button1:
 				        OContainerMessage msg1(MSG_CONTAINER,MSG_SELCHANGED,active,0);
-				        SendMessage(_msgwin, &msg1);
+				        SendMessage(_msgObject, &msg1);
 					break;
 					}
 			case MSG_CLICK:

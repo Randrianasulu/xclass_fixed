@@ -42,7 +42,7 @@
 #include "OXDirectoryTree.h"
 
 
-#define EXPLORER_VERSION        "0.6.5"
+#define EXPLORER_VERSION        "0.6.6"
 
 
 //----- Operation modes:
@@ -131,9 +131,7 @@ public:
   virtual ~OXExplorer();
 
   virtual int HandleMapNotify(XMapEvent *event);
-
   virtual int ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
 
   void ReadIniFile();
   void SaveIniFile();

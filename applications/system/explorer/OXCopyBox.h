@@ -18,12 +18,11 @@ public:
             const char *frompath, const char *topath);
   virtual ~OXCopyBox();
   
+  virtual int CloseWindow();
   virtual int HandleMapNotify(XMapEvent *event);
   virtual int HandleFileEvent(OFileHandler *f, unsigned int mask);
   virtual int HandleTimer(OTimer *t);
   virtual int ProcessMessage(OMessage *msg);
-  
-  virtual void CloseWindow();
 
 protected:
   int FileError(const char *msg, const char *fname, int errc);

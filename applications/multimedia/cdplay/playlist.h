@@ -51,7 +51,6 @@ public:
                       unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXEditPlayListFrame();
 
-  virtual void CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
 protected:

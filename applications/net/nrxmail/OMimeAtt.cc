@@ -114,6 +114,8 @@ OMimeAtt::OMimeAtt(FILE **f, char *mailfile, char *boundary, long border) {
 	_encoding = BIT7;
       else if (!(strncasecmp(first, "8bit", 4)))
 	_encoding = BIT8;
+      else if (!(strncasecmp(first, "quoted-printable", 16)))
+	_encoding = QUOTED_PRINTABLE;
       else if (!(strncasecmp(first, "quoted printable", 16)))
 	_encoding = QUOTED_PRINTABLE;
     }
@@ -255,7 +257,37 @@ bool OMimeAtt::Decode8Bit(FILE *g) {
 }
 
 bool OMimeAtt::DecodeQuotedPrintable(FILE *g) {
-  return False;
+  FILE *f;
+  int  c, eof = false;
+
+  f = fopen(_mailfile, "r"); // ==!==
+  fseek(f, _contStart, SEEK_SET);
+  fseek(g, 0, SEEK_SET);
+
+  while (ftell(f) <= _end) {
+    c = fgetc(f);
+    if (c == EOF) {
+      eof = true;
+      break;
+    }
+    if (c == '=') {
+      int c1, c2;
+      c1 = fgetc(f);
+      if (c1 == '\n') {
+        c = c1;
+      } else {
+        if (c1 >= 'A') c1 -= 'A', c1 += 10; else c1 -= '0';
+        c2 = fgetc(stdin);
+        if (c2 >= 'A') c2 -= 'A', c2 += 10; else c2 -= '0';
+        c = c1 * 16 + c2;
+      }
+    }
+    fputc(c, g);
+  }
+
+  fclose(f);
+
+  return !eof;
 }
 
 bool OMimeAtt::DecodeBase64(FILE *g) {

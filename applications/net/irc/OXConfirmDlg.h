@@ -45,8 +45,8 @@ public:
                unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXConfirmDlg();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   OLayoutHints *L1, *L2, *L3, *L4, *L5;

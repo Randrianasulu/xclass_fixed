@@ -42,7 +42,6 @@ public:
   char *GetAddress() const { return inet_ntoa(host.sin_addr); }
   int  GetPort() const { return ntohs(host.sin_port); }
 
-  void Associate(OComponent * w) { _msgObject = w; }
   int  ProcessMessage(OMessage *msg);
 
 protected:
@@ -56,8 +55,6 @@ protected:
   int _fd;
   struct sockaddr_in host;
   struct hostent *hp;
-
-  OComponent *_msgObject;
 
   char _buffer[TCP_BUFFER_LENGTH+1];
   int _blength, _rem_bytes;

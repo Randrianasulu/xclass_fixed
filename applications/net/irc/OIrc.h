@@ -17,7 +17,6 @@ public:
   int  Connect(char *server, int port) 
        const { return _tcp->Connect(server, port, True); }
   void Close() const { _tcp->Close(); }
-  void Associate(OComponent * w) { _msgObject = w; }
   int  GetFD() const { return _tcp->GetFD(); }
 
   int Receive() { return _tcp->Receive(); }
@@ -26,7 +25,6 @@ public:
 
 protected:
   OTcp *_tcp;
-  OComponent *_msgObject;
 };
 
 #endif  // __OIRC_H

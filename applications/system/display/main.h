@@ -36,9 +36,8 @@ public:
   OXMain(const OXWindow *p, int w, int h, char *modname, int inp, int outp);
   virtual ~OXMain();
 
-  virtual int  HandleFileEvent(OFileHandler *fh, unsigned int mask);
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
+  virtual int ProcessMessage(OMessage *msg);
 
   int  ReadFvwmPacket(unsigned long *header, unsigned long **body);
   void SendFvwmPipe(const char *message, unsigned long window = 0);

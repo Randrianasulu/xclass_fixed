@@ -134,10 +134,6 @@ OXSearchBox::~OXSearchBox() {
   delete L10;
 }
 
-void OXSearchBox::CloseWindow() {
-  delete this;
-}
-
 int OXSearchBox::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

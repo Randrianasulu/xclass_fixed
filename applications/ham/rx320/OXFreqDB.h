@@ -56,8 +56,8 @@ public:
   OXFreqDB(const OXWindow *p, OXMain *m, int w, int h);
   ~OXFreqDB();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
 
   void SetWindowTitle(char *title);
   void UpdateStatus();

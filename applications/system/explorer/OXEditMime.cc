@@ -221,10 +221,6 @@ OXEditMimeDialog::~OXEditMimeDialog() {
   delete lv; delete llv;
 }
 
-void OXEditMimeDialog::CloseWindow() {
-  delete this;
-}
-
 int OXEditMimeDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

@@ -255,7 +255,7 @@ OXFreqDB::~OXFreqDB() {
   if (_filename) delete[] _filename;
 }
 
-void OXFreqDB::CloseWindow() {
+int OXFreqDB::CloseWindow() {
   switch (IsSaved()) {
   case ID_CANCEL:
     break;
@@ -264,8 +264,9 @@ void OXFreqDB::CloseWindow() {
     if (_changed) break;
   case ID_NO:
     _rxmain->RemoveFreqDBwindow(this);
-    OXMainFrame::CloseWindow();
+    return OXMainFrame::CloseWindow();
   }
+  return False;
 }
 
 OXPopupMenu *OXFreqDB::_MakePopup(struct _popup *p) {
@@ -296,7 +297,7 @@ OXPopupMenu *OXFreqDB::_MakePopup(struct _popup *p) {
 
 int OXFreqDB::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
-  OItemViewMessage *vmsg = (OItemViewMessage *) msg;
+  OItemViewMessage *vmsg;
 
   switch (msg->type) {
 

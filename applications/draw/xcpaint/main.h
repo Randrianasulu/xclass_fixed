@@ -125,9 +125,9 @@ public:
   OXAppMainFrame(const OXWindow *p, int w, int h);
   virtual ~OXAppMainFrame();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual int  HandleKey(XKeyEvent * event);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int HandleKey(XKeyEvent * event);
+  virtual int CloseWindow();
 
   void SetWindowTitle(char *title);
   void UpdateStatus();

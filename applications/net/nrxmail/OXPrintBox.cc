@@ -133,10 +133,6 @@ OXPrintBox::~OXPrintBox() {
   delete L21;
 }
 
-void OXPrintBox::CloseWindow() {
-  delete this;
-}
-
 int OXPrintBox::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

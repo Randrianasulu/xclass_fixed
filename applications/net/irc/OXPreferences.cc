@@ -432,10 +432,6 @@ OXPreferencesDialog::~OXPreferencesDialog() {
   delete Ltab;
 }
 
-void OXPreferencesDialog::CloseWindow() {
-  delete this;
-}
-
 int OXPreferencesDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 

@@ -43,8 +43,7 @@ public:
                  unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXFolderDelete();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   int *_ret;

@@ -1,7 +1,7 @@
 #ifndef __OXIRC_H
 #define __OXIRC_H
 
-#define FOXIRCVERSION "fOXIrc v0.02-990614 http://www.foxproject.org/"
+#define FOXIRCVERSION "fOXIrc v0.03-020619 http://www.foxproject.org/"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -61,10 +61,10 @@ public:
         char *server = NULL, int port = 6667);
   virtual ~OXIrc();
 
-  virtual void CloseWindow();
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual int  HandleMapNotify(XMapEvent *event);
-  virtual int  HandleFileEvent(OFileHandler *fh, unsigned int mask);
+  virtual int CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int HandleMapNotify(XMapEvent *event);
+  virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
 
   int Connect(char *server, int port = 6667);
   int Disconnect();

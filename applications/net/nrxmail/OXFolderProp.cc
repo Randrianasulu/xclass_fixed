@@ -174,10 +174,6 @@ OXFolderProp::OXFolderProp(const OXWindow *p, const OXWindow *main,
 OXFolderProp::~OXFolderProp() {
 }
 
-void OXFolderProp::CloseWindow() {
-  delete this;
-}
-
 void OXFolderProp::SetLinkPath() {
   OFileInfo fi;
   char *p, tmp[1024];

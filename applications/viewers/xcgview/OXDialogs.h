@@ -33,8 +33,8 @@ public:
   OXOutput(const OXWindow *p, const OXWindow *t, int w, int h);
   virtual ~OXOutput();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
+  virtual int CloseWindow();
 
   void AddText(char *text) { _text->AddText(text); }
   void Clear() { _text->Clear(); }
@@ -54,8 +54,7 @@ public:
              unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXPrintBox();
 
-  virtual int  ProcessMessage(OMessage *msg);
-  virtual void CloseWindow();
+  virtual int ProcessMessage(OMessage *msg);
 
 protected:
   char **pprinter, **pprintCommand;

@@ -301,7 +301,7 @@ void OXMain::Print() {
   }
 }
 
-void OXMain::CloseWindow() {
+int OXMain::CloseWindow() {
   switch (IsSaved()) {
   case ID_CANCEL:
     break;
@@ -312,9 +312,9 @@ void OXMain::CloseWindow() {
       SaveFile(filename);
     if (_te->TextChanged()) break;
   case ID_NO:
-    OXMainFrame::CloseWindow();
+    return OXMainFrame::CloseWindow();
   }
-  return;
+  return False;
 }
 
 int OXMain::HandleKey(XKeyEvent *event) {

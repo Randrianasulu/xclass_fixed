@@ -379,7 +379,7 @@ OXIrc::~OXIrc() {
   if (_logfile) DoCloseLog();
 }
 
-void OXIrc::CloseWindow() {
+int OXIrc::CloseWindow() {
   OString *lmsg = new OString("QUIT");
 
   if (_connected && foxircSettings->Confirm(P_CONFIRM_LEAVE)) {
@@ -389,7 +389,7 @@ void OXIrc::CloseWindow() {
     OString *text = new OString("Really Quit fOXirc?");
 
     new OXConfirmDlg(_client->GetRoot(), this, title, text, msg, &retc);
-    if (retc == ID_NO) return;
+    if (retc == ID_NO) return False;
     if (msg->GetLength() > 0) {
       lmsg->Append(" :");
       lmsg->Append(msg);
@@ -407,7 +407,7 @@ void OXIrc::CloseWindow() {
   Disconnect();
   while (channels) channels->CloseWindow();
 
-  OXMainFrame::CloseWindow();
+  return OXMainFrame::CloseWindow();
 }
 
 OXPopupMenu *OXIrc::MakePopup(SPopupData *p) {

@@ -117,10 +117,10 @@ OXCopyBox::~OXCopyBox() {
 
 // abort any copy operation in progress
 
-void OXCopyBox::CloseWindow() {
+int OXCopyBox::CloseWindow() {
   // delete the destination file
   if (_to_fd > 0) unlink(_to_path);
-  delete this;
+  return OXTransientFrame::CloseWindow();
 }
 
 // We start the copy operation as soon as the window gets mapped.

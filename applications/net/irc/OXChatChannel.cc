@@ -214,8 +214,8 @@ OXChatChannel::~OXChatChannel() {
 
 //----------------------------------------------------------------------
 
-void OXChatChannel::CloseWindow() {
-  DoLeave();
+int OXChatChannel::CloseWindow() {
+  return DoLeave();
 }
 
 //----------------------------------------------------------------------
@@ -804,7 +804,7 @@ void OXChatChannel::DoToggleTopicBar() {
 
 //----------------------------------------------------------------------
 
-void OXChatChannel::DoLeave() {
+int OXChatChannel::DoLeave() {
   OString *lmsg = new OString(_name);
 
   if (foxircSettings->Confirm(P_CONFIRM_LEAVE) && _server->Connected()) {
@@ -815,13 +815,13 @@ void OXChatChannel::DoLeave() {
              text->Append(_name); text->Append("?");
 
     new OXConfirmDlg(_client->GetRoot(), this, title, text, msg, &retc);
-    if (retc == ID_NO) return;
+    if (retc == ID_NO) return False;
     if (msg->GetLength() > 0) { lmsg->Append(" :"); lmsg->Append(msg); }
   }
   OIrcMessage message(OUTGOING_IRC_MSG, LEAVE, 0, 0, 0, 0,
                       (char *) lmsg->GetString());
   SendMessage(_server, &message);
-  OXChannel::CloseWindow();
+  return OXChannel::CloseWindow();
 }
 
 //----------------------------------------------------------------------

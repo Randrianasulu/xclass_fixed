@@ -39,7 +39,6 @@ public:
   bool IsVoiced()		{ return _flags & NICK_VOICED;	}
   
   void DoSendMessage();
-  void Associate(const OComponent *o) { _msgObject = o; } 
 
   friend class OXClient;
   friend class OXNameList;
@@ -48,7 +47,6 @@ protected:
   void _DoRedraw();
   void _DrawTrianglePattern(GC gc, int l, int t, int r, int b);
 
-  const OComponent *_msgObject;
   const OPicture *_pic;
   int _tw, _th;
   int _flags;
@@ -79,13 +77,10 @@ public:
   int  GetOpedCount(){return _oped;}
   int  GetVoicedCount(){return _voiced;}
 
-  void Associate(const OComponent *o) { _msgObject = o; } 
-
 protected:
   OXName *_current;
   int _stick; 
   OXPopupMenu *_popup;
-  const OComponent *_msgObject;
   const OPicture *_pchanop, *_pvoice;
   int _total,_oped,_voiced;
 };

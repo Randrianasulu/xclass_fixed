@@ -110,10 +110,10 @@ void OXChannel::_AddView() {
   _vf->AddFrame(_sayentry, topexpandxlayout1);
 }
 
-void OXChannel::CloseWindow() {
+int OXChannel::CloseWindow() {
   // Tell OXIrc to remove us from the chain...
   _server->RemoveChannel(this);
-  OXTransientFrame::CloseWindow();
+  return OXTransientFrame::CloseWindow();
 }
 
 void OXChannel::Say(char *nick, char *message, int mode) {

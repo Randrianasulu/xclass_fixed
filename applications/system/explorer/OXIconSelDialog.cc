@@ -114,10 +114,6 @@ OXIconSelDialog::~OXIconSelDialog() {
   delete _picPool;
 }
 
-void OXIconSelDialog::CloseWindow() {
-  OXFileDialog::CloseWindow();
-}
-
 int OXIconSelDialog::ProcessMessage(OMessage *msg) {
   OItemViewMessage *cmsg;
   OFileItem *f;

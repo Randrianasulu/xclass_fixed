@@ -48,7 +48,7 @@
 
 #include "pbg.xpm"
 
-#define XCPAINT_VERSION "0.7.1"
+#define XCPAINT_VERSION "0.7.2"
 
 struct _popup file_popup = {
   { NULL }, {
@@ -343,9 +343,9 @@ OXAppMainFrame::~OXAppMainFrame() {
 
 }
 
-void OXAppMainFrame::CloseWindow() {
-  if (SaveIfChanged() == ID_CANCEL) return;
-  OXMainFrame::CloseWindow();
+int OXAppMainFrame::CloseWindow() {
+  if (SaveIfChanged() == ID_CANCEL) return False;
+  return OXMainFrame::CloseWindow();
 }
 
 OXPopupMenu *OXAppMainFrame::_MakePopup(struct _popup *p) {

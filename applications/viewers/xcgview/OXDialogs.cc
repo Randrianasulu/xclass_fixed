@@ -57,9 +57,10 @@ OXOutput::OXOutput(const OXWindow *p, const OXWindow *t, int w, int h) :
 OXOutput::~OXOutput() {
 }
 
-void OXOutput::CloseWindow() {
+int OXOutput::CloseWindow() {
   delete this;
   output_dlg = NULL;
+  return True;
 }
 
 int OXOutput::ProcessMessage(OMessage *msg) {
@@ -232,10 +233,6 @@ OXPrintBox::~OXPrintBox() {
   delete L7; delete L21;
 }
                           
-void OXPrintBox::CloseWindow() {
-  delete this;
-}
-
 int OXPrintBox::ProcessMessage(OMessage *msg) {
   const char *string;
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
