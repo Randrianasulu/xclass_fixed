@@ -14,6 +14,7 @@ MAKEDEPEND=@MAKEDEPEND@
 SRCS = btest.cc \
 	colorsel.cc \
 	combotest.cc \
+	docktest.cc \
 	exec.cc \
 	favordlg.cc \
 	ftest.cc \

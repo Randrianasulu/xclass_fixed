@@ -45,3 +45,5 @@ exec     - used to test the OExec class.
 colorsel - used to test the color select button and color selection dialog.
 
 mditest  - a simple MDI application, used to test the OXMdi set of classes.
+
+docktest - used to test the "dockable" frame widget.
