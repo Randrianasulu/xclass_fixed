@@ -32,7 +32,7 @@
 #include <xclass/OXTextEdit.h>
 #include <xclass/OString.h>
 
-#define NOTEPAD_VERSION    "0.8"
+#define NOTEPAD_VERSION    "0.8.1"
 
 #define M_FILE_NEW         101
 #define M_FILE_OPEN        102

@@ -310,6 +310,7 @@ void OXMain::CloseWindow() {
       SaveFileAs();
     else
       SaveFile(filename);
+    if (_te->TextChanged()) break;
   case ID_NO:
     OXMainFrame::CloseWindow();
   }
@@ -445,7 +446,9 @@ int OXMain::ProcessMessage(OMessage *msg) {
     switch (msg->action) {
     case MSG_CLICK:
       switch (wmsg->id) {
+
       //------------------------------- File
+
       case M_FILE_NEW:
 	switch (IsSaved()) {
 	case ID_CANCEL:
@@ -455,6 +458,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
 	    SaveFileAs();
 	  else
 	    SaveFile(filename);
+          if (_te->TextChanged()) break;
 	case ID_NO:
 	  Clear();
 	}
@@ -469,6 +473,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
 	    SaveFileAs();
 	  else
 	    SaveFile(filename);
+          if (_te->TextChanged()) break;
 	case ID_NO:
 	  LoadFile();
 	  break;
@@ -491,18 +496,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
 	break;
 
       case M_FILE_EXIT:
-	switch (IsSaved()) {
-	case ID_CANCEL:
-	  break;
-	case ID_YES:
-	  if (strcmp(filename, "Untitled") == 0)
-	    SaveFileAs();
-	  else
-	    SaveFile(filename);
-	case ID_NO:
-	  delete _client;
-	  exit(0);
-	}
+        CloseWindow();
 	break;
 
       //------------------------------- Edit
