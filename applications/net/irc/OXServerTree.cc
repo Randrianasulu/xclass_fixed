@@ -90,7 +90,7 @@ OXServerTree::OXServerTree(const OXWindow *p, const OXWindow *main,
 
   OLayoutHints *bl = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP, 0, 0, 0, 5);
 
-  _conn = new OXTextButton(vf, new OHotString("&Connect..."), 101);
+  _conn = new OXTextButton(vf, new OHotString("&Connect"), 101);
   _conn->Associate(this);
   vf->AddFrame(_conn, bl);
 
@@ -262,7 +262,7 @@ void OXServerTree::BuildTree() {
     ++hopcnt;
   }
 
-  printf("size = %d, total = %d\n", _links.size(), total);
+  //printf("size = %d, total = %d\n", _links.size(), total);
 
   _listTree->Layout();
   _clearPending = True;

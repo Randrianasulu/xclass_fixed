@@ -56,7 +56,6 @@ protected:
   int  lnlen;     // length of line (i.e. number of chars)
   
   unsigned long _defaultFg;
-  const OXFont *_cachedFont;
 };
 
 

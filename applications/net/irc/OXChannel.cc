@@ -1,9 +1,13 @@
 #include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 
 #include <X11/keysym.h>
+
+#include <xclass/OXFontDialog.h>
+#include <xclass/OXFont.h>
 
 #include "IRCcodes.h"
 #include "OIrcMessage.h"
@@ -35,14 +39,16 @@ extern char *filetypes[];
 OXChannel::OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
                      const char *ch, int init) :
   OXTransientFrame(p, main, 1, 1) {
-  char wname[100];
 
   _server = s;
-  _next = _prev = NULL;
   _name = StrDup(ch);
 
   _InitHistory();
-  
+
+  _logfile = NULL;
+  _logfilename = NULL;
+  _menulog = NULL;
+
   _cinfo = foxircSettings->FindChannel(_name);
   if (!_cinfo) _cinfo = new OChannelInfo();
   _cinfo->name = StrDup(_name);
@@ -65,9 +71,7 @@ OXChannel::OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
 
     SetFocusOwner(_sayentry);
 
-//    sprintf(wname, "%s Private Message", _name);
-    sprintf(wname, "%s - %s", FOXIRC_NAME, _name);
-    SetWindowName(wname);
+    _UpdateWindowName();
 
     CenterOnParent();
 
@@ -76,6 +80,7 @@ OXChannel::OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
 }
 
 OXChannel::~OXChannel() {
+  if (_logfile) DoCloseLog();
   _ClearHistory();
   delete[] _name;
 }
@@ -86,6 +91,14 @@ int OXChannel::CloseWindow() {
   // Tell OXIrc to remove us from the chain...
   _server->RemoveChannel(this);
   return OXTransientFrame::CloseWindow();
+}
+
+void OXChannel::_UpdateWindowName() {
+  char wname[100];
+
+//  sprintf(wname, "%s Private Message", _name);
+  sprintf(wname, "%s - %s", FOXIRC_NAME, _name);
+  SetWindowName(wname);
 }
 
 void OXChannel::_AddView() {
@@ -99,11 +112,14 @@ void OXChannel::_AddView() {
   _logw->SetScrollOptions(FORCE_VSCROLL | NO_HSCROLL);
   _vf->AddFrame(_logw, expandxexpandylayout);
 
+  if (_cinfo->background)
+    _logw->SetupBackgroundPic(_cinfo->background);
+
   AddFrame(_hf, expandxexpandylayout);
 
-  _sayentry = new OXTextEntry(_vf, new OTextBuffer(1000), T_SAY);
+  _sayentry = new OXTextEntry(_vf, new OTextBuffer(IRC_MSG_LENGTH - 10),
+                              T_SAY);
   _sayentry->Associate(this);
-  _sayentry->ChangeOptions(FIXED_WIDTH | SUNKEN_FRAME | DOUBLE_BORDER);
   _vf->AddFrame(_sayentry, topexpandxlayout1);
 }
 
@@ -137,14 +153,15 @@ void OXChannel::Say(const char *nick, char *message, int mode) {
 
     if (!strncmp(message+1, "ACTION", 6)) {
       if (mode == DCC)
-        sprintf(m, "%s %s", nick+1, message+8);
+        snprintf(m, IRC_MSG_LENGTH, "%s %s", nick+1, message+8);
       else
-        sprintf(m, "%s %s", nick, message+8);
+        snprintf(m, IRC_MSG_LENGTH, "%s %s", nick, message+8);
       Log(m, P_COLOR_ACTION);
       return;
 
     } else {
-      sprintf(m, "%s requested unknown CTCP %s", nick, message+1);
+      snprintf(m, IRC_MSG_LENGTH, "%s requested unknown CTCP %s",
+                                  nick, message+1);
       Log(m, P_COLOR_CTCP);
 
     }
@@ -155,34 +172,42 @@ void OXChannel::Say(const char *nick, char *message, int mode) {
 
   } else if (!strcasecmp(nick, _name)) { // for MSG windows
     if (mode == DCC)
-      sprintf(m, "\003%d=\003%d%s\003%d=\003 %s", 9, 15, nick+1, 9, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d=\003%d%s\003%d=\003 %s",
+                                  9, 15, nick+1, 9, message);
     else if (mode == NOTICE)
-      sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 9, 15, nick, 9, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d-\003%d%s\003%d-\003 %s",
+                                  9, 15, nick, 9, message);
     else
-      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 9, 15, nick, 9, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d<\003%d%s\003%d>\003 %s",
+                                  9, 15, nick, 9, message);
     Log(m);    
 
   } else if (!strcasecmp(nick, _server->GetNick())) {  // our own text
     if (mode == DCC)
-      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 8, 15, nick, 8, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d<\003%d%s\003%d>\003 %s",
+                                  8, 15, nick, 8, message);
     else if (mode == NOTICE)
-      sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 8, 15, nick, 8, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d-\003%d%s\003%d-\003 %s",
+                                  8, 15, nick, 8, message);
     else
-      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 8, 15, nick, 8, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d<\003%d%s\003%d>\003 %s",
+                                  8, 15, nick, 8, message);
     Log(m);
 
   } else {  // other's text
     
     if (mode == NOTICE) {
       if (*nick) {
-        sprintf(m, "\003%d-\003%d%s\003%d-\003 %s", 11, 15, nick, 11, message);
+        snprintf(m, IRC_MSG_LENGTH, "\003%d-\003%d%s\003%d-\003 %s",
+                                    11, 15, nick, 11, message);
       } else {
-        sprintf(m, "%s", message);
+        snprintf(m, IRC_MSG_LENGTH, "%s", message);
         Log(m, P_COLOR_NOTICE);
         return;
       }
     } else {
-      sprintf(m, "\003%d<\003%d%s\003%d>\003 %s", 11, 15, nick, 11, message);
+      snprintf(m, IRC_MSG_LENGTH, "\003%d<\003%d%s\003%d>\003 %s",
+                                  11, 15, nick, 11, message);
     }
       
     //sprintf(m, "<%s> %s", nick, message);
@@ -209,6 +234,77 @@ void OXChannel::Log(const char *message, int color) {
   l->Fill(message);
   _log->AddLine(l);
   _logw->ScrollUp();
+
+  if (_logfile) {
+    fprintf(_logfile, "%s\n", message);
+    fflush(_logfile);
+  }
+}
+
+void OXChannel::DoOpenLog() {
+  OFileInfo fi;
+
+  if (_logfile) DoCloseLog();  // perhaps we should ask first...
+
+  // always open the file in append mode,
+  // perhaps we should ask for this too...
+
+  fi.MimeTypesList = NULL;
+  fi.file_types = filetypes;
+  new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
+  if (fi.filename) {
+    _logfilename = StrDup(fi.filename);
+    _logfile = fopen(_logfilename, "a");
+    if (!_logfile) {
+      OString stitle("File Open Error");
+      OString smsg("Failed to open log file: ");
+      smsg.Append(strerror(errno));
+      new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
+                   MB_ICONSTOP, ID_OK);
+      delete[] _logfilename;
+      _logfilename = NULL;
+    }
+    time_t now = time(NULL);
+    fprintf(_logfile, "****** IRC log started %s", ctime(&now));
+    if (_menulog) {
+      _menulog->EnableEntry(L_CLOSE);
+      _menulog->EnableEntry(L_EMPTY);
+    }
+  }
+}
+
+void OXChannel::DoCloseLog() {
+  if (_logfile) {
+    time_t now = time(NULL);
+    fprintf(_logfile, "****** IRC log ended %s", ctime(&now));
+    fclose(_logfile);
+    _logfile = NULL;
+    delete[] _logfilename;
+    _logfilename = NULL;
+    if (_menulog) {
+      _menulog->DisableEntry(L_CLOSE);
+      _menulog->DisableEntry(L_EMPTY);
+    }
+  }
+}
+
+void OXChannel::DoEmptyLog() {
+}
+
+void OXChannel::DoPrintLog() {
+}
+
+void OXChannel::DoChangeFont() {
+  OString f(_logw->GetFont()->NameOfFont());
+
+  new OXFontDialog(_client->GetRoot(), this, &f);
+  _logw->SetFont(f.GetString()); 
+}
+
+void OXChannel::ChangeName(const char *name) {
+  delete[] _name;
+  _name = StrDup(name);
+  _UpdateWindowName();
 }
 
 int OXChannel::ProcessMessage(OMessage *msg) {
@@ -230,7 +326,8 @@ int OXChannel::ProcessMessage(OMessage *msg) {
                 if (!ProcessCommand(char1)) {
                   strtmp = strtok(char1, "\n");
 		  while (strtmp) {
-                    sprintf(char3, "PRIVMSG %s :%s", _name, strtmp);
+                    snprintf(char3, IRC_MSG_LENGTH,
+                             "PRIVMSG %s :%s", _name, strtmp);
                     _server->SendRawCommand(char3);
                     Say(_server->GetNick(), strtmp, PRIVMSG);
                     _AddToHistory(strtmp);
@@ -271,10 +368,35 @@ int OXChannel::ProcessMessage(OMessage *msg) {
       {
         OIrcMessage *ircmsg = (OIrcMessage *) msg;
 
-        switch (msg->action) {
-          default:
-	    break;
+        if (strcasecmp(ircmsg->command, "NICK") == 0) {
+          int notify = False;
+
+          if (_name[0] == '=') {  // DCC chat window
+            if (strcmp(_name+1, ircmsg->nick) == 0) {
+              sprintf(char1, "=%s", ircmsg->argv[0]);
+              ChangeName(char1);
+              notify = True;
+            }
+          } else {
+            if (strcmp(_name, ircmsg->nick) == 0) {
+              ChangeName(ircmsg->argv[0]);
+              notify = True;
+            }
+          }
+
+          // notify also about our own nick changes (note that it has
+          // already been changed in the server)
+
+          if (strcmp(_server->GetNick(), ircmsg->argv[0]) == 0)
+            notify = True;
+
+          if (notify) {
+            sprintf(char1, "%s is now known as %s.",
+                           ircmsg->nick, ircmsg->argv[0]);
+            Log(char1, P_COLOR_NICK);
+          }
         }
+
       }
       break;
   }
@@ -288,13 +410,13 @@ int OXChannel::ProcessCommand(char *cmd) {
   if (!cmd || *cmd != '/') return False;
 
   if (!strncmp(cmd, "/me ", 4)) {
-    sprintf(char1, "\1ACTION %s\1", &cmd[4]);
-    sprintf(char2, "PRIVMSG %s :%s", _name, char1);
+    snprintf(char1, IRC_MSG_LENGTH, "\1ACTION %s\1", &cmd[4]);
+    snprintf(char2, IRC_MSG_LENGTH, "PRIVMSG %s :%s", _name, char1);
     _server->SendRawCommand(char2);
     Say(_server->GetNick(), char1, PRIVMSG);
 
   } else if (!strncmp(cmd, "/notice ", 8)) {
-    sprintf(char1, "NOTICE %s :%s", _name, &cmd[8]);
+    snprintf(char1, IRC_MSG_LENGTH, "NOTICE %s :%s", _name, &cmd[8]);
     _server->SendRawCommand(char1);
     Say(_server->GetNick(), &cmd[8], NOTICE);
 

@@ -61,21 +61,21 @@ SColors cpref[] = {
   { "Action",      0xff, 0x00, 0xff },
   { "CTCP",        0xff, 0xff, 0x00 },
   { "Highlight",   0x00, 0xff, 0xff },
-  { "Server 1",    0xff, 0xff, 0xff },
+  { "Server 1",    0x00, 0xff, 0x00 },
   { "Server 2",    0xff, 0xff, 0xff },
   { "Invite",      0xff, 0x80, 0x00 },
-  { "Join",        0x00, 0x80, 0x80 },
+  { "Join",        0xc0, 0xc0, 0xc0 },
   { "Kick",        0xff, 0x00, 0x00 },
   { "Mode",        0xff, 0x00, 0x00 },
   { "Nick",        0x00, 0x00, 0xff },
   { "Normal text", 0xff, 0xff, 0xff },
-  { "Notice",      0x80, 0x00, 0x00 },
-  { "Notify",      0xff, 0xff, 0x00 },
+  { "Notice",      0xff, 0xff, 0x00 },
+  { "Notify",      0xff, 0x80, 0x00 },
   { "Other",       0x00, 0xff, 0xff },
   { "Own text",    0xff, 0xff, 0xff },
   { "Part",        0x00, 0x00, 0xff },
-  { "Quit",        0x80, 0x00, 0x80 },
-  { "Topic",       0x00, 0x80, 0x00 },
+  { "Quit",        0xff, 0x80, 0x00 },
+  { "Topic",       0x00, 0xff, 0x00 },
   { "Wallops",     0xff, 0x00, 0x00 }
 };
 
@@ -836,7 +836,7 @@ void OXServersTab::_doAdd() {
 }
 
 void OXServersTab::_doEdit() {
-  OXTextLBEntry *te = (OXTextLBEntry *)lb->GetSelectedEntry();
+  OXTextLBEntry *te = (OXTextLBEntry *) lb->GetSelectedEntry();
   if (!te) return;
 
   OServerInfo *o2 = _settings->FindServer(te->GetText()->GetString());
@@ -863,6 +863,7 @@ void OXServersTab::_doEdit() {
     if (info->name) {
       o2->name = StrDup(info->name);
       te->SetText(new OString(info->name));
+      lb->Layout();
     }
 
     if (o2->hostname)   delete[] o2->hostname;

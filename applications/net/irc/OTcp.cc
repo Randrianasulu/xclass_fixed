@@ -78,7 +78,9 @@ int OTcp::Bind(int port) {
 }
 
 int OTcp::Connect(const char *server, int port, int async) {
-  return _Connect(BuildAddress(server, port), async);
+  int fd = BuildAddress(server, port);
+  if (fd > 0) fd = _Connect(fd, async);
+  return fd;
 }
 
 int OTcp::Connect(unsigned long server, int port, int async) {
@@ -136,6 +138,9 @@ int OTcp::_Connect(int fd, int async) {
         if (errno == EINPROGRESS) {
 //          asyncConnect = 1;
           status = 0;
+        } else {
+          close(_fd);
+          _fd = -4;
         }
       }
     }
@@ -191,9 +196,8 @@ int OTcp::Send(const char *message) {
   return(send(_fd, message, strlen(message), 0));
 }
 
-int OTcp::BinaryReceive(char *buf, int size) {
-  _blength = recv(_fd, buf, size, 0);
-  return _blength;
+int OTcp::BinarySend(const char *buf, unsigned long size) {
+  return(send(_fd, buf, size, 0));
 }
 
 int OTcp::Receive() {
@@ -207,7 +211,6 @@ int OTcp::Receive() {
       if (_buffer[i] == '\n' || _buffer[i] == '\r') {
         _buffer[i] = 0;
 	if (_msgObject && *msg) {
-          //printf("%s\n", msg);
 	  OTcpMessage message(INCOMING_TCP_MSG, 0, msg);
           SendMessage(_msgObject, &message);
           if (_fd < 0) return 0;  // can happen due to reentrancy
@@ -235,10 +238,14 @@ int OTcp::Receive() {
   }
 }
 
+int OTcp::BinaryReceive(char *buf, unsigned long size) {
+  _blength = recv(_fd, buf, size, 0);
+  return _blength;
+}
+
 int OTcp::ProcessMessage(OMessage *msg) {
   if (msg->type == OUTGOING_TCP_MSG) {
     OTcpMessage *tcpmsg = (OTcpMessage *) msg;
-    //printf("%s\n", tcpmsg->string->GetString());
     if (Send((char *) tcpmsg->string->GetString()) < 0) {
       if (errno == EPIPE) {
         // hmmm... a message back

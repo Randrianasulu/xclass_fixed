@@ -38,10 +38,11 @@ public:
   int  Accept(int sockfd);
   void Close() { if (_fd > 0) { close(_fd); _fd = -1; } }
   int  Send(const char *message);
+  int  BinarySend(const char *buf, unsigned long size);
   int  Receive();
+  int  BinaryReceive(char *buf, unsigned long size);
   int  GetLocalAddress(unsigned long *hostr, unsigned short *portr);
   int  GetFD() { return _fd; }
-  int  BinaryReceive(char *buf, int size);
   char *GetAddress() const { return inet_ntoa(host.sin_addr); }
   int  GetPort() const { return ntohs(host.sin_port); }
 

@@ -33,12 +33,16 @@ public:
   int  Connect(const char *server, int port);
   int  Listen(unsigned long *host, unsigned short *port);
   void Disconnect(int log = True);
+  
+  const char *GetServerName() const { return _serverName; }
 
 protected:
   void _UpdateStatusBar();
 
+  virtual void _UpdateWindowName();
+
   OXMenuBar *_menubar;
-  OXPopupMenu *_menuchannel, *_menumode, *_menulog, *_menuedit,
+  OXPopupMenu *_menuchannel, *_menumode, *_menuedit,
               *_menuview, *_menuhelp, *_nick_ctcp, *_nick_dcc,
               *_nick_actions, *_nick_ignore;
 

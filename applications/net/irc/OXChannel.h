@@ -5,12 +5,11 @@
 #include <stdio.h>
 
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXToolBar.h>
 #include <xclass/OXStatusBar.h>
 #include <xclass/OXMsgBox.h>
-#include <xclass/OXSlider.h>
+#include <xclass/OXMenu.h>
 #include <xclass/OX3dLines.h>
 #include <xclass/OString.h>
 
@@ -20,28 +19,23 @@
 #include "OXNameList.h"
 #include "OXIrc.h"
 
-#define M_POPUP      100
-#define M_POPDOWN    101
-#define M_QUIET      103
-#define M_ACTIONS    104
-#define M_NOCASE     105
-#define M_BAN        106
-#define M_PRIVATE    107
-#define M_MODERATED  108
-#define M_SECRET     109
-#define M_INVITEONLY 110
-#define M_TOPIC      111
-#define M_NOMSG      112
-#define M_LIMIT      113
-#define M_KEY        114
+#define M_ACTIONS    101
+#define M_NOCASE     102
+#define M_BAN        103
+#define M_PRIVATE    104
+#define M_MODERATED  105
+#define M_SECRET     106
+#define M_INVITEONLY 107
+#define M_TOPIC      108
+#define M_NOMSG      109
+#define M_LIMIT      110
+#define M_KEY        111
 
 #define CH_WHO       201
 #define CH_INVITE    202
 #define CH_NOTICE    203
-#define CH_HISTORY   205
-#define CH_EXEC      206
-#define CH_CRYPT     207
-#define CH_LEAVE     208
+#define CH_CRYPT     204
+#define CH_LEAVE     205
 
 #define L_OPEN       301
 #define L_CLOSE      302
@@ -106,14 +100,21 @@ public:
   virtual int ProcessCommand(char *cmd);
 
   const char *GetName() const { return _name; }
+  void ChangeName(const char *name);
 
-  friend class OXIrc;
+  void DoOpenLog();
+  void DoCloseLog();
+  void DoEmptyLog();
+  void DoPrintLog();
+  void DoChangeFont();
 
 protected:
   void _AddView();
   void _InitHistory();
   void _AddToHistory(const char *str);
   void _ClearHistory();
+  
+  virtual void _UpdateWindowName();
 
   OXIrc *_server;
 
@@ -126,8 +127,11 @@ protected:
   OXTextEntry *_sayentry;
 
   char *_name;
-  OXChannel *_next, *_prev;
   OChannelInfo *_cinfo;
+
+  char *_logfilename;
+  FILE *_logfile;
+  OXPopupMenu *_menulog;
 };
 
 

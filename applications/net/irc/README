@@ -1,8 +1,8 @@
 Intro
 -----
 
-This the version 0.4.1 of fOXIrc, an irc client with a nice graphical user
-interface.
+This the version 0.4.1 of fOXIrc, an irc client with a nice graphical 
+(point-and-click) user interface.
 
 
 Installation
@@ -13,61 +13,104 @@ executable, cd to the directory where you unpacked the sources and type
 'make'. Copy the resulting 'foxirc' executable to a directory somewhere in
 your $PATH.
 
-foxircrc
 
-
-Usage
------
+Quick usage guide
+-----------------
 
 The fOXIrc user interface is very intuitive (I hope!). When you first start
 the program, the "info" window will appear. Connection messages, server
-notices, the MOTD and some other info are shown by default in that window.
+notices, the MOTD and some other miscellaneous information are shown in that
+window.
 
-Use the "IRC/Connect to..." menu option (or click on the "connect" toolbar
-icon) to connect to a remote server. In the dialog box that appears fill in
-the hostname, change the nick and/or irc name, then click "Connect". You
-should see the connection details in the info window,
+To connect to a server use the "IRC/Connect to..." menu option (or click on
+the "connect" toolbar icon). In the dialog box that appears fill in the
+hostname, port, set the nick and/or irc name, then click "Connect".
 
+You can also setup a list of your prefered servers. Use the preferences
+dialog ("Edit/Preferences..." from the menu or the little hammer toolbar
+button), click on the "Servers" tab and add your servers. Next time you can
+use the combo box at the top of the Connect dialog to select your favorite
+server.
 
+To join a channel, just type its name in the "Join" entry box below the
+toolbar (do not forget the "#" symbol), and press Enter. If the channel
+requires a key, just type the key after the channel name, separated by an
+space (e.g. "#vipchannel secretkey").
 
+Channel windows have a set of buttons with the nick names of the people
+present in the channel. Channel operators and voiced users are marked by an
+icon. Clicking on the buttons pops up a menu with which you can start a
+private chat, change the user's mode (if you are a channel operator), start
+a DCC chat or file send, send a CTCP command, etc.
+
+Private messages appear on a separate window, which can be used to have a
+separate, private chat.
+
+All standard IRC text attributes (bold, underline and reverse video) are
+supported, as well mIRC color extensions and ANSI color codes.
+
+The output of any window (info, channel, private or DCC chat) can be sent
+to a log file, each window can have its own separate log file. Since text
+attributes and color codes are also sent to the log, I have included a
+"Log/View..." option to view the saved log files (there is also a simple
+C program included with this distribution, named mirc2ansi, which
+translates color and text attributes into their approximate ANSI
+equivalents, so that the file could be viewed by simply 'cat'-ing it
+through mirc2ansi).
 
 The program also recognizes a few of ircII-style commands, the following can
 be typed on the channel window:
 
-/me <action>
-/notice <nick> <message>
-/names -- works only for the current channel, refreshes the name list.
-/leave
-/msg <nick> [<message>]
-/nick <newnick>
-/raw <command>
-/quote <command>
-/wallops <message>
-/mode <mode> [<mode arguments>]  -- note: the channel must not be specified,
-                                    it works only for the current channel
-/umode <usermode>
-/whois <nick>
-/whowas <nick>
-/invite <nick>  -- like in /mode above, you do not have to specify the
-                   channel name
-/kick <nick>
-/command --> sends command as raw, that way you can type such commands
-             as /who, /silence, etc...
-/ctcp <nick or channel> <command> <args>
+/me <action>                 - sends an action text to the channel
+/notice <message>            - sends a notice to the channel
+/names                       - works only for the current channel,
+                               refreshes the name list (you won't see
+                               any output).
+/leave                       - leaves the channel
+/msg <nick> [<message>]      - send a private message to the specified
+                               user
+/nick <newnick>              - change nicks
+/raw <command>               - send the specified command to the server
+/quote <command>             - same as /raw
+/wallops <message>           - send a wallops message (works only if you
+                               are an irc operator)
+/mode <mode> [<arguments>]   - set or change channel mode (note that the
+                               channel must not be specified, the command
+                               works only for the current channel)
+/umode <usermode>            - change user mode
+/whois <nick>                - perform a WHOIS query on the specified nick
+/whowas <nick>               - perfoerm a WHOWAS query
+/invite <nick>               - invite a person to the current channel
+                               (like in /mode above, you do not have to
+                               specify the channel name)
+/kick <nick>                 - kick nick from the channel
+/<command>                   - this sends 'command' as raw, that way you
+                               can type such commands as /who, /silence,
+                               etc.
+/ctcp <nick or channel> <command> <args> - send a CTCP command to the
+                               specified nick or channel.
 
+Private chat (message) windows also recognize a few of these commands:
 
-Private chat (/msg) windows also recognize a few of these commands:
-
-/me <action>
-/notice <message>
-/msg <nick> [<message>]
-/raw <command>
-/quote <command>
-/whois <nick>
-/whowas <nick>
+/me <action>                 - sends an action text to the ohter party
+/notice <message>            - sends a notice to the user
+/msg <nick> [<message>]      - send a private message to another user
+/raw <command>               - send the specified command to the server
+/quote <command>             - same as /raw
+/whois <nick>                - perform a WHOIS query on the specified nick
+/whowas <nick>               - perfoerm a WHOWAS query
 
 DCC chat windows only recognize the /me command.
 
+The following features are not yet implemented:
+
+- Ignores
+- Notify
+- Channel monitoring
+- Channel encryption (CTCP SED)
+- Auto-log
+- DCC resume
+
 
 Enjoy it!
-Hector.
+Hector <peraza@uia.ua.ac.be>

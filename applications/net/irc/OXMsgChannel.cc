@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <ctype.h>
 
-#include "OXMsgChannel.h"
 #include "OXIrc.h"
+#include "OIrcMessage.h"
+#include "OXMsgChannel.h"
+#include "OXCommandDlg.h"
 
 
 //----------------------------------------------------------------------
@@ -46,7 +49,6 @@ extern char *filetypes[];
 OXMsgChannel::OXMsgChannel(const OXWindow *p, const OXWindow *main,
                            OXIrc *s, const char *ch) :
   OXChannel(p, main, s, ch, False) {
-    char wname[100];
 
     _InitHistory();
 
@@ -59,11 +61,12 @@ OXMsgChannel::OXMsgChannel(const OXWindow *p, const OXWindow *main,
     _nick_ctcp->AddEntry(new OHotString("Time"),       CTCP_TIME);
     _nick_ctcp->AddEntry(new OHotString("Version"),    CTCP_VERSION);
     _nick_ctcp->AddEntry(new OHotString("Userinfo"),   CTCP_USERINFO);
+    _nick_ctcp->AddSeparator();
     _nick_ctcp->AddEntry(new OHotString("Other..."),   CTCP_OTHER);
 
     _nick_dcc = new OXPopupMenu(_client->GetRoot());
-    _nick_dcc->AddEntry(new OHotString("Send"), DCC_SEND);
-    _nick_dcc->AddEntry(new OHotString("Chat"), DCC_CHAT);
+    _nick_dcc->AddEntry(new OHotString("Send..."), DCC_SEND);
+    _nick_dcc->AddEntry(new OHotString("Chat"),    DCC_CHAT);
 
     _nick_ignore = new OXPopupMenu(_client->GetRoot());
     _nick_ignore->AddEntry(new OHotString("All"),     0);
@@ -96,22 +99,14 @@ OXMsgChannel::OXMsgChannel(const OXWindow *p, const OXWindow *main,
     _menulog->DisableEntry(L_EMPTY);
 
     _menumode = new OXPopupMenu(_client->GetRoot());
-    _menumode->AddEntry(new OHotString("Pop &Up"),      M_POPUP);
-    _menumode->AddEntry(new OHotString("Pop &Down"),    M_POPDOWN);
-    _menumode->AddEntry(new OHotString("&Quiet"),       M_QUIET);
     _menumode->AddEntry(new OHotString("&Actions"),     M_ACTIONS);
-    _menumode->DisableEntry(M_POPUP);
-    _menumode->DisableEntry(M_POPDOWN);
-    _menumode->DisableEntry(M_QUIET);
     _menumode->DisableEntry(M_ACTIONS);
 
     _menuchannel = new OXPopupMenu(_client->GetRoot());
     _menuchannel->AddPopup(new OHotString("&Mode"),    _menumode);
     _menuchannel->AddPopup(new OHotString("&Peer"),    _nick_actions);
     _menuchannel->AddPopup(new OHotString("L&og"),     _menulog);
-    _menuchannel->AddEntry(new OHotString("&History"), CH_HISTORY);
     _menuchannel->AddEntry(new OHotString("C&rypt"),   CH_CRYPT);
-    _menuchannel->AddEntry(new OHotString("&Exec"),    CH_EXEC);
     _menuchannel->AddSeparator();
     _menuchannel->AddEntry(new OHotString("&Leave"),   CH_LEAVE);
 
@@ -136,6 +131,9 @@ OXMsgChannel::OXMsgChannel(const OXWindow *p, const OXWindow *main,
     _menuhelp->AddEntry(new OHotString("&Index..."),    M_HELP_INDEX);
     _menuhelp->AddSeparator();
     _menuhelp->AddEntry(new OHotString("&About..."), M_HELP_ABOUT);  
+
+    _menuhelp->DisableEntry(M_HELP_CONTENTS);
+    _menuhelp->DisableEntry(M_HELP_INDEX);   
 
     _menulog->Associate(this);
     _menuchannel->Associate(this);
@@ -165,9 +163,7 @@ OXMsgChannel::OXMsgChannel(const OXWindow *p, const OXWindow *main,
 
     SetFocusOwner(_sayentry);
 
-    //sprintf(wname, "Conversation with %s", _name);
-    sprintf(wname, "%s Private Chat", _name);
-    SetWindowName(wname);
+    _UpdateWindowName();
 
     Resize(560, 350);
 
@@ -192,6 +188,115 @@ OXMsgChannel::~OXMsgChannel() {
   delete _menuhelp;
 }
 
+void OXMsgChannel::_UpdateWindowName() {
+  char wname[100];
+
+  //sprintf(wname, "Conversation with %s", _name);
+  sprintf(wname, "%s Private Chat", _name);
+  SetWindowName(wname);
+}
+
 int OXMsgChannel::ProcessMessage(OMessage *msg) {
-  return OXChannel::ProcessMessage(msg);
+  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
+
+  switch (msg->type) {
+    case MSG_MENU:
+      switch (msg->action) {
+        case MSG_CLICK:
+          switch (wmsg->id) {
+            case L_OPEN:
+              DoOpenLog();
+              break;
+
+            case L_CLOSE:
+              DoCloseLog();
+              break;
+
+            case L_EMPTY:
+              DoEmptyLog();
+              break;
+
+            case CH_LEAVE:
+              CloseWindow();
+              break;
+
+            case CTCP_PING:
+            case CTCP_VERSION:
+            case CTCP_TIME:
+            case CTCP_FINGER:
+            case CTCP_USERINFO:
+            case CTCP_CLIENTINFO:
+            case CTCP_OTHER:
+              DoRequestCTCP(_name, wmsg->id);
+              break;
+
+            case M_VIEW_FONT:
+              DoChangeFont();
+              break;
+          }
+          break;
+      }
+      break;
+
+    default:
+      return OXChannel::ProcessMessage(msg);
+  }
+
+  return True;
+}
+
+void OXMsgChannel::DoRequestCTCP(const char *target, int ctcp) {
+  char char1[IRC_MSG_LENGTH];
+
+  switch (ctcp) {
+    case CTCP_CLIENTINFO:
+      _server->CTCPRequest(target, "CLIENTINFO");
+      break;
+
+    case CTCP_FINGER:
+      _server->CTCPRequest(target, "FINGER");
+      break;
+
+    case CTCP_PING:
+      sprintf(char1, "PING %ld", time(NULL));
+      _server->CTCPRequest(target, char1);
+      break;
+
+    case CTCP_TIME:
+      _server->CTCPRequest(target, "TIME");
+      break;
+
+    case CTCP_VERSION:
+      _server->CTCPRequest(target, "VERSION");
+      break;
+
+    case CTCP_USERINFO:
+      _server->CTCPRequest(target, "USERINFO");
+      break;
+
+    case CTCP_OTHER:
+      DoAskCTCP(target);
+      break;
+  }
+}
+
+void OXMsgChannel::DoAskCTCP(const char *target) {
+  OString wtitle("CTCP");
+  OString cmd(""), args("");
+  int retc;
+
+  new OXCommandDlg(_client->GetRoot(), this, &wtitle,
+                   new OString("Enter CTCP command and arguments"),
+                   new OString("Command:"), &cmd,
+                   new OString("Arguments:"), &args, &retc);
+
+  if (retc == ID_OK) {
+    char *p = (char *) cmd.GetString();
+    while (*p) *p = toupper(*p), ++p;
+    if (args.GetLength() > 0) {
+      cmd.Append(" ");
+      cmd.Append(args.GetString());
+    }
+    _server->CTCPRequest(target, cmd.GetString());
+  }
 }

@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
@@ -26,6 +27,7 @@
 #include "OXIrc.h"
 #include "OXServerDlg.h"
 #include "OXConfirmDlg.h"
+#include "OXCommandDlg.h"
 #include "OXPasswdDlg.h"
 #include "OXChannelDialog.h"
 #include "OXChannelList.h"
@@ -90,11 +92,10 @@
 #define M_USERS_INVITE    4007
 #define M_USERS_MSG       4008
 #define M_USERS_NOTICE    4009
-#define M_USERS_FINGER    4010
-#define M_USERS_TIME      4011
-#define M_USERS_TRACE     4012
-#define M_USERS_UHOST     4013
-#define M_USERS_KILL      4014
+#define M_USERS_TIME      4010
+#define M_USERS_TRACE     4011
+#define M_USERS_UHOST     4012
+#define M_USERS_KILL      4013
 
 #define M_CHAN_JOIN       5001
 #define M_CHAN_WHO        5002
@@ -166,7 +167,7 @@ SPopupData pservdata = {
   { "&Version...",  M_SERV_VERSION, 0,             NULL },
   { "&Motd...",     M_SERV_MOTD,    0,             NULL },
   { "&Time...",     M_SERV_TIME,    0,             NULL },
-  { "T&race...",    M_SERV_TRACE,   0,             NULL },
+  { "Tra&ce...",    M_SERV_TRACE,   0,             NULL },
   { "A&dmin...",    M_SERV_ADMIN,   0,             NULL },
   { "L&users...",   M_SERV_LUSERS,  0,             NULL },
   { "&Info...",     M_SERV_INFO,    0,             NULL },
@@ -187,9 +188,8 @@ SPopupData pusersdata = {
   { "&CTCP...",     M_USERS_CTCP,   0,  NULL },
   { "&DCC...",      M_USERS_DCC,    0,  NULL },
   { "&Invite...",   M_USERS_INVITE, 0,  NULL },
-  { "M&sg...",      M_USERS_MSG,    0,  NULL },
+  { "M&essage...",  M_USERS_MSG,    0,  NULL },
   { "&Notice...",   M_USERS_NOTICE, 0,  NULL },
-  { "&Finger...",   M_USERS_FINGER, 0,  NULL },
   { "&Time...",     M_USERS_TIME,   0,  NULL },
   { "T&race...",    M_USERS_TRACE,  0,  NULL },
   { "&Userhost...", M_USERS_UHOST,  0,  NULL },
@@ -306,7 +306,8 @@ char *filetypes[] = { "All files",  "*",
 OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   OXMainFrame(p, 400, 300) {
 
-  _channels = NULL;
+  _channels = new OXSList(GetDisplay(), "Channels");
+  _transfers = new OXSList(GetDisplay(), "Transfers");
   _channelList = NULL;
   _serverTree = NULL;
   _viewLogFile = NULL;
@@ -490,7 +491,16 @@ int OXIrc::CloseWindow() {
     // sleep(2); or flush?
     Disconnect();
   }
-  while (_channels) _channels->CloseWindow();
+
+  const OXSNode *ptr;
+  while ((ptr = _channels->GetHead()) != NULL) {
+    OXChannel *ch = (OXChannel *) ptr->data;
+    ch->CloseWindow();
+  }
+  while ((ptr = _transfers->GetHead()) != NULL) {
+    OXDCCFile *dcc = (OXDCCFile *) ptr->data;
+    dcc->CloseWindow();
+  }
 
   return OXMainFrame::CloseWindow();
 }
@@ -531,7 +541,7 @@ void OXIrc::UpdateStatusBar(int field) {
   // connection status
   if (field == 0 || field < 0) {
     if (_connected) {
-      sprintf(tmp, "Connected to %s:%d", _realserver, _port);
+      snprintf(tmp, 256, "Connected to %s:%d", _realserver, _port);
       _statusBar->SetText(0, new OString(tmp));
     } else {
       _statusBar->SetText(0, new OString("Not connected."));
@@ -541,7 +551,7 @@ void OXIrc::UpdateStatusBar(int field) {
   // lag time
   if (field == 1 || field < 0) {
     if (_connected) {
-      sprintf(tmp, "Lag: %ld sec", _lag);
+      snprintf(tmp, 256, "Lag: %ld sec", _lag);
       _statusBar->SetText(1, new OString(tmp));
     } else {
       _statusBar->SetText(1, new OString(""));
@@ -632,13 +642,14 @@ int OXIrc::Connect(char *server, int port) {
     _port = port;
 
     if ((retc = _irc->Connect(_server, _port)) < 0) {
-      sprintf(tmp, "Connection to %s:%d failed (%s).",
-                   _server, _port, strerror(errno));
+      snprintf(tmp, 256, "Connection to %s:%d failed (%s).",
+                         _server, _port, strerror(errno));
       Log(tmp, P_COLOR_SERVER_1);
       return retc;
     }
 
-    sprintf(tmp, "Connecting to server %s, port %d", _server, _port);
+    snprintf(tmp, 256, "Connecting to server %s, port %d",
+                       _server, _port);
     Log(tmp, P_COLOR_SERVER_1);
 
     if (_fh) delete _fh;
@@ -700,15 +711,15 @@ int OXIrc::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
     UpdateStatusBar(2);
 
     if (_passwd && *_passwd) {
-      sprintf(tmp, "PASS %s", _passwd);
+      snprintf(tmp, 256, "PASS %s", _passwd);
       SendRawCommand(tmp);
     }
 
-    sprintf(tmp, "NICK %s", _nick);
+    snprintf(tmp, 256, "NICK %s", _nick);
     SendRawCommand(tmp);
 
-    sprintf(tmp, "USER %s %s %s :%s",
-                 _username, _hostname, _server, _ircname);
+    snprintf(tmp, 256, "USER %s %s %s :%s",
+                       _username, _hostname, _server, _ircname);
     SendRawCommand(tmp);
 
     //Log(" ");
@@ -774,27 +785,20 @@ OXChannel *OXIrc::GetChannel(const char *channel) {
 
   }
 
-  // new channels are added to the beginning of the list...
-
-  ch->_next = _channels;
-  if (ch->_next) ch->_next->_prev = ch;
-  ch->_prev = NULL;
-  _channels = ch;
-
-  if (ch->_cinfo->background)
-    ch->_logw->SetupBackgroundPic(ch->_cinfo->background);
+  _channels->Add(ch->GetId(), (XPointer) ch);
 
   return ch;
 }
-
 
 // Find a channel window with the given name, if not found return NULL.
 
 OXChannel *OXIrc::FindChannel(const char *channel) {
   OXChannel *ch;
+  const OXSNode *ptr;
 
-  for (ch = _channels; ch; ch = ch->_next) {
-    if (strcasecmp(channel, ch->_name) == 0) return ch;
+  for (ptr = _channels->GetHead(); ptr; ptr = ptr->next) {
+    ch = (OXChannel *) ptr->data;
+    if (strcasecmp(channel, ch->GetName()) == 0) return ch;
   }
 
   return NULL;
@@ -803,9 +807,13 @@ OXChannel *OXIrc::FindChannel(const char *channel) {
 // Remove the specified channel window from the chain.
 
 void OXIrc::RemoveChannel(OXChannel *ch) {
-  if (_channels == ch) _channels = ch->_next;
-  if (ch->_next) ch->_next->_prev = ch->_prev;
-  if (ch->_prev) ch->_prev->_next = ch->_next;
+  _channels->Remove(ch->GetId());
+}
+
+// Remove the specified DCC transfer window from the chain.
+
+void OXIrc::RemoveDCC(OXDCCFile *dcc) {
+  _transfers->Remove(dcc->GetId());
 }
 
 // Called when the user closes the channel list window.
@@ -939,6 +947,10 @@ int OXIrc::ProcessMessage(OMessage *msg) {
               DoList();
               break;
 
+            case M_CHAN_NOTICE:
+              DoNotice();
+              break;
+
             //------------------------------ Menu: Users
 
             case M_USERS_WHO:
@@ -951,6 +963,18 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
             case M_USERS_WHOWAS:
               DoWhowas();
+              break;
+
+            case M_USERS_MSG:
+              DoMessage();
+              break;
+
+            case M_USERS_NOTICE:
+              DoNotice();
+              break;
+
+            case M_USERS_INVITE:
+              DoInvite();
               break;
 
             //------------------------------ Menu: Servers
@@ -1626,13 +1650,24 @@ int OXIrc::ProcessMessage(OMessage *msg) {
             Log(str, P_COLOR_NOTICE);
           }
 
-          for (OXChannel *i = _channels; i; i= i->_next)
-            SendMessage(i, msg);  // OK to send it to all windows???
+          const OXSNode *ptr;
+          for (ptr = _channels->GetHead(); ptr; ptr = ptr->next) {
+            // it is OK to send the message to all windows:
+            // - if a channel window does not contain the old nick on
+            //   its list, it will ignore the message
+            // - message and DCC chat windows with the nick will rename
+            //   themselves.
+            OXChannel *ch = (OXChannel *) ptr->data;
+            SendMessage(ch, msg);
+          }
 
         } else if ((strcasecmp(ircmsg->command, "QUIT") == 0)) {
 
-          for (OXChannel *i = _channels; i; i= i->_next)
-            SendMessage(i, msg);  // OK to send it to all windows???
+          const OXSNode *ptr;
+          for (ptr = _channels->GetHead(); ptr; ptr = ptr->next) {
+            OXChannel *ch = (OXChannel *) ptr->data;
+            SendMessage(ch, msg);
+          }
 
         } else if ((strcasecmp(ircmsg->command, "KILL") == 0)) {
 
@@ -1865,14 +1900,14 @@ void OXIrc::ProcessCTCPReply(OIrcMessage *msg) {
 void OXIrc::CTCPRequest(const char *target, const char *command) {
   char str[512];
 
-  sprintf(str, "PRIVMSG %s :\001%s\001", target, command);
+  snprintf(str, 512, "PRIVMSG %s :\001%s\001", target, command);
   SendRawCommand(str);
 }
 
 void OXIrc::CTCPReply(const char *target, const char *command) {
   char str[512];
 
-  sprintf(str, "NOTICE %s :\001%s\001", target, command);
+  snprintf(str, 512, "NOTICE %s :\001%s\001", target, command);
   SendRawCommand(str);
 }
 
@@ -1898,23 +1933,26 @@ void OXIrc::ProcessDCCRequest(const char *nick, const char *string) {
 
   if (strcmp(cmd, "SEND") == 0) {
 
-    printf("DCC SEND received\n");
+    // DCC SEND filename ip_address port size
+
     if (sscanf(arg, "%s %s %s %s", char1, char2, char3, char4) == 4) {
-      new OXDCCFile(_client->GetRoot(), nick,
-                    char1, char2, char3, char4, &ret);
+      OXDCCFile *dcc = new OXDCCFile(_client->GetRoot(), this, nick,
+                                     char1, char2, char3, char4, &ret);
+      _transfers->Add(dcc->GetId(), (XPointer) dcc);
 
       if (ret == ID_DCC_REJECT) {
-        printf("Refusing DCC SEND from %s\n", nick);
-        sprintf(char1, "DCC REJECT SEND %s", char1);
-        CTCPReply(nick, char1);
+        sprintf(char2, "DCC REJECT SEND %s", char1);
+        CTCPReply(nick, char2);
       }
     } else {
-      printf("Invalid DCC SEND: %s\n", arg);
+      sprintf(char2, "Invalid DCC SEND from %s: %s\n", nick, arg);
+      Log(char2, P_COLOR_NOTICE);
     }
 
   } else if (strcmp(cmd, "CHAT") == 0) {
 
-    printf("DCC CHAT received\n");
+    // DCC CHAT chat ip_address port
+
     if (sscanf(arg, "%s %s %s", char1, char2, char3) == 3) {
       sprintf(char4, "%s wishes to chat with you ", nick);
       new OXMsgBox(_client->GetRoot(), this, new OString("DCC Confirm"), 
@@ -1922,34 +1960,34 @@ void OXIrc::ProcessDCCRequest(const char *nick, const char *string) {
                    ID_YES | ID_NO | ID_IGNORE, &ret);
 
       if (ret == ID_YES) {
-        printf("Accepting DCC CHAT from %s\n", nick);
         AcceptDCCChat(nick, char2, atoi(char3));
-
       } else if (ret == ID_NO) {
-        printf("Refusing DCC CHAT from %s\n", nick);
         CTCPReply(nick, "DCC REJECT CHAT chat"); // CTCPRequest?
-
       } else {
-        printf("Ignoring DCC CHAT from %s\n", nick);
-
+        // CTCP chat ignored
       }
     } else {
-      printf("Invalid DCC CHAT: %s\n", arg);
+      sprintf(char2, "Invalid DCC CHAT from %s: %s\n", nick, arg);
+      Log(char2, P_COLOR_NOTICE);
     }
 
   } else if (strcmp(cmd, "REJECT") == 0) {
 
-    printf("DCC REJECT received\n");
     if (sscanf(arg, "%s %s", char1, char2) == 2) {
       if (strcasecmp(char1, "CHAT") == 0) {
         CTCPReply(nick, "DCC REJECT CHAT chat");
-        printf("DCC CHAT REJECT from %s\n", nick);
+        sprintf(char3, "DCC REJECT CHAT from %s\n", nick);
+        Log(char3, P_COLOR_CTCP);
         sprintf(char3, "=%s", nick);
         OXChannel *ch = FindChannel(char3);
         if (ch) ((OXDCCChannel *) ch)->Disconnect();
+      } else {
+        sprintf(char3, "DCC REJECT %s from %s\n", char1, nick);
+        Log(char3, P_COLOR_CTCP);
       }
     } else {
-      printf("Unknown DCC REJECT: %s\n", arg);
+      sprintf(char3, "Unknown DCC REJECT from %s: %s\n", nick, arg);
+      Log(char3, P_COLOR_NOTICE);
     }
 
   }
@@ -1963,14 +2001,12 @@ void OXIrc::StartDCCChat(const char *nick) {
   sprintf(char1, "=%s", nick);
   OXDCCChannel *xdcc = (OXDCCChannel *) GetChannel(char1);
 
-  if (!xdcc->Listen(&hostnum, &portnum)) {
-    xdcc->Log("Failed to create server socket", P_COLOR_NOTIFY);
-    printf("StartDCCChat: Listen Failed!\n");
-  } else {
-    printf("Listening for DCC Chat with %s on IP %u Port %d\n",
-           nick, ntohl(hostnum), ntohs(portnum));
-    sprintf(char2, "DCC CHAT chat %u %d", ntohl(hostnum), ntohs(portnum));
+  if (xdcc->Listen(&hostnum, &portnum)) {
+    sprintf(char2, "DCC CHAT chat %lu %u", ntohl(hostnum), ntohs(portnum));
     CTCPRequest(nick, char2);  
+  } else {
+    sprintf(char2, "Failed to create server socket (%s)", strerror(errno));
+    xdcc->Log(char2, P_COLOR_NOTIFY);
   }
 }
 
@@ -1979,9 +2015,37 @@ void OXIrc::AcceptDCCChat(const char *nick, const char *server, int port) {
 
   sprintf(char1, "=%s", nick);
   OXDCCChannel *xdcc = (OXDCCChannel *) GetChannel(char1);
-  xdcc->Connect(server, port);
+  if (xdcc->Connect(server, port) < 0) {
+    sprintf(char1, "Failed to connect to host %s (%s)", 
+                   xdcc->GetServerName(), strerror(errno));
+    xdcc->Log(char1, P_COLOR_NOTIFY);
+    xdcc->Disconnect();
+  }
 }
 
+void OXIrc::StartDCCSend(const char *nick, const char *filename) {
+  char char1[256];
+  unsigned long hostnum, filesize;
+  unsigned short portnum;
+  struct stat stbuf;
+
+  if (stat(filename, &stbuf) != 0) {
+    return;
+  }
+
+  OXDCCFile *dcc = new OXDCCFile(_client->GetRoot(), this, nick, filename);
+  _transfers->Add(dcc->GetId(), (XPointer) dcc);
+
+  if (dcc->Listen(&hostnum, &portnum)) {
+    sprintf(char1, "DCC SEND %s %lu %u %lu",
+                   filename, ntohl(hostnum), ntohs(portnum), stbuf.st_size);
+    CTCPRequest(nick, char1);
+  } else {
+    sprintf(char1, "DCC SEND: Failed to create server socket (%s)",
+                   strerror(errno));
+    Log(char1, P_COLOR_NOTIFY);
+  }
+}
 
 //----------------------------------------------------------------------
 
@@ -2004,7 +2068,7 @@ void OXIrc::ChangeNick(const char *nick) {
 void OXIrc::JoinChannel(const char *channel) {
   char str[IRC_MSG_LENGTH];
 
-  sprintf(str, "JOIN :%s", channel);
+  sprintf(str, "JOIN %s", channel);
   SendRawCommand(str);
   // wait until we actually join the channel...
   //sprintf(str, "MODE :%s", channel);
@@ -2325,6 +2389,62 @@ void OXIrc::DoOper() {
   }
 }
 
+void OXIrc::DoNotice() {
+  OString wtitle("Send Notice");
+  OString channel(""), text("");
+  int retc;
+
+  new OXCommandDlg(_client->GetRoot(), this, &wtitle,
+               new OString("Enter channel or nick name and notice to send"),
+               new OString("Target:"), &channel,
+               new OString("Notice:"), &text, &retc);
+
+  if (retc == ID_OK) {
+    if ((channel.GetLength() > 0) && (text.GetLength() > 0)) {
+      char str[512];
+      snprintf(str, 512, "NOTICE %s :%s",
+                         channel.GetString(), text.GetString());
+      SendRawCommand(str);
+    }
+  }
+}
+
+void OXIrc::DoMessage() {
+  OString user("");
+  int retc;
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   new OString("Message"),
+                   new OString("Enter nick name"),
+                   new OString("Nick:"),
+                   &user, &retc, ID_OK | ID_CANCEL);
+
+  if (retc == ID_OK) {
+    if (user.GetLength() > 0) 
+      GetChannel(user.GetString());
+  }
+}
+
+void OXIrc::DoInvite() {
+  OString wtitle("Invite");
+  OString nick(""), channel("");
+  int retc;
+
+  new OXCommandDlg(_client->GetRoot(), this, &wtitle,
+               new OString("Enter nick and channel"),
+               new OString("Nick:"), &nick,
+               new OString("Channel:"), &channel, &retc);
+
+  if (retc == ID_OK) {
+    if ((nick.GetLength() > 0) && (channel.GetLength() > 0)) {
+      char str[512];
+      snprintf(str, 512, "INVITE %s :%s",
+                         nick.GetString(), channel.GetString());
+      SendRawCommand(str);
+    }
+  }
+}
+
 void OXIrc::DoOpenLog() {
   OFileInfo fi;
 
@@ -2392,7 +2512,7 @@ void OXIrc::DoChangeFont() {
 
   foxircSettings->SetFont(f.GetString());
   foxircSettings->Save();
-  _logw->Redisplay();
+  _logw->SetFont(f.GetString());
 }
 
 void OXIrc::DoToggleToolBar() {
@@ -2423,12 +2543,11 @@ void OXIrc::DoHelpAbout() {
   info.wname = "About "FOXIRC_NAME;
   info.title = FOXIRC_NAME" "FOXIRC_VERSION" ("FOXIRC_RELEASE_DATE")\n"
                "A cool IRC client program";
-  info.copyright = "Copyright © 1998-1999 by the fOX Project Team.";
+  info.copyright = "Copyright © 1998-1999 by the fOX Project Team,\n"
+                   "Copyright © 2000-2002 by Héctor Peraza.";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
-              "General Public License.\n\nCoders:\n"
-	      "Ben Ciaccio, Mike McDonald, Hector Peraza, Rodolphe Suescun\n\n"
-              "irc.foxchat.net  #foxchat\n"
+              "General Public License.\n\n"
               FOXIRC_HOMEPAGE;
   info.title_font = (OXFont *) _client->GetFont("Times -14 bold");
 
@@ -2755,21 +2874,21 @@ char *OXIrc::DateString(const char *tmstr) {
 void OXIrc::SendWallops(const char *mess) {
   char m[IRC_MSG_LENGTH];
 
-  sprintf(m, "WALLOPS :%s", mess);
+  snprintf(m, IRC_MSG_LENGTH, "WALLOPS :%s", mess);
   SendRawCommand(m);
 }
 
 void OXIrc::SendUMode(const char *mod) {
   char m[IRC_MSG_LENGTH];
 
-  sprintf(m, "MODE %s %s", _nick, mod);
+  snprintf(m, IRC_MSG_LENGTH, "MODE %s %s", _nick, mod);
   SendRawCommand(m);
 }
 
 void OXIrc::SendMode(const char *chan, const char *mod) {
   char m[IRC_MSG_LENGTH];
 
-  sprintf(m, "MODE %s %s", chan, mod);
+  snprintf(m, IRC_MSG_LENGTH, "MODE %s %s", chan, mod);
   SendRawCommand(m);
 }
 
@@ -2777,7 +2896,7 @@ void OXIrc::SendRawCommand(const char *command) {
   if (_connected) {
     char m[IRC_MSG_LENGTH];
 
-    sprintf(m, "%s\r\n", command);
+    snprintf(m, IRC_MSG_LENGTH, "%s\r\n", command);
     OTcpMessage msg(OUTGOING_TCP_MSG, 0, m);
     SendMessage(_irc, &msg);
   }

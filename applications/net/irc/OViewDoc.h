@@ -13,7 +13,7 @@ class OXViewDoc;
 
 class OViewDoc : public OBaseObject {
 public:
-  OViewDoc() {}
+  OViewDoc() { _nlines = 0; }
   virtual ~OViewDoc() {}
 
   virtual void CreateCanvas(OXViewDoc *p);
@@ -27,14 +27,17 @@ public:
   virtual int SetHeight(int h) { return False; }
   virtual int SetWidth(int w) { return False; }
 
-  virtual void Layout() { }
+  virtual void Layout() {}
 
   virtual void DrawRegion(Display *dpy, Drawable d,
                           int x, int y, XRectangle *rect) {}
 
+  unsigned long NumLines() { return _nlines; }
+
 protected:
   OXViewDocFrame *_canvas;
   int _h, _w;
+  unsigned long _nlines;
 };
 
 

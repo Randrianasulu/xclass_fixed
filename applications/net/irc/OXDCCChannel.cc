@@ -49,7 +49,6 @@ extern char *filetypes[];
 OXDCCChannel::OXDCCChannel(const OXWindow *p, const OXWindow *main,
                            OXIrc *s, const char *ch) :
   OXChannel(p, main, s, ch, False) {
-    char wname[100];
 
     _dccServer = new OTcp(); 
     _dccServer->Associate(this);
@@ -69,11 +68,12 @@ OXDCCChannel::OXDCCChannel(const OXWindow *p, const OXWindow *main,
     _nick_ctcp->AddEntry(new OHotString("Time"),       CTCP_TIME);
     _nick_ctcp->AddEntry(new OHotString("Version"),    CTCP_VERSION);
     _nick_ctcp->AddEntry(new OHotString("Userinfo"),   CTCP_USERINFO);
+    _nick_ctcp->AddSeparator();
     _nick_ctcp->AddEntry(new OHotString("Other..."),   CTCP_OTHER);
 
     _nick_dcc = new OXPopupMenu(_client->GetRoot());
-    _nick_dcc->AddEntry(new OHotString("Send"), DCC_SEND);
-    _nick_dcc->AddEntry(new OHotString("Chat"), DCC_CHAT);
+    _nick_dcc->AddEntry(new OHotString("Send..."), DCC_SEND);
+//    _nick_dcc->AddEntry(new OHotString("Chat"),    DCC_CHAT);
 
     _nick_ignore = new OXPopupMenu(_client->GetRoot());
     _nick_ignore->AddEntry(new OHotString("All"),     0);
@@ -106,22 +106,14 @@ OXDCCChannel::OXDCCChannel(const OXWindow *p, const OXWindow *main,
     _menulog->DisableEntry(L_EMPTY);
 
     _menumode = new OXPopupMenu(_client->GetRoot());
-    _menumode->AddEntry(new OHotString("Pop &Up"),      M_POPUP);
-    _menumode->AddEntry(new OHotString("Pop &Down"),    M_POPDOWN);
-    _menumode->AddEntry(new OHotString("&Quiet"),       M_QUIET);
     _menumode->AddEntry(new OHotString("&Actions"),     M_ACTIONS);
-    _menumode->DisableEntry(M_POPUP);
-    _menumode->DisableEntry(M_POPDOWN);
-    _menumode->DisableEntry(M_QUIET);
     _menumode->DisableEntry(M_ACTIONS);
 
     _menuchannel = new OXPopupMenu(_client->GetRoot());
     _menuchannel->AddPopup(new OHotString("&Mode"),    _menumode);
     _menuchannel->AddPopup(new OHotString("&Peer"),    _nick_actions);
     _menuchannel->AddPopup(new OHotString("L&og"),     _menulog);
-    _menuchannel->AddEntry(new OHotString("&History"), CH_HISTORY);
     _menuchannel->AddEntry(new OHotString("C&rypt"),   CH_CRYPT);
-    _menuchannel->AddEntry(new OHotString("&Exec"),    CH_EXEC);
     _menuchannel->AddSeparator();
     _menuchannel->AddEntry(new OHotString("&Leave"),   CH_LEAVE);
 
@@ -146,6 +138,9 @@ OXDCCChannel::OXDCCChannel(const OXWindow *p, const OXWindow *main,
     _menuhelp->AddEntry(new OHotString("&Index..."),    M_HELP_INDEX);
     _menuhelp->AddSeparator();
     _menuhelp->AddEntry(new OHotString("&About..."), M_HELP_ABOUT);  
+
+    _menuhelp->DisableEntry(M_HELP_CONTENTS);
+    _menuhelp->DisableEntry(M_HELP_INDEX);   
 
     _menulog->Associate(this);
     _menuchannel->Associate(this);
@@ -176,9 +171,7 @@ OXDCCChannel::OXDCCChannel(const OXWindow *p, const OXWindow *main,
     _UpdateStatusBar();
     SetFocusOwner(_sayentry);
 
-//    sprintf(wname, "DCC Chat with %s", &_name[1]);
-    sprintf(wname, "=%s DCC Chat", &_name[1]);
-    SetWindowName(wname);
+    _UpdateWindowName();
 
     Resize(600, 350);
 
@@ -207,6 +200,14 @@ OXDCCChannel::~OXDCCChannel() {
   if (_serverName) delete[] _serverName;
 }
 
+void OXDCCChannel::_UpdateWindowName() {
+  char wname[100];
+
+//  sprintf(wname, "DCC Chat with %s", &_name[1]);
+  sprintf(wname, "=%s DCC Chat", &_name[1]);
+  SetWindowName(wname);
+}
+
 void OXDCCChannel::_UpdateStatusBar() {
   char tmp[256];
 
@@ -229,8 +230,13 @@ int OXDCCChannel::Connect(const char *server, int port) {
   _port = port;  //_dccServer->GetPort();
 
   if (_fl) delete _fl;
-  _fl = new OFileHandler(this, _dccServer->GetFD(),
-                               XCM_WRITABLE | XCM_EXCEPTION);
+  _fl = NULL;
+
+  if (retc > 0) {
+    _fl = new OFileHandler(this, _dccServer->GetFD(),
+                                 XCM_WRITABLE | XCM_EXCEPTION);
+  }
+
   _serverSocket = False;
 
   _UpdateStatusBar();
@@ -318,23 +324,56 @@ int OXDCCChannel::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
 }
 
 int OXDCCChannel::ProcessMessage(OMessage *msg) {
+  OWidgetMessage *wmsg = (OWidgetMessage *) msg;
   char char1[IRC_MSG_LENGTH];
 
   switch (msg->type) {
+    case MSG_MENU:
+      switch (msg->action) {
+        case MSG_CLICK:
+          switch (wmsg->id) {
+            case L_OPEN:
+              DoOpenLog();
+              break;
+
+            case L_CLOSE:
+              DoCloseLog();
+              break;
+
+            case L_EMPTY:
+              DoEmptyLog();
+              break;
+
+            case CH_LEAVE:
+              CloseWindow();
+              break;
+
+            case M_VIEW_FONT:
+              DoChangeFont();
+              break;
+
+            default:
+              break;
+
+          }
+          break;
+      }
+      break;
+
     case MSG_TEXTENTRY:
-    {
+      {
       OTextEntryMessage *tmsg = (OTextEntryMessage *) msg;
       switch (msg->action) {
         case MSG_TEXTCHANGED:
           switch (tmsg->keysym) {
             case XK_Return:
 	      sprintf(char1, "%s\n", _sayentry->GetString());
-	      //printf("DCC Sending Message: %s\n", char1);
               if (strlen(_sayentry->GetString()) > 0) {
                 if (_connected) {
 		  if (!ProcessCommand(char1)) {
                     OTcpMessage message(OUTGOING_TCP_MSG, 0, char1);
                     SendMessage(_dccServer, &message);
+                    char1[strlen(char1)-1] = '\0';  // strip the '\n'
                     Say(_server->GetNick(), char1, DCC);
 		  }
                   _AddToHistory(_sayentry->GetString());
@@ -355,7 +394,6 @@ int OXDCCChannel::ProcessMessage(OMessage *msg) {
     case INCOMING_TCP_MSG:
       {
       OTcpMessage *tmsg = (OTcpMessage *) msg;
-      //printf("DCC Recieve Message: %s\n", tmsg->string1->GetString());
       Say(_name, (char *) tmsg->string->GetString(), DCC);
       }
       break;
@@ -363,6 +401,10 @@ int OXDCCChannel::ProcessMessage(OMessage *msg) {
     case BROKEN_PIPE:
       Log("Remote end closed connection.", P_COLOR_SERVER_1);
       Disconnect(False);
+      break;
+
+    case INCOMING_IRC_MSG:
+      OXChannel::ProcessMessage(msg);
       break;
   }
 
@@ -377,8 +419,7 @@ int OXDCCChannel::ProcessCommand(char *cmd) {
   cmdsize = strlen(cmd);
   if (cmd[--cmdsize] == '\n') cmd[cmdsize] = 0;
 
-  if (!strncmp(cmd, "/me ", 4)) {
-    //printf("Size of me is %d\n", cmdsize);
+  if (strncmp(cmd, "/me ", 4) == 0) {
     sprintf(char1, "\1ACTION %s\1\n", &cmd[4]);
     {
       OTcpMessage message(OUTGOING_TCP_MSG, 0, char1);

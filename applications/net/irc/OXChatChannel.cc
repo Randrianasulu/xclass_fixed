@@ -7,6 +7,7 @@
 #include <X11/keysym.h>
 
 #include <xclass/utils.h>
+#include <xclass/OXFileDialog.h>
 
 #include "OXIrc.h"
 #include "IRCcodes.h"
@@ -54,14 +55,14 @@ extern char *filetypes[];
 OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main, 
                              OXIrc *s, const char *ch) :
   OXChannel(p, main, s, ch, False) {
-  char wname[100];
 
   _InitHistory();
 
-  _logfile = NULL;
-  _logfilename = NULL;
   _cmode = _ecmode = _umode = _eumode = 0L;
   _chlimit = 0;
+  _chkey = NULL;
+
+  _idle = NULL;
 
   //---- nicklist menu
 
@@ -76,8 +77,8 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _nick_ctcp->AddEntry(new OHotString("Other..."),   CTCP_OTHER);
 
   _nick_dcc = new OXPopupMenu(_client->GetRoot());
-  _nick_dcc->AddEntry(new OHotString("Send"), DCC_SEND);
-  _nick_dcc->AddEntry(new OHotString("Chat"), DCC_CHAT);
+  _nick_dcc->AddEntry(new OHotString("Send..."), DCC_SEND);
+  _nick_dcc->AddEntry(new OHotString("Chat"),    DCC_CHAT);
 
   _nick_ignore = new OXPopupMenu(_client->GetRoot());
   _nick_ignore->AddEntry(new OHotString("All"),     0);
@@ -100,7 +101,6 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _nick_actions->AddPopup(new OHotString("DCC"),      _nick_dcc);
   _nick_actions->AddEntry(new OHotString("Notify"),   C_NOTIFY);
   _nick_actions->AddPopup(new OHotString("Ignore"),   _nick_ignore);
-  _nick_actions->AddEntry(new OHotString("Finger"),   C_FINGER);
   _nick_actions->AddSeparator();
   _nick_actions->AddEntry(new OHotString("Speak"),    C_SPEAK);
   _nick_actions->AddEntry(new OHotString("ChanOp"),   C_CHAN_OP);
@@ -127,9 +127,6 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _menulog->DisableEntry(L_EMPTY);
 
   _menumode = new OXPopupMenu(_client->GetRoot());
-  _menumode->AddEntry(new OHotString("Pop &Up"),      M_POPUP);
-  _menumode->AddEntry(new OHotString("Pop &Down"),    M_POPDOWN);
-  _menumode->AddEntry(new OHotString("&Quiet"),       M_QUIET);
   _menumode->AddEntry(new OHotString("&Actions"),     M_ACTIONS);
   _menumode->AddEntry(new OHotString("&Ban"),         M_BAN);
   _menumode->AddEntry(new OHotString("&Private"),     M_PRIVATE);
@@ -140,9 +137,6 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _menumode->AddEntry(new OHotString("&No Msg"),      M_NOMSG);
   _menumode->AddEntry(new OHotString("&Limit"),       M_LIMIT);
   _menumode->AddEntry(new OHotString("&Key"),         M_KEY);
-  _menumode->DisableEntry(M_POPUP);
-  _menumode->DisableEntry(M_POPDOWN);
-  _menumode->DisableEntry(M_QUIET);
   _menumode->DisableEntry(M_ACTIONS);
   _menumode->DisableEntry(M_BAN);
   _menumode->DisableEntry(M_PRIVATE);
@@ -157,14 +151,12 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _menuchannel = new OXPopupMenu(_client->GetRoot());
   _menuchannel->AddPopup(new OHotString("&Mode"),     _menumode);
   _menuchannel->AddSeparator();
+  _menuchannel->AddPopup(new OHotString("L&og"),       _menulog);
   _menuchannel->AddEntry(new OHotString("&Who"),       CH_WHO);
   _menuchannel->AddEntry(new OHotString("&Invite..."), CH_INVITE);
   _menuchannel->AddEntry(new OHotString("&Notice"),    CH_NOTICE);
   _menuchannel->AddPopup(new OHotString("&CTCP"),      _nick_ctcp);
-  _menuchannel->AddPopup(new OHotString("L&og"),       _menulog);
-  _menuchannel->AddEntry(new OHotString("&History"),   CH_HISTORY);
   _menuchannel->AddEntry(new OHotString("C&rypt"),     CH_CRYPT);
-  _menuchannel->AddEntry(new OHotString("&Exec"),      CH_EXEC);
   _menuchannel->AddSeparator();
   _menuchannel->AddEntry(new OHotString("&Leave"),     CH_LEAVE);
 
@@ -190,6 +182,9 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _menuhelp->AddEntry(new OHotString("&Index..."), M_HELP_INDEX);
   _menuhelp->AddSeparator();
   _menuhelp->AddEntry(new OHotString("&About..."), M_HELP_ABOUT);  
+
+  _menuhelp->DisableEntry(M_HELP_CONTENTS);
+  _menuhelp->DisableEntry(M_HELP_INDEX);
 
   _menulog->Associate(this);
   _menuchannel->Associate(this);
@@ -217,9 +212,10 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _ltopic = new OXLabel(_ftopic, new OString("Topic: "));
   _ftopic->AddFrame(_ltopic, leftcenterylayout);
 
-  _topic = new OXTextEntry(_ftopic, new OTextBuffer(1000), T_TOPIC);
+  _topic = new OXTextEntry(_ftopic, new OTextBuffer(IRC_MSG_LENGTH - 10),
+                           T_TOPIC);
   _topic->Associate(this);
-  //_topic->ChangeOptions(FIXED_WIDTH | SUNKEN_FRAME | DOUBLE_BORDER);
+
   _ftopic->AddFrame(_topic, expandxexpandylayout);
 
   AddFrame(_ftopic, topexpandxlayout2);
@@ -252,9 +248,7 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
   _statusBar->SetText(0, new OString("Unknown channel modes"));
   _statusBar->SetText(1, new OString("Unknown status"));
 
-//  sprintf(wname, "IRC channel %s", _name);
-  sprintf(wname, "%s IRC channel", _name);
-  SetWindowName(wname);
+  _UpdateWindowName();
 
   SetFocusOwner(_sayentry);
 
@@ -269,7 +263,7 @@ OXChatChannel::OXChatChannel(const OXWindow *p, const OXWindow *main,
 }
 
 OXChatChannel::~OXChatChannel() {
-  if (_logfile) DoCloseLog();
+  if (_idle) delete _idle;
   delete _nick_actions;
   delete _nick_ignore;
   delete _nick_ctcp;
@@ -280,10 +274,27 @@ OXChatChannel::~OXChatChannel() {
   delete _menuedit;
   delete _menuview;
   delete _menuhelp;
+  if (_chkey) delete _chkey;
 }
 
 int OXChatChannel::CloseWindow() {
   return DoLeave();
+}
+
+void OXChatChannel::_UpdateWindowName() {
+  char wname[100];
+
+//  sprintf(wname, "IRC channel %s", _name);
+  sprintf(wname, "%s IRC channel", _name);
+  SetWindowName(wname);
+}
+
+int OXChatChannel::HandleIdleEvent(OIdleHandler *i) {
+  if (i != _idle) return False;
+  delete _idle;
+  _idle = NULL;
+  OXChannel::CloseWindow();
+  return True;
 }
 
 int OXChatChannel::ProcessMessage(OMessage *msg) {
@@ -299,6 +310,9 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
       switch (msg->action) {
         case MSG_CLICK:
           switch (wmsg->id) {
+
+            //----------------------------------------- Menu: Channel
+
             case CH_WHO:
               sprintf(m, "WHO :%s", _name);
               _server->SendRawCommand(m);
@@ -309,7 +323,7 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
               int retc;
               OString *wtitle = new OString("Invite to ");
                        wtitle->Append(_name);
-              OString *text = new OString("Enter tne nick name of the user\n"
+              OString *text = new OString("Enter the nick name of the user\n"
                                           "you want to invite to this channel");
               OString arg("");
 
@@ -324,9 +338,15 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
               }
               break;
 
+            case CH_NOTICE:
+              DoSendNotice(_name);
+              break;
+
             case CH_LEAVE:
               DoLeave();
               break;
+
+            //----------------------------------------- Menu: Channel/Log
 
             case L_OPEN:
               DoOpenLog();
@@ -340,9 +360,11 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
               DoEmptyLog();
               break;
 
-            case M_QUIET:
+            //----------------------------------------- Menu: Channel/Mode
+
+            case M_NOMSG:
               _server->SendMode(_name,
-                         _menumode->IsEntryChecked(M_QUIET) ? "-n" : "+n");
+                         _menumode->IsEntryChecked(M_NOMSG) ? "-n" : "+n");
               break;
 
             case M_PRIVATE:
@@ -395,22 +417,45 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
               }
               break;
 
-            case CTCP_PING:
-              sprintf(char1, "PING %ld", time(NULL));
-              _server->CTCPRequest(_name, char1);
+            case M_KEY:
+              {
+              int retc;
+              OString *wtitle = new OString("Key");
+              OString *text = new OString("Enter key to set for channel ");
+                       text->Append(_name);
+                       text->Append("\n(empty value clears key)");
+              OString arg(_chkey ? _chkey : "");
+
+              new OXConfirmDlg(_client->GetRoot(), this,
+                               wtitle, text, new OString("Key:"),
+                               &arg, &retc, ID_OK | ID_CANCEL);
+
+              if (retc == ID_OK) {
+                if (_chkey) {
+                  sprintf(m, "-k %s", _chkey);
+                  _server->SendMode(_name, m);
+                }
+                if (arg.GetLength() > 0) {
+                  sprintf(m, "+k %s", arg.GetString());
+                  _server->SendMode(_name, m);
+                }
+              }
+              }
               break;
 
-            case CTCP_VERSION:
-              _server->CTCPRequest(_name, "VERSION");
-              break;
+            //----------------------------------------- Menu: Channel/CTCP
 
             case CTCP_CLIENTINFO:
-              _server->CTCPRequest(_name, "CLIENTINFO");
+            case CTCP_FINGER:
+            case CTCP_PING:
+            case CTCP_TIME:
+            case CTCP_VERSION:
+            case CTCP_USERINFO:
+            case CTCP_OTHER:
+              DoRequestCTCP(_name, wmsg->id);
               break;
 
-            case CTCP_OTHER:
-              DoAskCTCP(_name);
-              break;
+            //----------------------------------------- Menu: View
 
             case M_VIEW_STATUSBAR:
               DoToggleStatusBar();
@@ -418,6 +463,10 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
 
             case M_VIEW_TITLE:
               DoToggleTopicBar();
+              break;
+
+            case M_VIEW_FONT:
+              DoChangeFont();
               break;
 
             default:
@@ -456,6 +505,9 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
         switch (msg->action) {
           case MSG_CLICK:
             switch (nlmsg->id) {
+
+              //--------------------------------------- Nick list
+
               case C_WHOIS:
                 sprintf(char1, "WHOIS %s", nlmsg->name);
                 _server->SendRawCommand(char1);
@@ -465,34 +517,40 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
                 _server->GetChannel(nlmsg->name)->MapRaised();
                 break;
 
+              case C_NOTICE:
+                DoSendNotice(nlmsg->name);
+                break;
+
+              //--------------------------------------- Nick list: CTCP
+
               case CTCP_PING:
-                sprintf(char1, "PING %ld", time(NULL));
-                _server->CTCPRequest(nlmsg->name, char1);
-                break;
-
               case CTCP_VERSION:
-                _server->CTCPRequest(nlmsg->name, "VERSION");
-                break;
-
               case CTCP_TIME:
-                _server->CTCPRequest(nlmsg->name, "TIME");
-                break;
-
               case CTCP_FINGER:
-                _server->CTCPRequest(nlmsg->name, "FINGER");
-                break;
-
               case CTCP_USERINFO:
-                _server->CTCPRequest(nlmsg->name, "USERINFO");
-                break;
-
               case CTCP_CLIENTINFO:
-                _server->CTCPRequest(nlmsg->name, "CLIENTINFO");
+              case CTCP_OTHER:
+                DoRequestCTCP(nlmsg->name, wmsg->id);
                 break;
 
-              case CTCP_OTHER:
-                DoAskCTCP(nlmsg->name);
+              //--------------------------------------- Nick list: DCC
+
+              case DCC_CHAT:
+                _server->StartDCCChat(nlmsg->name);
                 break;
+
+              case DCC_SEND:
+                {
+                OFileInfo fi;
+                fi.file_types = filetypes;
+                new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
+                if (fi.filename) {
+                  _server->StartDCCSend(nlmsg->name, fi.filename);
+                }
+                }
+                break;
+
+              //--------------------------------------- Nick list: Mode
 
               case C_SPEAK:
                 e = _nlist->GetName(nlmsg->name);
@@ -532,10 +590,6 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
                 break;
 
               case C_KILL:
-                break;
-
-              case DCC_CHAT:
-                _server->StartDCCChat((char *) nlmsg->name);
                 break;
 
               default:
@@ -596,6 +650,11 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
             case RPL_TOPIC:           // 332
               _topic->Clear();
               _topic->AddText(0, ircmsg->argv[2]);
+#if 1
+              sprintf(m, "The topic for this channel is \"%s\"", 
+                         ircmsg->argv[2]);
+              Log(m, P_COLOR_TOPIC);
+#endif
               break;
 
             case RPL_BANLIST:         // 367
@@ -863,18 +922,14 @@ void OXChatChannel::SetChannelMode(unsigned long mode_bits) {
     else                           _menumode->UnCheckEntry(M_LIMIT);
     if (_cmode & CMODE_MODERATED)  _menumode->CheckEntry(M_MODERATED);
     else                           _menumode->UnCheckEntry(M_MODERATED);
-    if (_cmode & CMODE_NOMSGS)     _menumode->CheckEntry(M_QUIET);
-    else                           _menumode->UnCheckEntry(M_QUIET);
-//  if (_cmode & CMODE_SETCHANOP)  _menumode->CheckEntry(??);
-//  else                           _menumode->UnCheckEntry(??);
+    if (_cmode & CMODE_NOMSGS)     _menumode->CheckEntry(M_NOMSG);
+    else                           _menumode->UnCheckEntry(M_NOMSG);
     if (_cmode & CMODE_PRIVATE)    _menumode->CheckEntry(M_PRIVATE);
     else                           _menumode->UnCheckEntry(M_PRIVATE);
     if (_cmode & CMODE_SECRET)     _menumode->CheckEntry(M_SECRET);
     else                           _menumode->UnCheckEntry(M_SECRET);
     if (_cmode & CMODE_OPTOPIC)    _menumode->CheckEntry(M_TOPIC);
     else                           _menumode->UnCheckEntry(M_TOPIC);
-//  if (_cmode & CMODE_SETSPEAK)   _menumode->CheckEntry(??);
-//  else                           _menumode->UnCheckEntry(??);
   }
 
   msg[0] = '\0';
@@ -883,12 +938,10 @@ void OXChatChannel::SetChannelMode(unsigned long mode_bits) {
   if (_cmode & CMODE_SETKEY)     strcat(msg, "Key ");
   if (_cmode & CMODE_SETULIMIT)  sprintf(msg, "%sLimit=%d ", msg, _chlimit);
   if (_cmode & CMODE_MODERATED)  strcat(msg, "Moderated ");
-  if (_cmode & CMODE_NOMSGS)     strcat(msg, "Quiet ");
-//if (_cmode & CMODE_SETCHANOP)  ??;
+  if (_cmode & CMODE_NOMSGS)     strcat(msg, "No-Msgs ");
   if (_cmode & CMODE_PRIVATE)    strcat(msg, "Private ");
   if (_cmode & CMODE_SECRET)     strcat(msg, "Secret ");
   if (_cmode & CMODE_OPTOPIC)    strcat(msg, "Topic ");
-//if (_cmode & CMODE_SETSPEAK)   ??;
 
   _statusBar->SetText(0, new OString(msg));
 }
@@ -955,79 +1008,16 @@ void OXChatChannel::EnableChannelMode(unsigned long mode_bits) {
     if (_ecmode & CMODE_SETKEY)     _menumode->EnableEntry(M_KEY);
     if (_ecmode & CMODE_SETULIMIT)  _menumode->EnableEntry(M_LIMIT);
     if (_ecmode & CMODE_MODERATED)  _menumode->EnableEntry(M_MODERATED);
-    if (_ecmode & CMODE_NOMSGS)     _menumode->EnableEntry(M_QUIET);
-//  if (_ecmode & CMODE_SETCHANOP)  _menumode->EnableEntry(??);
+    if (_ecmode & CMODE_NOMSGS)     _menumode->EnableEntry(M_NOMSG);
     if (_ecmode & CMODE_PRIVATE)    _menumode->EnableEntry(M_PRIVATE);
     if (_ecmode & CMODE_SECRET)     _menumode->EnableEntry(M_SECRET);
     if (_ecmode & CMODE_OPTOPIC)    _menumode->EnableEntry(M_TOPIC);
-//  if (_ecmode & CMODE_SETSPEAK)   _menumode->EnableEntry(??);
   }
 }
 
 void OXChatChannel::EnableUserMode(unsigned long mode_bits) {
   _eumode = mode_bits;
   // update menu...
-}
-
-void OXChatChannel::Log(const char *message) {
-  Log(message, P_COLOR_TEXT);
-}
-
-void OXChatChannel::Log(const char *message, int color) {
-  OXChannel::Log(message, color);
-  if (_logfile) {
-    fprintf(_logfile, "%s\n", message);
-    fflush(_logfile);
-  }
-}
-
-void OXChatChannel::DoOpenLog() {
-  OFileInfo fi;
-
-  if (_logfile) DoCloseLog();  // perhaps we should ask first...
-
-  // always open the file in append mode,
-  // perhaps we should ask for this too...
-
-  fi.MimeTypesList = NULL;
-  fi.file_types = filetypes;
-  new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
-  if (fi.filename) {
-    _logfilename = StrDup(fi.filename);
-    _logfile = fopen(_logfilename, "a");
-    if (!_logfile) {
-      OString stitle("File Open Error");
-      OString smsg("Failed to open log file: ");
-      smsg.Append(strerror(errno));
-      new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
-                   MB_ICONSTOP, ID_OK);
-      delete[] _logfilename;
-      _logfilename = NULL;
-    }
-    time_t now = time(NULL);
-    fprintf(_logfile, "****** IRC log started %s", ctime(&now));
-    _menulog->EnableEntry(L_CLOSE);
-    _menulog->EnableEntry(L_EMPTY);
-  }
-}
-
-void OXChatChannel::DoCloseLog() {
-  if (_logfile) {
-    time_t now = time(NULL);
-    fprintf(_logfile, "****** IRC log ended %s", ctime(&now));
-    fclose(_logfile);
-    _logfile = NULL;
-    delete[] _logfilename;
-    _logfilename = NULL;
-    _menulog->DisableEntry(L_CLOSE);
-    _menulog->DisableEntry(L_EMPTY);
-  }
-}
-
-void OXChatChannel::DoEmptyLog() {
-}
-
-void OXChatChannel::DoPrintLog() {
 }
 
 void OXChatChannel::DoToggleToolBar() {
@@ -1078,6 +1068,19 @@ int OXChatChannel::DoLeave() {
       sprintf(str, "PART %s", _name);
 
     _server->SendRawCommand(str);
+
+    // We need this for the case the /leave command is entered from
+    // the text entry box. The command processing is done in OXChannel
+    // which calls ProcessCommand(), which in turn calls DoLeave (i.e.
+    // this function), which causes the window to be closed (and thus
+    // deleted). The control then goes back to OXChannel, which tries to
+    // save the command into the just deleted history buffer and to clean 
+    // the also deleted text entry. That would cause the program to
+    // crash. So, instead we schedule an idle event and then close the
+    // window when it is safe to do so.
+
+    if (!_idle) _idle = new OIdleHandler(this);
+    return False;
   }
 
   return OXChannel::CloseWindow();
@@ -1086,7 +1089,7 @@ int OXChatChannel::DoLeave() {
 void OXChatChannel::DoChannelMode(const char *mode) {
   vector<char *> sl;
   char *temp = StrDup(mode);
-  const char *mode_str, *who, *ban_mask, *key;
+  const char *mode_str, *who, *ban_mask;
   int i, bit, param;
   bool add = true;
   unsigned long mode_bits = _cmode;
@@ -1167,7 +1170,8 @@ void OXChatChannel::DoChannelMode(const char *mode) {
           break;
 
         case 'k':  // key
-          if (add) key = sl[param++];
+          if (_chkey) delete[] _chkey;
+          if (add) _chkey = StrDup(sl[param++]); else _chkey = NULL;
           if (add) mode_bits |= CMODE_SETKEY; else mode_bits &= ~CMODE_SETKEY;
           break;
 
@@ -1181,6 +1185,41 @@ void OXChatChannel::DoChannelMode(const char *mode) {
   SetChannelMode(mode_bits);
 
   delete[] temp;
+}
+
+void OXChatChannel::DoRequestCTCP(const char *target, int ctcp) {
+  char char1[IRC_MSG_LENGTH];
+
+  switch (ctcp) {
+    case CTCP_CLIENTINFO:
+      _server->CTCPRequest(target, "CLIENTINFO");
+      break;
+
+    case CTCP_FINGER:
+      _server->CTCPRequest(target, "FINGER");
+      break;
+
+    case CTCP_PING:
+      sprintf(char1, "PING %ld", time(NULL));
+      _server->CTCPRequest(target, char1);
+      break;
+
+    case CTCP_TIME:
+      _server->CTCPRequest(target, "TIME");
+      break;
+
+    case CTCP_VERSION:
+      _server->CTCPRequest(target, "VERSION");
+      break;
+
+    case CTCP_USERINFO:
+      _server->CTCPRequest(target, "USERINFO");
+      break;
+
+    case CTCP_OTHER:
+      DoAskCTCP(target);
+      break;
+  }
 }
 
 void OXChatChannel::DoAskCTCP(const char *target) {
@@ -1201,5 +1240,26 @@ void OXChatChannel::DoAskCTCP(const char *target) {
       cmd.Append(args.GetString());
     }
     _server->CTCPRequest(target, cmd.GetString());
+  }
+}
+
+void OXChatChannel::DoSendNotice(const char *target) {
+  int  retc;
+  char m[IRC_MSG_LENGTH];
+
+  OString *wtitle = new OString("Notice to ");
+           wtitle->Append(target);
+  OString *text = new OString("Enter your notice text");
+  OString arg("");
+
+  new OXConfirmDlg(_client->GetRoot(), this,
+                   wtitle, text, new OString("Notice:"),
+                   &arg, &retc, ID_OK | ID_CANCEL);
+
+  if ((retc == ID_OK) && (arg.GetLength() > 0)) {
+    sprintf(m, "NOTICE %s :%s", target, arg.GetString());
+    _server->SendRawCommand(m);
+    _server->GetChannel(target)->Say(_server->GetNick(),
+                                     (char *) arg.GetString(), NOTICE);
   }
 }

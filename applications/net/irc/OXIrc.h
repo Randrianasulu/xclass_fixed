@@ -6,17 +6,14 @@
 #include <time.h>
 
 #include <xclass/OXClient.h>
-#include <xclass/OXWindow.h>
 #include <xclass/OXMainFrame.h>
 #include <xclass/OXToolBar.h>
 #include <xclass/OXStatusBar.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXButton.h>
 #include <xclass/OXMsgBox.h>
-#include <xclass/OXSlider.h>
 #include <xclass/OX3dLines.h>
 #include <xclass/OString.h>
-#include <xclass/OMimeTypes.h>
 #include <xclass/OXFileDialog.h>
 #include <xclass/OXAboutDialog.h>
 #include <xclass/OFileHandler.h>
@@ -45,6 +42,7 @@ class OXChannelList;
 class OXServerTree;
 class OXViewLogFile;
 class OXChannel;
+class OXDCCFile;
 
 
 //----------------------------------------------------------------------
@@ -76,6 +74,8 @@ public:
   OXChannel *GetChannel(const char *channel);
   OXChannel *FindChannel(const char *channel);
   void RemoveChannel(OXChannel *channel);
+  
+  void RemoveDCC(OXDCCFile *dcc);
 
   OXChannelList *GetChannelList();
   void ChannelListClosed();
@@ -105,6 +105,9 @@ public:
   void DoList();
   void DoTrace();
   void DoOper();
+  void DoNotice();
+  void DoMessage();
+  void DoInvite();
   void DoRaw();
 
   void DoOpenLog();
@@ -133,6 +136,7 @@ public:
   void ProcessDCCRequest(const char *nick, const char *string);
   void StartDCCChat(const char *nick);
   void AcceptDCCChat(const char *nick, const char *server, int port);
+  void StartDCCSend(const char *nick, const char *filename);
 
   void ChangeNick(const char *nick);
   void JoinChannel(const char *channel);
@@ -167,7 +171,8 @@ protected:
   char *_server, *_realserver, *_hostname;
   int _init, _port, _fd, _connected;
 
-  OXChannel *_channels;
+  OXSList *_channels;
+  OXSList *_transfers;
   OXChannelList *_channelList;
   OXViewLogFile *_viewLogFile;
   OXServerTree *_serverTree;

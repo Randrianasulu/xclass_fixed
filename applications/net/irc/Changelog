@@ -166,3 +166,29 @@
 - Added a command dialog. Used to get CTCP/Other... command and arguments.
 
 - Added /ctcp command to OXChatChannel.
+
+
+23/08/02
+
+- OXMsgChannel.cc: menu is now (partially) processed.
+
+- Fixed a bug in OTcp::Connect(): now returns -1 if the connection failed.
+
+- Moved logfile handling from OXChatChannel to OXChannel, that way
+  OXMsgChannel and OXDCCChannel can save the chat to a log too.
+
+
+24/08/02
+
+- Implemented DCC SEND.
+
+- OXDCCFile transfer windows are now in a list handled by OXIrc, much like
+  OXChannel, so they can all be closed at exit.
+
+- Added support for channel key handling.
+
+
+25/08/02
+
+- Channel dialogs can now use a different font, but only the info window
+  font is saved and used as default.

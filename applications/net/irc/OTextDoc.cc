@@ -34,6 +34,7 @@ void OTextDoc::SetCanvas(OXViewDocFrame *c) {
 
 void OTextDoc::Clear() {
   _lines = NULL;
+  _nlines = 0;
   _w = _h = 0;
 }
 
@@ -42,6 +43,9 @@ int OTextDoc::AddLine(OLineDoc *line) {
     _lines->InsertBefore(line);
   else
     _lines = line;
+
+  ++_nlines;
+
   line->Layout();
   _h += line->GetHeight();
   _mainWidget->AdjustScrollbars();
@@ -66,9 +70,6 @@ int OTextDoc::LoadFile(FILE *fp) {
     line = new OLineDoc();
     line->SetCanvas(_textFrame);
   }
-
-  // Remember the number of lines, and initialize the current line
-  // number to be 0.
 
   return True;
 }

@@ -19,14 +19,16 @@
 
 //----------------------------------------------------------------------
 
+class OXIrc;
 class OXProgressBar;
 class OFileHandler;
 
-class DCCFileConfirm : public OXTransientFrame {
+class OXDCCFileConfirm : public OXTransientFrame {
 public:
-  DCCFileConfirm(const OXWindow *p, const OXWindow *main, const char *nick, 
-                 char *filename, char *size, OFileInfo *retn, int *reti);
-  virtual ~DCCFileConfirm();
+  OXDCCFileConfirm(const OXWindow *p, const OXWindow *main,
+                   const char *nick, const char *filename,
+                   const char *size, OFileInfo *retn, int *reti);
+  virtual ~OXDCCFileConfirm();
 
   virtual int ProcessMessage(OMessage *msg);
 
@@ -43,20 +45,26 @@ protected:
 
 class OXDCCFile : public OXMainFrame {
 public:
-  OXDCCFile(const OXWindow *p, const char *nick, char *filename, char *ip,
+  OXDCCFile(const OXWindow *p, OXIrc *irc,
+            const char *nick, const char *filename, char *ip,
             char *port, char *size = 0, int *retc = 0);
-  OXDCCFile(const OXWindow *p, const char *nick, char *filename)
-    :OXMainFrame(p, 10, 10) {};
+  OXDCCFile(const OXWindow *p, OXIrc *irc,
+            const char *nick, const char *filename);
   virtual ~OXDCCFile();
   
+  virtual int CloseWindow();
   virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
   virtual int ProcessMessage(OMessage *msg);
+
+  int Listen(unsigned long *host, unsigned short *port);
 
 protected:
   bool _OpenFile(char *name);
   bool _FetchSomeData();
+  bool _SendSomeData();
 
   OTcp *_tcp;
+  OXIrc *_irc;
   OFileInfo fi;
   OFileHandler *_fh;
   OXProgressBar *_prog;
@@ -64,11 +72,9 @@ protected:
   OXLabel *_t1, *_t2, *_t3;
   OLayoutHints *L1, *L2;
 
-  int _file, *_retc;
-  bool _coned;
-  bool _serverSocket;
-  unsigned long bytesread;
-  unsigned long filesize;
+  int _file, _mode, *_retc;
+  bool _connected, _serverSocket;
+  unsigned long _filesize, _bytesread, _bytessent, _lastsent, _acksize;
   char *_filename;
   char _dir[PATH_MAX];
 };

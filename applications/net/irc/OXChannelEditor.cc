@@ -64,7 +64,6 @@ OXChannelEditor::OXChannelEditor(const OXWindow *p, const OXWindow *main,
     _logfileTE = new OXTextEntry(h1, new OTextBuffer(100));
     _logfileTE->Associate(this);
     if (!pic) {
-      printf("No open Pic\n");
       _logfileBT = new OXTextButton(h1, new OString("Load..."), CH_ED_LOGFILE);
     } else {
       _logfileBT = new OXPictureButton(h1, pic, CH_ED_LOGFILE);
@@ -81,7 +80,6 @@ OXChannelEditor::OXChannelEditor(const OXWindow *p, const OXWindow *main,
     _backTE = new OXTextEntry(h2, new OTextBuffer(100));
     _backTE->Associate(this);
     if (!pic) {
-      printf("No open Pic\n");
       _fileBT = new OXTextButton(h2, new OString("Load..."), CH_ED_BACKGROUND);
     } else {
       _fileBT = new OXPictureButton(h2, pic, CH_ED_BACKGROUND);
@@ -297,7 +295,6 @@ void OXChannelEditor::_GetBack() {
   fi.file_types = backtypes;
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
   if (fi.filename) {
-    //printf("Loading \"%s/%s\"\n", fi.ini_dir, fi.filename);
     if (_ci->background) delete[] _ci->background;
     _ci->background = new char[strlen(fi.filename) + strlen(fi.ini_dir) + 2];
     sprintf(_ci->background, "%s/%s", fi.ini_dir, fi.filename);

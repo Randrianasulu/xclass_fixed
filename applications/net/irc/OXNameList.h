@@ -13,13 +13,12 @@
 #define C_MESSAGE     2
 #define C_NOTICE      3
 #define C_NOTIFY      4
-#define C_FINGER      5
-#define C_SPEAK       6
-#define C_CHAN_OP     7
-#define C_KICK        8
-#define C_BAN         9
-#define C_BANKICK    10
-#define C_KILL       11
+#define C_SPEAK       5
+#define C_CHAN_OP     6
+#define C_KICK        7
+#define C_BAN         8
+#define C_BANKICK     9
+#define C_KILL       10
 
 class OXNameList;
 

@@ -2,6 +2,7 @@
 
 #include <xclass/utils.h>
 #include <xclass/OResourcePool.h>
+#include <xclass/OXFont.h>
 #include <xclass/OGC.h>
 
 #include "OXViewDoc.h"
@@ -39,8 +40,10 @@ OXViewDocFrame::OXViewDocFrame(OXWindow *parent, int x, int y,
   }
   _backgc = new OXGC(GetDisplay(), _id, mask, &gcv);
 
+  _font = _client->GetFont((OXFont *) foxircSettings->GetFont());
+
   _gc = new OXGC(GetDisplay(), _id);
-  _gc->SetFont(foxircSettings->GetFont()->GetId());
+  _gc->SetFont(_font->GetId());
   _gc->SetBackground(foxircSettings->GetPixelID(P_COLOR_BACKGROUND));
 
   _tx = 0;
@@ -51,6 +54,7 @@ OXViewDocFrame::~OXViewDocFrame() {
   Clear();
   delete _backgc;
   delete _gc;
+  _client->FreeFont(_font);
 }
 
 void OXViewDocFrame::SetupBackgroundPic(const char *name) {
@@ -67,6 +71,20 @@ void OXViewDocFrame::SetupBackground(unsigned long back) {
   _backgc->SetBackground(back);
   _backgc->SetForeground(back);
   _gc->SetBackground(back);
+}
+
+void OXViewDocFrame::SetFont(const char *fontname) {
+  SetFont(_client->GetFont(fontname));
+}
+
+void OXViewDocFrame::SetFont(OXFont *f) {
+  _client->FreeFont(_font);
+  if (f) {
+    _font = f;
+  } else {
+    _font = _client->GetFont((OXFont *) foxircSettings->GetFont());
+  }
+  _gc->SetFont(_font->GetId());
 }
 
 void OXViewDocFrame::Clear() {
@@ -267,7 +285,7 @@ int OXViewDoc::LoadFile(const char *fname) {
   if (file) {
     _document->LoadFile(file);
     fclose(file);
-    Layout();
+    //Layout();
     Redisplay();
     return True;
   }
@@ -387,10 +405,10 @@ void OXViewDoc::ScrollUp() {
 }
 
 void OXViewDoc::Redisplay() {
+  Layout();
 #if 0
   _canvas->ClearWindow();
 #else
   _canvas->DrawRegion(0, 0, _canvas->_w, _canvas->_h, True);
 #endif
-  Layout();
 }

@@ -1,5 +1,6 @@
 #include <fcntl.h> 
 #include <unistd.h> 
+#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -12,16 +13,22 @@
 #include <xclass/OFileHandler.h>
 #include <xclass/OXProgressBar.h>
 
+#include "OXIrc.h"
 #include "OXDCCFile.h"
 
+#define DCC_MODE_CLIENT  0
+#define DCC_MODE_SERVER  1
+
+#define DCC_BLOCK_SIZE   1024
 
 extern char *filetypes[];
 
+
 //----------------------------------------------------------------------
 
-DCCFileConfirm::DCCFileConfirm(const OXWindow *p, const OXWindow *main,
-                               const char *nick, char *filename, char *size,
-                               OFileInfo *retn, int *reti) :
+OXDCCFileConfirm::OXDCCFileConfirm(const OXWindow *p, const OXWindow *main,
+                              const char *nick, const char *filename,
+                              const char *size, OFileInfo *retn, int *reti) :
   OXTransientFrame(p, main, 10, 10) {
 
     int width = 0, height = 0;
@@ -117,7 +124,7 @@ DCCFileConfirm::DCCFileConfirm(const OXWindow *p, const OXWindow *main,
     _client->WaitFor(this); 
 }
 
-int DCCFileConfirm::ProcessMessage(OMessage *msg) {
+int OXDCCFileConfirm::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
   switch (msg->action) {
@@ -174,7 +181,7 @@ int DCCFileConfirm::ProcessMessage(OMessage *msg) {
   return true;
 }
 
-DCCFileConfirm::~DCCFileConfirm() {
+OXDCCFileConfirm::~OXDCCFileConfirm() {
   delete L1;
   delete L2;
 }
@@ -182,23 +189,28 @@ DCCFileConfirm::~DCCFileConfirm() {
 
 //----------------------------------------------------------------------
 
-OXDCCFile::OXDCCFile(const OXWindow *p, const char *nick, char *filename,
+// This constructor is for receive (client) mode
+
+OXDCCFile::OXDCCFile(const OXWindow *p, OXIrc *irc,
+                     const char *nick, const char *filename,
                      char *ip, char *port, char *size, int *retc) :
   OXMainFrame(p, 100, 100) {
-
     char name[PATH_MAX];
-    int  ste, wid;
+    int  ste, width;
+
+    _mode = DCC_MODE_CLIENT;
 
     _retc = retc;
     if (_retc) *_retc = ID_DCC_REJECT;
 
-    filesize = strtoul(size, NULL, 10);
+    _filesize = strtoul(size, NULL, 10);
+    _irc = irc;
     _tcp = new OTcp();
-    _coned = false;
+    _connected = false;
     _fh = NULL;
     _file = -1;
     _serverSocket = false;
-    bytesread = 0;
+    _bytesread = 0;
 
     if (fi.filename) delete[] fi.filename;
     if (filename)
@@ -226,32 +238,34 @@ OXDCCFile::OXDCCFile(const OXWindow *p, const char *nick, char *filename,
     L2 = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_CENTER_Y, 2, 2, 2, 2);
 
     _t1 = new OXLabel(this, str);
-    wid = _t1->GetDefaultWidth();
+    width = _t1->GetDefaultWidth();
 
-    _t2 = new OXLabel(this, new OString("Bytes Recieved:"));
+    _t2 = new OXLabel(this, new OString("Bytes Received:"));
     _t2->SetTextAlignment(TEXT_LEFT);
 
-    wid = max(wid, _t2->GetDefaultWidth());
+    width = max(width, _t2->GetDefaultWidth());
     _t3 = new OXLabel(this, new OString("Bytes Remaining:"));
     _t3->SetTextAlignment(TEXT_LEFT);
 
-    wid = max(wid, _t3->GetDefaultWidth());
+    width = max(width, _t3->GetDefaultWidth());
 
     AddFrame(_t1, L1);
     AddFrame(_t2, L1);
     AddFrame(_t3, L1);
 
-    _prog = new OXProgressBar(this, 150, 20);
+    _prog = new OXProgressBar(this, 250, 20);
     _prog->SetRange(0, strtoul(size, NULL, 10));
     _prog->SetPosition(0);
     _prog->ShowPercentage(true);
     AddFrame(_prog, L2);
 
+    width = max(width, _prog->GetDefaultWidth());
+
     _cancel = new OXTextButton(this, new OHotString("&Cancel"), -1);
     _cancel->Associate(this);
     AddFrame(_cancel, new OLayoutHints(LHINTS_CENTER_X, 2, 2, 2, 2));
 
-    Resize(wid+80, GetDefaultHeight()+20);
+    Resize(width + 80, GetDefaultHeight() + 20);
 
     SetWindowName("DCC File");
     SetIconName("DCC File");
@@ -261,37 +275,137 @@ OXDCCFile::OXDCCFile(const OXWindow *p, const char *nick, char *filename,
     Layout();
     MapWindow();
 
-    new DCCFileConfirm(_client->GetRoot(), this, nick, filename, size,
-                       &fi, &ste);
+    new OXDCCFileConfirm(_client->GetRoot(), this, nick, filename, size,
+                         &fi, &ste);
 
     if (_retc) *_retc = ste;
 
     if (ste == ID_DCC_SAVE) {
-      printf("File name is %s\n", fi.filename);
-      printf("Path is %s\n", fi.ini_dir);
-
-      sprintf(name, "%s/%s", fi.ini_dir, fi.filename);
+      snprintf(name, PATH_MAX, "%s/%s", fi.ini_dir, fi.filename);
       if (_OpenFile(name)) {
-        _tcp->Connect(strtoul(ip, NULL, 10), atoi(port), true);
-        _fh = new OFileHandler(this, _tcp->GetFD(), XCM_WRITABLE | XCM_EXCEPTION);
-        OString *str = new OString("Saving as: ");
-        str->Append(fi.filename);
-        _t1->SetText(str);
+        if (_tcp->Connect(strtoul(ip, NULL, 10), atoi(port), true) > 0) {
+          _fh = new OFileHandler(this, _tcp->GetFD(),
+                                       XCM_WRITABLE | XCM_EXCEPTION);
+          OString *str = new OString("Saving as: ");
+          str->Append(fi.filename);
+          _t1->SetText(str);
+        } else {
+          OString stitle("Connect");
+          sprintf(name, "Failed to connect to %s (%s)",
+                        _tcp->GetAddress(), strerror(errno));
+          OString smsg(name);
+          new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
+                       MB_ICONSTOP, ID_OK);
+          if (_retc) *_retc = ID_DCC_REJECT;
+          CloseWindow();
+        }
       } else {
-        CloseWindow();
         if (_retc) *_retc = ID_DCC_REJECT;
+        CloseWindow();
       }
     } else {
       CloseWindow();
     }
 }
 
+// This constructor is for sender (server) mode
+
+OXDCCFile::OXDCCFile(const OXWindow *p, OXIrc *irc,
+                     const char *nick, const char *filename) :
+  OXMainFrame(p, 100, 100) {
+    struct stat stbuf;
+    int width = 0;
+
+    _mode = DCC_MODE_SERVER;
+
+    if (!filename || stat(filename, &stbuf) != 0) {
+      CloseWindow();
+      return;
+    }
+
+    _tcp = new OTcp();
+    _irc = irc;
+    _connected = false;
+    _fh = NULL;
+    _file = -1;
+    _serverSocket = false;
+    _bytessent = 0;
+    _lastsent = 0;
+    _acksize = 0;
+
+    _filename = StrDup(filename);
+    _filesize = stbuf.st_size;
+
+    OString *str = new OString("Sending ");
+    str->Append(_filename);
+
+    L1 = new OLayoutHints(LHINTS_NORMAL | LHINTS_EXPAND_X, 2, 2, 2, 2);
+    L2 = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_CENTER_Y, 2, 2, 2, 2);
+
+    _t1 = new OXLabel(this, str);
+    width = _t1->GetDefaultWidth();
+
+    _t2 = new OXLabel(this, new OString("Bytes Sent:"));
+    _t2->SetTextAlignment(TEXT_LEFT);
+
+    width = max(width, _t2->GetDefaultWidth());
+    _t3 = new OXLabel(this, new OString("Bytes Remaining:"));
+    _t3->SetTextAlignment(TEXT_LEFT);
+
+    width = max(width, _t3->GetDefaultWidth());
+
+    AddFrame(_t1, L1);
+    AddFrame(_t2, L1);
+    AddFrame(_t3, L1);
+
+    _prog = new OXProgressBar(this, 250, 20);
+    _prog->SetRange(0, _filesize);
+    _prog->SetPosition(0);
+    _prog->ShowPercentage(true);
+    AddFrame(_prog, L2);
+
+    width = max(width, _prog->GetDefaultWidth());
+
+    _cancel = new OXTextButton(this, new OHotString("&Cancel"), -1);
+    _cancel->Associate(this);
+    AddFrame(_cancel, new OLayoutHints(LHINTS_CENTER_X, 2, 2, 2, 2));
+
+    Resize(width + 80, GetDefaultHeight() + 20);
+
+    SetWindowName("DCC File");
+    SetIconName("DCC File");
+    SetClassHints("XDCC", "XDCC");
+
+    MapSubwindows();
+    Layout();
+    MapWindow();
+
+    _file = open(_filename, O_RDONLY /* | O_NONBLOCK */);
+
+    if (_file < 0) {
+      OString stitle("Open");
+      OString smsg("Failed to open file: ");
+      smsg.Append(strerror(errno));
+      new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
+                   MB_ICONSTOP, ID_OK);
+      CloseWindow();
+      return;
+    }
+
+}
+
 OXDCCFile::~OXDCCFile() {
   if (_tcp) delete _tcp;
   if (_fh) delete _fh;
-  _fh = 0;
+  if (_file >= 0) close(_file);
   delete L1;
   delete L2;
+}
+
+int OXDCCFile::CloseWindow() {
+  // Tell OXIrc to remove us from the chain...
+  _irc->RemoveDCC(this);
+  return OXMainFrame::CloseWindow();
 }
 
 int OXDCCFile::ProcessMessage(OMessage *msg) {
@@ -315,32 +429,6 @@ int OXDCCFile::ProcessMessage(OMessage *msg) {
   return false;
 }
 
-/*
-bool OXDCCFile::_ConfirmSaveAs(char *filename) {
-  // always open the file in append mode,
-  // perhaps we should ask for this too...
-
-  fi.MimeTypesList = NULL;
-  fi.file_types = filetypes;
-  if (fi.filename) delete[] fi.filename;
-  fi.filename = StrDup(filename);
-  new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
-  if (fi.filename) {
-    if (_OpenFile(fi.filename)) return true;
-  }
-  return false;
-}
-*/
-
-/*
-int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
-  if (fh != _fh) return false;
-
-  delete _fh;
-  _fh = NULL;
-}
-*/
-
 bool OXDCCFile::_OpenFile(char *name) {
   struct stat st;
   char *fname = name;
@@ -363,7 +451,7 @@ bool OXDCCFile::_OpenFile(char *name) {
     fname = f2.filename;
   }
 
-  _file = open(fname, O_CREAT | O_WRONLY | O_TRUNC);
+  _file = open(fname, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 
   if (_file < 0) {
     OString stitle("Save");
@@ -377,38 +465,94 @@ bool OXDCCFile::_OpenFile(char *name) {
   return true;
 }
 
+int OXDCCFile::Listen(unsigned long *host, unsigned short *port) {
+  int ret;
+
+  if (_connected) _tcp->Close(); //Disconnect();
+  ret = _tcp->Listen(host, port, _irc->GetOIrc()->GetOTcp());
+
+  if (_fh) delete _fh;
+  _fh = NULL;
+
+  if (ret < 0) return ret;
+  _fh = new OFileHandler(this, _tcp->GetFD(), XCM_READABLE);
+  _serverSocket = True;
+  //Log("Waiting for connection...", P_COLOR_SERVER_1);
+
+  return ret;
+}
+
 int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
   if (fh != _fh) return False;
 
-/*
-  if (_serverSocket) {
-    if (_fl) { delete _fl; _fl = NULL; }
-    OTcp *newconn = new OTcp();
-    int ret = newconn->Accept(_dccServer->GetFD());  // write this better...
-    delete _dccServer;  // we do not have to continue
-                        // listening on that port...
-    _dccServer = newconn;
-    _dccServer->Associate(this);
-    if (ret >= 0) {
-      char s[256];
+  if (_mode == DCC_MODE_SERVER) {
 
-      _fl = new OFileHandler(this, _dccServer->GetFD(), XCM_READABLE);
-      sprintf(s, "Connection to %s:%d established",
-                  _dccServer->GetAddress(), _dccServer->GetPort());
-      Log(s, "green");
-      _coned = True;
+    if (_serverSocket) {
+      if (_fh) { delete _fh; _fh = NULL; }
+      OTcp *newconn = new OTcp();
+      int ret = newconn->Accept(_tcp->GetFD());  // write this better...
+      delete _tcp;  // we do not have to continue
+                    // listening on that port...
+      _tcp = newconn;
+      _tcp->Associate(this);
+      if (ret >= 0) {
+        char s[256];
+
+        _fh = new OFileHandler(this, _tcp->GetFD(),
+                               XCM_READABLE | XCM_WRITABLE);
+        //sprintf(s, "Connection to %s:%d established",
+        //            _dccServer->GetAddress(), _dccServer->GetPort());
+        //Log(s, "green");
+        _connected = True;
+        _acksize = 0;
+      } else {
+        //Log("Connection failed", "red");
+      }
+      _serverSocket = False;
+
     } else {
-      Log("Connection failed", "red");
-    }
-    _serverSocket = False;
 
-  } else {
-*/
+      switch (mask) {
+        case XCM_WRITABLE:
+          if (_acksize == 0) _SendSomeData();
+          break;
+
+        case XCM_READABLE:
+          if (!_acksize != 0) {
+            unsigned long bytestemp;
+
+            if (_tcp->BinaryReceive((char *) &bytestemp,
+                                    sizeof(unsigned long)) < 0) {
+              // error
+            } else {
+              bytestemp = ntohl(bytestemp);
+              _acksize += bytestemp;
+              if (_acksize == _lastsent) _acksize = 0;
+              if (_acksize > _lastsent) {
+                OString stitle("Sending File");
+                OString smsg("Transfer error: "
+                             "bad ACK size received from remote end.\n"
+                             "Connection will be closed");
+                new OXMsgBox(_client->GetRoot(), this, &stitle,
+                             new OString(&smsg), MB_ICONSTOP, ID_OK);
+                CloseWindow();
+                return False;
+              }
+              if (_fh) delete _fh;
+              _fh = new OFileHandler(this, _tcp->GetFD(),
+                                     XCM_READABLE | XCM_WRITABLE);
+            }
+          }
+          break;
+      }
+    }
+
+  } else if (_mode == DCC_MODE_CLIENT) {
+
     switch (mask) {
       case XCM_WRITABLE:
-        if (!_coned) {
-          _coned = True;
-
+        if (!_connected) {
+          _connected = True;
           if (_fh) delete _fh;
           _fh = new OFileHandler(this, _tcp->GetFD(), XCM_READABLE);
         }
@@ -418,32 +562,32 @@ int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
         if (!_serverSocket) _FetchSomeData();
         break;
     }
-//  }
+  }
 
   return True;
 }
 
 bool OXDCCFile::_FetchSomeData() {
-  char buf[TCP_BUFFER_LENGTH], char1[TCP_BUFFER_LENGTH];
+  char buf[DCC_BLOCK_SIZE], char1[256];
   unsigned long bytestemp;
 
-  int size = _tcp->BinaryReceive((char *) &buf, TCP_BUFFER_LENGTH);
+  int size = _tcp->BinaryReceive(buf, DCC_BLOCK_SIZE);
 
   if (size > 0) {
     write(_file, buf, size);
-    bytesread += size;
-    bytestemp = htonl(bytesread);
+    _bytesread += size;
+    bytestemp = htonl(_bytesread);
 
-    sprintf(char1, "Bytes Recieved: %ld", bytesread);
+    sprintf(char1, "Bytes Received: %ld", _bytesread);
     _t2->SetText(new OString(char1));
     
-    sprintf(char1, "Bytes Remaining: %ld", filesize - bytesread);
+    sprintf(char1, "Bytes Remaining: %ld", _filesize - _bytesread);
     _t3->SetText(new OString(char1));
 
-    _prog->SetPosition(bytesread);
-    if (write(_tcp->GetFD(), (char *) &bytestemp, sizeof(unsigned long)) < 0) {
+    _prog->SetPosition(_bytesread);
+    if (_tcp->BinarySend((char *) &bytestemp, sizeof(unsigned long)) < 0) {
       OString stitle("Reading File");
-      OString smsg("Remote end close connection ");
+      OString smsg("Remote end closed connection.");
       new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
                    MB_ICONSTOP, ID_OK);
       return false;
@@ -453,7 +597,7 @@ bool OXDCCFile::_FetchSomeData() {
     _fh = new OFileHandler(this, _tcp->GetFD(), XCM_READABLE);
 
   } else {
-    if (bytesread != filesize) {
+    if (_bytesread != _filesize) {
       OString stitle("Error Reading File");
       OString smsg("File size is different than reported");
       new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
@@ -461,12 +605,62 @@ bool OXDCCFile::_FetchSomeData() {
       return false;
     }
     close(_file);
+    _file = -1;
     if (_fh) delete _fh;
     _fh = 0;
     _tcp->Close();
 
     CloseWindow();
-    return true;
+  }
+
+  return true;
+}
+
+bool OXDCCFile::_SendSomeData() {
+  char buf[DCC_BLOCK_SIZE], char1[256];
+
+  int size = read(_file, &buf, DCC_BLOCK_SIZE);
+
+  if (size > 0) {
+
+    if (_tcp->BinarySend(buf, size) < 0) {
+      OString stitle("Sending File");
+      OString smsg("Remote end closed connection.");
+      new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
+                   MB_ICONSTOP, ID_OK);
+      return false;
+    }
+
+    _lastsent = size;
+
+    _acksize = 0;
+    _bytessent += size;
+
+    sprintf(char1, "Bytes Sent: %ld", _bytessent);
+    _t2->SetText(new OString(char1));
+    
+    sprintf(char1, "Bytes Remaining: %ld", _filesize - _bytessent);
+    _t3->SetText(new OString(char1));
+
+    _prog->SetPosition(_bytessent);
+    if (_fh) delete _fh;
+    _fh = new OFileHandler(this, _tcp->GetFD(), XCM_READABLE | XCM_WRITABLE);
+
+  } else {
+    if (_bytessent != _filesize) {  // we shouldn't bother about this...
+      OString stitle("Error Sending File");
+      OString smsg("File size changed during transfer?");
+      new OXMsgBox(_client->GetRoot(), this, &stitle, new OString(&smsg),
+                   MB_ICONSTOP, ID_OK);
+      return false;
+    }
+    close(_file);
+    _file = -1;
+    if (_fh) delete _fh;
+    _fh = 0;
+    _tcp->Close();
+
+    CloseWindow();
   }
 
   return true;

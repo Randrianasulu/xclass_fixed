@@ -12,6 +12,7 @@
 
 class OXViewDoc;
 class OXGC;
+class OXFont;
 
 
 //----------------------------------------------------------------------
@@ -25,6 +26,9 @@ public:
   void SetDocument(OViewDoc *d) { _document = d; }
   void SetupBackground(unsigned long back);
   void SetupBackgroundPic(const char *name);
+  void SetFont(OXFont *f);
+  void SetFont(const char *fontname);
+  const OXFont *GetFont() const { return _font; }
   void Clear();
   int  GetDocHeight() { return _document->GetHeight(); }
   int  GetDocWidth() { return _document->GetWidth(); }
@@ -51,6 +55,7 @@ protected:
   OViewDoc *_document;
 
   OXGC *_backgc, *_gc;
+  OXFont *_font;
   int _tx, _ty;
 };
 
@@ -80,6 +85,9 @@ public:
   void SetupBackground(unsigned long back) { _canvas->SetupBackground(back); }
   void SetupBackgroundPic(const char *name) { _canvas->SetupBackgroundPic(name); }
   int  GetBackground() { return _background; }
+  void SetFont(OXFont *f) { _canvas->SetFont(f); Redisplay(); }
+  void SetFont(const char *fontname) { _canvas->SetFont(fontname); Redisplay(); }
+  const OXFont *GetFont() const { return _canvas->GetFont(); }
   void ScrollUp();
   void Redisplay();
 

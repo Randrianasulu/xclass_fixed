@@ -26,8 +26,13 @@ public:
   virtual int ProcessMessage(OMessage *msg);
 
 protected:
+  void DoRequestCTCP(const char *target, int ctcp);
+  void DoAskCTCP(const char *target);
+  
+  virtual void _UpdateWindowName();
+
   OXMenuBar *_menubar;
-  OXPopupMenu *_menuchannel, *_menumode, *_menulog, *_menuedit,
+  OXPopupMenu *_menuchannel, *_menumode, *_menuedit,
               *_menuview, *_menuhelp, *_nick_ctcp, *_nick_dcc,
               *_nick_ignore, *_nick_actions;
 

@@ -43,7 +43,7 @@ PROG = foxirc
 .cc.o:
 	$(CXX) $(CXXFLAGS) -c $<
 
-all: ${PROG}
+all: ${PROG} mirc2ansi
 
 depend:
 	${MAKEDEPEND} ${CXXFLAGS} ${SRCS}
@@ -51,10 +51,13 @@ depend:
 install:
 
 clean:
-	${RM} ${OBJS} $(PROG) *~ core *.bak
+	${RM} ${OBJS} $(PROG) mirc2ansi *~ core *.bak
 
 distclean: clean
 
 ${PROG}: ${OBJS}
 	$(CXX) -o $@ ${OBJS} $(LDFLAGS) $(LIBS) $(EXTRALIBS)
 	strip $@
+
+mirc2ansi: mirc2ansi.c
+	$(CC) -o $@ $<

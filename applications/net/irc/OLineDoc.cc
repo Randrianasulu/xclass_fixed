@@ -16,7 +16,6 @@ OLineDoc::OLineDoc() {
   prev = next = this;
   _w = _h = 0;
   lnlen = 0;
-  _cachedFont = NULL;
 }
 
 OLineDoc::~OLineDoc() {
@@ -65,13 +64,8 @@ int OLineDoc::Fill(const char *buf) {
 
   OXGC *gc = _textFrame->GetGC();
 
-  if (foxircSettings->GetFont() != _cachedFont) {
-    _cachedFont = foxircSettings->GetFont();
-    gc->SetFont(_cachedFont->GetId());
-  }
-
   OFontMetrics fm;
-  _cachedFont->GetFontMetrics(&fm);
+  _textFrame->GetFont()->GetFontMetrics(&fm);
 
   int lh = fm.ascent + fm.descent;
 
@@ -201,16 +195,12 @@ int OLineDoc::LoadFile(FILE *file) {
 void OLineDoc::Layout() {
   char *p = chars, *prev = chars, *chunk = chars;
   int tw, nlines;
+  const OXFont *font = _textFrame->GetFont();
 
   OXGC *gc = _textFrame->GetGC();
 
-  if (foxircSettings->GetFont() != _cachedFont) {
-    _cachedFont = foxircSettings->GetFont();
-    gc->SetFont(_cachedFont->GetId());
-  }
-
   OFontMetrics fm;
-  _cachedFont->GetFontMetrics(&fm);
+  font->GetFontMetrics(&fm);
 
   _h = fm.ascent + fm.descent;
 
@@ -218,17 +208,17 @@ void OLineDoc::Layout() {
 
   int w = (_w = _textFrame->GetDocWidth()) - (2 * MARGIN);
 
-  tw = _cachedFont->XTextWidth(chars, lnlen);
+  tw = _textFrame->GetFont()->XTextWidth(chars, lnlen);
   if (tw <= w) return;
 
   while (1) {
     p = strchr(p, ' ');
     if (p == NULL) {
-      tw = _cachedFont->XTextWidth(chunk);
+      tw = font->XTextWidth(chunk);
       if (tw > w) ++nlines;
       break;
     }
-    tw = _cachedFont->XTextWidth(chunk, p-chunk);
+    tw = font->XTextWidth(chunk, p-chunk);
     if (tw > w) {
       if (prev == chunk)
         chunk = prev = ++p;
@@ -249,24 +239,20 @@ void OLineDoc::DrawRegion(Display *dpy, Drawable d,
   int tw, th;
 
   OXGC *gc = _textFrame->GetGC();
+  const OXFont *font = _textFrame->GetFont();
 
 #if 1
   gc->SetForeground(_defaultFg);
 #endif
 
-  if (foxircSettings->GetFont() != _cachedFont) {
-    _cachedFont = foxircSettings->GetFont();
-    gc->SetFont(_cachedFont->GetId());
-  }
-
   OFontMetrics fm;
-  _cachedFont->GetFontMetrics(&fm);
+  font->GetFontMetrics(&fm);
 
   int w = (_w = _textFrame->GetDocWidth()) - (2 * MARGIN);
 
   y += fm.ascent;
 
-  tw = _cachedFont->XTextWidth(chars, lnlen);
+  tw = font->XTextWidth(chars, lnlen);
   if (tw <= w) {
     DrawLine(dpy, d, x+MARGIN, y, 0, lnlen);
     return;
@@ -277,7 +263,7 @@ void OLineDoc::DrawRegion(Display *dpy, Drawable d,
   while (1) {
     p = strchr(p, ' ');
     if (p == NULL) {
-      tw = _cachedFont->XTextWidth(chunk);
+      tw = font->XTextWidth(chunk);
       if (tw > w) {
         DrawLine(dpy, d, x+MARGIN, y, chunk-chars, prev-chunk-1);
         y += th;
@@ -287,7 +273,7 @@ void OLineDoc::DrawRegion(Display *dpy, Drawable d,
       }
       break;
     }
-    tw = _cachedFont->XTextWidth(chunk, p-chunk);
+    tw = font->XTextWidth(chunk, p-chunk);
     if (tw > w) {
       if (prev == chunk)
         prev = ++p;
@@ -331,7 +317,7 @@ int OLineDoc::DrawLineSegment(Display *dpy, Drawable d,
                 oldbg = gc->GetBackground(),
                 fg, bg, tmp;
 
-  tw = _cachedFont->XTextWidth(str, len);
+  tw = _textFrame->GetFont()->XTextWidth(str, len);
   fg = oldfg;
   bg = oldbg;
 

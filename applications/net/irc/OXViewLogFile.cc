@@ -54,7 +54,6 @@ extern char *filetypes[];
 OXViewLogFile::OXViewLogFile(const OXWindow *p, const OXWindow *main,
                              OXIrc *irc, const char *fname) :
   OXTransientFrame(p, main, 200, 100) {
-  char wname[100];
 
   _irc = irc;
 
@@ -114,16 +113,11 @@ OXViewLogFile::OXViewLogFile(const OXWindow *p, const OXWindow *main,
   MapSubwindows();
   Layout();
 
-  if (fname) {
-    Load(fname);
-    sprintf(wname, "%s - %s", FOXIRC_NAME, fname);
-  } else {
-    sprintf(wname, "%s", FOXIRC_NAME);
-  }
-  SetWindowName(wname);
+  SetWindowName(FOXIRC_NAME);
+
+  if (fname) Load(fname);
 
   CenterOnParent();
-
   MapWindow();
 }
 
@@ -141,7 +135,17 @@ int OXViewLogFile::CloseWindow() {
 }
 
 int OXViewLogFile::Load(const char *fname) {
-  return _logw->LoadFile(fname);
+  char tmp[256];
+
+  int retc = _logw->LoadFile(fname);
+
+  snprintf(tmp, 256, "%lu lines read", _log->NumLines());
+  _statusBar->SetText(0, new OString(tmp));
+
+  snprintf(tmp, 256, "%s - %s", FOXIRC_NAME, fname);
+  SetWindowName(tmp);
+
+  return retc;
 }
 
 int OXViewLogFile::ProcessMessage(OMessage *msg) {
