@@ -1,4 +1,4 @@
-This is the version 0.7.6 of xcgview, a xclass port of ghostview 1.5
+This is the version 0.8.1 of xcgview, a xclass port of ghostview 1.5
 
 Status Of The Port  or  Currently Implemented Features:
 
@@ -46,7 +46,37 @@ Status Of The Port  or  Currently Implemented Features:
     action = xcgview %s
 
 
-In order to compile the program, just do a 'make'.
+This version of xcgview requires xclass 0.7.3 or later. In order to compile
+the program, cd to the directory where you unpacked the sources and type
+'make'. Copy the resulting 'xcgview' executable to a directory in your
+$PATH.
 
 Have fun,
 Hector.
+
+
+ChangeLog
+---------
+
+05/09/00 (0.6.1)
+
+- Added keyboard shortcuts
+
+
+04/10/01 (0.7.5)
+
+- Improved keyboard support, accelerator keys are now grabbed and the key
+  works regardless where the mouse pointer is inside the document window
+  or not.
+
+
+02/07/02 (0.7.6)
+
+- Modified to OXMain::CloseWindow() according to latest xclass release.
+
+
+25/07/02 (0.8.1)
+
+- Added recent file list to the File menu.
+
+- The PgUp/PgDn behaviour is now more comfortable.

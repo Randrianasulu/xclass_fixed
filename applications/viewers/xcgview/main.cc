@@ -10,12 +10,7 @@
 #include <xclass/OXMsgBox.h>
 #include <xclass/OXAboutDialog.h>
 #include <xclass/OMimeTypes.h>
-
-#ifdef USE_FAVOR_DLG
-#include <fOX/OXFavorFileDialog.h>
-#else
 #include <xclass/OXFileDialog.h>
-#endif
 
 #include <X11/keysym.h>
 
@@ -34,34 +29,7 @@
 #include "pbg.xpm"
 
 
-#include "ps.h"
-
-
-FILE   *psfile = NULL;
-struct document *doc = NULL;
-int    current_page = -1;
-int    current_pagemedia = 0;
-XCPageOrientation current_orientation = PageOrientationPortrait;
-int    swap_landscape = False;
-int    has_toc = False;
-int    mag_step = 0;
-int    base_papersize = 0;
-int    default_document_pagemedia = True;
-int    default_document_orientation = True;
-int    last_pagemedia_entry = M_PAGEMEDIA;
-char   *filename = NULL;
-char   *full_filename = NULL;
-char   *printerName = NULL, *printProg = NULL;
-char   *gsCommand = NULL;
-time_t mtime;
-int    winx = 600, winy = 400;
-
 OXOutput *output_dlg = NULL;
-
-// we will keep our own list of listbox entries,
-// as that makes operations with marked pages easier
-OXPageLBEntry **toc = NULL;
-
 
 struct _popup file_popup = {
   { NULL }, {
@@ -162,11 +130,8 @@ int main(int argc, char **argv) {
 
   OXClient *clientX = new OXClient(argc, argv);
 
-  OXMain *mainw = new OXMain(clientX->GetRoot(), 10, 10);
-  mainw->Resize(winx, winy);
-
+  OXMain *mainw = new OXMain(clientX->GetRoot(), 600, 400);
   if (argc > 1) mainw->OpenFile(argv[1]);
-
   mainw->MapWindow();
 
   clientX->Run();
@@ -174,8 +139,7 @@ int main(int argc, char **argv) {
   exit(0);
 }
 
-OXMain::OXMain(const OXWindow *p, int w, int h) :
-  OXMainFrame(p, w, h) {
+OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
   char tmp[BUFSIZ];
   const OPicture *cbgnd;
 
@@ -201,7 +165,7 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
   _orienPopup->Associate(this);
   _mediaPopup->Associate(this);
 
-  __build_pagemedia_menu();
+  _BuildPagemediaMenu();
 
   //------ menu bar
 
@@ -279,22 +243,55 @@ OXMain::OXMain(const OXWindow *p, int w, int h) :
   SetWindowTitle(NULL);
   SetClassHints("XCGhostView", "XCGhostView");
 
-  printerName = StrDup("lp");
-  printProg = StrDup("lpr");
+  //------ init variables...
 
-  gsCommand = StrDup("gs");
+  _psFile = NULL;
+
+  doc = NULL;
+  current_page = -1;
+  current_pagemedia = 0;
+  current_orientation = PageOrientationPortrait;
+  swap_landscape = False;
+  has_toc = False;
+  mag_step = 0;
+  base_papersize = 0;
+  default_document_pagemedia = True;
+  default_document_orientation = True;
+  last_pagemedia_entry = M_PAGEMEDIA;
+
+  _filename = NULL;
+  _full_filename = NULL;
+
+  for (int i = 0; i < NUM_RECENT; ++i) _recent_files[i] = NULL;
+
+  _printerName = StrDup("lp");
+  _printProg = StrDup("lpr");
+
+  _gsCommand = StrDup("gs");
+
+  _winx = w;
+  _winy = h;
+
+  // we will keep our own list of listbox entries,
+  // as that makes operations with marked pages easier
+  toc = NULL;
 
   AddInput(KeyPressMask);
   SetFocusOwner(this);
 
-  MapSubwindows();
+  //--- read .ini file settings...
 
   _ReadIniFile();
+
+  MapSubwindows();
 
   _hf->HideFrame(_lb);
   _hf->HideFrame(_resizer);
 
   _GrabKeys();
+
+  Resize(_winx, _winy);
+  Layout();
 }
 
 OXMain::~OXMain() {
@@ -308,6 +305,14 @@ OXMain::~OXMain() {
   delete _mediaPopup;
   delete _orienPopup;
   delete _magstepPopup;
+
+  if (_filename) delete[] _filename;
+  if (_full_filename) delete[] _full_filename;
+  for (int i = 0; i < NUM_RECENT; ++i)
+    if (_recent_files[i]) delete[] _recent_files[i];
+  if (_printerName) delete[] _printerName;
+  if (_printProg) delete[] _printProg;
+  if (_gsCommand) delete[] _gsCommand;
 }
 
 int OXMain::CloseWindow() {
@@ -351,12 +356,19 @@ int OXMain::ProcessMessage(OMessage *msg) {
     case MSG_MENU:
     case MSG_BUTTON:
       wmsg = (OWidgetMessage *) msg;
-      switch(msg->action) {
+      switch (msg->action) {
 
         case MSG_CLICK:
           if (wmsg->id >= M_PAGEMEDIA) DoSetPageMedia(wmsg->id);
 
-          switch(wmsg->id) {
+          if ((wmsg->id >= M_FILE_RECENT + 1) &&
+              (wmsg->id <= M_FILE_RECENT + NUM_RECENT)) {
+            if (_recent_files[wmsg->id - M_FILE_RECENT - 1])
+              OpenFile(_recent_files[wmsg->id - M_FILE_RECENT - 1]);
+              break;
+          }
+
+          switch (wmsg->id) {
 
             //--------------------------------------- File
 
@@ -462,22 +474,22 @@ int OXMain::ProcessMessage(OMessage *msg) {
               DoHelpAbout();
               break;
 
-          } // switch(id)
+          } // switch (id)
           break;
 
         default:
           break;
 
-      } // switch(action)
+      } // switch (action)
       break;
 
     case MSG_LISTBOX:
       lbmsg = (OListBoxMessage *) msg;
       if (lbmsg->action == MSG_CLICK) {
-        switch(lbmsg->id) {
+        switch (lbmsg->id) {
           case LB_PAGE:
             if (lbmsg->entryID != current_page)
-              __show_page(lbmsg->entryID); ///////
+              _ShowPage(lbmsg->entryID); ///////
             break;
 
           default:
@@ -488,7 +500,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
 
     case MSG_GHOSTVIEW:
       wmsg = (OWidgetMessage *) msg;
-      switch(msg->action) {
+      switch (msg->action) {
         case GV_PAGE:
           break;
 
@@ -525,21 +537,21 @@ int OXMain::ProcessMessage(OMessage *msg) {
     default:
       break;
 
-  } // switch(type)
+  } // switch (type)
 
   return True;
 }
 
 //----------------------------------------------------------------------
 
-void OXMain::SetWindowTitle(char *title) {
+void OXMain::SetWindowTitle(const char *title) {
   static char *pname = "fOX Ghostview";
 
   if (title) {
     char *wname = new char[strlen(title) + 20];
     sprintf(wname, "%s - %s", pname, title);
     SetWindowName(wname);
-    delete wname;
+    delete[] wname;
   } else {
     SetWindowName(pname);
   }
@@ -561,7 +573,7 @@ void OXMain::ErrorMsg(int icon_type, char *msg) {
 
 //----------------------------------------------------------------------
 
-void OXMain::OpenFile(char *fname) {
+void OXMain::OpenFile(const char *fname) {
   struct stat sbuf;
   char buf[BUFSIZ];
   FILE *fp;
@@ -572,24 +584,23 @@ void OXMain::OpenFile(char *fname) {
     fprintf(stderr, "Could not open input file: \"%s\"\n", fname);
     exit(1);
   } else {
-    filename = new char[strlen(fname)+1];
-    strcpy(filename, fname);
+    _filename = StrDup(fname);
     if (*fname == '/') {
-      full_filename = new char[strlen(fname)+1];
-      strcpy(full_filename, fname);
+      _full_filename = StrDup(fname);
     } else {
       getcwd(buf, BUFSIZ);
-      full_filename = new char[strlen(buf)+strlen(fname)+2];
-      sprintf(full_filename, "%s/%s", buf, fname);
+      _full_filename = new char[strlen(buf)+strlen(fname)+2];
+      sprintf(_full_filename, "%s/%s", buf, fname);
     }
-    //if (psfile) fclose(psfile);
-    psfile = fp;
-    stat(full_filename, &sbuf);
+    //if (_psFile) fclose(_psFile);
+    _psFile = fp;
+    _AddToRecent(_full_filename);
+    stat(_full_filename, &sbuf);
     mtime = sbuf.st_mtime;
-    __new_file(0);
-    SetWindowTitle(filename);
+    _NewFile(0);
+    SetWindowTitle(_filename);
     UpdateStatus();
-    __show_page(0);
+    _ShowPage(0);
   }
 }
 
@@ -601,7 +612,7 @@ void OXMain::DoOpen() {
   fi.MimeTypesList = GetResourcePool()->GetMimeTypes();
   fi.file_types = filetypes;
 #ifdef USE_FAVOR_DLG
-  new OXFavorFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
+  new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN | FDLG_FAVOURITES, &fi);
 #else
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
 #endif
@@ -609,20 +620,20 @@ void OXMain::DoOpen() {
     if ((fp = fopen(fi.filename, "r")) == NULL) {
       ErrorMsg(MB_ICONSTOP, "Could not open file.");
     } else {
-      if (filename) delete[] filename;
-      if (full_filename) delete[] full_filename;
-      filename = new char[strlen(fi.filename)+1];
-      strcpy(filename, fi.filename);
-      full_filename = new char[strlen(fi.ini_dir)+strlen(fi.filename)+2];
-      sprintf(full_filename, "%s/%s", fi.ini_dir, fi.filename);
-      if (psfile) fclose(psfile);
-      psfile = fp;
-      stat(full_filename, &sbuf);
+      if (_filename) delete[] _filename;
+      if (_full_filename) delete[] _full_filename;
+      _filename = StrDup(fi.filename);
+      _full_filename = new char[strlen(fi.ini_dir)+strlen(fi.filename)+2];
+      sprintf(_full_filename, "%s/%s", fi.ini_dir, fi.filename);
+      if (_psFile) fclose(_psFile);
+      _psFile = fp;
+      _AddToRecent(_full_filename);
+      stat(_full_filename, &sbuf);
       mtime = sbuf.st_mtime;
-      __new_file(0);
-      SetWindowTitle(filename);
+      _NewFile(0);
+      SetWindowTitle(_filename);
       UpdateStatus();
-      __show_page(0);
+      _ShowPage(0);
     }
   }
 }
@@ -633,16 +644,16 @@ void OXMain::DoReopen() {
   struct stat sbuf;
   int page = current_page;
 
-  if (psfile) fclose(psfile);
-  psfile = fopen(full_filename, "r");
-  if (!psfile) {
+  if (_psFile) fclose(_psFile);
+  _psFile = fopen(_full_filename, "r");
+  if (!_psFile) {
     ErrorMsg(MB_ICONSTOP, "Could not reopen file.");
     return;
   }
-  stat(full_filename, &sbuf);
+  stat(_full_filename, &sbuf);
   mtime = sbuf.st_mtime;
-  __new_file(page);
-  __show_page(page);
+  _NewFile(page);
+  _ShowPage(page);
 }
 
 
@@ -651,7 +662,7 @@ void OXMain::DoSaveMarked() {
   OFileInfo fi;
   FILE *pswrite;
 
-  if (!__marked_pages()) {
+  if (!_NumMarkedPages()) {
     XBell(GetDisplay(), 0);
     return;
   }
@@ -659,7 +670,7 @@ void OXMain::DoSaveMarked() {
   fi.MimeTypesList = GetResourcePool()->GetMimeTypes();
   fi.file_types = filetypes;
 #ifdef USE_FAVOR_DLG
-  new OXFavorFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
+  new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE | FDLG_FAVOURITES, &fi);
 #else
   new OXFileDialog(_client->GetRoot(), this, FDLG_SAVE, &fi);
 #endif
@@ -681,7 +692,7 @@ void OXMain::DoSaveMarked() {
       OString stitle("Write Error");
       ErrorMsg(MB_ICONSTOP, "Can't write postscript file.");
     } else {
-      __write_doc(pswrite);
+      _WriteDoc(pswrite);
       fclose(pswrite);
     }
 
@@ -700,20 +711,20 @@ void OXMain::DoPrint() {
   }
 
   if (doc && toc) {
-    if (__marked_pages()) {
+    if (_NumMarkedPages()) {
       whole_mode = False;
       retc |= PB_PRINTMARKED;
     }
   }
 
   new OXPrintBox(_client->GetRoot(), this, 400, 150, 
-                 &printerName, &printProg, &retc);
+                 &_printerName, &_printProg, &retc);
 
   if (retc & PB_OK) {
 
     if (retc & PB_PRINTALL) whole_mode = True;
 
-    sprintf(tmp, "%s -P%s", printProg, printerName);
+    sprintf(tmp, "%s -P%s", _printProg, _printerName);
     FILE *p = popen(tmp, "w");
     if (p == NULL) {
       ErrorMsg(MB_ICONSTOP, "Print command failed.");
@@ -721,9 +732,9 @@ void OXMain::DoPrint() {
     }
 
     if (toc && !whole_mode) {
-      __write_doc(p);
+      _WriteDoc(p);
     } else {
-      FILE *psf = fopen(full_filename, "r");
+      FILE *psf = fopen(_full_filename, "r");
       if (psf) {
         int  bytes;
         char buf[BUFSIZ];
@@ -749,11 +760,11 @@ void OXMain::DoPageNext() {
   if (has_toc && doc) {
     new_page = current_page + 1;
     if (new_page < doc->numpages)
-      __show_page(new_page);
+      _ShowPage(new_page);
     else
       XBell(GetDisplay(), 0);
   } else {
-    __show_page(0);
+    _ShowPage(0);
   }
 }
 
@@ -763,7 +774,7 @@ void OXMain::DoPagePrev() {
   if (has_toc) {
     new_page = current_page - 1;
     if (new_page >= 0)
-      __show_page(new_page);
+      _ShowPage(new_page);
     else
       XBell(GetDisplay(), 0);
   }
@@ -777,7 +788,7 @@ void OXMain::DoToggleDefaultOrientation() {
     default_document_orientation = True;
     _orienPopup->CheckEntry(M_ORIEN_DEFAULT);
   }
-  __set_orientation(current_page);
+  _SetOrientation(current_page);
 }
 
 void OXMain::DoSwapLandscape() {
@@ -788,7 +799,7 @@ void OXMain::DoSwapLandscape() {
     swap_landscape = True;
     _orienPopup->CheckEntry(M_ORIEN_SWAPLANDSCAPE);
   }
-  __show_page(current_page);
+  _ShowPage(current_page);
 }
 
 void OXMain::DoMark() {
@@ -799,7 +810,7 @@ void OXMain::DoMark() {
       if (toc[i]->IsActive()) 
         toc[i]->SetMark(PLBE_CHECKMARK, True);
   }
-  if (__marked_pages())
+  if (_NumMarkedPages())
     _menuFile->EnableEntry(M_FILE_SAVEMARKED);
   else
     _menuFile->DisableEntry(M_FILE_SAVEMARKED);
@@ -813,7 +824,7 @@ void OXMain::DoUnmark() {
       if (toc[i]->IsActive())
         toc[i]->SetMark(PLBE_CHECKMARK, False);
   }
-  if (__marked_pages())
+  if (_NumMarkedPages())
     _menuFile->EnableEntry(M_FILE_SAVEMARKED);
   else
     _menuFile->DisableEntry(M_FILE_SAVEMARKED);
@@ -868,30 +879,30 @@ void OXMain::DoSetOrientation(int orien) {
       current_orientation = PageOrientationSeascape;
       break;
   }
-  __set_orientation(current_page);
+  _SetOrientation(current_page);
 }
 
 void OXMain::DoSetPageMedia(int media) {
   int n = media - M_PAGEMEDIA;
 
   default_document_pagemedia = False;
-  __set_pagemedia(current_page, n);
+  _SetPagemedia(current_page, n);
 }
 
 void OXMain::DoRefresh() {
   int i;
 
   if (has_toc && doc && doc->pages) {
-    _gv->SendPS(psfile, doc->beginprolog,
-                        doc->lenprolog, False);
-    _gv->SendPS(psfile, doc->beginsetup,
-                        doc->lensetup, False);
+    _gv->SendPS(_psFile, doc->beginprolog,
+                         doc->lenprolog, False);
+    _gv->SendPS(_psFile, doc->beginsetup,
+                         doc->lensetup, False);
     if (doc->pageorder == PS_DESCEND)
       i = (doc->numpages - 1) - current_page;
     else
       i = current_page;
-    _gv->SendPS(psfile, doc->pages[i].begin,
-                        doc->pages[i].len, False);
+    _gv->SendPS(_psFile, doc->pages[i].begin,
+                         doc->pages[i].len, False);
   }
 }
 
@@ -943,7 +954,7 @@ void OXMain::DoHelpAbout() {
   info.wname = "About fOX Ghostview";
   info.title = "fOX Ghostview version " XCGVIEW_VERSION "\n"
                "A Postscript file viewer program";
-  info.copyright = "Copyright © 1998-2001 by H. Peraza";
+  info.copyright = "Copyright © 1998-2002 by H. Peraza";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"
@@ -955,7 +966,7 @@ void OXMain::DoHelpAbout() {
 //----------------------------------------------------------------------
 
 void OXMain::_ReadIniFile() {
-  char *inipath, line[1024], arg[256];
+  char *inipath, line[1024], arg[PATH_MAX];
 
   inipath = GetResourcePool()->FindIniFile(XCGVIEW_INI, INI_READ);
   if (!inipath) return;
@@ -966,14 +977,14 @@ void OXMain::_ReadIniFile() {
 
     if (strcasecmp(line, "defaults") == 0) {
       if (ini.GetItem("window size", arg)) {
-        if (sscanf(arg, "%d x %d", &winx, &winy) == 2) {
-          if (winx < 10 || winx > 32000 || winy < 10 || winy > 32000) {
-            winx = 600;
-            winy = 400;
+        if (sscanf(arg, "%d x %d", &_winx, &_winy) == 2) {
+          if (_winx < 10 || _winx > 32000 || _winy < 10 || _winy > 32000) {
+            _winx = 600;
+            _winy = 400;
           }
         } else {
-          winx = 600;
-          winy = 400;
+          _winx = 600;
+          _winy = 400;
         }
       }
       if (!ini.GetBool("show toolbar", true)) {
@@ -1009,21 +1020,29 @@ void OXMain::_ReadIniFile() {
         if (sscanf(arg, "%d", &ms) == 1) DoSetMagstep(ms);
       }
 
+    } else if (strcasecmp(line, "recent files") == 0) {
+      char tmp[50];
+
+      for (int i = NUM_RECENT-1; i >= 0; --i) {
+        sprintf(tmp, "file%d", i+1);
+        if (ini.GetItem(tmp, arg)) _AddToRecent(arg);
+      }
+
     } else if (strcasecmp(line, "printer") == 0) {
       if (ini.GetItem("name", arg)) {
-        if (printerName) delete[] printerName;
-        printerName = StrDup(arg);
+        if (_printerName) delete[] _printerName;
+        _printerName = StrDup(arg);
       }
       if (ini.GetItem("command", arg)) {
-        if (printProg) delete[] printProg;
-        printProg = StrDup(arg);
+        if (_printProg) delete[] _printProg;
+        _printProg = StrDup(arg);
       }
 
     } else if (strcasecmp(line, "ghostscript") == 0) {
       if (ini.GetItem("command", arg)) {
-        if (gsCommand) delete[] gsCommand;
-        gsCommand = StrDup(arg);
-        _gv->SetInterpreterCommand(gsCommand);
+        if (_gsCommand) delete[] _gsCommand;
+        _gsCommand = StrDup(arg);
+        _gv->SetInterpreterCommand(_gsCommand);
       }
 
     }
@@ -1067,18 +1086,84 @@ void OXMain::_SaveIniFile() {
   ini.PutItem("magstep", tmp);
   ini.PutNewLine();
 
+  ini.PutNext("recent files");
+  for (int i = 0; i < NUM_RECENT; ++i) {
+    if (_recent_files[i]) {
+      sprintf(tmp, "file%d", i+1);
+      ini.PutItem(tmp, _recent_files[i]);
+    }
+  }
+  ini.PutNewLine();
+
   ini.PutNext("printer");
-  ini.PutItem("name", printerName);
-  ini.PutItem("command", printProg);
+  ini.PutItem("name", _printerName);
+  ini.PutItem("command", _printProg);
   ini.PutNewLine();
 
   ini.PutNext("ghostscript");
-  ini.PutItem("command", gsCommand);
+  ini.PutItem("command", _gsCommand);
   ini.PutNewLine();
 
   delete[] inipath;
 }
 
+void OXMain::_AddToRecent(const char *filename) {
+  int i;
+
+  if (!filename) return;
+
+  // first, see if the file is already there
+
+  for (i = 0; i < NUM_RECENT; ++i) {
+    if (_recent_files[i] && (strcmp(filename, _recent_files[i]) == 0)) break;
+  }
+
+  if (i == 0) {
+
+    return; // nothing to do, the file already was the most recent
+
+  } else if (i < NUM_RECENT) {
+
+    // the file was there, move it to the top of the list
+
+    char *tmp = _recent_files[i];
+
+    for ( ; i > 0; --i) _recent_files[i] = _recent_files[i-1];
+    _recent_files[0] = tmp;
+
+  } else {
+
+    // new file: shift all the entries down and add the filename to the head
+
+    if (_recent_files[NUM_RECENT-1]) delete[] _recent_files[NUM_RECENT-1];
+    for (i = NUM_RECENT-1; i > 0; --i)
+      _recent_files[i] = _recent_files[i-1];
+    _recent_files[0] = StrDup(filename);
+
+  }
+
+  _UpdateRecentList();
+}
+
+void OXMain::_UpdateRecentList() {
+  int  i;
+  char tmp[PATH_MAX];
+
+  _menuFile->RemoveEntry(M_FILE_RECENT, MENU_SEPARATOR);
+  for (i = 0; i < NUM_RECENT; ++i) _menuFile->RemoveEntry(M_FILE_RECENT + i+1);
+
+  if (!_recent_files[0]) return;
+
+  _menuFile->AddSeparator(M_FILE_RECENT);
+  for (i = 0; i < NUM_RECENT; ++i) {
+    if (_recent_files[i]) {
+      const char *p = strrchr(_recent_files[i], '/');
+      if (p) ++p; else p = _recent_files[i];
+      sprintf(tmp, "&%d. %s", i+1, p);
+      _menuFile->AddEntry(new OHotString(tmp), M_FILE_RECENT + i+1);
+    }
+  }
+}
 
 
 //----------------------------------------------------------------------
@@ -1091,19 +1176,19 @@ void OXMain::_SaveIniFile() {
 //    - sensitizing the appropriate menu buttons,
 //    - erasing the stdout popup.
 
-void OXMain::__setup_gv() {
+void OXMain::_SetupGhostview() {
 
   //--- reset to a known state.
 
   psfree(doc);
   current_page = -1;
   _gv->DisableInterpreter();
-  if (psfile) doc = psscan(psfile);
+  if (_psFile) doc = psscan(_psFile);
 
   default_document_pagemedia = True;
   current_pagemedia = 0;
 
-  __build_pagemedia_menu();
+  _BuildPagemediaMenu();
 
   //--- build table of contents
 
@@ -1169,7 +1254,7 @@ void OXMain::__setup_gv() {
 
   } else {
 
-    _gv->SetFilename(full_filename);
+    _gv->SetFilename(_full_filename);
     _hf->HideFrame(_lb);
     _hf->HideFrame(_resizer);
     _menuView->DisableEntry(M_VIEW_PAGEINDEX);
@@ -1186,7 +1271,7 @@ void OXMain::__setup_gv() {
   _lb->Update();
   _hf->Layout();
 
-  if (psfile) {
+  if (_psFile) {
     _menuFile->EnableEntry(M_FILE_REOPEN);
     _menuFile->EnableEntry(M_FILE_PRINT);
     _menuPage->EnableEntry(M_PAGE_NEXT);
@@ -1202,29 +1287,29 @@ void OXMain::__setup_gv() {
   if (output_dlg) output_dlg->Clear();
 }
 
-void OXMain::__new_file(int n) {
-  __setup_gv();
+void OXMain::_NewFile(int n) {
+  _SetupGhostview();
 }
 
-void OXMain::__show_page(int n) {
+void OXMain::_ShowPage(int n) {
   struct stat sbuf;
   int i;
 
-  if (!filename) return;
+  if (!_filename) return;
 
   // If the file has changed, rescan it so that offsets into the file
   // are still correct. If the file is rescanned, we must setup ghostview
   // again. Also, force a new copy of ghostscript to start.
-  if (psfile) {
-    if (!stat(full_filename, &sbuf) && mtime != sbuf.st_mtime) {
-      fclose(psfile);
-      psfile = fopen(full_filename, "r");
-      if (!psfile) {
+  if (_psFile) {
+    if (!stat(_full_filename, &sbuf) && (mtime != sbuf.st_mtime)) {
+      fclose(_psFile);
+      _psFile = fopen(_full_filename, "r");
+      if (!_psFile) {
         ErrorMsg(MB_ICONSTOP, "Could not reopen file.");
         return;
       }
       mtime = sbuf.st_mtime;
-      __new_file(n);
+      _NewFile(n);
     }
   }
 
@@ -1234,8 +1319,8 @@ void OXMain::__show_page(int n) {
     if (n < 0) n = 0;
   }
 
-  __set_orientation(n);
-  __set_pagemedia(n);
+  _SetOrientation(n);
+  _SetPagemedia(n);
 
   if (has_toc && doc && doc->pages) {
     OXPageLBEntry *e;
@@ -1245,15 +1330,15 @@ void OXMain::__show_page(int n) {
 
     current_page = n;
     _gv->EnableInterpreter();
-    _gv->SendPS(psfile, doc->beginprolog, doc->lenprolog, False);
-    _gv->SendPS(psfile, doc->beginsetup, doc->lensetup, False);
+    _gv->SendPS(_psFile, doc->beginprolog, doc->lenprolog, False);
+    _gv->SendPS(_psFile, doc->beginsetup, doc->lensetup, False);
     if (doc->pageorder == PS_DESCEND) {
       i = (doc->numpages-1)-current_page;
     } else {
       i = current_page;
     }
 
-    _gv->SendPS(psfile, doc->pages[i].begin, doc->pages[i].len, False);
+    _gv->SendPS(_psFile, doc->pages[i].begin, doc->pages[i].len, False);
     e = (OXPageLBEntry *) _lb->Select(current_page);
     if (e) e->SetMark(PLBE_RADIOMARK, True);
 
@@ -1283,7 +1368,7 @@ void OXMain::__show_page(int n) {
 //  - the document defined page medias
 //  - the standard page media defined from Adobe's PDD
 
-void OXMain::__build_pagemedia_menu() {
+void OXMain::_BuildPagemediaMenu() {
   int i;
 
   _mediaPopup->RemoveAllEntries();
@@ -1311,7 +1396,7 @@ void OXMain::__build_pagemedia_menu() {
   last_pagemedia_entry = M_PAGEMEDIA + i+base_papersize -1;
 }
 
-void OXMain::__set_orientation(int n) {
+void OXMain::_SetOrientation(int n) {
   int psorient;
   XCPageOrientation gvorient;
 
@@ -1369,7 +1454,7 @@ void OXMain::__set_orientation(int n) {
                            M_ORIEN_SEASCAPE);
 }
 
-void OXMain::__set_pagemedia(int n, int media) {
+void OXMain::_SetPagemedia(int n, int media) {
   int llx, lly, urx, ury;
   int new_pagemedia;
 
@@ -1419,25 +1504,25 @@ void OXMain::__set_pagemedia(int n, int media) {
 
 //--- Count marked pages
 
-int OXMain::__marked_pages() {
+int OXMain::_NumMarkedPages() {
   int i, pages;
 
   if (!toc || !doc) return 0;
 
-  for (pages=0, i=0; i<doc->numpages; i++)
+  for (pages = 0, i = 0; i < doc->numpages; i++)
     if (toc[i]->GetFlags() & PLBE_CHECKMARK) pages++;
 
   return pages;
 }
 
-// length calculates string length at compile time
+// length calculates string length at compile time,
 // can only be used with character constants
+
 #define length(a) (sizeof(a)-1)
 
-//--- Write the headers, marked pages, and trailer to the
-//    specified file
+//--- Write the headers, marked pages, and trailer to the specified file
 
-void OXMain::__write_doc(FILE *fp) {
+void OXMain::_WriteDoc(FILE *fp) {
   FILE *psfile;
   char text[PS_LINELENGTH];
   char *comment;
@@ -1450,11 +1535,11 @@ void OXMain::__write_doc(FILE *fp) {
 
   if (!toc) return;
 
-  pages = __marked_pages();
+  pages = _NumMarkedPages();
 
   if (!pages) return;
 
-  psfile = fopen(full_filename, "r");
+  psfile = fopen(_full_filename, "r");
   if (!psfile) return;
 
   here = doc->beginheader;
@@ -1608,12 +1693,41 @@ int OXMain::HandleKey(XKeyEvent *event) {
 
       case XK_Page_Up:
       case XK_KP_Page_Up:
+#if 1
+    	po = -((OXViewPort *)_canvas->GetViewPort())->GetVPos();
+        if (po > 0) {
+          po -= _canvas->GetViewPort()->GetHeight() - 20;
+          if (po < 0) po = 0;
+          _canvas->SetVPos(po);
+          _client->NeedRedraw(_canvas->GetViewPort());
+        } else {
+          DoPagePrev();
+          po = _container->GetHeight()-_canvas->GetViewPort()->GetHeight();
+          _canvas->SetVPos(po);
+        }
+#else
     	DoPagePrev();
+#endif
 	break;
 
       case XK_Page_Down:
       case XK_KP_Page_Down:
+#if 1
+    	po = -((OXViewPort *)_canvas->GetViewPort())->GetVPos();
+        if (po < _container->GetHeight()-_canvas->GetViewPort()->GetHeight()) {
+          po += _canvas->GetViewPort()->GetHeight() - 20;
+          if (po > _container->GetHeight()-_canvas->GetViewPort()->GetHeight())
+            po = _container->GetHeight()-_canvas->GetViewPort()->GetHeight();
+          _canvas->SetVPos(po);
+          _client->NeedRedraw(_canvas->GetViewPort());
+        } else {
+          DoPageNext();
+          po = 0;
+          _canvas->SetVPos(po);
+        }
+#else
     	DoPageNext();
+#endif
 	break;
 
       case XK_plus:

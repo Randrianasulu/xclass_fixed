@@ -17,10 +17,12 @@
 #include <xclass/OIniFile.h>
 #include <xclass/utils.h>
 
+#include "ps.h"
+
 
 //----------------------------------------------------------------------
 
-#define XCGVIEW_VERSION   "0.7.6"
+#define XCGVIEW_VERSION   "0.8.1"
 #define XCGVIEW_INI       "xcgviewrc"
 
 
@@ -35,6 +37,7 @@
 #define M_FILE_PRINT       104
 #define M_FILE_PRINTSETUP  105
 #define M_FILE_EXIT        106
+#define M_FILE_RECENT      107
 
 #define M_VIEW_TOOLBAR     201
 #define M_VIEW_STATUSBAR   202
@@ -84,6 +87,8 @@
 #define LB_PAGE            801
 
 
+#define NUM_RECENT  5
+
 struct _popup {
   OXPopupMenu *ptr;
   struct {
@@ -105,9 +110,9 @@ public:
   virtual int ProcessMessage(OMessage *msg);
   virtual int CloseWindow();
 
-  void SetWindowTitle(char *title);
+  void SetWindowTitle(const char *title);
   void UpdateStatus();
-  void OpenFile(char *fname);
+  void OpenFile(const char *fname);
   void DoOpen();
   void DoReopen();
   void DoSaveMarked();
@@ -130,18 +135,20 @@ public:
 
   void ErrorMsg(int icon_type, char *msg);
 
-  void __setup_gv();
-  void __new_file(int n);
-  void __show_page(int n);
-  void __build_pagemedia_menu();
-  void __set_orientation(int n);
-  void __set_pagemedia(int n, int media = -1);
-  int  __marked_pages();
-  void __write_doc(FILE *fp);
-
 protected:
+  void _SetupGhostview();
+  void _NewFile(int n);
+  void _ShowPage(int n);
+  void _BuildPagemediaMenu();
+  void _SetOrientation(int n);
+  void _SetPagemedia(int n, int media = -1);
+  int  _NumMarkedPages();
+  void _WriteDoc(FILE *fp);
+
   void _ReadIniFile();
   void _SaveIniFile();
+  void _AddToRecent(const char *fname);
+  void _UpdateRecentList();
   void _GrabKeys();
   OXPopupMenu *_MakePopup(struct _popup *);
 
@@ -160,6 +167,24 @@ protected:
   OXMenuBar *_menuBar;
   OXPopupMenu *_menuFile, *_menuView, *_menuPage, *_menuHelp,
               *_magstepPopup, *_orienPopup, *_mediaPopup;
+              
+  FILE *_psFile;
+  struct document *doc;
+  int current_page, current_pagemedia, swap_landscape;
+  int default_document_pagemedia, default_document_orientation;
+  int last_pagemedia_entry;
+  int has_toc, mag_step, base_papersize;
+  XCPageOrientation current_orientation;
+
+  char *_filename, *_full_filename;
+  char *_recent_files[NUM_RECENT];
+  char *_printerName, *_printProg;
+  char *_gsCommand;
+  
+  time_t mtime;
+  int _winx, _winy;
+  
+  OXPageLBEntry **toc;
 };
 
 #endif  // __MAIN_H
