@@ -87,7 +87,7 @@ void OXDirectoryTree::UpdateTree() {
                  _client->GetPicture("fdisk.t.xpm"),
                  _client->GetPicture("fdisk.t.xpm"));
   }
-  _i->open = True;
+  OpenNode(_i);
   if (strcmp(&_currentDir[1], "/") == 0) HighlightItem(_i, True);
 
   DefineCursor(GetResourcePool()->GetWaitCursor());
@@ -115,7 +115,7 @@ void OXDirectoryTree::UpdateTree() {
                 _client->GetPicture("fdisk.t.xpm"),
                 _client->GetPicture("fdisk.t.xpm"));
   }
-  i->open = True;
+  OpenNode(i);
   HighlightItem(i, True);
 
   DefineCursor(GetResourcePool()->GetWaitCursor());
@@ -135,7 +135,7 @@ void OXDirectoryTree::UpdateTree() {
     if (dir) {
       i = FindChildByName(i, dir);
       if (i) {
-        if (p) i->open = True;
+        if (p) OpenNode(i);
         //HighlightItem(i);
         //SortChildren(i);
       }
@@ -165,7 +165,7 @@ int OXDirectoryTree::HandleIdleEvent(OIdleHandler *ih) {
   if (_dir) {
     _i = FindChildByName(_i, _dir);
     if (_i) {
-      if (_p) _i->open = True;
+      if (_p) OpenNode(_i);
       //HighlightItem(_i, True);
       //SortChildren(_i);
     }

@@ -799,7 +799,7 @@ int OXFtpManager::ReadFile(char *file) {
     ReadFolder("root", line, &ini);
     root = _lt->AddItem(NULL, line, _client->GetPicture("hdisk.t.xpm"),
                         _client->GetPicture("hdisk.t.xpm"));
-    root->open = true;
+    _lt->OpenNode(root);
     ReadSubFolders("root", root, &ini);
   }
 
@@ -1184,11 +1184,10 @@ void OXFtpManager::DoNewFolder() {
   if (rtc) {
     if ((h = _lt->GetSelected()) != NULL && h->parent != NULL) {
       h = _lt->AddItem(h->parent, tmp, NULL, NULL);
-      h->open = true;
     } else {
       h = _lt->AddItem(_lt->GetFirstItem(), tmp, NULL, NULL);
-      h->open = true;
     }
+    _lt->OpenNode(h);
     _lt->GetPathnameFromItem(h, tmp);
     OBookmarkList *blist = new OBookmarkList(tmp, new TDDLList<OBookmark*>());
     _bookmarks->Add(blist);
@@ -1278,7 +1277,7 @@ int OXFtpManager::ProcessMessage(OMessage *msg) {
           if ((h = _lt->GetSelected()) != NULL) {
             char tmp[PATH_MAX];
             _lt->GetPathnameFromItem(h, tmp);
-	    //h->open = true;
+	    //_lt->OpenNode(h);
             UpdateBookmarkList(FindBookmarkList(tmp));
           } else {
             SetControls();

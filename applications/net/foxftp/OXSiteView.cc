@@ -436,7 +436,7 @@ void OXSiteView::UpdateTree(const char *path) {
     root = _lt->AddItem(NULL, buf2,
                         _client->GetPicture("hdisk.t.xpm", hdisk_t_xpm),
                         _client->GetPicture("hdisk.t.xpm", hdisk_t_xpm));
-    root->open = true;
+    _lt->OpenNode(root);
   }
   i1 = root;
   p = strtok(p, "/\\");
@@ -445,7 +445,7 @@ void OXSiteView::UpdateTree(const char *path) {
       i2 = _lt->FindChildByName(i1, p);
       if (!i2) {
         i2 = _lt->AddItem(i1, p, NULL, NULL);
-        i2->open = true;
+        _lt->OpenNode(i2);
         _lt->SortChildren(i1);
       }
       i1 = i2;
@@ -1089,7 +1089,7 @@ int OXSiteView::ProcessMessage(OMessage *msg) {
               if ((h = _lt->GetSelected()) != NULL) {
                 char tmp[2048];
                 _lt->GetPathnameFromItem(h, tmp);
-                h->open = true;
+                _lt->OpenNode(h);
                ChangeDirectory(tmp);
               }
               break;
@@ -1175,7 +1175,7 @@ int OXSiteView::ProcessMessage(OMessage *msg) {
           if ((h = _lt->GetSelected()) != NULL) {
             char tmp[2048];
             _lt->GetPathnameFromItem(h, tmp);
-            //h->open = true;
+            //_lt->OpenNode(h);
             ChangeDirectory(tmp);
           }
           break;
