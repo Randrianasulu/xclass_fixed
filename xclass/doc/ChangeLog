@@ -1871,3 +1871,11 @@ OPicture.cc
 - OMime strings are now dynamically allocated.
 
 - OMimeTypes: recompile regular expresion when pattern is changed.
+
+
+10/10/01
+
+- OXListTree now subclasses OXView, and does not needs OXCanvas anymore.
+
+- OXClient::handleMaskEvent(): allow dispatching of pointer enter/leave
+  events during WaitFor().

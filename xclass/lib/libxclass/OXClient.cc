@@ -644,8 +644,10 @@ int OXClient::HandleMaskEvent(XEvent *Event, Window wid) {
          (Event->type != ButtonRelease) &&
          (Event->type != KeyPress) &&
          (Event->type != KeyRelease) &&
+#if 0
          (Event->type != EnterNotify) &&
          (Event->type != LeaveNotify) &&
+#endif
          (Event->type != MotionNotify))) {
       w->HandleEvent(Event);
       return True;

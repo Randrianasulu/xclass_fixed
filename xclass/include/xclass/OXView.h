@@ -126,9 +126,9 @@ protected:
   virtual void _DoRedraw();
   virtual bool ItemLayout() { return False; }
   
-  void Scroll(OPosition pos);
+  virtual void Scroll(OPosition pos);
 
-  void UpdateBackgroundStart();
+  virtual void UpdateBackgroundStart();
 
   bool _clearExposedArea;        // whether any exposed area of the object
                                  // should be cleared before readrawing.

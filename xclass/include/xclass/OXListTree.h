@@ -27,11 +27,12 @@
 
 #include <xclass/OXClient.h>
 #include <xclass/OXWindow.h>
-#include <xclass/OXWidget.h>
-#include <xclass/OXCompositeFrame.h>
+#include <xclass/OXView.h>
 #include <xclass/OPicture.h>
 
 class OXFont;
+
+//----------------------------------------------------------------------
 
 class OListTreeItem {
 public:
@@ -44,25 +45,22 @@ public:
   OListTreeItem	*parent, *firstchild, *prevsibling, *nextsibling;
   int  open, active;
   char *text;
-  int  length, xnode, y, xtext, ytext, height, picWidth;
+  int  length, xnode, y, xpic, ypic, xtext, ytext, height, picWidth;
   const OPicture *open_pic, *closed_pic;
 
 protected:
   OXClient *_client;
 };
 
-class OXListTree : public OXFrame, public OXWidget {
+
+class OXListTree : public OXView {
 public:
-  OXListTree(const OXWindow *p, int w, int h,
-             unsigned int options, unsigned long back = _defaultDocumentBackground);
+  OXListTree(const OXWindow *p, int w, int h, int id, unsigned int options);
   virtual ~OXListTree();
 
   virtual int HandleButton(XButtonEvent *event);
   virtual int HandleDoubleClick(XButtonEvent *event);
-  virtual int HandleExpose(XExposeEvent *event);
-
-  virtual ODimension GetDefaultSize() const
-           { return ODimension(_defw, _defh); }
+  virtual int HandleKey(XKeyEvent *event);
 
   OListTreeItem *AddItem(OListTreeItem *parent, char *string,
                          const OPicture *open = NULL,
@@ -87,19 +85,27 @@ public:
   OListTreeItem *FindSiblingByName(OListTreeItem *item, char *name);
   OListTreeItem *FindChildByName(OListTreeItem *item, char *name);
 
+  virtual void DrawRegion(OPosition coord, ODimension size, int clear = True);
+
 protected:
-  virtual void _DoRedraw();
+  virtual void _GotFocus();
+  virtual void _LostFocus();
+  
+  virtual void UpdateBackgroundStart();
 
   void _Draw(int yevent, int hevent);
   int  _DrawChildren(OListTreeItem *item, int x, int y, int xroot);
   void _DrawItem(OListTreeItem *item, int x, int y, int *xroot,
                  int *retwidth, int *retheight);
+  void _DrawItemPic(OListTreeItem *item);
   void _DrawItemName(OListTreeItem *item);
   void _DrawNode(OListTreeItem *item, int x, int y);
 
   void _HighlightItem(OListTreeItem *item, int state, int draw);
   void _HighlightChildren(OListTreeItem *item, int state, int draw);
   void _UnselectAll(int draw);
+
+  void ShowFocusHilite(int onoff);
 
   void _RemoveReference(OListTreeItem *item);
   void _DeleteChildren(OListTreeItem *item);
@@ -114,8 +120,10 @@ protected:
   unsigned int _grayPixel;
   GC _drawGC, _lineGC, _highlightGC;
   const OXFont *_font;
-  int _th, _ascent, _defw, _defh;
+  int _th, _ascent, _focused;
   int _exposeTop, _exposeBottom;
+
+  void __NeedFullRedraw(int);
 };
 
 

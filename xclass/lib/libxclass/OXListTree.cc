@@ -25,13 +25,16 @@
 #include <stdio.h>
 
 #include <xclass/OXClient.h>
-#include <xclass/OXCanvas.h>
-#include <xclass/OXFrame.h>
 #include <xclass/OXFont.h>
 #include <xclass/OXListTree.h>
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
 #include <xclass/OResourcePool.h>
+#include <xclass/OGC.h>
+
+
+#include <xclass/OXCanvas.h>  // tmp for OContainerMessage
+
 
 //--------------------------------------------------------------------
 
@@ -72,9 +75,9 @@ void OListTreeItem::Rename(char *new_name) {
 
 //--------------------------------------------------------------------
 
-OXListTree::OXListTree(const OXWindow *p, int w, int h,
-                       unsigned int options, unsigned long back) :
-  OXFrame(p, w, h, options|OWN_BKGND, back) {
+OXListTree::OXListTree(const OXWindow *p, int w, int h, int id,
+                       unsigned int options) :
+  OXView(p, w, h, id, options) {
     XGCValues gcv;
     unsigned int gcmask;
     OFontMetrics fm;
@@ -82,6 +85,15 @@ OXListTree::OXListTree(const OXWindow *p, int w, int h,
     //_widgetID = ID;
     _widgetType = "OXListTree";
     _msgObject = p;
+
+    XSetWindowAttributes wattr;
+    unsigned long mask;
+
+    mask = CWBitGravity | CWWinGravity;
+    wattr.bit_gravity = NorthWestGravity;
+    wattr.win_gravity = NorthWestGravity;
+
+    XChangeWindowAttributes(GetDisplay(), _canvas->GetId(), mask, &wattr);
 
     _font = GetResourcePool()->GetIconFont();
     _font->GetFontMetrics(&fm);
@@ -117,16 +129,26 @@ OXListTree::OXListTree(const OXWindow *p, int w, int h,
 
     _first = _selected = NULL;
 
-    _defw = _defh = 1;
+    _virtualSize = ODimension(1, 1);
 
     _hspacing = 2;
     _vspacing = 2;  // 0;
     _indent = 3;    // 0;
     _margin = 2;
 
-    XGrabButton(GetDisplay(), Button1, AnyModifier, _id, True,
+    _focused = False;
+    AddInput(FocusChangeMask);
+
+    XGrabButton(GetDisplay(), Button1, AnyModifier, _canvas->GetId(), True,
                 ButtonPressMask | ButtonReleaseMask,
                 GrabModeAsync, GrabModeAsync, None, None);
+
+    _vsb->SetDelay(10, 10);
+    _vsb->SetMode(SB_ACCELERATED);
+    _hsb->SetDelay(10, 10);
+    _hsb->SetMode(SB_ACCELERATED);
+
+    _clearExposedArea = True;
 }
 
 OXListTree::~OXListTree() {
@@ -171,25 +193,33 @@ void OXListTree::_UnselectAll(int draw) {
   _HighlightChildren(_first, False, draw);
 }
 
+void OXListTree::__NeedFullRedraw(int clrbg) {
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+}
+
 int OXListTree::HandleButton(XButtonEvent *event) {
   OListTreeItem *item;
 
+  OPosition ep = ToVirtual(OPosition(event->x, event->y));
+
   if (event->type == ButtonPress) {
-    if ((item = _FindItem(event->y)) != NULL) {
+    if (TakesFocus()) RequestFocus();
+
+    if ((item = _FindItem(ep.y)) != NULL) {
       if (item->xnode > 0) {
-        if ((event->x > item->xnode-5) && (event->x < item->xnode+5)) {
+        if ((ep.x > item->xnode-5) && (ep.x < item->xnode+5)) {
           // toggle open 
           item->open = !item->open;
-          NeedRedraw(True);
+          __NeedFullRedraw(True);
         }
       }
       if (_selected) _selected->active = False;
-      _last_y = event->y;
+      _last_y = ep.y;
       _UnselectAll(True);
       _selected = item;
       //item->active = True; // this is done below w/redraw
       _HighlightItem(item, True, True);
-      NeedRedraw(False);
+      __NeedFullRedraw(False);
       OContainerMessage msg(MSG_LISTTREE, MSG_CLICK, -1,
                             event->button, 0, 0,
                             event->x_root, event->y_root);
@@ -202,9 +232,11 @@ int OXListTree::HandleButton(XButtonEvent *event) {
 int OXListTree::HandleDoubleClick(XButtonEvent *event) {
   OListTreeItem *item;
 
-  if ((item = _FindItem(event->y)) != NULL) {
+  OPosition ep = ToVirtual(OPosition(event->x, event->y));
+
+  if ((item = _FindItem(ep.y)) != NULL) {
     if (item->xnode > 0) {
-      if ((event->x > item->xnode-5) && (event->x < item->xnode+5)) {
+      if ((ep.x > item->xnode-5) && (ep.x < item->xnode+5)) {
         return False;
       }
     }
@@ -214,7 +246,7 @@ int OXListTree::HandleDoubleClick(XButtonEvent *event) {
     _selected = item;
     //item->active = True; // this is done below w/redraw
     _HighlightItem(item, True, True);
-    NeedRedraw();
+    __NeedFullRedraw(99);
     OContainerMessage msg(MSG_LISTTREE, MSG_DBLCLICK, -1, event->button,
                           0, 0, event->x_root, event->y_root);
     SendMessage(_msgObject, &msg);
@@ -223,30 +255,68 @@ int OXListTree::HandleDoubleClick(XButtonEvent *event) {
   return True;
 }
 
-int OXListTree::HandleExpose(XExposeEvent *event) {
-  _Draw(event->y, event->height);
+void OXListTree::DrawRegion(OPosition coord, ODimension size, int clear) {
+  OXView::DrawRegion(coord, size, clear);
+  _Draw(coord.y, size.h);
+}
+
+int OXListTree::HandleKey(XKeyEvent *event) {
   return True;
 }
 
+void OXListTree::_GotFocus() {
+  OXFrame::_GotFocus();
+  AddInput(KeyPressMask | KeyReleaseMask);
+  _focused = True;
+  ShowFocusHilite(True);
+}
+
+void OXListTree::_LostFocus() {
+  OXFrame::_LostFocus();
+  RemoveInput(KeyPressMask | KeyReleaseMask);
+  _focused = False;
+  ShowFocusHilite(False);
+
+  OContainerMessage message(_msgType, MSG_FOCUSLOST, _widgetID);
+  SendMessage(_msgObject, &message);
+}
+
+void OXListTree::ShowFocusHilite(int onoff) {
+  if (_selected) {
+    NeedRedraw(ORectangle(0, _selected->y,
+               _canvas->GetWidth(), _selected->height));
+  }
+}
+
+void OXListTree::UpdateBackgroundStart() {
+  OXView::UpdateBackgroundStart();
+
+  XGCValues gcv;
+  unsigned int mask = GCTileStipXOrigin | GCTileStipYOrigin;
+
+  gcv.ts_x_origin = -_visibleStart.x;
+  gcv.ts_y_origin = -_visibleStart.y;
+  XChangeGC(GetDisplay(), _lineGC, mask, &gcv);
+}
+
+
 //--------------------------------------------------- drawing functions
 
-void OXListTree::_DoRedraw() {
-  if (_clearBgnd) ClearWindow();
-  _Draw(0, _h);
-}
+// This also recalculates the size and calls Layout(), hmmm...
 
 void OXListTree::_Draw(int yevent, int hevent) {
   OListTreeItem *item;
   int x, y, width, height, old_width, old_height;
   int xbranch;
 
-  // Overestimate the expose region to be sure to draw an item that gets
-  // cut by the region
+  // Overestimate the expose region to be sure to draw an item
+  // that gets cut by the region
+
   _exposeTop = yevent - _th;
   _exposeBottom = yevent + hevent + _th;
-  old_width  = _defw;
-  old_height = _defh;
-  _defw = _defh = 1;
+  old_width  = _virtualSize.w;
+  old_height = _virtualSize.h;
+  _virtualSize = ODimension(1, 1);
 
   x = _margin;
   y = _margin;
@@ -257,7 +327,7 @@ void OXListTree::_Draw(int yevent, int hevent) {
 
     width += x + _hspacing + _margin;
 
-    if (width > _defw) _defw = width;
+    if (width > _virtualSize.w) _virtualSize.w = width;
 
     y += height + _vspacing;
     if (item->firstchild && item->open)
@@ -266,11 +336,11 @@ void OXListTree::_Draw(int yevent, int hevent) {
     item = item->nextsibling;
   }
 
-  _defh = y + _margin;
+  _virtualSize.h = y + _margin;
 
-  if ((old_width != _defw) || (old_height != _defh))
-    ((OXCanvas *)GetParent()->GetParent())->Layout();
-
+  if ((old_width != _virtualSize.w) || (old_height != _virtualSize.h)) {
+    Layout();
+  }
 }
 
 int OXListTree::_DrawChildren(OListTreeItem *item, int x, int y, int xroot) {
@@ -284,7 +354,7 @@ int OXListTree::_DrawChildren(OListTreeItem *item, int x, int y, int xroot) {
 
     width += x + _hspacing + _margin;
 
-    if (width > _defw) _defw = width;
+    if (width > _virtualSize.w) _virtualSize.w = width;
 
     y += height + _vspacing;
     if ((item->firstchild) && (item->open))
@@ -294,6 +364,8 @@ int OXListTree::_DrawChildren(OListTreeItem *item, int x, int y, int xroot) {
   }
   return y;
 }
+
+// The next 3 routines are the only ones that actually draw to the screen 
 
 void OXListTree::_DrawItem(OListTreeItem *item, int x, int y, int *xroot,
                            int *retwidth, int *retheight) {
@@ -329,47 +401,55 @@ void OXListTree::_DrawItem(OListTreeItem *item, int x, int y, int *xroot,
     yline = ypic + (height >> 1);
   }
 
-  // height must be even, otherwise our dashed line wont appear properly
+  // height must be even, otherwise our dashed line will not appear properly
   ++height; height &= ~1;
 
   // Save the basic graphics info for use by other functions
   item->y = y;
   item->xnode = *xroot;
+  item->xpic = xpic;
+  item->ypic = ypic;
   item->xtext = xtext;
   item->ytext = ytext;
   item->height = height;
 
   if ((y+height >= _exposeTop) && (y <= _exposeBottom)) {
+    OPosition p1, p2;
+
     if (*xroot >= 0) {
       xc = *xroot;
 
+      p1 = ToPhysical(OPosition(xc, y));
+      p2 = ToPhysical(OPosition(xc, yline));
+
       if (item->nextsibling)
-        DrawLine(_lineGC, xc, y, xc, y+height +1);
+        _canvas->DrawLine(_lineGC, p1.x, p1.y, p1.x, p1.y + height +1);
       else
-        DrawLine(_lineGC, xc, y, xc, yline);
+        _canvas->DrawLine(_lineGC, p1.x, p1.y, p2.x, p2.y);
 
       OListTreeItem *p = item->parent;
       while (p) {
         xc -= (_indent + item->picWidth);
+        p1 = ToPhysical(OPosition(xc, y));
         if (p->nextsibling)
-          DrawLine(_lineGC, xc, y, xc, y+height +1);
+          _canvas->DrawLine(_lineGC, p1.x, p1.y, p1.x, p1.y + height +1);
         p = p->parent;
       }
-      DrawLine(_lineGC, *xroot, yline, xpic/*xbranch*/, yline);
+
+      p1 = ToPhysical(OPosition(*xroot, yline));
+      p2 = ToPhysical(OPosition(xpic/*xbranch*/, yline));
+
+      _canvas->DrawLine(_lineGC, p1.x, p1.y, p2.x, p2.y);
       _DrawNode(item, *xroot, yline);
-
     }
-    if (item->open && item->firstchild)
-      DrawLine(_lineGC, xbranch, ybranch/*yline*/, xbranch, y+height +1);
 
-//    if (pic)
-//      pic->Draw(GetDisplay(), _id, _drawGC, xpic, ypic);
-    ClearArea(xpic, ypic, item->picWidth, height);
-    if (item->active || (item == _selected))
-      item->open_pic->Draw(GetDisplay(), _id, _drawGC, xpic, ypic);
-    else
-      item->closed_pic->Draw(GetDisplay(), _id, _drawGC, xpic, ypic);
+    if (item->open && item->firstchild) {
+      p1 = ToPhysical(OPosition(xbranch, ybranch/*yline*/));
+      p2 = ToPhysical(OPosition(xbranch, y));
+      _canvas->DrawLine(_lineGC, p1.x, p1.y, p2.x, p2.y + height +1);
+    }
 
+    _DrawItemPic(item);
     _DrawItemName(item);
   }
 
@@ -378,33 +458,54 @@ void OXListTree::_DrawItem(OListTreeItem *item, int x, int y, int *xroot,
   *retheight = height;
 }
 
-void OXListTree::_DrawItemName(OListTreeItem *item) {
-  int width;
+void OXListTree::_DrawItemPic(OListTreeItem *item) {
 
-  width = _font->TextWidth(item->text);
+  OPosition p = ToPhysical(OPosition(item->xpic, item->ypic));
+
+  _canvas->ClearArea(p.x, p.y, item->picWidth, item->height);
+  if (item->active || (item == _selected))
+    item->open_pic->Draw(GetDisplay(), _canvas->GetId(), _drawGC, p.x, p.y);
+  else
+    item->closed_pic->Draw(GetDisplay(), _canvas->GetId(), _drawGC, p.x, p.y);
+}
+
+void OXListTree::_DrawItemName(OListTreeItem *item) {
+
+  int width = _font->TextWidth(item->text);
+  OPosition p = ToPhysical(OPosition(item->xtext, item->ytext));
+
   if (item->active || item == _selected) {
     XSetForeground(GetDisplay(), _drawGC, _defaultSelectedBackground);
-    FillRectangle(_drawGC, item->xtext, item->ytext, width, _th);
+    _canvas->FillRectangle(_drawGC, p.x, p.y, width + 1, _th + 1);
     XSetForeground(GetDisplay(), _drawGC, _blackPixel);
-    DrawString(_highlightGC,
-		item->xtext, item->ytext + _ascent,
-		item->text, item->length);
+    _canvas->DrawString(_highlightGC, p.x, p.y + _ascent,
+                        item->text, item->length);
+#if 1
+    if (_focused) {
+      _canvas->DrawRectangle(_client->GetResourcePool()->GetDocumentBckgndGC()->GetGC(),
+                             p.x, p.y, width, _th);
+      _canvas->DrawRectangle(_client->GetResourcePool()->GetFocusHiliteGC()->GetGC(),
+                             p.x, p.y, width, _th);
+    }
+#endif
   } else {
-    FillRectangle(_highlightGC, item->xtext, item->ytext, width, _th);
-    DrawString(_drawGC,
-		item->xtext, item->ytext + _ascent,
-		item->text, item->length);
+    _canvas->FillRectangle(_highlightGC, p.x, p.y, width + 1, _th + 1);
+    _canvas->DrawString(_drawGC, p.x, p.y + _ascent,
+                        item->text, item->length);
   }
 }
 
 void OXListTree::_DrawNode(OListTreeItem *item, int x, int y) {
   if (item->firstchild) {
-    FillRectangle(_highlightGC, x-3, y-3, 7, 7);
+    OPosition p = ToPhysical(OPosition(x, y));
+
+    _canvas->FillRectangle(_highlightGC, p.x - 3, p.y - 3, 7, 7);
     XSetForeground(GetDisplay(), _highlightGC, _blackPixel);
-    DrawLine(_highlightGC, x-2, y, x+2, y);
-    if (!item->open) DrawLine(_highlightGC, x, y-2, x, y+2);
+    _canvas->DrawLine(_highlightGC, p.x - 2, p.y, p.x + 2, p.y);
+    if (!item->open)
+      _canvas->DrawLine(_highlightGC, p.x, p.y - 2, p.x, p.y + 2);
     XSetForeground(GetDisplay(), _highlightGC, _grayPixel);
-    DrawRectangle(_highlightGC, x-4, y-4, 8, 8);
+    _canvas->DrawRectangle(_highlightGC, p.x - 4, p.y - 4, 8, 8);
     XSetForeground(GetDisplay(), _highlightGC, _whitePixel);
   }
 }
@@ -599,14 +700,14 @@ OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, char *string,
   item = new OListTreeItem(_client, string, open, closed);
   _InsertChild(parent, item);
 
-  NeedRedraw();
+  __NeedFullRedraw(99);
 
   return item;
 }
 
 void OXListTree::RenameItem(OListTreeItem *item, char *string) {
   item->Rename(string);
-  NeedRedraw();
+  __NeedFullRedraw(99);
 }
 
 int OXListTree::DeleteItem(OListTreeItem *item) {
@@ -618,7 +719,7 @@ int OXListTree::DeleteItem(OListTreeItem *item) {
   _RemoveReference(item);
   delete item;
 
-  NeedRedraw();
+  __NeedFullRedraw(99);
 
   return 1;
 }
@@ -630,7 +731,7 @@ int OXListTree::DeleteChildren(OListTreeItem *item) {
 
   item->firstchild = NULL;
 
-  NeedRedraw();
+  __NeedFullRedraw(99);
 
   return 1;
 }
@@ -643,7 +744,7 @@ int OXListTree::Reparent(OListTreeItem *item, OListTreeItem *newparent) {
   // The item is now unattached. Reparent it.
   _InsertChild(newparent, item);
 
-  NeedRedraw();
+  __NeedFullRedraw(99);
 
   return 1;
 }
@@ -658,7 +759,7 @@ int OXListTree::ReparentChildren(OListTreeItem *item,
 
     _InsertChildren(newparent, first);
 
-    NeedRedraw();
+    __NeedFullRedraw(99);
     return 1;
   }
   return 0;
@@ -711,7 +812,7 @@ int OXListTree::Sort(OListTreeItem *item) {
 
   delete[] list;
 
-  NeedRedraw();
+  __NeedFullRedraw(99);
 
   return 1;
 }
@@ -774,12 +875,12 @@ OListTreeItem *OXListTree::FindChildByName(OListTreeItem *item, char *name) {
 void OXListTree::HighlightItem(OListTreeItem *item) {
   _UnselectAll(False);
   _HighlightItem(item, True, False);
-  NeedRedraw(False);
+  __NeedFullRedraw(False);
 }
 
 void OXListTree::ClearHighlighted() {
   _UnselectAll(False);
-  NeedRedraw(False);
+  __NeedFullRedraw(False);
 }
 
 void OXListTree::GetPathnameFromItem(OListTreeItem *item, char *path) {

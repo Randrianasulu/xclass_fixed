@@ -73,12 +73,14 @@ ICONS = app.s.xpm \
 	slink.s.xpm \
 	slink.t.xpm \
 	srecycle.xpm \
+	tb-addfavor.xpm \
 	tb-bigicons.xpm \
 	tb-copy.xpm \
 	tb-cut.xpm \
 	tb-delete.xpm \
 	tb-details.xpm \
 	tb-dscntw.xpm \
+	tb-favor.xpm \
 	tb-list.xpm \
 	tb-mapntw.xpm \
 	tb-newfolder.xpm \
@@ -119,5 +121,6 @@ install:
 	done
 
 clean:
+	rm -f *~ core *.bak
 
 distclean:
