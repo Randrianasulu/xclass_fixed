@@ -1,7 +1,8 @@
 Intro
 -----
 
-This is the alpha version 0.6.6 of the xclass explorer, a file manager for X
+This is the alpha version 0.6.7 of the xclass explorer, a file manager for
+X
 with the windows-95 look and feel. I started writing it some years ago after
 hacking fvwm into fvwm95, together with the xclass library, but haven't got
 the time to finish it.
