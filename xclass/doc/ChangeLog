@@ -1993,7 +1993,7 @@ OPicture.cc
 
 15/11/01
 
-- Corrected a bun in OResourcePool: the resource file was not always being
+- Corrected a bug in OResourcePool: the resource file was not always being
   read. (Thanks to Rick Sivernell)
 
 - Added OXTransientFrame::CenterOnParent() method.
