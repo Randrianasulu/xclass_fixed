@@ -70,4 +70,5 @@ root_trails - similar to the above programs, but they run on the root window
 
 exception - used to test xclass exception objects.
 
-htmltest  - used to test the OXHtml widget.
+htmltest  - used to test the OXHtml widget. Select File/Open, go to the
+            html directory and open index.html
