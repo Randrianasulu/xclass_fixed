@@ -86,9 +86,9 @@ public:
   
   virtual void Reconfig();
 
-  void SetWindowName(char *Name);
-  void SetIconName(char *Name);
-  void SetClassHints(char *ClassName, char *ResourceName);
+  void SetWindowName(const char *Name);
+  void SetIconName(const char *Name);
+  void SetClassHints(const char *ClassName, const char *ResourceName);
   void SetMWMHints(unsigned int value, unsigned int funcs, unsigned int input);
   void SetWMPosition(int x, int y);
   void SetWMSize(int w, int h);

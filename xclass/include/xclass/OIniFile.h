@@ -44,7 +44,7 @@ public:
   bool  GetBool(const char *, bool _default = false);
 
   int   PutNext(const char *);
-  int   PutItem(const char *, char *);
+  int   PutItem(const char *, const char *);
   int   PutBool(const char *, bool);
 
   int   PutNewLine();

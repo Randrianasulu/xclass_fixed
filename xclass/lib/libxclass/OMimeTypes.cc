@@ -42,6 +42,7 @@
 
 OMime::OMime() {
   type = pattern = action = icon = description = NULL;
+  has_preg = false;
   next = NULL;
 }
 
@@ -51,7 +52,7 @@ OMime::~OMime() {
   if (action) delete[] action;
   if (icon) delete[] icon;
   if (description) delete[] description;
-  regfree(&preg);
+  if (has_preg) regfree(&preg);
 }
 
 
@@ -284,6 +285,7 @@ void OMimeTypes::AddType(char *description,
   listptr->type = StrDup(type);
   listptr->pattern = StrDup(pattern);
   _CompilePattern(pattern, &listptr->preg);
+  listptr->has_preg = true;
   listptr->action = StrDup(action);
   listptr->icon = StrDup(icon);
   listptr->description = description ? StrDup(description) : NULL;
@@ -323,6 +325,7 @@ void OMimeTypes::Modify(OMime *mime,
     mime->pattern = StrDup(pattern);
     regfree(&mime->preg);
     _CompilePattern(pattern, &mime->preg);
+    mime->has_preg = true;
   }
 
   _changed = True;

@@ -41,6 +41,7 @@ public:
   char *icon;
   char *description;
   regex_t preg;
+  int  has_preg;
   OMime *next;
 };
 

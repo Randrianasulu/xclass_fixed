@@ -298,10 +298,10 @@ int OXMainFrame::CloseWindow() {
   return True;
 }
 
-void OXMainFrame::SetWindowName(char *Name) {
+void OXMainFrame::SetWindowName(const char *Name) {
   XTextProperty wname;
 
-  if (XStringListToTextProperty(&Name, 1, &wname) == 0) {
+  if (XStringListToTextProperty((char **) &Name, 1, &wname) == 0) {
     Debug(DBG_ERR, "OXMainFrame: Cannot allocate window name!\n");
     return;
   }
@@ -309,10 +309,10 @@ void OXMainFrame::SetWindowName(char *Name) {
   XFree(wname.value);
 }
 
-void OXMainFrame::SetIconName(char *Name) {
+void OXMainFrame::SetIconName(const char *Name) {
   XTextProperty wname;
 
-  if (XStringListToTextProperty(&Name, 1, &wname) == 0) {
+  if (XStringListToTextProperty((char **) &Name, 1, &wname) == 0) {
     Debug(DBG_ERR, "OXMainFrame: Cannot allocate icon name!\n");
     return;
   }
@@ -320,11 +320,12 @@ void OXMainFrame::SetIconName(char *Name) {
   XFree(wname.value);
 }
 
-void OXMainFrame::SetClassHints(char *ClassName, char *ResourceName) {
+void OXMainFrame::SetClassHints(const char *ClassName,
+                                const char *ResourceName) {
   XClassHint class_hints;
  
-  class_hints.res_class = ClassName;
-  class_hints.res_name  = ResourceName;
+  class_hints.res_class = (char *) ClassName;
+  class_hints.res_name  = (char *) ResourceName;
   XSetClassHint(GetDisplay(), _id, &class_hints);
 }
 

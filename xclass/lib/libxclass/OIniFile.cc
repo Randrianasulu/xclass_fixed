@@ -125,10 +125,8 @@ int OIniFile::GetNext(char *type) {
   return 0;
 }
 
-int OIniFile::PutItem(const char *item, char *value) {
+int OIniFile::PutItem(const char *item, const char *value) {
   if (ifp) {
-    if (value[strlen(value)-1] == '\n')
-      value[strlen(value)-1] = '\0';
     return fprintf(ifp, "%s = %s\n", item, value);
   }
   return 0;
