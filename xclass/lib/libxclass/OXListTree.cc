@@ -41,14 +41,13 @@
 
 // TODO:
 // - add support for drag and drop
-// - optimize redrawings, get rid of __NeedFullRedraw()
 // - send more descriptive messages to the application
 // - implement a new OXFileSystemTree class
 
 
 //--------------------------------------------------------------------
 
-OListTreeItem::OListTreeItem(OXClient *client, char *name, 
+OListTreeItem::OListTreeItem(OXClient *client, const char *name, 
                              const OPicture *opened,
                              const OPicture *closed) {
   length = strlen(name);
@@ -76,7 +75,7 @@ OListTreeItem::~OListTreeItem() {
   _client->FreePicture(closed_pic);
 }
 
-void OListTreeItem::Rename(char *new_name) {
+void OListTreeItem::Rename(const char *new_name) {
   delete[] text;
   length = strlen(new_name);
   text = new char[length + 1];
@@ -186,7 +185,10 @@ void OXListTree::_HighlightItem(OListTreeItem *item, int state, int draw) {
     if ((item == _selected) && !state) _selected = NULL;
     if (state != item->active) {
       item->active = state;
-      if (draw) _DrawItemName(item);
+      if (draw) {
+        _DrawItemPic(item);
+        _DrawItemName(item);
+      }
     }
   }
 }
@@ -204,10 +206,6 @@ void OXListTree::_UnselectAll(int draw) {
   _HighlightChildren(_first, False, draw);
 }
 
-void OXListTree::__NeedFullRedraw(int clrbg) {
-  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
-}
-
 int OXListTree::HandleButton(XButtonEvent *event) {
   OListTreeItem *item;
 
@@ -223,16 +221,13 @@ int OXListTree::HandleButton(XButtonEvent *event) {
         if ((ep.x > item->xnode-5) && (ep.x < item->xnode+5)) {
           // toggle open 
           item->open = !item->open;
-          __NeedFullRedraw(True);
+          NeedRedraw(ORectangle(0, item->y,
+                     _virtualSize.w, _canvas->GetHeight()));
         }
       }
-      if (_selected) _selected->active = False;
       _last_y = ep.y;
       _UnselectAll(True);
-      _selected = item;
-      //item->active = True; // this is done below w/redraw
-      _HighlightItem(item, True, True);
-      __NeedFullRedraw(False);
+      _HighlightItem(_selected = item, True, True);
       OListTreeMessage msg(_msgType, MSG_CLICK, _widgetID,
                            event->button, event->x_root, event->y_root);
       SendMessage(_msgObject, &msg);
@@ -255,12 +250,11 @@ int OXListTree::HandleDoubleClick(XButtonEvent *event) {
       }
     }
     item->open = !item->open;
-    if (_selected) _selected->active = False;
+    NeedRedraw(ORectangle(0, item->y,
+               _virtualSize.w, _canvas->GetHeight()));
     _UnselectAll(True);
     _selected = item;
-    //item->active = True; // this is done below w/redraw
-    _HighlightItem(item, True, True);
-    __NeedFullRedraw(99);
+    _HighlightItem(_selected = item, True, True);
     OListTreeMessage msg(_msgType, MSG_DBLCLICK, _widgetID,
                          event->button, event->x_root, event->y_root);
     SendMessage(_msgObject, &msg);
@@ -281,7 +275,6 @@ int OXListTree::HandleKey(XKeyEvent *event) {
   if (!_selected) {
     _selected = _first;
     _HighlightItem(_selected, True, True);
-    __NeedFullRedraw(99);
     return True;
   }
 
@@ -296,6 +289,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
         // otherwise go to parent node
         if (_selected->open) {
           _selected->open = False;
+          NeedRedraw(ORectangle(0, _selected->y,
+                     _virtualSize.w, _canvas->GetHeight()));
         } else if (_selected != _first) {
           next = _selected->parent;
           if (_timer) delete _timer;
@@ -307,7 +302,11 @@ int OXListTree::HandleKey(XKeyEvent *event) {
         // if the current node is closed, open it
         // otherwise go to the first child
         if (!_selected->open) {
-          if (_selected->firstchild) _selected->open = True;
+          if (_selected->firstchild) {
+            _selected->open = True;
+            NeedRedraw(ORectangle(0, _selected->y,
+                       _virtualSize.w, _canvas->GetHeight()));
+          }
         } else if (_selected->firstchild) {
           next = _selected->firstchild;
           if (_timer) delete _timer;
@@ -385,6 +384,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
       case XK_KP_Add:
         // expand one level
         _selected->open = True;
+        NeedRedraw(ORectangle(0, _selected->y,
+                   _virtualSize.w, _canvas->GetHeight()));
         msg.action = MSG_DBLCLICK;
         SendMessage(_msgObject, &msg);
         break;
@@ -393,6 +394,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
       case XK_KP_Subtract:
         // collapse one level
         _selected->open = False;
+        NeedRedraw(ORectangle(0, _selected->y,
+                   _virtualSize.w, _canvas->GetHeight()));
         msg.action = MSG_DBLCLICK;
         SendMessage(_msgObject, &msg);
         break;
@@ -441,12 +444,11 @@ int OXListTree::HandleKey(XKeyEvent *event) {
     }
 
     if (next != _selected) {
-      _selected->active = False;
+      _HighlightItem(_selected, False, True);
       _selected = next;
       _EnsureVisible(_selected);
     }
     _HighlightItem(_selected, True, True);
-    __NeedFullRedraw(99);
   }
 
   return True;
@@ -484,7 +486,7 @@ void OXListTree::_LostFocus() {
 void OXListTree::ShowFocusHilite(int onoff) {
   if (_selected) {
     NeedRedraw(ORectangle(0, _selected->y,
-               _canvas->GetWidth(), _selected->height));
+               _virtualSize.w, _selected->height));
   }
 }
 
@@ -911,7 +913,19 @@ OListTreeItem *OXListTree::_FindItem(int findy) {
 
 //----------------------------------------------- Public Functions
 
-OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, char *string,
+void OXListTree::AddItem(OListTreeItem *parent, OListTreeItem *item) {
+
+  if (!item->open_pic)
+    item->open_pic = _client->GetPicture("ofolder.t.xpm");
+  if (!item->closed_pic)
+    item->closed_pic = _client->GetPicture("folder.t.xpm");
+
+  _InsertChild(parent, item);
+
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+}
+
+OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, const char *string,
                                    const OPicture *open,
                                    const OPicture *closed) {
   OListTreeItem *item;
@@ -922,17 +936,18 @@ OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, char *string,
   item = new OListTreeItem(_client, string, open, closed);
   _InsertChild(parent, item);
 
-  __NeedFullRedraw(99);
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return item;
 }
 
-void OXListTree::RenameItem(OListTreeItem *item, char *string) {
+void OXListTree::RenameItem(OListTreeItem *item, const char *string) {
   item->Rename(string);
-  __NeedFullRedraw(99);
+  NeedRedraw(ORectangle(0, item->y, _virtualSize.w, item->height));
 }
 
 int OXListTree::DeleteItem(OListTreeItem *item) {
+  int y = item->y;
 
   if (item->firstchild)
     _DeleteChildren(item->firstchild);
@@ -941,19 +956,20 @@ int OXListTree::DeleteItem(OListTreeItem *item) {
   _RemoveReference(item);
   delete item;
 
-  __NeedFullRedraw(99);
+  NeedRedraw(ORectangle(0, y, _virtualSize.w, _canvas->GetHeight()));
 
   return 1;
 }
 
 int OXListTree::DeleteChildren(OListTreeItem *item) {
+  int y = item->y;
 
   if (item->firstchild)
     _DeleteChildren(item->firstchild);
 
   item->firstchild = NULL;
 
-  __NeedFullRedraw(99);
+  NeedRedraw(ORectangle(0, y, _virtualSize.w, _canvas->GetHeight()));
 
   return 1;
 }
@@ -966,7 +982,7 @@ int OXListTree::Reparent(OListTreeItem *item, OListTreeItem *newparent) {
   // The item is now unattached. Reparent it.
   _InsertChild(newparent, item);
 
-  __NeedFullRedraw(99);
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return 1;
 }
@@ -981,7 +997,7 @@ int OXListTree::ReparentChildren(OListTreeItem *item,
 
     _InsertChildren(newparent, first);
 
-    __NeedFullRedraw(99);
+    NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
     return 1;
   }
   return 0;
@@ -1001,11 +1017,20 @@ int OXListTree::Sort(OListTreeItem *item) {
   while (item->prevsibling) item = item->prevsibling;
 
   first = item;
+
+  i = 0;
+  while (item->nextsibling) {
+    if (strcmp(item->text, item->nextsibling->text) > 0) { i = 1; break; }
+    item = item->nextsibling;
+  }
+
+  if (i == 0) return 1;  // no need to sort!
+
   parent = first->parent;
 
   // Count the children
   count = 1;
-  while (item->nextsibling) item = item->nextsibling, count++;
+  for (item = first ; item->nextsibling ; item = item->nextsibling) count++;
   if (count <= 1) return 1;
 
   list = new OListTreeItem* [count];
@@ -1034,7 +1059,7 @@ int OXListTree::Sort(OListTreeItem *item) {
 
   delete[] list;
 
-  __NeedFullRedraw(99);
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
 
   return 1;
 }
@@ -1056,7 +1081,8 @@ int OXListTree::SortChildren(OListTreeItem *item) {
   return 1;
 }
 
-OListTreeItem *OXListTree::FindSiblingByName(OListTreeItem *item, char *name) {
+OListTreeItem *OXListTree::FindSiblingByName(OListTreeItem *item,
+                                             const char *name) {
   OListTreeItem *first;
 
   // Get first child in list;
@@ -1075,7 +1101,8 @@ OListTreeItem *OXListTree::FindSiblingByName(OListTreeItem *item, char *name) {
   return NULL;
 }
 
-OListTreeItem *OXListTree::FindChildByName(OListTreeItem *item, char *name) {
+OListTreeItem *OXListTree::FindChildByName(OListTreeItem *item,
+                                           const char *name) {
 
   // Get first child in list
   if (item && item->firstchild) {
@@ -1095,15 +1122,13 @@ OListTreeItem *OXListTree::FindChildByName(OListTreeItem *item, char *name) {
 }
 
 void OXListTree::HighlightItem(OListTreeItem *item, int ensure_visible) {
-  _UnselectAll(False);
-  _HighlightItem(_selected = item, True, False);
+  _UnselectAll(True);
+  _HighlightItem(_selected = item, True, True);
   if (ensure_visible) _EnsureVisible(item);
-  __NeedFullRedraw(False);
 }
 
 void OXListTree::ClearHighlighted() {
-  _UnselectAll(False);
-  __NeedFullRedraw(False);
+  _UnselectAll(True);
 }
 
 void OXListTree::EnsureVisible(OListTreeItem *item) {

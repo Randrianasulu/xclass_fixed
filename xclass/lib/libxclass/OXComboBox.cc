@@ -99,6 +99,7 @@ int OXComboBox::HandleButton(XButtonEvent *event) {
   if (event->subwindow == _te->GetId()) {
     return _te->HandleButton(event);
   } else if (event->subwindow == _but->GetId()){
+    if (_te->TakesFocus()) _te->RequestFocus();
     if (event->type == ButtonPress) {
       _but->SetState(BUTTON_DOWN);
     } else {
@@ -144,7 +145,12 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
               break;
 
             case XK_Down:
-              _lb->MoveSelectDown(GetSelectedEntry());
+              if (!GetSelectedEntry()) {
+                e = _lb->GetFirstEntry();
+                if (e) _lb->Select(e->ID());
+              } else {
+                _lb->MoveSelectDown(GetSelectedEntry());
+              }
               e = _lb->GetSelectedEntry();
               _UpdateText(e);
               break;

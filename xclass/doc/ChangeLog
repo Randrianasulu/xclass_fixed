@@ -2276,3 +2276,14 @@ OPicture.cc
   were of equal width. But there are some special widgets (OXGroupFrame, for
   example) which have different border widths, and therefore require this.
 
+- Added OXListTree::AddItem(OListTreeItem *parent, OListTreeItem *item).
+
+- Optimized OXListTree redraws.
+
+
+22/08/02
+
+- OXTextEntry: removed RequestFocus() call from SelectAll() to avoid focus
+  loops.
+
+- OXComboBox: improved focus handling.

@@ -769,7 +769,7 @@ void OXTextEntry::Clear(int sendmsg) {
 
 void OXTextEntry::SelectAll() {
   if (!IsEnabled()) return;
-  if (TakesFocus()) RequestFocus();
+// no!  if (TakesFocus()) RequestFocus();
   _start_x = _start_ix = 0;
   _end_ix = _text->GetTextLength();
   _end_x  = _TextWidth(0, _end_ix);

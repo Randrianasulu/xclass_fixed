@@ -134,6 +134,7 @@ public:
   virtual void UnSelectAll();
   virtual OXLBEntry *Select(int ID);
   virtual OXLBEntry *FindEntry(int ID);
+  virtual OXLBEntry *GetFirstEntry();
 
   void SetMultipleSelect(int mode) { _multipleSelect = mode; }
 
@@ -180,6 +181,8 @@ public:
   virtual int  GetSelected() const;
   virtual OXLBEntry *GetSelectedEntry() const
     { return _lbc->GetSelectedEntry(); }
+  virtual OXLBEntry *GetFirstEntry() const
+    { return _lbc->GetFirstEntry(); }
 
   virtual void SetMultipleSelect(int mode)
     { _lbc->SetMultipleSelect(mode); }

@@ -415,6 +415,13 @@ OXLBEntry *OXLBContainer::FindEntry(int ID) {
   return NULL;
 }
 
+OXLBEntry *OXLBContainer::GetFirstEntry() {
+  if (_flist) 
+    return (OXLBEntry *) _flist->frame;
+  else
+    return NULL;
+}
+
 int OXLBContainer::GetSelected() const {
   if (_last_active == NULL) return -1;
   return _last_active->ID();

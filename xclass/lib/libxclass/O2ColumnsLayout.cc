@@ -32,10 +32,11 @@ O2ColumnsLayout::O2ColumnsLayout(OXCompositeFrame *main, int hsep, int vsep) {
 
 void O2ColumnsLayout::Layout() {
   ODimension csize, c1size(0,0), c2size(0,0);
-  int x = 0, y = 0, h, count = 0;
+  OInsets ins = _main->GetInsets();
+  int x = ins.l, y = ins.t, h, count = 0;
   SListFrameElt *ptr;
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     ++count;
     csize = ptr->frame->GetDefaultSize();
     c1size.w = max(c1size.w, csize.w);
@@ -49,7 +50,7 @@ void O2ColumnsLayout::Layout() {
 
   h = max(c1size.h, c2size.h);
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     csize = ptr->frame->GetDefaultSize();
     ptr->frame->MoveResize(x, y+((h-csize.h)>>1), csize.w, csize.h);
     ptr->frame->Layout();
@@ -64,10 +65,11 @@ void O2ColumnsLayout::Layout() {
 
 ODimension O2ColumnsLayout::GetDefaultSize() const {
   ODimension size, csize, c1size(0,0), c2size(0,0);
+  OInsets ins = _main->GetInsets();
   int count = 0;
   SListFrameElt *ptr;
 
-  for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
+  for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     ++count;
     csize = ptr->frame->GetDefaultSize();
     c1size.w = max(c1size.w, csize.w);
@@ -79,8 +81,8 @@ ODimension O2ColumnsLayout::GetDefaultSize() const {
     c2size.h = max(c2size.h, csize.h);
   }
 
-  size.w = c1size.w + _hsep + c2size.w;
-  size.h = (max(c1size.h, c2size.h) + _vsep) * count;
+  size.w = c1size.w + _hsep + c2size.w + ins.l + ins.r;
+  size.h = (max(c1size.h, c2size.h) + _vsep) * count + ins.t + ins.b;
 
   return size;
 }

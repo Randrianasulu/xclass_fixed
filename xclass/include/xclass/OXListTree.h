@@ -55,11 +55,11 @@ public:
 
 class OListTreeItem : public OBaseObject {
 public:
-  OListTreeItem(OXClient *_client, char *name,
+  OListTreeItem(OXClient *_client, const char *name,
                 const OPicture *opened, const OPicture *closed);
   ~OListTreeItem();
 
-  void Rename(char *new_name);
+  void Rename(const char *new_name);
 
   OListTreeItem	*parent, *firstchild, *prevsibling, *nextsibling;
   int  open, active;
@@ -83,10 +83,11 @@ public:
   virtual int HandleKey(XKeyEvent *event);
   virtual int HandleTimer(OTimer *t);
 
-  OListTreeItem *AddItem(OListTreeItem *parent, char *string,
+  void AddItem(OListTreeItem *parent, OListTreeItem *item);
+  OListTreeItem *AddItem(OListTreeItem *parent, const char *string,
                          const OPicture *open = NULL,
                          const OPicture *closed = NULL);
-  void RenameItem(OListTreeItem *item, char *string);
+  void RenameItem(OListTreeItem *item, const char *string);
   int  DeleteItem(OListTreeItem *item);
   int  DeleteChildren(OListTreeItem *item);
   int  Reparent(OListTreeItem *item, OListTreeItem *newparent);
@@ -104,8 +105,8 @@ public:
 
   OListTreeItem *GetFirstItem() const { return _first; }
   OListTreeItem *GetSelected() const { return _selected; }
-  OListTreeItem *FindSiblingByName(OListTreeItem *item, char *name);
-  OListTreeItem *FindChildByName(OListTreeItem *item, char *name);
+  OListTreeItem *FindSiblingByName(OListTreeItem *item, const char *name);
+  OListTreeItem *FindChildByName(OListTreeItem *item, const char *name);
 
   virtual int DrawRegion(OPosition coord, ODimension size, int clear = True);
 
@@ -146,8 +147,6 @@ protected:
   int _th, _ascent, _focused;
   int _exposeTop, _exposeBottom;
   OTimer *_timer;
-
-  void __NeedFullRedraw(int);
 };
 
 
