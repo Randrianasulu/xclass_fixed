@@ -74,7 +74,7 @@ protected:
 
   int _file, _mode, *_retc;
   bool _connected, _serverSocket;
-  unsigned long _filesize, _bytesread, _bytessent, _lastsent, _acksize;
+  unsigned long _filesize, _bytesread, _bytessent, _acksize;
   char *_filename;
   char _dir[PATH_MAX];
 };

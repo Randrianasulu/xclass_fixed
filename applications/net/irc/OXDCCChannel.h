@@ -40,6 +40,7 @@ protected:
   void _UpdateStatusBar();
 
   virtual void _UpdateWindowName();
+  virtual void _ShowHelp();
 
   OXMenuBar *_menubar;
   OXPopupMenu *_menuchannel, *_menumode, *_menuedit,

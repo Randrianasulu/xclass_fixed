@@ -51,6 +51,7 @@ protected:
   void DoSendNotice(const char *target);
   
   virtual void _UpdateWindowName();
+  virtual void _ShowHelp();
 
   OXHorizontal3dLine *_topicsep;
   OXCompositeFrame *_ftopic;

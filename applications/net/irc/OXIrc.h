@@ -16,6 +16,7 @@
 #include <xclass/OString.h>
 #include <xclass/OXFileDialog.h>
 #include <xclass/OXAboutDialog.h>
+#include <xclass/OXHelpWindow.h>
 #include <xclass/OFileHandler.h>
 
 #include "OIrc.h"
@@ -55,6 +56,8 @@ public:
 
   virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
+
+  virtual int HandleKey(XKeyEvent *event);
   virtual int HandleMapNotify(XMapEvent *event);
   virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
   virtual int HandleTimer(OTimer *t);
@@ -118,7 +121,8 @@ public:
   void DoChangeFont();
   void DoToggleToolBar();
   void DoToggleStatusBar();
-  void DoHelpAbout();
+  void DoHelp(const char *topic = NULL);
+  void DoHelpAbout(const OXWindow *t);
 
   void ProcessWho(int cmd, OIrcMessage *msg);
   void ProcessWhois(int cmd, OIrcMessage *msg);
@@ -190,6 +194,8 @@ protected:
   
   char *_logfilename;
   FILE *_logfile;
+
+  OXHelpWindow *_helpWindow;
 };
 
 

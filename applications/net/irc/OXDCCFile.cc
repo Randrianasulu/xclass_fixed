@@ -254,7 +254,7 @@ OXDCCFile::OXDCCFile(const OXWindow *p, OXIrc *irc,
     AddFrame(_t3, L1);
 
     _prog = new OXProgressBar(this, 250, 20);
-    _prog->SetRange(0, strtoul(size, NULL, 10));
+    _prog->SetRange(0, _filesize);
     _prog->SetPosition(0);
     _prog->ShowPercentage(true);
     AddFrame(_prog, L2);
@@ -284,8 +284,7 @@ OXDCCFile::OXDCCFile(const OXWindow *p, OXIrc *irc,
       snprintf(name, PATH_MAX, "%s/%s", fi.ini_dir, fi.filename);
       if (_OpenFile(name)) {
         if (_tcp->Connect(strtoul(ip, NULL, 10), atoi(port), true) > 0) {
-          _fh = new OFileHandler(this, _tcp->GetFD(),
-                                       XCM_WRITABLE | XCM_EXCEPTION);
+          _fh = new OFileHandler(this, _tcp->GetFD(), XCM_WRITABLE);
           OString *str = new OString("Saving as: ");
           str->Append(fi.filename);
           _t1->SetText(str);
@@ -330,7 +329,6 @@ OXDCCFile::OXDCCFile(const OXWindow *p, OXIrc *irc,
     _file = -1;
     _serverSocket = false;
     _bytessent = 0;
-    _lastsent = 0;
     _acksize = 0;
 
     _filename = StrDup(filename);
@@ -514,11 +512,11 @@ int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
 
       switch (mask) {
         case XCM_WRITABLE:
-          if (_acksize == 0) _SendSomeData();
+          if (_acksize == _bytessent) _SendSomeData();
           break;
 
         case XCM_READABLE:
-          if (!_acksize != 0) {
+          if (_acksize < _bytessent) {
             unsigned long bytestemp;
 
             if (_tcp->BinaryReceive((char *) &bytestemp,
@@ -528,9 +526,9 @@ int OXDCCFile::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
               if (_fh) delete _fh;  // here and not below to avoid receiving file
               _fh = 0;              // events while the message box is active
               bytestemp = ntohl(bytestemp);
-              _acksize += bytestemp;
-              if (_acksize == _lastsent) _acksize = 0;
-              if (_acksize > _lastsent) {
+              //_acksize += bytestemp;
+              _acksize = bytestemp;
+              if (_acksize > _bytessent) {
                 OString stitle("Sending File");
                 OString smsg("Transfer error: "
                              "bad ACK size received from remote end.\n"
@@ -632,9 +630,6 @@ bool OXDCCFile::_SendSomeData() {
       return false;
     }
 
-    _lastsent = size;
-
-    _acksize = 0;
     _bytessent += size;
 
     sprintf(char1, "Bytes Sent: %ld", _bytessent);

@@ -90,6 +90,8 @@ public:
             const char *ch, int init = True);
   virtual ~OXChannel();
 
+  virtual int HandleKey(XKeyEvent *event);
+
   virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
@@ -107,7 +109,7 @@ public:
   void DoEmptyLog();
   void DoPrintLog();
   void DoChangeFont();
-
+  
 protected:
   void _AddView();
   void _InitHistory();
@@ -115,6 +117,7 @@ protected:
   void _ClearHistory();
   
   virtual void _UpdateWindowName();
+  virtual void _ShowHelp();
 
   OXIrc *_server;
 

@@ -192,3 +192,17 @@
 
 - Channel dialogs can now use a different font, but only the info window
   font is saved and used as default.
+
+
+16/09/04  (0.4.4)
+
+- Removed an endless loop problem in OXDCCFile (happened in client mode when
+  the server prematurely closed the connection).
+
+
+22/09/04  (0.5.1)
+
+- Corrected the DCC File transfer protocol.
+
+- Added a help window and a few preliminary help files.
+

@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
   char server[50], nick[15];
   int  port = -1;
 
-  clientX = new OXClient;
+  clientX = new OXClient(argc, argv);
 
   foxircSettings = new OSettings(clientX);
   foxircSettings->Load();
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
   nick[14] = 0;
   server[49] = 0;
 
-  // Ignore SIGPIPE errors so that the application don't die when the
+  // Ignore SIGPIPE errors so that the application won't die when the
   // remote end closes the connection. This will cause write (send)
   // operations on sockets to return with errno = EPIPE in these cases.
 

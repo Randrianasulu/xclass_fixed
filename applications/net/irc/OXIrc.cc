@@ -115,9 +115,8 @@
 #define M_VIEW_FONT       7003
 #define M_VIEW_COLORS     7004
 
-#define M_HELP_CONTENTS   8001
-#define M_HELP_INDEX      8002
-#define M_HELP_ABOUT      8003
+#define M_HELP_INDEX      8001
+#define M_HELP_ABOUT      8002
 
 #define TB_INVISIBLE      9001
 #define TB_WALLOPS        9002
@@ -248,11 +247,10 @@ SPopupData mviewdata = {
 
 SPopupData mhelpdata = {
   NULL, {
-  { "&Contents...", M_HELP_CONTENTS, MENU_DISABLED, NULL },
-  { "&Index...",    M_HELP_INDEX,    MENU_DISABLED, NULL },
-  { "",             -1,              0,             NULL },
-  { "&About...",    M_HELP_ABOUT,    0,             NULL },
-  { NULL,           -1,              -1,            NULL } }
+  { "&Index...",    M_HELP_INDEX,    0,            NULL },
+  { "",             -1,              0,            NULL },
+  { "&About...",    M_HELP_ABOUT,    0,            NULL },
+  { NULL,           -1,              -1,           NULL } }
 };
 
 
@@ -315,6 +313,7 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   _logfilename = NULL;
   _fh = NULL;
   _init = False;
+  _helpWindow = NULL;
 
   _avcmode = 0x00444100L; // 0L;
   _avumode = 0x00088100L; // 0L;
@@ -438,12 +437,19 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
   _statusBar->SetText(1, new OString(""));
   _statusBar->SetText(2, new OString(nick));
 
+  int keycode;
+
+  keycode = XKeysymToKeycode(GetDisplay(), XK_F1);
+  XGrabKey(GetDisplay(), keycode, AnyModifier, _id, True,
+           GrabModeAsync, GrabModeAsync);
+
 }
 
 OXIrc::~OXIrc() {
   if (_channelList) _channelList->CloseWindow();
   if (_viewLogFile) _viewLogFile->CloseWindow();
   if (_serverTree) _serverTree->CloseWindow();
+  if (_helpWindow) _helpWindow->CloseWindow();
 
   _irc->Close();
   if (_logfile) DoCloseLog();
@@ -622,6 +628,22 @@ int OXIrc::HandleMapNotify(XMapEvent *event) {
     _init = True;
   }
   return True;
+}
+
+int OXIrc::HandleKey(XKeyEvent *event) {
+  if (event->type == KeyPress) {
+    int keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
+    switch (keysym) {
+      case XK_F1:
+        DoHelp();
+        break;
+
+      default:
+        return OXMainFrame::HandleKey(event);
+    }
+    return True;
+  }
+  return OXMainFrame::HandleKey(event);
 }
 
 int OXIrc::Connect(char *server, int port) {
@@ -929,8 +951,12 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
             //------------------------------ Menu: Help
 
+            case M_HELP_INDEX:
+              DoHelp();
+              break;
+
             case M_HELP_ABOUT:
-              DoHelpAbout();
+              DoHelpAbout(this);
               break;
 
             //------------------------------ Menu: Channels
@@ -1742,6 +1768,13 @@ int OXIrc::ProcessMessage(OMessage *msg) {
       Disconnect();
       break;
 
+    case MSG_HELP:
+      if (msg->action == MSG_CLOSE) _helpWindow = 0;
+      break;
+
+    default:
+      break;
+
   }
 
   return True;
@@ -2537,21 +2570,32 @@ void OXIrc::DoToggleStatusBar() {
   }
 }
 
-void OXIrc::DoHelpAbout() {
+void OXIrc::DoHelp(const char *topic) {
+  if (!_helpWindow) {
+    _helpWindow = new OXHelpWindow(_client->GetRoot(), NULL, 600, 650,
+                                   "index.html", topic, "foxirc");
+    _helpWindow->Associate(this);
+  } else {
+    _helpWindow->DoSetCurrent(topic);
+  }
+  _helpWindow->MapRaised();
+}
+
+void OXIrc::DoHelpAbout(const OXWindow *t) {
   OAboutInfo info;
   
   info.wname = "About "FOXIRC_NAME;
   info.title = FOXIRC_NAME" "FOXIRC_VERSION" ("FOXIRC_RELEASE_DATE")\n"
                "A cool IRC client program";
   info.copyright = "Copyright © 1998-1999 by the fOX Project Team,\n"
-                   "Copyright © 2000-2002 by Héctor Peraza.";
+                   "Copyright © 2000-2004 by Héctor Peraza.";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.\n\n"
               FOXIRC_HOMEPAGE;
   info.title_font = (OXFont *) _client->GetFont("Times -14 bold");
 
-  new OXAboutDialog(_client->GetRoot(), this, &info);
+  new OXAboutDialog(_client->GetRoot(), t, &info);
 }
 
 int OXIrc::PromptServer(OString *cmd, OString *arg) {

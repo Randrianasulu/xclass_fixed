@@ -22,9 +22,8 @@
 #define M_VIEW_FONT       3004
 #define M_VIEW_COLORS     3005
 
-#define M_HELP_CONTENTS   4001
-#define M_HELP_INDEX      4002
-#define M_HELP_ABOUT      4003
+#define M_HELP_INDEX      4001
+#define M_HELP_ABOUT      4002
 
 
 extern OLayoutHints *topleftlayout;
@@ -127,13 +126,9 @@ OXMsgChannel::OXMsgChannel(const OXWindow *p, const OXWindow *main,
     _menuview->CheckEntry(M_VIEW_TITLE);
 
     _menuhelp = new OXPopupMenu(_client->GetRoot());   
-    _menuhelp->AddEntry(new OHotString("&Contents..."), M_HELP_CONTENTS);
     _menuhelp->AddEntry(new OHotString("&Index..."),    M_HELP_INDEX);
     _menuhelp->AddSeparator();
     _menuhelp->AddEntry(new OHotString("&About..."), M_HELP_ABOUT);  
-
-    _menuhelp->DisableEntry(M_HELP_CONTENTS);
-    _menuhelp->DisableEntry(M_HELP_INDEX);   
 
     _menulog->Associate(this);
     _menuchannel->Associate(this);
@@ -196,6 +191,10 @@ void OXMsgChannel::_UpdateWindowName() {
   SetWindowName(wname);
 }
 
+void OXMsgChannel::_ShowHelp() {
+  _server->DoHelp("message.html");
+}
+ 
 int OXMsgChannel::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
@@ -232,6 +231,14 @@ int OXMsgChannel::ProcessMessage(OMessage *msg) {
 
             case M_VIEW_FONT:
               DoChangeFont();
+              break;
+
+            case M_HELP_INDEX:
+              _ShowHelp();
+              break;
+
+            case M_HELP_ABOUT:
+              _server->DoHelpAbout(this);
               break;
           }
           break;

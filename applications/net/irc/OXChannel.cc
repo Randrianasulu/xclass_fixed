@@ -76,7 +76,14 @@ OXChannel::OXChannel(const OXWindow *p, const OXWindow *main, OXIrc *s,
     CenterOnParent();
 
     MapWindow();
+
   }
+
+  int keycode;
+
+  keycode = XKeysymToKeycode(GetDisplay(), XK_F1);
+  XGrabKey(GetDisplay(), keycode, AnyModifier, _id, True,
+           GrabModeAsync, GrabModeAsync);
 }
 
 OXChannel::~OXChannel() {
@@ -87,6 +94,22 @@ OXChannel::~OXChannel() {
 
 //------------------------------------------------------------------------
 
+int OXChannel::HandleKey(XKeyEvent *event) {
+  if (event->type == KeyPress) {
+    int keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
+    switch (keysym) {
+      case XK_F1:  
+        _ShowHelp();
+        break;
+
+      default:
+        return OXTransientFrame::HandleKey(event);
+    }
+    return True;
+  }
+  return OXTransientFrame::HandleKey(event);
+}
+ 
 int OXChannel::CloseWindow() {
   // Tell OXIrc to remove us from the chain...
   _server->RemoveChannel(this);
@@ -99,6 +122,10 @@ void OXChannel::_UpdateWindowName() {
 //  sprintf(wname, "%s Private Message", _name);
   sprintf(wname, "%s - %s", FOXIRC_NAME, _name);
   SetWindowName(wname);
+}
+
+void OXChannel::_ShowHelp() {
+  _server->DoHelp();
 }
 
 void OXChannel::_AddView() {

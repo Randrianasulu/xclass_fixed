@@ -8,6 +8,7 @@ LDFLAGS=
 MAKEDEPEND=@MAKEDEPEND@
 INSTALL=install -c
 BINDIR=`xc-config --exec-prefix`/bin
+HELPDIR=`xc-config --prefix`/xclass/docs
 RM=rm -f
 
 SRCS = OIrc.cc \
@@ -51,6 +52,14 @@ depend:
 install: ${PROG}
 	mkdir -p ${BINDIR}
 	${INSTALL} ${PROG} ${BINDIR}
+	mkdir -p ${HELPDIR}/${PROG}
+	${INSTALL} -m 0644 help/* ${HELPDIR}/${PROG}
+
+install_user: ${PROG}
+	mkdir -p ${HOME}/.xclass/bin
+	${INSTALL} ${PROG} ${HOME}/.xclass/bin
+	mkdir -p ${HOME}/.xclass/docs/${PROG}
+	${INSTALL} -m 0644 help/* ${HOME}/.xclass/docs/${PROG}
 
 clean:
 	${RM} ${OBJS} $(PROG) mirc2ansi *~ core *.bak
