@@ -95,4 +95,6 @@ protected:
   OXMenuBar *_menuBar;
   OXPopupMenu *_menuFile, *_menuEdit, *_menuSearch, *_menuHelp;
   OString *_fontName;
+  
+  int _exiting;
 };

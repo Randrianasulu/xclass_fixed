@@ -161,6 +161,8 @@ OXMain::OXMain(const OXWindow *p, int w, int h) : OXMainFrame(p, w, h) {
            GrabModeAsync, GrabModeAsync);
 
   timer = new OTimer(this, 100);
+
+  _exiting = False;
 }
 
 OXMain::~OXMain() {
@@ -301,7 +303,13 @@ void OXMain::Print() {
 }
 
 int OXMain::CloseWindow() {
+  if (_exiting) {
+    XBell(GetDisplay(), 0);
+    return False;
+  }
+  _exiting = True;
   switch (IsSaved()) {
+  case ID_CLOSE:
   case ID_CANCEL:
     break;
   case ID_YES:
@@ -313,6 +321,7 @@ int OXMain::CloseWindow() {
   case ID_NO:
     return OXMainFrame::CloseWindow();
   }
+  _exiting = False;
   return False;
 }
 
@@ -449,6 +458,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
 
       case M_FILE_NEW:
 	switch (IsSaved()) {
+        case ID_CLOSE:
 	case ID_CANCEL:
 	  break;
 	case ID_YES:
@@ -464,6 +474,7 @@ int OXMain::ProcessMessage(OMessage *msg) {
 
       case M_FILE_OPEN:
 	switch (IsSaved()) {
+        case ID_CLOSE:
 	case ID_CANCEL:
 	  break;
 	case ID_YES:
