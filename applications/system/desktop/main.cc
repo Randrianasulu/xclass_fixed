@@ -40,6 +40,7 @@
 
 #include "OXDesktopIcon.h"
 #include "OXDesktopContainer.h"
+#include "OXDesktopRoot.h"
 
 #include "main.h"
 
@@ -60,6 +61,9 @@ ODNDmanager *dndManager = NULL;
 Atom URI_list = None;
 
 //#define TRAP_ERRORS
+
+
+//----------------------------------------------------------------------
 
 #ifdef TRAP_ERRORS
 int ErrorHandler(Display *dpy, XErrorEvent *event) {
@@ -96,8 +100,14 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
+
+//----------------------------------------------------------------------
+
 OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
   OXMainFrame(p, w, h) {
+    int retc;
+
+    _t = NULL;
 
     _dndTypeList = new Atom[2];
 
@@ -111,13 +121,26 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
     dndManager = _dndManager;
 
     if (!_dndManager->SetRootProxy()) {
-      int retc;
-
       new OXMsgBox(_client->GetRoot(), NULL,
                    new OString("Desktop manager"),
                    new OString("Could not grab the desktop window for "
                                "drag-and-drop operations.\n"
                                "Another desktop manager is probably running.\n"
+                               "Continue anyway?"),
+                   MB_ICONSTOP, ID_YES | ID_NO, &retc);
+
+      if (retc != ID_YES) exit(1);
+    }
+
+    OXDesktopRoot *dr = new OXDesktopRoot(_client, &retc);
+    dr->Associate(this);
+
+    if (retc == BadAccess) {
+      new OXMsgBox(_client->GetRoot(), NULL,
+                   new OString("Desktop manager"),
+                   new OString("Could not grab the desktop window to capture mouse events.\n"
+                               "Another desktop manager is probably running,\n"
+                               "or you have conflicting window manager settings.\n"
                                "Continue anyway?"),
                    MB_ICONSTOP, ID_YES | ID_NO, &retc);
 
@@ -165,11 +188,17 @@ OXDesktopMain::OXDesktopMain(const OXWindow *p, int w, int h) :
     fileWindow->ArrangeIcons();
 
     MapSubwindows();
+
+    // This window must remain hidden (and mapped!), its only purpose
+    // is to grab the WM focus when an icon is clicked (icons are
+    // override-redirect windows and therefore cannot be used for that
+    // purpose).
+
     MoveResize(-100, -100, 90, 40);
     SetWMPosition(-100, -100);
 
-    SetWindowName("fOX desktop");
-    SetClassHints("Desktop", "Desktop");
+    SetWindowName("desktop");
+    SetClassHints("XCLASS", "Desktop");
 
     SetMWMHints(MWM_DECOR_ALL, MWM_FUNC_ALL, MWM_INPUT_MODELESS);
 
@@ -190,6 +219,8 @@ OXDesktopMain::~OXDesktopMain() {
   delete[] _dndTypeList;
 
   _dndManager->RemoveRootProxy();
+
+  if (_t) delete _t;
 }
 
 void OXDesktopMain::_MakeMenus() {
@@ -245,6 +276,18 @@ void OXDesktopMain::_MakeMenus() {
 
   _sortMenu->Associate(this);
 
+  _rootMenu = new OXPopupMenu(_client->GetRoot());
+  _rootMenu->AddPopup(new OHotString("&New"), _newMenu);
+  _rootMenu->AddSeparator();
+  _rootMenu->AddEntry(new OHotString("Cu&t"),   M_EDIT_CUT);
+  _rootMenu->AddEntry(new OHotString("&Copy"),  M_EDIT_COPY);
+  _rootMenu->AddEntry(new OHotString("&Paste"), M_EDIT_PASTE);
+  _rootMenu->AddSeparator();
+  _rootMenu->AddEntry(new OHotString("&Line Up Icons"), M_ROOT_LINEUP);
+  _rootMenu->AddSeparator();
+  _rootMenu->AddEntry(new OHotString("P&roperties..."), M_ROOT_PROPS);
+
+  _rootMenu->Associate(this);
 }
 
 int OXDesktopMain::_CreateDesktop(const char *path) {
@@ -264,6 +307,18 @@ int OXDesktopMain::_CreateDesktop(const char *path) {
   return 0;
 }
 
+int OXDesktopMain::HandleConfigureNotify(XConfigureEvent *event) {
+  OXMainFrame::HandleConfigureNotify(event);
+  if ((_x + _w > 0) && (_y + _h > 0)) {
+    // the hidden window became visible for some reason,
+    // hide it again after a second.
+    if (_t) delete _t;
+    _t = new OTimer(this, 1000);
+  }
+  return True;
+}
+
+
 int OXDesktopMain::HandleFocusChange(XFocusChangeEvent *event) {
   if ((event->mode == NotifyNormal) &&
       (event->detail != NotifyPointer)) {
@@ -275,20 +330,26 @@ int OXDesktopMain::HandleFocusChange(XFocusChangeEvent *event) {
   return True;
 }
 
+int OXDesktopMain::HandleTimer(OTimer *t) {
+  if (t == _t) {
+    MoveResize(-100, -100, 90, 40);
+    delete _t;
+    _t = NULL;
+    return True;
+  }
+  return False;
+}
+
 int OXDesktopMain::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch (msg->action) {
+  switch (msg->type) {
 
-    case MSG_CLICK:
-      switch (msg->type) {
+    case MSG_MENU:
+      switch (msg->action) {
 
-        case MSG_MENU:
+        case MSG_CLICK:
           switch (wmsg->id) {
-
-            case M_FILE_CLOSE:
-              delete this; // mainWindow;
-              break;
 
             case M_VIEW_ARRANGE_BYNAME:
               _sortMenu->RCheckEntry(M_VIEW_ARRANGE_BYNAME,
@@ -342,6 +403,16 @@ int OXDesktopMain::ProcessMessage(OMessage *msg) {
         default:
           break;
 
+      }
+      break;
+
+    case MSG_DESKTOPROOT:
+      if (msg->action == MSG_CLICK) {
+        ODesktopRootMessage *dmsg = (ODesktopRootMessage *) msg;
+
+        if (dmsg->button == Button3) {
+          _rootMenu->PopupMenu(dmsg->x_root, dmsg->y_root);
+        }
       }
       break;
 

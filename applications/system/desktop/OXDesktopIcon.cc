@@ -46,11 +46,6 @@
 #include <X11/extensions/shape.h>
 
 
-/**********************************************/
-/*  WARNING: Weird things are going on here!  */
-/**********************************************/
-
-
 Cursor OXDesktopIcon::_defaultCursor = None;
 unsigned int OXDesktopIcon::_selPixel;
 OXGC *OXDesktopIcon::_defaultGC;
@@ -129,6 +124,7 @@ OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
 
   XDefineCursor(GetDisplay(), _id, _defaultCursor);
 
+#if 0
   int _version = 4; //XDND_PROTOCOL_VERSION;
 
   XChangeProperty(GetDisplay(), _id, ODNDmanager::DNDaware, XA_ATOM, 32,
@@ -144,7 +140,6 @@ OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
   }
 */
 
-#if 0
   _dndManager = dndManager;
 #else
   static Atom dndTypeList[2];
@@ -152,7 +147,15 @@ OXDesktopIcon::OXDesktopIcon(const OXWindow *p, const OPicture *pic,
   dndTypeList[0] = URI_list;
   dndTypeList[1] = NULL;
 
-  ////////////////////////////////////// vvvvvvvvvvvvvvv WOW!!!  
+  // This is weird: we're casting OXDesktopIcon, an OXFrame derivate, to an
+  // OXMainFrame object. OXDesktopIcon objects behave much like a top-level
+  // window, they are direct descendants of the root window of the display
+  // and therefore need to have an ODNDmanager object of their own attached
+  // to them, otherwise they would remain invisible to other dnd
+  // applications. Fortunatelly, ODNDmanager internally it does not care
+  // whether the passed argument is really an OXMainFrame or not, so the
+  // cast below is safe.
+
   _dndManager = new ODNDmanager(_client, (OXMainFrame *) this, dndTypeList);
 #endif
 }

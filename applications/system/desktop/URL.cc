@@ -37,6 +37,8 @@
 //   file:/home/documents/index.txt
 //   /home/documents/doc.txt
 
+//#define DEBUG_URL
+
 
 //-------------------------------------------------------------------
 
@@ -87,7 +89,7 @@ URL::URL(const char *urlspec) {
     strncpy(directory, full_path, p - full_path);
     directory[p - full_path] = '\0';
   } else {
-    filename = StrDup(p);
+    filename = StrDup(full_path);
     directory = StrDup("");
   }
 

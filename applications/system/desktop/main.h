@@ -19,12 +19,13 @@
 
 **************************************************************************/
 
+#include <xclass/utils.h>
 #include <xclass/OXClient.h>
 #include <xclass/OXWindow.h>
 #include <xclass/OXMainFrame.h>
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
-#include <xclass/utils.h>
+#include <xclass/OTimer.h>
 #include <xclass/ODNDmanager.h>
 
 
@@ -52,6 +53,9 @@
 #define M_VIEW_LINEUP           307
 #define M_VIEW_REFRESH          308
 
+#define M_ROOT_LINEUP           401
+#define M_ROOT_PROPS            402
+
 
 class OXPopupMenu;
 
@@ -62,7 +66,9 @@ public:
   OXDesktopMain(const OXWindow *p, int w, int h);
   virtual ~OXDesktopMain();
 
+  virtual int HandleConfigureNotify(XConfigureEvent *event);
   virtual int HandleFocusChange(XFocusChangeEvent *event);
+  virtual int HandleTimer(OTimer *t);
   virtual int ProcessMessage(OMessage *msg);
 
   virtual OXFrame *GetFrameFromPoint(int x, int y);  
@@ -71,6 +77,7 @@ protected:
   int  _CreateDesktop(const char *path);
   void _MakeMenus();
 
-  OXPopupMenu *_newMenu, *_sortMenu;
+  OTimer *_t;
+  OXPopupMenu *_newMenu, *_sortMenu, *_rootMenu;
   Atom *_dndTypeList;
 };

@@ -56,11 +56,6 @@ extern Atom URI_list;
 /*mainWindow*/  extern OXDesktopMain *mainWindow;
 
 
-/**********************************************/
-/*  WARNING: Weird things are going on here!  */
-/**********************************************/
-
-
 // TODO:
 // + watch desktop directory for changes
 // - implement a correct layout manager which tracks desktop size changes
@@ -72,6 +67,13 @@ extern Atom URI_list;
 // - capture stderr to show error messages while trying to execute programs
 // + add support for "shortcut" pixmaps
 // - lots of some other things
+// + exec: use absolute path, do not rely on "." in $PATH
+// - executable icons: add "start in" (directory) property
+// - capture mouse events on the root window
+// - correct small icon moves (currently xdnd interferes)
+// - edit icon labels
+// - wrap/truncate long icon labels
+
 
 //#define DEBUG
 
