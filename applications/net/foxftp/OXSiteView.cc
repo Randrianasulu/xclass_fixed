@@ -85,9 +85,9 @@
 //----------------------------------------------------------------------
 
 OXSiteView::OXSiteView(OXMdiMainFrame *p, OMimeTypes *mime_types,
-              OFileSystem *base, int w, int h,
-              unsigned int options = SUNKEN_FRAME,
-              unsigned long back = _defaultFrameBackground)
+                       OFileSystem *base, int w, int h,
+                       unsigned int options = SUNKEN_FRAME,
+                       unsigned long back = _defaultFrameBackground)
  : OXMdiFrame(p, w, h, options, back) {
 
   _base = base;
@@ -99,7 +99,7 @@ OXSiteView::OXSiteView(OXMdiMainFrame *p, OMimeTypes *mime_types,
   _retry_count = 0;
   _dirhandler = NULL;
   _waitCursor = GetResourcePool()->GetWaitCursor();
-                //XCreateFontCursor(GetDisplay(), XC_watch);
+
   _cache = new TDDLList<ODir *>();
   SetSiteLock(false);
 
@@ -488,6 +488,7 @@ int OXSiteView::Chdir(const char *path) {
 
 void OXSiteView::AddFile(OFile *elem) {
   const OPicture *pic, *lpic, *spic, *slpic;
+
   if (_siteConfig->_showdot == false && elem->_name[0] == '.') {
     return;
   } else if (S_ISDIR(elem->_type) || _lv->FileMatch(elem->_name) != 0) {
@@ -497,6 +498,13 @@ void OXSiteView::AddFile(OFile *elem) {
                          elem->_is_link, elem->_name, true);
     vector<OString *> names;
     names.push_back(new OString(elem->_name));
+    names.push_back(new OString(""));  // as required by OXFileList
+    names.push_back(new OString(_lv->AttributeString(elem->_type,
+                                                     elem->_is_link)));
+    names.push_back(new OString(_lv->SizeString(elem->_size)));
+    names.push_back(new OString(elem->_user));
+    names.push_back(new OString(elem->_group));
+    names.push_back(new OString(_lv->TimeString(elem->_time)));
     _lv->AddItem(new OFtpItem(_lv, -1, pic, lpic, spic, slpic,
                               names, elem, _viewMode));
   }

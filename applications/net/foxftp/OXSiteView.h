@@ -19,8 +19,8 @@
 
 **************************************************************************/
 
-#ifndef _OXSITEVIEW_H
-#define _OXSITEVIEW_H
+#ifndef __OXSITEVIEW_H
+#define __OXSITEVIEW_H
 
 #include <xclass/OXFileList.h>
 #include <xclass/OXMdi.h>
@@ -43,6 +43,9 @@ class OXVerticalResizer;
 class OXHorizontalResizer;
 
 template <class T> class TDDLList;
+
+
+//----------------------------------------------------------------------
 
 class OFtpItem : public OFileItem {
 public:
@@ -151,4 +154,4 @@ protected:
   OXFileList *_lv;
 };
 
-#endif
+#endif  // __OXSITEVIEW_H
