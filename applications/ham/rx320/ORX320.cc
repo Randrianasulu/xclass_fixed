@@ -29,7 +29,6 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <argp.h>
 #include <math.h>
 #include <time.h>
 

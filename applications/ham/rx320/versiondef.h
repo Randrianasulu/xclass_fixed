@@ -22,6 +22,6 @@
 #ifndef __VERSIONDEF_H
 #define __VERSIONDEF_H
 
-#define RX320_VERSION  "0.4.3 (15-May-2003)"
+#define RX320_VERSION  "0.4.3 (16-May-2003)"
 
 #endif
