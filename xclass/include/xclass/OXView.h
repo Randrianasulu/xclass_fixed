@@ -182,6 +182,20 @@ public:
     { ((OXView *) _parent)->HandleKey(event); return True; }
 
   virtual void Reconfig() {}
+
+  virtual Atom HandleDNDenter(Atom *typelist)
+    { return ((OXView *) _parent)->HandleDNDenter(typelist); }
+  virtual int  HandleDNDleave()
+    { return ((OXView *) _parent)->HandleDNDleave(); }
+  virtual Atom HandleDNDposition(int x, int y, Atom action, int xr, int yr)
+    { return ((OXView *) _parent)->HandleDNDposition(x, y, action, xr, yr); }
+  virtual int  HandleDNDdrop(ODNDdata *DNDdata)
+    { return ((OXView *) _parent)->HandleDNDdrop(DNDdata); }
+  virtual int  HandleDNDfinished()
+    { return ((OXView *) _parent)->HandleDNDfinished(); }
+  virtual ODNDdata *GetDNDdata(Atom dataType)
+    { return ((OXView *) _parent)->GetDNDdata(dataType); }
+
 };
 
 

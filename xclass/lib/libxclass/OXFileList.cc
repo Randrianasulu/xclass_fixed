@@ -801,13 +801,7 @@ Atom OXFileList::HandleDNDposition(int x, int y, Atom action,
 
   _dropPos = OPosition(xroot, yroot);
 
-#if 1
-  ((OXMainFrame *)_toplevel)->TranslateCoordinates(this, x, y, &nx, &ny);
-  nx -= _canvas->GetX();
-  ny -= _canvas->GetY();
-#else
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(_canvas, x, y, &nx, &ny);
-#endif
 
   OFileItem *fi = (OFileItem *) GetItemByPos(ToVirtual(OPosition(nx, ny)));
 
