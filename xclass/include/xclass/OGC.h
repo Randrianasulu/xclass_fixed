@@ -36,11 +36,11 @@ class OXGC : public OXObject {
 public: 
   OXGC(Display *dpy, Drawable d, unsigned long valuemask = 0L,
        XGCValues *values = NULL) {
-    _gc = XCreateGC(_dpy = dpy, _d = d, _mask = valuemask, values);
     if (values)
       memcpy(&_values, values, sizeof(XGCValues));
     else
       memset(&_values, 0, sizeof(XGCValues));
+    _gc = XCreateGC(_dpy = dpy, _d = d, _mask = valuemask, &_values);
   }
   OXGC(const OXGC *g) {
     memcpy(&_values, &g->_values, sizeof(XGCValues));

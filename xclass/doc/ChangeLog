@@ -1989,3 +1989,11 @@ OPicture.cc
 
 - Corrected Makefiles.in in test, include and example_app for shared and 
   install_shared targets.
+
+
+15/11/01
+
+- Corrected a bun in OResourcePool: the resource file was not always being
+  read. (Thanks to Rick Sivernell)
+
+- Added OXTransientFrame::CenterOnParent() method.

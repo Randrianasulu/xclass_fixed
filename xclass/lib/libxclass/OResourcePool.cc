@@ -90,9 +90,10 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
 
     sprintf(inirc, "%s/.xclassrc", _homeDir);
     if (access(inirc, R_OK) != 0) {
-      sprintf(inirc, "%s/etc/xclassrc", _homeDir);
-    } else if (access(inirc, R_OK) != 0) {
-      sprintf(inirc, "%s/etc/xclassrc", OX_DEFAULT_ROOT);
+      sprintf(inirc, "%s/.xclass/etc/xclassrc", _homeDir);
+      if (access(inirc, R_OK) != 0) {
+        sprintf(inirc, "%s/etc/xclassrc", OX_DEFAULT_ROOT);
+      }
     }
 
     OIniFile *xcini;
@@ -115,7 +116,7 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
 
   //--- Then try to load values from the xclass root property, if it exists...
 
-  retc = LoadFromServer(&config);
+  //retc = LoadFromServer(&config);
 
   //--- Get resource values from the .xclassrc file...
 
@@ -124,8 +125,9 @@ OResourcePool::OResourcePool(const OXClient *client, OIniFile *ini) {
   sprintf(inirc, "%s/.xclassrc", _homeDir);
   if (access(inirc, R_OK) != 0) {
     sprintf(inirc, "%s/etc/xclassrc", _homeDir);
-  } else if (access(inirc, R_OK) != 0) {
-    sprintf(inirc, "%s/etc/xclassrc", OX_DEFAULT_ROOT);
+    if (access(inirc, R_OK) != 0) {
+      sprintf(inirc, "%s/etc/xclassrc", OX_DEFAULT_ROOT);
+    }
   }
 
   OIniFile *xcini;

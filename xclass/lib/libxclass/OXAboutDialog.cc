@@ -107,24 +107,7 @@ OXAboutDialog::OXAboutDialog(const OXWindow *p, const OXWindow *main,
 
     //---- position relative to the parent's window
 
-    if (main) {
-      int ax, ay;
-      Window wdummy;
-      XTranslateCoordinates(GetDisplay(),
-                            main->GetId(), GetParent()->GetId(),
-                            (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                            (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                            &ax, &ay, &wdummy);
-
-      int dw = _client->GetDisplayWidth();
-      int dh = _client->GetDisplayHeight();
-
-      if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
-      if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _w - 50;
-
-      Move(ax, ay);
-      SetWMPosition(ax, ay);
-    }
+    CenterOnParent(False);
 
     //---- make the dialog box non-resizable
 

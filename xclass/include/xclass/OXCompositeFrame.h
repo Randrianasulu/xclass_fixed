@@ -35,7 +35,7 @@
 
 class OXCompositeFrame : public OXFrame {
 public:
-  OXCompositeFrame(const OXWindow *p, int w, int h,
+  OXCompositeFrame(const OXWindow *p, int w = 10, int h = 10,
 		   unsigned int options = 0,
 		   unsigned long back = _defaultFrameBackground);
   virtual ~OXCompositeFrame();
@@ -85,7 +85,7 @@ private:
 
 class OXVerticalFrame : public OXCompositeFrame {
 public:
-  OXVerticalFrame(const OXWindow *p, int w, int h,
+  OXVerticalFrame(const OXWindow *p, int w = 10, int h = 10,
 		  unsigned int options = CHILD_FRAME,
                   unsigned long back = _defaultFrameBackground) :
     OXCompositeFrame(p, w, h, options | VERTICAL_FRAME, back) {}
@@ -94,7 +94,7 @@ public:
 
 class OXHorizontalFrame : public OXCompositeFrame {
 public:
-  OXHorizontalFrame(const OXWindow *p, int w, int h,
+  OXHorizontalFrame(const OXWindow *p, int w = 10, int h = 10,
 		  unsigned int options = CHILD_FRAME,
                   unsigned long back = _defaultFrameBackground) :
     OXCompositeFrame(p, w, h, options | HORIZONTAL_FRAME, back) {}

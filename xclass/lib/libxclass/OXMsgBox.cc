@@ -76,9 +76,7 @@ OXMsgBox::OXMsgBox(const OXWindow *p, const OXWindow *main,
 void OXMsgBox::_MsgBox(const OXWindow *main,
                        OString *title, OString *msg, const OPicture *icon,
                        int buttons, int *ret_code) {
-  int ax, ay, nb, width;
-  unsigned int root_w, root_h, dummy;
-  Window wdummy;
+  int nb, width;
 
   Yes = YesAll = No = OK = Apply =
   Retry = Ignore = Cancel = Close = Dismiss = NULL;
@@ -201,27 +199,7 @@ void OXMsgBox::_MsgBox(const OXWindow *main,
 
   //---- position relative to the parent's window
 
-  if (main) {
-    XTranslateCoordinates(GetDisplay(),
-                          main->GetId(), GetParent()->GetId(),
-                          (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                          (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                          &ax, &ay, &wdummy);
-    int dw = _client->GetDisplayWidth();
-    int dh = _client->GetDisplayHeight();
-
-    if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
-    if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _h - 50;
-
-  } else {
-    XGetGeometry(GetDisplay(), _client->GetRoot()->GetId(), &wdummy,
-                 &ax, &ay, &root_w, &root_h, &dummy, &dummy);
-    ax = (root_w - _w) >> 1;
-    ay = (root_h - _h) >> 1;
-  }
-
-  Move(ax, ay);
-  SetWMPosition(ax, ay);
+  CenterOnParent();
 
   //---- make the message box non-resizable
 

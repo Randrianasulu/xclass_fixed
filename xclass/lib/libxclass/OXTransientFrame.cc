@@ -33,15 +33,15 @@ OXTransientFrame::OXTransientFrame(const OXWindow *p, const OXWindow *main,
                                    int w, int h, unsigned long options) :
   OXMainFrame(p, w, h, options) {
 
-  _main = (OXMainFrame*)main;
+  _main = (OXMainFrame *) main;
   if (main) {
     XSetTransientForHint(GetDisplay(), _id, main->GetId());
-    ((OXMainFrame*)main)->RegisterTransient(this);
+    ((OXMainFrame *)main)->RegisterTransient(this);
   }
 }
 
 OXTransientFrame::~OXTransientFrame() {
-  if (_main) ((OXMainFrame*)_main)->UnregisterTransient(this);
+  if (_main) ((OXMainFrame *)_main)->UnregisterTransient(this);
 }
 
 // Override this to intercept close...
@@ -50,4 +50,42 @@ void OXTransientFrame::CloseWindow() {
   // The following delete calls OXMainFrame's destructor,
   // which does a DestroyWindow()
   delete this;
+}
+
+// Position transient frame centered relative to the parent frame.
+// If _main is NULL (i.e. OXTransientFrame is acting just like a
+// OXMainFrame) and croot is True, the window will be centered on
+// the root window, otherwise no action is taken and the default
+// wm placement will be used.
+
+void OXTransientFrame::CenterOnParent(int croot) {
+  int ax, ay;
+  unsigned int root_w, root_h, dummy;
+  Window wdummy;
+
+  if (_main) {
+    XTranslateCoordinates(GetDisplay(),
+                          _main->GetId(), GetParent()->GetId(),
+                          (_main->GetWidth() - _w) >> 1,
+                          (_main->GetHeight() - _h) >> 1,
+                          &ax, &ay, &wdummy);
+    int dw = _client->GetDisplayWidth();
+    int dh = _client->GetDisplayHeight();
+
+    if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
+    if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _h - 50;
+
+  } else if (croot) {
+    XGetGeometry(GetDisplay(), _client->GetRoot()->GetId(), &wdummy,
+                 &ax, &ay, &root_w, &root_h, &dummy, &dummy);
+    ax = (root_w - _w) >> 1;
+    ay = (root_h - _h) >> 1;
+
+  } else {
+    return;
+
+  }
+
+  Move(ax, ay);
+  SetWMPosition(ax, ay);
 }

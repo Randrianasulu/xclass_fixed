@@ -72,8 +72,6 @@ OFileInfo::~OFileInfo() {
 OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
                            int dlg_type, OFileInfo *file_info) :
   OXTransientFrame(p, main, 10, 10, MAIN_FRAME | VERTICAL_FRAME) {
-    int ax, ay;
-    Window wdummy;
 
     _FileDialog(dlg_type, file_info);
 
@@ -82,23 +80,8 @@ OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
 
     //---- position relative to the parent's window
 
-    if (main) {
-      XTranslateCoordinates(GetDisplay(),
-                            main->GetId(), GetParent()->GetId(),
-                            (((OXFrame *) main)->GetWidth() - _w) >> 1,
-                            (((OXFrame *) main)->GetHeight() - _h) >> 1,
-                            &ax, &ay, &wdummy);
+    CenterOnParent(False);
 
-      int dw = _client->GetDisplayWidth();
-      int dh = _client->GetDisplayHeight();
-
-      if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
-      if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _h - 50;
-
-      Move(ax, ay);
-      SetWMPosition(ax, ay);
-    }
-    
     //---- make the message box non-resizable
 
     SetWMSize(_w, _h);

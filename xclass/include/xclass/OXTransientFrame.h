@@ -31,10 +31,12 @@
 class OXTransientFrame : public OXMainFrame {
 public:
   OXTransientFrame(const OXWindow *p, const OXWindow *main, int w, int h,
-	      unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
+                   unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXTransientFrame();
 
   virtual void CloseWindow();
+  
+  void CenterOnParent(int croot = True);
 
 protected:
   OXMainFrame *_main;
