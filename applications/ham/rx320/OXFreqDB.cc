@@ -41,6 +41,15 @@
 #include "OXDialogs.h"
 #include "main.h"
 
+// TODO:
+// - keep the full path to loaded filename, since other database instances
+//   could change the current dir, and the file would get saved somewhere
+//   else.
+// - OFDBitem: highlight the full line. Select by clicking anywhere on the
+//   line.
+// - View options: font size, which columns.
+// - Save: as *.320 or *.cdf file.
+
 char *filetypes[] = { "All files",       "*",
                       "Frequency files", "*.320",
                       "CDF files",       "*.cdf",
@@ -378,7 +387,7 @@ int OXFreqDB::ProcessMessage(OMessage *msg) {
                 frec->filter_bw = vfo.filter;
                 frec->pbt_offset = vfo.pbt;
 
-                new OXEditStation(_client->GetRoot(), this, frec, &retc);
+                new OXEditStation(_client->GetRoot(), this, frec, &retc, True);
                 if (retc == ID_OK) {
                   AddStation(frec);
                   _listView->Layout();
@@ -593,9 +602,11 @@ void OXFreqDB::DoSave(char *fname) {
     }
 
     WriteFile(fname);
-    if (_filename) delete[] _filename;
-    _filename = StrDup(fname);
-    SetWindowTitle(_filename);
+    if (fname != _filename) {
+      if (_filename) delete[] _filename;
+      _filename = StrDup(fname);
+      SetWindowTitle(_filename);
+    }
     SetChanged(False);
   }
 }

@@ -40,7 +40,7 @@ extern SFilter Filters[];
 //-------------------------------------------------------------------
 
 OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
-                             OFreqRecord *frec, int *retc,
+                             OFreqRecord *frec, int *retc, int new_station,
                              unsigned long options) :
   OXTransientFrame(p, main, 400, 200, options) {
     int ax, ay, width;
@@ -172,7 +172,7 @@ OXEditStation::OXEditStation(const OXWindow *p, const OXWindow *main,
     SetWMSize(size.w, size.h);
     SetWMSizeHints(size.w, size.h, size.w, size.h, 0, 0);
 
-    sprintf(name, "%s Station", _freqRec ? "Edit" : "Add New");
+    sprintf(name, "%s Station", new_station ? "Add New" : "Edit");
     SetWindowName(name);
     SetIconName(name);
     SetClassHints("XCLASS", "RX320");
@@ -233,9 +233,13 @@ void OXEditStation::InitControls() {
 
   _mode->Select(_freqRec->mode);
 
-  for (fe = Filters; fe->bandwidth > 0; fe++)
-    if (_freqRec->filter_bw >= fe->bandwidth) break;
-  _filter->Select(fe->filter);
+  if (_freqRec->filter_bw > 34) {
+    for (fe = Filters; fe->bandwidth > 0; fe++)
+      if (_freqRec->filter_bw >= fe->bandwidth) break;
+    _filter->Select(fe->filter);
+  } else {
+    _filter->Select(_freqRec->filter_bw);
+  }
 
   _agc->Select(_freqRec->agc);
 

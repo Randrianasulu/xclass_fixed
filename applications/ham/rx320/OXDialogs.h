@@ -36,7 +36,7 @@ class OXDDListBox;
 class OXEditStation : public OXTransientFrame {
 public:
   OXEditStation(const OXWindow *p, const OXWindow *main,
-                OFreqRecord *mime, int *retc = NULL,
+                OFreqRecord *fr, int *retc = NULL, int new_station = False,
                 unsigned long options = MAIN_FRAME | VERTICAL_FRAME);
   virtual ~OXEditStation();
   

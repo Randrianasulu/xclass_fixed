@@ -1,13 +1,14 @@
 /* XPM */
-static char *tb_open_xpm[] = {
+static char * tb_open_xpm[] = {
 /* width height num_colors chars_per_pixel */
-"16 16 5 1",
+"16 16 6 1",
 /* colors */
 " 	s None	c None",
 ".	c black",
-"X	c #ffff00",
+"X	c yellow",
 "o	c white",
-"O	c #808000",
+"O	c #808080",
+"+	c #808000",
 /* pixels */
 "                ",
 "                ",
@@ -16,12 +17,12 @@ static char *tb_open_xpm[] = {
 "             .. ",
 " ...        ... ",
 ".XoX.......     ",
-".oXoXoXoXo.     ",
-".XoXoXoXoX.     ",
+".oXoXoXoXo.O    ",
+".XoXoXoXoX.O    ",
 ".oXoX...........",
-".XoX.OOOOOOOOO. ",
-".oX.OOOOOOOOO.  ",
-".X.OOOOOOOOO.   ",
-"..OOOOOOOOO.    ",
-"...........     ",
-"                "};
+".XoX.+++++++++.O",
+".oX.+++++++++.OO",
+".X.+++++++++.OO ",
+"..+++++++++.OO  ",
+"...........OO   ",
+" OOOOOOOOOOO    "};
