@@ -51,7 +51,7 @@
 #include "OXDialogs.h"
 
 
-#define XCDIFF_VERSION    "V0.7"
+#define XCDIFF_VERSION    "V0.7.1"
 
 
 #define MENU_DISABLED     (1<<0)

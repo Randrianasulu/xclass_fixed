@@ -200,7 +200,7 @@ int OXDiff::DoDiff() {
     ptr = curr;
   }
 
-  sprintf(cmd, "diff -w %s %s", leftFile, rightFile);
+  sprintf(cmd, "diff -w \"%s\" \"%s\"", leftFile, rightFile);
   if ((pipe = popen(cmd, "r")) == NULL) {
     return 0;
   }
