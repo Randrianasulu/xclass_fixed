@@ -27,7 +27,7 @@
 #define XCLASS_MINOR_VERSION  "7"
 #define XCLASS_PATCH_LEVEL    "3"
 #define XCLASS_VERSION        "0.7.3"
-#define XCLASS_RELEASE_DATE   "16-Jul-2002"
+#define XCLASS_RELEASE_DATE   "5-Aug-2002"
 
 
 #endif  // __VERSION_H

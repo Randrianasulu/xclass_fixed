@@ -8,6 +8,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 lib_dir=@exec_prefix@/lib
 x_includes=@x_includes@
+x_libraries=@x_libraries@
 
 lib_name=xclass
 
@@ -16,6 +17,7 @@ INCLUDES=-I${top_srcdir}/include ${x_includes}
 DEFINES=-DOX_DEFAULT_POOL=\"/usr/local/xclass-icons\" \
 	-DOX_DEFAULT_ROOT=\"/usr/local/xclass\"
 CXXFLAGS=${INCLUDES} ${DEFINES} @CXXFLAGS@
+EXTRALIBS=${x_libraries}
 RANLIB=@RANLIB@
 AR=@AR@
 INSTALL=@INSTALL@
@@ -137,7 +139,7 @@ ${STATIC_LIB}: ${OBJS}
 # Rules for building the shared library
 
 ${SHARED_LIB}: ${OBJS}
-	gcc -shared -Wl,-soname,${SO_NAME} -o ${SHARED_LIB} $(OBJS)
+	g++ -shared -Wl,-soname,${SO_NAME} -o ${SHARED_LIB} $(OBJS) ${EXTRALIBS}
 	ln -sf $(SHARED_LIB) lib$(lib_name).so.@XCLASS_MAJOR_VERSION@.@XCLASS_MINOR_VERSION@
 	ln -sf $(SHARED_LIB) lib$(lib_name).so.@XCLASS_MAJOR_VERSION@
 	ln -sf $(SHARED_LIB) lib$(lib_name).so

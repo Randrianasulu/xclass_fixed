@@ -52,13 +52,13 @@ OXDragWindow::OXDragWindow(const OXWindow *p, Pixmap pic, Pixmap mask,
   _mask = mask;
 
   XSetWindowAttributes wattr;
-  unsigned long mask;
+  unsigned long wmask;
 
-  mask = CWOverrideRedirect | CWSaveUnder;
+  wmask = CWOverrideRedirect | CWSaveUnder;
   wattr.save_under = True;
   wattr.override_redirect = True;
     
-  XChangeWindowAttributes(GetDisplay(), _id, mask, &wattr);
+  XChangeWindowAttributes(GetDisplay(), _id, wmask, &wattr);
 
   Window root;
   int x, y;
@@ -66,7 +66,7 @@ OXDragWindow::OXDragWindow(const OXWindow *p, Pixmap pic, Pixmap mask,
 
   XGetGeometry(GetDisplay(), _pic, &root, &x, &y, &_pw, &_ph, &bw, &d);
 
-  mask = CWOverrideRedirect;
+  wmask = CWOverrideRedirect;
   wattr.override_redirect = True;
 
   // This input window is used to make the dragging smoother when using
@@ -77,7 +77,7 @@ OXDragWindow::OXDragWindow(const OXWindow *p, Pixmap pic, Pixmap mask,
   _input = XCreateWindow(GetDisplay(), _client->GetRoot()->GetId(),
                          0, 0, _w, _h, 0, 0,
                          InputOnly, CopyFromParent,
-                         mask, &wattr);
+                         wmask, &wattr);
 
   Resize(GetDefaultSize());
 

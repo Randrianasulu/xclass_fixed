@@ -324,7 +324,7 @@ void OXColorPalette::_DrawFocusHilite(int onoff) {
 #define CLICK_HS    1
 #define CLICK_L     2
 
-OXColorPick::OXColorPick(const OXWindow *p, int w, int h, int id = -1) :
+OXColorPick::OXColorPick(const OXWindow *p, int w, int h, int id) :
   OXFrame(p, w, h, CHILD_FRAME), OXWidget(id, "OXColorPick") {
 
   _colormapRect = ORectangle(1, 1, w - 33 - 2, h - 2);
