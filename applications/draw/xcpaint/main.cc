@@ -48,7 +48,7 @@
 
 #include "pbg.xpm"
 
-#define XCPAINT_VERSION "0.6"
+#define XCPAINT_VERSION "0.7.1"
 
 struct _popup file_popup = {
   { NULL }, {
@@ -469,6 +469,7 @@ int OXAppMainFrame::ProcessMessage(OMessage *msg) {
 
             case M_EDIT_PASTE:
               _pcanvas->Paste();
+              _palette->UpdateColors(_pcanvas->GetColorTable());
               break;
 
             //--------------------------------------------- View

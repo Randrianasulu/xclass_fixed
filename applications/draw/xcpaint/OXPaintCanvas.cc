@@ -654,8 +654,8 @@ int OXPaintCanvas::_readFile(char *filename) {
                                         &mask_image, &attribs);
   if (status == XpmSuccess) {
     // Notify colors to be loaded with this pixmap
-    for (i=0, color=xpm_image.colorTable, pixel=attribs.pixels;
-	      i<xpm_image.ncolors; i++, color++, pixel++) {
+    for (i = 0, color = xpm_image.colorTable, pixel = attribs.pixels;
+	        i < xpm_image.ncolors; i++, color++, pixel++) {
       // look for a defined color value
       char *c_name;
       char **defaults = (char **)color;
@@ -803,8 +803,8 @@ int OXPaintCanvas::StoreFile(char *filename) {
 					  &mask_image, &attribs);
   if (status == XpmSuccess) {
     // Notify colors to be loaded with this pixmap
-    for (i=0, color=xpm_image.colorTable, pixel=attribs.pixels;
-	     i<xpm_image.ncolors; i++, color++, pixel++) {
+    for (i = 0, color = xpm_image.colorTable, pixel = attribs.pixels;
+	        i < xpm_image.ncolors; i++, color++, pixel++) {
       char *c_name;
 
       switch (_depth) {
@@ -1034,8 +1034,8 @@ void OXPaintCanvas::BuildXpmImageAndAttributes(XImage *image, XImage *mask_image
   xpm_image->colorTable = NULL;
   xpm_image->ncolors = 0;
   
-  for (y=0, data=xpm_image->data; y<image->height; y++)
-    for (x=0; x<image->width; x++, data++) {
+  for (y = 0, data = xpm_image->data; y < image->height; y++)
+    for (x = 0; x < image->width; x++, data++) {
       OColorInfo *pw_color;
 
       pxl = _GetPxlFromImageAndMask(image, mask_image, x, y);
@@ -3119,6 +3119,19 @@ int OXPaintCanvas::_PasteSelection(Atom type, unsigned char *value) {
 	_storage = GetImage(*pixmap);
 	_mask_storage = CreateMaskImage(_mask_image->width,
 			                _mask_image->height);
+
+#if 1
+	for (int y = 0; y < _storage->height; ++y) {
+	  for (int x = 0; x < _storage->width; ++x) {
+	    unsigned int pix = XGetPixel(_storage, x, y);
+	    if (_colorTable->GetColor(pix) == NULL) {
+	      _colorTable->UseColorInTable(pix, NULL, NULL, NULL, NULL,
+	                                   NULL, NULL);
+	    }
+	  }
+	}
+#endif
+
 // hmmm... pixmap should be rather freed by selection owner
 	XFreePixmap(GetDisplay(), *pixmap);
 	break;
