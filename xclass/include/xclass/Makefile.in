@@ -9,6 +9,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 
 HEADERS = O2ColumnsLayout.h \
+	OColor.h \
 	OBaseObject.h \
 	OComponent.h \
 	ODNDmanager.h \
@@ -38,6 +39,8 @@ HEADERS = O2ColumnsLayout.h \
 	OXCanvas.h \
 	OXCheckButton.h \
 	OXClient.h \
+	OXColorDialog.h \
+	OXColorSelect.h \
 	OXComboBox.h \
 	OXCompositeFrame.h \
 	OXDDListBox.h \

@@ -32,6 +32,7 @@
 #include <xclass/OXRootWindow.h>
 #include <xclass/OXFrame.h>
 #include <xclass/OGC.h>
+#include <xclass/OColor.h>
 #include <xclass/OPicture.h>
 #include <xclass/OResourcePool.h>
 #include <xclass/OXFont.h>
@@ -149,11 +150,39 @@ unsigned long OXClient::GetColorByName(const char *name) const {
   XColor color;
 
   color.pixel = 0;
-  if (!XParseColor(_dpy, _defaultColormap, name, &color)) 
-    Debug(DBG_WARN, "OXClient: Couldn't parse color %s\n",name);
-  else if (!XAllocColor(_dpy, _defaultColormap, &color)) 
-    Debug(DBG_WARN, "OXClient: Couldn't retrieve color %s\n",name);
+  if (!XParseColor(_dpy, _defaultColormap, name, &color))  {
+    Debug(DBG_WARN, "OXClient: Couldn't parse color %s\n", name);
+  } else if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+    Debug(DBG_WARN, "OXClient: Couldn't retrieve color %s\n", name);
+    // force allocation of pixel 0
+    XQueryColor(_dpy, _defaultColormap, &color);
+    if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+      Debug(DBG_WARN, "OXClient: failed to allocate pixel 0!!!\n");
+    }
+  }
   return color.pixel;
+}
+
+unsigned long OXClient::GetColor(OColor c) const {
+  XColor color;
+
+  color.pixel = 0;
+  color.red   = c.GetR() * 256;
+  color.green = c.GetG() * 256;
+  color.blue  = c.GetB() * 256;
+
+  if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+    Debug(DBG_WARN, "OXClient: Couldn't retrieve color #%02x%02x%02x\n",
+          c.GetR(), c.GetG(), c.GetB());
+    // force allocation of pixel 0
+    XQueryColor(_dpy, _defaultColormap, &color);
+    if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+      Debug(DBG_WARN, "OXClient: failed to allocate pixel 0!!!\n");
+    }
+  }
+
+  return color.pixel;
+
 }
 
 unsigned long OXClient::GetHilite(const unsigned long base_color) const {
@@ -179,8 +208,14 @@ unsigned long OXClient::GetHilite(const unsigned long base_color) const {
   color.blue  = white_p.blue  - (white_p.blue  - color.blue  - 1) / 2;
 #endif
   
-  if (!XAllocColor(_dpy, _defaultColormap, &color))
+  if (!XAllocColor(_dpy, _defaultColormap, &color)) {
     Debug(DBG_WARN, "OXClient: Couldn't allocate hilight color\n");
+    // force allocation of pixel 0
+    XQueryColor(_dpy, _defaultColormap, &color);
+    if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+      Debug(DBG_WARN, "OXClient: failed to allocate pixel 0!!!\n");
+    }
+  }
 
   return color.pixel;
 }
@@ -201,10 +236,20 @@ unsigned long OXClient::GetShadow(const unsigned long base_color) const {
   color.blue  = (unsigned short)(color.blue  * 2 / 3);
 #endif
   
-  if (!XAllocColor(_dpy, _defaultColormap, &color))
+  if (!XAllocColor(_dpy, _defaultColormap, &color)) {
     Debug(DBG_WARN, "OXClient: Couldn't allocate shadow color\n");
+    // force allocation of pixel 0
+    XQueryColor(_dpy, _defaultColormap, &color);
+    if (!XAllocColor(_dpy, _defaultColormap, &color)) {
+      Debug(DBG_WARN, "OXClient: failed to allocate pixel 0!!!\n");
+    }
+  }
   
   return color.pixel;
+}
+
+void OXClient::FreeColor(unsigned long pixel) const {
+  XFreeColors(_dpy, _defaultColormap, &pixel, 1, 0);
 }
 
 

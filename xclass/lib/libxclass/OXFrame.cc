@@ -120,7 +120,11 @@ OXFrame::OXFrame(const OXWindow *p, int w, int h,
         SetBackgroundPixmap(_defaultBackgroundPicture->GetPicture());
     } else {
       XChangeWindowAttributes(GetDisplay(), _id, mask, &wattr); 
+#if 0
       if (_defaultBackgroundPicture && !(_options & OWN_BKGND))
+#else
+      if (!(_options & OWN_BKGND))
+#endif
         SetBackgroundPixmap(ParentRelative);
     }
 
@@ -515,8 +519,11 @@ int OXFrame::IsVisible() const {
 
 void OXFrame::Reconfig() {
 
-  if (!(_options & OWN_BKGND))
+  if (!(_options & OWN_BKGND)) {
     _backPixel = _defaultFrameBackground;
+    _hilitePixel = _defaultFrameHilite;
+    _shadowPixel = _defaultFrameShadow;
+  }
 
   if (_options & MAIN_FRAME) {
     SetBackgroundColor(_backPixel);
@@ -527,16 +534,24 @@ void OXFrame::Reconfig() {
       SetBackgroundColor(_backPixel);
     }
   } else {
-    SetBackgroundColor(_backPixel);
-    if (!(_options & OWN_BKGND)) {
+    if (_options & OWN_BKGND) {
+      SetBackgroundColor(_backPixel);
+    } else {
+#if 0
       if (_defaultBackgroundPicture) {
         SetBackgroundPixmap(ParentRelative);
       } else {
         SetBackgroundPixmap(None);
         SetBackgroundColor(_backPixel);
       }
+#else
+      SetBackgroundPixmap(None);
+      SetBackgroundPixmap(ParentRelative);
+#endif
     }
   }
+
+  if (_tip) _tip->Reconfig();
 
   NeedRedraw(True);
 }

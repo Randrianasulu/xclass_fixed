@@ -1997,3 +1997,23 @@ OPicture.cc
   read. (Thanks to Rick Sivernell)
 
 - Added OXTransientFrame::CenterOnParent() method.
+
+
+20/11/01
+
+- Added OXClient::FreeColor(), must be used to free the r/o color
+  allocated by OXClient::GetColorByName(), OXClient::GetHilite() and
+  OXClient::GetShadow().
+
+
+22/11/01
+
+- Added OColor class.
+
+- OXClient::GetColorByName(): always return an *allocated* color.
+
+- OXTip: get colors from OResourcePool. Implemented Reconfig() method.
+
+- Added OXColorDialog and OXColorSelect classes. The "custom" colors are
+  not handled yet by OXColorDialog.
+

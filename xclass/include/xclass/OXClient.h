@@ -57,6 +57,7 @@ extern Atom _XCLASS_RESOURCES;
 
 class OXWindow;
 class OXFrame;
+class OColor;
 class OGCPool;
 class OXGC;
 class OPicturePool;
@@ -90,9 +91,11 @@ public:
   const OXWindow *GetRoot() const { return _Root; }
   OXWindow *GetWindowById(Window sw) const;
 
+  unsigned long GetColor(OColor color) const;
   unsigned long GetColorByName(const char *name) const;
   unsigned long GetHilite(const unsigned long base_color) const;
   unsigned long GetShadow(const unsigned long base_color) const;
+  void FreeColor(unsigned long pixel) const;
 
   Colormap GetDefaultColormap() const { return _defaultColormap; }
 

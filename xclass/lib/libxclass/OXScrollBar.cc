@@ -62,13 +62,14 @@ void OXScrollBarElt::SetState(int state) {
   if (state != _state) {
     switch (state) {
     case BUTTON_DOWN:
-           _options &= ~RAISED_FRAME;
-           _options |= SUNKEN_FRAME;
-           break;
+      _options &= ~RAISED_FRAME;
+      _options |= SUNKEN_FRAME;
+      break;
+
     case BUTTON_UP:
-           _options &= ~SUNKEN_FRAME;
-           _options |= RAISED_FRAME;
-           break;
+      _options &= ~SUNKEN_FRAME;
+      _options |= RAISED_FRAME;
+      break;
     }
     _state = state;
     _client->NeedRedraw(this);
@@ -78,15 +79,15 @@ void OXScrollBarElt::SetState(int state) {
 void OXScrollBarElt::DrawBorder() {
   switch (_options & (SUNKEN_FRAME | RAISED_FRAME)) {
   case SUNKEN_FRAME: // pressed
-    XDrawLine (GetDisplay(), _id, _blackGC, 0, 0, _w-2, 0);
-    XDrawLine (GetDisplay(), _id, _blackGC, 0, 0, 0, _h-2);
-    XDrawLine (GetDisplay(), _id, _shadowGC,  1, 1, _w-3, 1);
-    XDrawLine (GetDisplay(), _id, _shadowGC,  1, 1, 1, _h-3);
+    XDrawLine(GetDisplay(), _id, _blackGC, 0, 0, _w-2, 0);
+    XDrawLine(GetDisplay(), _id, _blackGC, 0, 0, 0, _h-2);
+    XDrawLine(GetDisplay(), _id, _shadowGC,  1, 1, _w-3, 1);
+    XDrawLine(GetDisplay(), _id, _shadowGC,  1, 1, 1, _h-3);
 
-    XDrawLine (GetDisplay(), _id, _whiteGC,  0, _h-1, _w-1, _h-1);
-    XDrawLine (GetDisplay(), _id, _whiteGC,  _w-1, _h-1, _w-1, 1);
-    XDrawLine (GetDisplay(), _id, _bckgndGC,  1, _h-2, _w-2, _h-2);
-    XDrawLine (GetDisplay(), _id, _bckgndGC,  _w-2, _h-2, _w-2, 2);
+    XDrawLine(GetDisplay(), _id, _whiteGC,  0, _h-1, _w-1, _h-1);
+    XDrawLine(GetDisplay(), _id, _whiteGC,  _w-1, _h-1, _w-1, 1);
+    XDrawLine(GetDisplay(), _id, _bckgndGC,  1, _h-2, _w-2, _h-2);
+    XDrawLine(GetDisplay(), _id, _bckgndGC,  _w-2, _h-2, _w-2, 2);
 
     if (_pic != NULL) {
       int x = (_w - _pic->GetWidth()) >> 1;
@@ -96,15 +97,15 @@ void OXScrollBarElt::DrawBorder() {
     break;
 
   case RAISED_FRAME: // normal
-    XDrawLine (GetDisplay(), _id, _bckgndGC, 0, 0, _w-2, 0);
-    XDrawLine (GetDisplay(), _id, _bckgndGC, 0, 0, 0, _h-2);
-    XDrawLine (GetDisplay(), _id, _hilightGC, 1, 1, _w-3, 1);
-    XDrawLine (GetDisplay(), _id, _hilightGC, 1, 1, 1, _h-3);
+    XDrawLine(GetDisplay(), _id, _bckgndGC, 0, 0, _w-2, 0);
+    XDrawLine(GetDisplay(), _id, _bckgndGC, 0, 0, 0, _h-2);
+    XDrawLine(GetDisplay(), _id, _hilightGC, 1, 1, _w-3, 1);
+    XDrawLine(GetDisplay(), _id, _hilightGC, 1, 1, 1, _h-3);
     
-    XDrawLine (GetDisplay(), _id, _shadowGC,  1, _h-2, _w-2, _h-2);
-    XDrawLine (GetDisplay(), _id, _shadowGC,  _w-2, _h-2, _w-2, 1);
-    XDrawLine (GetDisplay(), _id, _blackGC, 0, _h-1, _w-1, _h-1);
-    XDrawLine (GetDisplay(), _id, _blackGC, _w-1, _h-1, _w-1, 0);
+    XDrawLine(GetDisplay(), _id, _shadowGC,  1, _h-2, _w-2, _h-2);
+    XDrawLine(GetDisplay(), _id, _shadowGC,  _w-2, _h-2, _w-2, 1);
+    XDrawLine(GetDisplay(), _id, _blackGC, 0, _h-1, _w-1, _h-1);
+    XDrawLine(GetDisplay(), _id, _blackGC, _w-1, _h-1, _w-1, 0);
 
     if (_pic != NULL) {
       int x = (_w - _pic->GetWidth()) >> 1;

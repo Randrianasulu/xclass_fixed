@@ -27,6 +27,7 @@ SHARED_LIB=lib${lib_name}.so.@XCLASS_VERSION@
 SO_NAME=lib${lib_name}.so.@XCLASS_VERSION@
 
 SRCS = O2ColumnsLayout.cc \
+	OColor.cc \
 	ODNDmanager.cc \
 	OExec.cc \
 	OFileHandler.cc \
@@ -51,6 +52,8 @@ SRCS = O2ColumnsLayout.cc \
 	OXCanvas.cc \
 	OXCheckButton.cc \
 	OXClient.cc \
+	OXColorDialog.cc \
+	OXColorSelect.cc \
 	OXComboBox.cc \
 	OXCompositeFrame.cc \
 	OXDDListBox.cc \

@@ -19,6 +19,7 @@ LDFLAGS=@LDFLAGS@
 MAKEDEPEND=@MAKEDEPEND@
 
 SRCS = btest.cc \
+	colorsel.cc \
 	combotest.cc \
 	exec.cc \
 	favordlg.cc \

@@ -85,7 +85,10 @@
 #define MSG_APPSTOPPED               10
 #define MSG_APPEXITED                11
 
-#define MSG_MSGMAX         21
+#define MSG_COLORSEL       22
+
+
+#define MSG_MSGMAX         22
 #define MSG_USERMSG       100
 
 

@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of xclass.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    Copyright (C) 2000, 2001, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,37 +19,38 @@
 
 **************************************************************************/
 
-#ifndef __OXTIP_H
-#define __OXTIP_H
+#ifndef __OCOLOR_H
+#define __OCOLOR_H
 
-#include <X11/Xlib.h>
+#include <xclass/OBaseObject.h>
 
-#include <xclass/utils.h>
-#include <xclass/OXCompositeFrame.h>
-#include <xclass/OXLabel.h>
-#include <xclass/OString.h>
+class OXClient;
 
-
-//---------------------------------------------------------------------
-
-class OXTip : public OXCompositeFrame {
+class OColor : public OBaseObject {
 public:
-  OXTip(const OXWindow *p, OString *text);
-  virtual ~OXTip();
-
-  virtual void DrawBorder();
-  virtual void Reconfig();
-
-  void SetText(OString *text);
-  void Show(int x, int y);
-  void Hide();
-
-private:
-  OXLabel *_label;
-  OLayoutHints *_ll;
+  OColor();
+  OColor(int r, int g, int b);
+  virtual ~OColor();
   
-  unsigned long _bg, _fg;
+  static void HLS2RGB(int h, int l, int s, int *r, int *g, int *b);
+  static void RGB2HLS(int r, int g, int b, int *h, int *l, int *s);
+
+  int GetR() const { return _r; }
+  int GetG() const { return _g; }
+  int GetB() const { return _b; }
+
+  int GetH() const { return _h; }
+  int GetL() const { return _l; }
+  int GetS() const { return _s; }
+  
+  void SetRGB(int r, int g, int b);
+  void SetHLS(int h, int l, int s);
+  
+  unsigned long GetDisplayPixel(OXClient *c);
+  void SetColor(OXClient *c, unsigned long color);
+  
+protected:
+  int _r, _g, _b, _h, _l, _s;
 };
 
-
-#endif  // __OXTIP_H
+#endif  // __OXCOLOR_H

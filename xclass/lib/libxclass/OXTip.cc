@@ -21,7 +21,11 @@
 
 #include <xclass/utils.h>
 #include <xclass/ODimension.h>
+#include <xclass/OResourcePool.h>
 #include <xclass/OXTip.h>
+
+
+//----------------------------------------------------------------------
 
 OXTip::OXTip(const OXWindow *p, OString *text) :
   OXCompositeFrame(p, 10, 10, HORIZONTAL_FRAME | RAISED_FRAME) {
@@ -34,10 +38,16 @@ OXTip::OXTip(const OXWindow *p, OString *text) :
   attr.save_under = True;
 
   XChangeWindowAttributes(GetDisplay(), _id, mask, &attr);
-  SetBackgroundColor(_client->GetColorByName("LightYellow"));
+
+  _bg = _client->GetResourcePool()->GetTipBgndColor();
+  _fg = _client->GetResourcePool()->GetTipFgndColor();
+
+  SetBackgroundColor(_bg);
 
   _label = new OXLabel(this, text);
-  _label->SetBackgroundColor(_client->GetColorByName("LightYellow"));
+  _label->SetBackgroundColor(_bg);
+  _label->SetTextColor(_fg);
+  //_label->SetFont(...);
 
   AddFrame(_label, _ll = new OLayoutHints(LHINTS_LEFT | LHINTS_TOP,
                                           2, 3, 0, 0));
@@ -70,4 +80,19 @@ void OXTip::Show(int x, int y) {
 
 void OXTip::Hide() {
   UnmapWindow();
+}
+
+void OXTip::Reconfig() {
+
+  _bg = _client->GetResourcePool()->GetTipBgndColor();
+  _fg = _client->GetResourcePool()->GetTipFgndColor();
+
+  SetBackgroundColor(_bg);
+
+  _label->SetBackgroundColor(_bg);
+  _label->SetTextColor(_fg);
+  //_label->SetFont(...);
+
+  _label->Reconfig();
+  NeedRedraw(True);
 }
