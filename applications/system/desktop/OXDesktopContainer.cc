@@ -24,8 +24,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <assert.h>
 #include <errno.h>
+#include <string.h>
 
 #include <X11/Xatom.h>
 
@@ -73,7 +73,7 @@ extern Atom URI_list;
 // + add support for "shortcut" pixmaps
 // - lots of some other things
 
-#define DEBUG
+//#define DEBUG
 
 
 // NewIcon() actions:
@@ -331,12 +331,10 @@ int OXDesktopContainer::HandleDoubleClick(XButtonEvent *event) {
       if (S_ISDIR(ftype)) {
         pid = fork();
         if (pid == 0) {
-          execlp("explorer",
-                 "explorer",
-                 f->GetName()->GetString(), 
-                 NULL);
+          execlp("explorer", "explorer", f->GetName()->GetString(), NULL);
           // if we are here then execlp failed!
-          fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", AppName);
+          fprintf(stderr, "execlp: cannot spawn \"explorer\": %s\n",
+                          strerror(errno));
           exit(1);
         }
 
@@ -345,12 +343,21 @@ int OXDesktopContainer::HandleDoubleClick(XButtonEvent *event) {
       } else if (S_ISREG(ftype) && (ftype & S_IXUSR)) {
         pid = fork();
         if (pid == 0) {
-          execlp(f->GetName()->GetString(),
-                 f->GetName()->GetString(),
-                 NULL,
-                 NULL);
+#if 0
+          execlp(f->GetName()->GetString(), f->GetName()->GetString(),
+                 NULL, NULL);
           // if we are here then execlp failed!
-          fprintf(stderr, "\"%s\" failed to run!\n", f->GetName()->GetString());
+          fprintf(stderr, "execlp: cannot spawn \"%s\": %s\n",
+                          f->GetName()->GetString(), strerror(errno));
+#else
+          char progpath[PATH_MAX];
+          sprintf(progpath, "./%s", f->GetName()->GetString());
+          //sprintf(progpah, "%s/%s", getcwd(...), f->GetName()->GetString());
+          execlp(progpath, f->GetName()->GetString(), NULL, NULL);
+          // if we are here then execlp failed!
+          fprintf(stderr, "execlp: cannot spawn \"%s\": %s\n",
+                          progpath, strerror(errno));
+#endif
           exit(1);
         }
 
@@ -375,8 +382,9 @@ int OXDesktopContainer::HandleDoubleClick(XButtonEvent *event) {
         pid = fork();
         if (pid == 0) {
           execvp(argv[0], argv);
-          // if we are here then execlp failed!
-          fprintf(stderr, "Cannot spawn \"%s\": execvp failed!\n", argv[0]);
+          // if we are here then execvp failed!
+          fprintf(stderr, "execvp: cannot spawn \"%s\": %s\n", argv[0],
+                          strerror(errno));
           exit(1);
         }
       }

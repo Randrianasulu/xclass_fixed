@@ -70,8 +70,6 @@ public:
   virtual int HandleMotion(XMotionEvent *event);
   virtual int HandleTimer(OTimer *t);
 
-  virtual void Associate(const OComponent *w) { _msgObject = w; }
-
   virtual OXFrame *GetFrameFromPoint(int x, int y);
 
   virtual Atom HandleDNDenter(Atom *typelist);
@@ -104,7 +102,6 @@ private:
   void CreateIcons();
 
 protected:
-  const OComponent *_msgObject;
   OMimeTypes *MimeTypesList;
 
   OTimer *_refresh;

@@ -59,6 +59,8 @@ const OXFont *OXDesktopIcon::_defaultFont = NULL;
 extern ODNDmanager *dndManager;
 extern Atom URI_list;
 
+#define SHAPED_LABEL
+
 
 //---------------------------------------------------------------------------
 
@@ -173,6 +175,9 @@ void OXDesktopIcon::Activate(int a) {
     _selpic = NULL;
   }
 
+#ifdef SHAPED_LABEL
+  Layout();
+#endif
   _DoRedraw();
 }
 
@@ -208,8 +213,45 @@ void OXDesktopIcon::Layout() {
   rect.y = 0;
   rect.width  = _tw;
   rect.height = _th+1;
+#ifdef SHAPED_LABEL
+  if (_active) {
+    XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
+                            lx, ly, &rect, 1, ShapeUnion, Unsorted);
+  } else {
+    Pixmap lmask;
+    XGCValues gcval;
+    unsigned long gcmask;
+    GC _maskGC;
+    OFontMetrics fm;
+
+    lmask = XCreatePixmap(GetDisplay(), _id, rect.width, rect.height, 1);
+
+    gcmask = GCForeground | GCBackground | GCFillStyle | GCFont;
+    gcval.foreground = 0;
+    gcval.background = 0;
+    gcval.fill_style = FillSolid;
+    gcval.font = _font->GetId();
+    _maskGC = XCreateGC(GetDisplay(), lmask, gcmask, &gcval);
+
+    XFillRectangle(GetDisplay(), lmask, _maskGC,
+                   0, 0, rect.width, rect.height);
+
+    XSetForeground(GetDisplay(), _maskGC, 1);
+
+    XDrawString(GetDisplay(), lmask, _maskGC, 0, _ta,
+                _name->GetString(), _name->GetLength());
+
+    XFreeGC(GetDisplay(), _maskGC);
+
+    XShapeCombineMask(GetDisplay(), _id, ShapeBounding,
+                      lx, ly, lmask, ShapeUnion);
+
+    XFreePixmap(GetDisplay(), lmask);
+  }
+#else
   XShapeCombineRectangles(GetDisplay(), _id, ShapeBounding,
                           lx, ly, &rect, 1, ShapeUnion, Unsorted);
+#endif
 }
 
 void OXDesktopIcon::_DoRedraw() {
@@ -336,7 +378,6 @@ void OXDesktopIcon::_SetDragPixmap() {
   unsigned long gcmask;
   GC _picGC, _maskGC;
   int ix, iy, lx, ly;
-  OFontMetrics fm;
 
   const OResourcePool *res = _client->GetResourcePool();
 

@@ -104,7 +104,7 @@ $PATH.
 If you are using fvwm95, make sure you add the following line to your
 .fvwm95rc file:
 
-  Style "Desktop" WindowListSkip
+  Style "Desktop" Sticky,WindowListSkip
 
 Also, it would be a good idea to start the desktop manager at fvwm95
 startup:
