@@ -248,6 +248,7 @@ int OXMain::HandleFileEvent(OFileHandler *fh, unsigned int mask) {
 
 //  if (fh->GetFd())...
   if (fh != _fh) return False;
+
   if (mask != XCM_READABLE) return False;
 
   retc = read(_fd, bfr, sizeof(bfr));

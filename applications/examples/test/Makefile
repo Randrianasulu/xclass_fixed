@@ -12,7 +12,7 @@ MAKEDEPEND=@MAKEDEPEND@
 	$(CXX) $(CXXFLAGS) -c $<
 
 SRCS = btest.cc \
-	colortest.cc \
+	colorsel.cc \
 	combotest.cc \
 	exec.cc \
 	favordlg.cc \
