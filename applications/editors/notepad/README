@@ -1,0 +1,47 @@
+Notepad is simple text editor that uses the OXTextEdit widget. It was
+first started by H. Radke, I just sort of finished it.
+
+Still to be done
+----------------
+
+- all help stuff
+
+
+Changes to the last release
+---------------------------
+
+- OXTextEdit was rewritten and moved to the xclass library.
+- TABs are now handled properly.
+- Added some shortcuts:
+
+	Ctrl + x                     : cut
+	Ctrl + c  or  Ctrl + Insert  : copy
+	CTRL + v  or  Shift + Insert : paste
+	F3                           : search again Dialog
+
+
+Install
+-------
+
+Just type "make" and copy the binary to a dir somewhere in your path.
+
+A pixmap is also provided for using with xclass explorer, just modify your
+~/.xclass/etc/mime.types file accordingly:
+
+	[text/plain]
+	pattern = *.te?xt 
+	icon = mini.text.xpm
+	action = notepad %s
+
+For fvwm95, just add to the .fvwm95rc file:
+
+	Style "Notepad" TitleIcon mini.text.xpm
+
+There are two more pixmaps: notepad.s.xpm and notepad.t.xpm. Copy those to
+your xclass icons directory (where OX_POOL points to) After that, every
+file box (including explorer) will show those icons for the "notepad"
+executable.
+
+Have fun,
+Harald Radke.
+Hector Peraza.

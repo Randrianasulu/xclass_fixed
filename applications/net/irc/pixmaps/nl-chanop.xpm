@@ -1,0 +1,23 @@
+/* XPM */
+static char *nl_chanop[] = {
+"14 14 6 1",
+" 	s None	m none	c None",
+".	s iconColor1	m black	c black",
+"X	c #808080",
+"o	s iconColor6	m white	c yellow",
+"O	s iconColor2	m white	c white",
+"+	c #c0c0c0",
+"              ",
+"      .       ",
+"      .       ",
+"     XXX      ",
+".    .o.    . ",
+"..   .o.   .. ",
+"XX. XXoXX .XX ",
+" .O..ooo..X.  ",
+" .oO.Oo+.Xo.  ",
+" XXoOooo+oXX  ",
+"  .OoOo+o+.   ",
+"  .oOooo+o.   ",
+"  .........   ",
+"              "};
