@@ -13,6 +13,7 @@ MAKEDEPEND=@MAKEDEPEND@
 
 SRCS = btest.cc \
 	combotest.cc \
+	exec.cc \
 	favordlg.cc \
 	ftest.cc \
 	listview.cc \

@@ -39,3 +39,6 @@ xdnd     - used to test drag-and-drop operations.
 textedit - used to test the OXTextEdit widget.
 
 favordlg - used to test the file dialog in normal and favourites mode.
+
+exec     - used to test the OExec class.
+
