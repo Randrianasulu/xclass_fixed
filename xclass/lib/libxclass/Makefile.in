@@ -72,6 +72,9 @@ SRCS = O2ColumnsLayout.cc \
 	OXFontDialog.cc \
 	OXFrame.cc \
 	OXGroupFrame.cc \
+	OXHelpDoc.cc \
+	OXHelpPopup.cc \
+	OXHelpWindow.cc \
 	OXHtml.cc \
 	OXHtmlDraw.cc \
 	OXHtmlForm.cc \
@@ -113,6 +116,7 @@ SRCS = O2ColumnsLayout.cc \
 	OXTextEntry.cc \
 	OXTip.cc \
 	OXToolBar.cc \
+	OXToolBarButton.cc \
 	OXTransientFrame.cc \
 	OXView.cc \
 	OXWindow.cc \

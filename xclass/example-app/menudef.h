@@ -43,7 +43,7 @@ struct _popup {
 };
 
 struct _popup file_popup = {
-  { NULL }, {
+  NULL, {
   { "&Open...",        M_FILE_OPEN,       0,             NULL },
   { "&Save",           M_FILE_SAVE,       MENU_DISABLED, NULL },
   { "Save &as...",     M_FILE_SAVEAS,     MENU_DISABLED, NULL },
@@ -55,14 +55,14 @@ struct _popup file_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup edit_popup = {
-  { NULL }, {
+  NULL, {
   { "Cu&t",            M_EDIT_CUT,        MENU_DISABLED, NULL },
   { "&Copy",           M_EDIT_COPY,       MENU_DISABLED, NULL },
   { "&Paste",          M_EDIT_PASTE,      MENU_DISABLED, NULL },
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup view_popup = {
-  { NULL }, {
+  NULL, {
   { "&Toolbar",        M_VIEW_TOOLBAR,    MENU_CHECKED,  NULL },
   { "Status &Bar",     M_VIEW_STATUSBAR,  MENU_CHECKED,  NULL },
   { "",                -1,                0,             NULL },
@@ -70,7 +70,7 @@ struct _popup view_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup help_popup = {
-  { NULL }, {
+  NULL, {
   { "&Contents...",    M_HELP_CONTENTS,   MENU_DISABLED, NULL },
   { "&Search...",      M_HELP_SEARCH,     MENU_DISABLED, NULL },
   { "",                -1,                0,             NULL },

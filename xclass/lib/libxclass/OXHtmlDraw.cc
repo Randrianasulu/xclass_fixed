@@ -354,7 +354,6 @@ void OXHtml::BlockDraw(OHtmlBlock *pBlock, Drawable drawable,
   } else {
     // We are dealing with a single OHtmlElement which contains something
     // other than plain text.
-    int top, btm, cntr;
     int cnt, w;
     char zBuf[30];
     OHtmlLi *li;
@@ -364,7 +363,6 @@ void OXHtml::BlockDraw(OHtmlBlock *pBlock, Drawable drawable,
         li = (OHtmlLi *) src;
         x = li->x;
         y = li->y;
-        cntr = (top + btm) / 2;
         switch (li->ltype) {
           case LI_TYPE_Enum_1:
             sprintf(zBuf, "%d.", li->cnt);

@@ -130,15 +130,15 @@ OXClient::~OXClient() {
 
   Debug(DBG_MISC, "OXClient: terminating!\n");
 
+  delete _resourcePool;
+
+  delete _Root;        // before _wlist gets destroyed!
+
   delete _wlist;
   delete _tlist;
   delete _idlelist;
   delete _iolist;
   delete _siglist;
-
-  delete _resourcePool;
-
-  delete _Root;
 
   XSync(GetDisplay(), False);
 

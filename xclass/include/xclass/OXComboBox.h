@@ -87,6 +87,8 @@ public:
   void SetText(const char *text) { _te->Clear(); _te->AddText(0, text); }
   OXTextEntry *GetTextEntry() const { return _te; }
 
+  virtual void Reconfig();
+
 protected:
   void _PopDown();
   void _UpdateText(OXLBEntry *e);

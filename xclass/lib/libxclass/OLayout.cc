@@ -200,7 +200,7 @@ void OHorizontalLayout::Layout() {
       if ((hints & LHINTS_EXPAND_X) || (hints & LHINTS_CENTER_X)) {
 	nb_expand++;
 	exp += size.w;
-	exp_max = min(exp_max, size.w);
+	exp_max = max(exp_max, size.w);
       } else
 	remain -= size.w;
     }

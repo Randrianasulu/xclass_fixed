@@ -1317,6 +1317,28 @@ int OXPopupMenu::IsEntryRChecked(int ID) {
   return 0;
 }
 
+void OXPopupMenu::Reconfig() {
+  OMenuEntry *ptr;
+
+  _backPixel = _defaultFrameBackground;
+  OXFrame::Reconfig();
+  SetBackgroundColor(_backPixel);
+
+  _normGC->SetForeground(_client->GetResourcePool()->GetFrameFgndColor());
+  _normGC->SetBackground(_client->GetResourcePool()->GetFrameBgndColor());
+
+  _selGC->SetForeground(_client->GetResourcePool()->GetSelectedFgndColor());
+  _selGC->SetBackground(_client->GetResourcePool()->GetSelectedBgndColor());
+
+  _selbackGC->SetForeground(_client->GetResourcePool()->GetSelectedBgndColor());
+  _selbackGC->SetBackground(_client->GetResourcePool()->GetSelectedFgndColor());
+
+  for (ptr = _first; ptr != NULL; ptr = ptr->next)
+    if (ptr->_type == MENU_POPUP) ptr->_popup->Reconfig();
+
+  AdjustEntries();
+  Resize(_mw, _mh);
+}
 
 //-----------------------------------------------------------------
 
@@ -1437,4 +1459,9 @@ int OXMenuTitle::HandleMotion(XMotionEvent *event) {
     return _menu->HandleMotion(&ev);
   }
   return False;
+}
+
+void OXMenuTitle::Reconfig() {
+  OXFrame::Reconfig();
+  if (_menu) _menu->Reconfig();
 }

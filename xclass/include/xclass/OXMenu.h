@@ -117,6 +117,7 @@ public:
 
   virtual void Activate(OMenuEntry *entry, int delayed = True);
   virtual void DrawBorder();
+  virtual void Reconfig();
 
   friend class OXMenuTitle;
 
@@ -157,9 +158,12 @@ public:
   virtual void DoSendMessage();
   virtual int  GetState() const { return _state; }
   virtual int  GetHotKeyCode() const { return _hkeycode; }
+
   virtual int  HandleButton(XButtonEvent *event);
   virtual int  HandleMotion(XMotionEvent *event);
   virtual int  HandleKey(XKeyEvent *event);
+  
+  virtual void Reconfig();
   
 protected:
   virtual void _DoRedraw();

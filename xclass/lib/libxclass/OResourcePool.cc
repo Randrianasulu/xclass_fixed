@@ -650,8 +650,18 @@ int OResourcePool::Reload() {
 
   _focusGC->SetBackground(_selBgnd);
 
-  //_checkered = ...
+  // update _checkered pixmap
 
+  XGCValues gval;
+  unsigned long gmask;
+
+  XFillRectangle(_dpy, _checkered, _whiteGC->GetGC(), /* _hiliteGC->GetGC() */
+                 0, 0, gray_width, gray_height);
+  _focusGC->SetForeground(_frameBgnd);
+  XFillRectangle(_dpy, _checkered, _focusGC->GetGC(),
+                 0, 0, gray_width, gray_height);
+  _focusGC->SetForeground(_black);
+  
   return _changeMask;
 }
 
@@ -721,4 +731,45 @@ char *OResourcePool::FindIniFile(const char *name, int mode) const {
     return NULL;
 
   }
+}
+
+char *OResourcePool::FindHelpFile(const char *name, const char *appname) const {
+  char *help_path = new char[PATH_MAX];
+
+  // 1: search for the help file in ${_userRoot}/docs/appname/
+
+  sprintf(help_path, "%s/docs/%s/%s", _userRoot, appname, name);
+  if (access(help_path, R_OK) == 0) return help_path;
+
+  // 2: if not found try in ${_userRoot}/apps/docs/appname/
+
+  sprintf(help_path, "%s/apps/docs/%s/%s", _userRoot, appname, name);
+  if (access(help_path, R_OK) == 0) return help_path;
+
+  // 3: if not found, try just in ${_userRoot}/apps/appname/
+
+  sprintf(help_path, "%s/apps/%s/%s", _userRoot, appname, name);
+  if (access(help_path, R_OK) == 0) return help_path;
+
+
+  // 4: if nothing found so far, try then ${_systemRoot}/docs/appname
+
+  sprintf(help_path, "%s/docs/%s/%s", _systemRoot, appname, name);
+  if (access(help_path, R_OK) == 0) return help_path;
+
+  // 5: if not found try in ${_systemRoot}/apps/docs/appname/
+
+  sprintf(help_path, "%s/apps/docs/%s/%s", _systemRoot, appname, name);
+  if (access(help_path, R_OK) == 0) return help_path;
+
+  // 6: if still not found, try in ${_systemRoot}/apps/appname/
+
+  sprintf(help_path, "%s/apps/%s/%s", _systemRoot, appname, name);
+  if (access(help_path, R_OK) == 0) return help_path;
+
+
+  // 7: nothing found, return NULL...
+
+  delete[] help_path;
+  return NULL;
 }

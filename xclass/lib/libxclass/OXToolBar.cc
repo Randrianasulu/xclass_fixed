@@ -25,6 +25,9 @@
 #include <unistd.h>
 
 #include <xclass/OXToolBar.h>
+#include <xclass/OXPictureButton.h>
+#include <xclass/OXToolBarButton.h>
+#include <xclass/OX3dLines.h>
 
 
 //-------------------------------------------------------------------
@@ -97,4 +100,79 @@ void OXToolBar::AddButtons(SToolBarData *tdata) {
                                   tdata[i].id);
     }
   }
+}
+
+void OXToolBar::AddButtons(SToolBarDataEx *tdata,
+                           int show_labels, int equal_widths) {
+  int i, spacing = 0;
+  OXToolBarButton *button;
+  const OPicture *pic;
+
+  for (i = 0; tdata[i].pixmap_name != NULL; ++i) {
+
+    if (strlen(tdata[i].pixmap_name) > 0) {
+      pic = _client->GetPicture(tdata[i].pixmap_name,
+                                tdata[i].pixmap_data);
+
+      button = new OXToolBarButton(this, pic,
+                                   new OHotString(tdata[i].label),
+                                   tdata[i].id);
+      button->ShowLabel(show_labels);
+
+      AddFrame(button, new OLayoutHints(LHINTS_CENTER_Y | LHINTS_LEFT,
+                                        spacing, 0, 2, 2));
+
+      if (tdata[i].pixmap_on_data) {
+        pic = _client->GetPicture(tdata[i].pixmap_on_name,
+                                  tdata[i].pixmap_on_data);
+        button->SetOnPic(pic);
+      }
+
+      if (tdata[i].pixmap_disabled_data) {
+        pic = _client->GetPicture(tdata[i].pixmap_disabled_name,
+                                  tdata[i].pixmap_disabled_data);
+        button->SetDisabledPic(pic);
+      }
+
+      button->Associate(_msgObject);
+      button->SetType(tdata[i].type);
+
+      if (tdata[i].id == -1) {
+        button->Disable();
+        button->ChangeOptions(CHILD_FRAME);
+      } else {
+        button->SetTip(tdata[i].tip_text);
+      }
+      tdata[i].button = button;
+
+    } else {
+
+      AddFrame(new OXVertical3dLine(this),
+               new OLayoutHints(LHINTS_EXPAND_Y | LHINTS_LEFT,
+                                spacing + 4, 4, 2, 2));
+
+    }
+
+    spacing = 4;
+  }
+
+  if (equal_widths) {
+    int maxw = 0;
+
+    for (i = 0; tdata[i].pixmap_name != NULL; ++i) {
+      if (tdata[i].button) {
+        ODimension size = tdata[i].button->GetDefaultSize();
+        if (size.w > maxw) maxw = size.w;
+      }
+    }
+
+    for (i = 0; tdata[i].pixmap_name != NULL; ++i) {
+      if (tdata[i].button) {
+        ODimension size = tdata[i].button->GetDefaultSize();
+        tdata[i].button->Resize(maxw, size.h);
+        tdata[i].button->ChangeOptions(tdata[i].button->GetOptions() | FIXED_WIDTH);
+      }
+    }
+  }
+
 }

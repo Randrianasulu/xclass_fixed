@@ -97,11 +97,14 @@
 #define MSG_HIDE                     11
 #define MSG_DOCK                     12
 #define MSG_UNDOCK                   13
+#define MSG_CLOSE                    14
 
 #define MSG_HTML           26
 
+#define MSG_HELP           27
 
-#define MSG_MSGMAX         26
+
+#define MSG_MSGMAX         27
 #define MSG_USERMSG       100
 
 

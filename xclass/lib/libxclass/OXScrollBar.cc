@@ -119,6 +119,11 @@ void OXScrollBarElt::DrawBorder() {
   }
 }
 
+void OXScrollBarElt::Reconfig() {
+  _backPixel = _defaultFrameBackground;
+  OXFrame::Reconfig();
+  SetBackgroundColor(_backPixel);
+}
 
 //-----------------------------------------------------------------
 

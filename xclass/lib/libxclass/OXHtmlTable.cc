@@ -40,8 +40,8 @@
 #define DFLT_VSPACE             0
 
 // Set parameter A to the maximum of A and B.
-#define SETMAX(A,B)  if( (A)<(B) ){ (A) = (B); }
-#define MAX(A,B)     ((A)<(B)?(B):(A))
+#define SETMAX(A,B)  if ((A) < (B)) { (A) = (B); }
+#define MAX(A,B)     ((A) < (B) ? (B) : (A))
 
 
 // Return the appropriate cell spacing for the given table.

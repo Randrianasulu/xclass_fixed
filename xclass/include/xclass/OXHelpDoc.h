@@ -1,7 +1,7 @@
 /**************************************************************************
 
-    This file is part of xclass, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    This file is part of xclass.
+    Copyright (C) 2004, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,15 +19,38 @@
 
 **************************************************************************/
 
-#ifndef __VERSION_H
-#define __VERSION_H
+#ifndef __OXHELPDOC_H
+#define __OXHELPDOC_H
+
+#include <vector>
+
+#include <xclass/utils.h>
+#include <xclass/OHtmlUri.h>
+#include <xclass/OXHtml.h>
 
 
-#define XCLASS_MAJOR_VERSION  "0"
-#define XCLASS_MINOR_VERSION  "8"
-#define XCLASS_PATCH_LEVEL    "4"
-#define XCLASS_VERSION        "0.8.4"
-#define XCLASS_RELEASE_DATE   "27-Jun-2004"
+//----------------------------------------------------------------------
+
+class OXHelpDoc : public OXHtml {
+public:
+  OXHelpDoc(const OXWindow *p, int w, int h, int id = -1);
+  virtual ~OXHelpDoc();
+
+  virtual void Clear();
+  virtual int  IsVisited(const char *url);
+  virtual int  ProcessToken(OHtmlElement *pElem, const char *name, int type);
+  virtual int  FormAction(OHtmlForm *form, int id);
+
+  void AddToVisited(const char *url);
+
+  char *GetDocName() const { return docName; }
+
+protected:
+  char *docName;
+  int docNameStart;
+  
+  std::vector<char *> visitedUrl;
+};
 
 
-#endif  // __VERSION_H
+#endif  // __OXHELPDOC_H

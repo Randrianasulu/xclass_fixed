@@ -94,6 +94,8 @@ public:
 
   virtual void SetTopEntry(OXLBEntry *e, OLayoutHints *lh);
 
+  virtual void Reconfig();
+
 protected:
   virtual void _GotFocus();
   virtual void _LostFocus();

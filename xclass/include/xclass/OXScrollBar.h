@@ -67,8 +67,7 @@ public:
 
   virtual void SetState(int state);
   virtual void DrawBorder();
-  virtual void Reconfig() { _backPixel = _defaultFrameBackground;
-                            OXFrame::Reconfig(); }
+  virtual void Reconfig();
 
 protected:
   int _state;

@@ -242,6 +242,20 @@ void OXMdiDecorFrame::UnsetGrab() {
   XUngrabButton(GetDisplay(), AnyButton, AnyModifier, _id);
 }
 
+// We need to handle OXClient masked button events during
+// WaitFor loops, otherwise we would prevent the X server
+// from dispatching further button events, possibly hanging
+// the whole session.
+
+int OXMdiDecorFrame::HandleMaskEvent(XEvent *event) {
+  if (event->type == ButtonPress) {
+    XSync(GetDisplay(), False);
+    XAllowEvents(GetDisplay(), AsyncPointer, CurrentTime);
+    XSync(GetDisplay(), False);
+  }
+  return False;
+}
+
 int OXMdiDecorFrame::HandleButton(XButtonEvent *event) {
   if (event->type == ButtonPress) {
 

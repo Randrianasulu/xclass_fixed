@@ -1346,11 +1346,17 @@ protected:
 
 class OHtmlMessage : public OWidgetMessage {
 public:
-  OHtmlMessage(int t, int a, int i, const char *u) :
-    OWidgetMessage(t, a, i) { uri = u; }
+  OHtmlMessage(int t, int a, int i, const char *u, int rx, int ry) :
+    OWidgetMessage(t, a, i) {
+      uri = u;
+      x_root = rx;
+      y_root = ry;
+    }
 
 public:
   const char *uri;
+  //ORectangle bbox;
+  int x_root, y_root;
 };
 
 

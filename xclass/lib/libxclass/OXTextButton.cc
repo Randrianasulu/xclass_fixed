@@ -169,7 +169,7 @@ void OXTextButton::_DoRedraw() {
   if (_state == BUTTON_DOWN || _state == BUTTON_ENGAGED) { ++x; ++y; }
 
   if (_state == BUTTON_ENGAGED) {
-    FillRectangle(_hibckgndGC, 2, 2, _w-4, _h-4);
+    FillRectangle(_hibckgndGC->GetGC(), 2, 2, _w-4, _h-4);
     DrawLine(_hilightGC, 2, 2, _w-3, 2);
   }
 

@@ -204,6 +204,7 @@ public:
   const char *GetSystemRoot() const { return _systemRoot; }
   const char *GetUserRoot() const { return _userRoot; }
   char *FindIniFile(const char *name, int mode) const;
+  char *FindHelpFile(const char *name, const char *appname) const;
 
 protected:
   const OXClient *_client;

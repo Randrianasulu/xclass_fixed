@@ -26,7 +26,7 @@
 #include <xclass/OGC.h>
 
 
-GC  OXButton::_hibckgndGC;
+const OXGC *OXButton::_hibckgndGC = 0;
 int OXButton::_init = False;
 
 
@@ -46,7 +46,7 @@ OXButton::OXButton(const OXWindow *p, int ID, unsigned int options)
       gval.fill_style = FillTiled;
       gval.tile = GetResourcePool()->GetCheckeredPixmap();
       gval.graphics_exposures = False;
-      _hibckgndGC = _client->GetGC(GetId(), gmask, &gval)->GetGC();
+      _hibckgndGC = _client->GetGC(GetId(), gmask, &gval);
 
       _init = True;
     }
@@ -223,6 +223,24 @@ void OXButton::DrawBorder() {
                      x, y, w, h);
     break;
   }
+}
+
+void OXButton::Reconfig() {
+  XGCValues gval;
+  unsigned long gmask;
+
+  OXFrame::Reconfig();
+
+  gmask = GCForeground | GCBackground | GCTile |
+          GCFillStyle | GCGraphicsExposures;
+  gval.foreground = GetResourcePool()->GetFrameHiliteColor();
+  gval.background = _backPixel;
+  gval.fill_style = FillTiled;
+  gval.tile = GetResourcePool()->GetCheckeredPixmap();
+  gval.graphics_exposures = False;
+
+  _client->FreeGC((OXGC *) _hibckgndGC);
+  _hibckgndGC = _client->GetGC(GetId(), gmask, &gval);
 }
 
 void OXButton::_GotFocus() {

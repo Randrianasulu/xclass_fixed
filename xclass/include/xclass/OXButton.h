@@ -54,7 +54,7 @@ class OXGC;
 
 class OXButton : public OXFrame, public OXWidget {
 protected:
-  static GC _hibckgndGC;
+  static const OXGC *_hibckgndGC;
   static int _init;
 
 public:
@@ -68,6 +68,7 @@ public:
   virtual void SetType(int a) { _type = a; }
   virtual void SetDefault(int onoff = True);
   virtual void DrawBorder();
+  virtual void Reconfig();
 
 protected:
   virtual void _GotFocus();

@@ -502,7 +502,7 @@ int OXHtml::ControlSize(OHtmlInput *pElem) {
 // Return the number of elments of type p in a form.
 
 int OXHtml::FormCount(OHtmlInput *p, int radio) {
-  OHtmlElement *q;
+  OHtmlElement *q = p;
 
   switch (p->type) {
     case Html_SELECT:

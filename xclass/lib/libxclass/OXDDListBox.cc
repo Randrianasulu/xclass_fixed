@@ -380,3 +380,8 @@ int OXDDListBox::HandleKey(XKeyEvent *event) {
    }
    return true;
 }
+
+void OXDDListBox::Reconfig() {
+  OXCompositeFrame::Reconfig();
+  _ddframe->Reconfig();
+}

@@ -2404,4 +2404,44 @@ OPicture.cc
 
 - OXComboBox: defer sending messages until the popdown listbox is unmapped
   (like OXDDListBox does).
-  
+
+
+18/05/03  (0.8.3)
+
+- Fixed Reconfig() for OXScrollBar and OXButton.
+
+- Added Reconfig() to OXDDListBox, OXComboBox, OXPopupMenu, OXMenuTitle.
+
+
+15/09/03
+
+- Fixed a bug in OXClient's destructor: _Root must be deleted before _wlist.
+
+
+18/09/03
+
+- Added x_root and y_root fields to OHtmlMessage.
+
+
+12/12/03  Valeriy Onuchin <onuchin@users.sourceforge.net>
+
+- Corrected a bug in OHorizontalLayout.
+
+
+30/01/04
+
+- Corrected a problem in OXMdiDecorFrame that could potentially hang the
+  X session (for example, when clicking on a MDI window other than the last
+  focused while a modal dialog box is being displayed).
+
+
+27/06/04  (0.8.4)
+
+- Added OXToolBarButton from foxftp to the core lib.
+
+- Added FindHelpFile() method to OResourcePool.
+
+- Added OXHelpDoc, OXHelpPopup and OXHelpWindow clases. These implement a
+  html-based help system. To use it, user applications need only to create
+  a OXHelpWindow top-level window object and to pass the application and
+  root document names.

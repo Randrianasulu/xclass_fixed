@@ -214,6 +214,8 @@ public:
 	          unsigned long back = _defaultFrameBackground);
   virtual ~OXMdiDecorFrame();
 
+  virtual int HandleMaskEvent(XEvent *event);
+
   virtual int HandleButton(XButtonEvent *event);
   virtual int HandleConfigureNotify(XConfigureEvent *event);
 

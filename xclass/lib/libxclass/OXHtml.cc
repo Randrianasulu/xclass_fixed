@@ -788,20 +788,23 @@ void OXHtml::_Clear() {
     iDark[i] = 0;
     iLight[i] = 0;
   }
-  fgColor = AllocColor("black");
-  bgColor = AllocColor("white"); //AllocColor("#c0c0c0");
-  newLinkColor = AllocColor(DEF_HTML_UNVISITED);
-  oldLinkColor = AllocColor(DEF_HTML_VISITED);
-  selectionColor = AllocColor(DEF_HTML_SELECTION_COLOR);
 
-  apColor[COLOR_Normal] = fgColor;
-  apColor[COLOR_Visited] = oldLinkColor;
-  apColor[COLOR_Unvisited] = newLinkColor;
-  apColor[COLOR_Selection] = selectionColor;
-  apColor[COLOR_Background] = bgColor;
+  if (!_exiting) {
+    fgColor = AllocColor("black");
+    bgColor = AllocColor("white"); //AllocColor("#c0c0c0");
+    newLinkColor = AllocColor(DEF_HTML_UNVISITED);
+    oldLinkColor = AllocColor(DEF_HTML_VISITED);
+    selectionColor = AllocColor(DEF_HTML_SELECTION_COLOR);
 
-  SetupBackgroundColor(apColor[COLOR_Background]->pixel);
-  SetupBackgroundPic(NULL);  // use solid color
+    apColor[COLOR_Normal] = fgColor;
+    apColor[COLOR_Visited] = oldLinkColor;
+    apColor[COLOR_Unvisited] = newLinkColor;
+    apColor[COLOR_Selection] = selectionColor;
+    apColor[COLOR_Background] = bgColor;
+
+    SetupBackgroundColor(apColor[COLOR_Background]->pixel);
+    SetupBackgroundPic(NULL);  // use solid color
+  }
 
   colorUsed = 0;
   while (imageList) {
@@ -1018,7 +1021,8 @@ int OXHtml::HandleButton(XButtonEvent *event) {
     if (uri) {
       uri = ResolveUri(uri);
       if (uri) {
-        OHtmlMessage msg(MSG_HTML, MSG_CLICK, _widgetID, uri);
+        OHtmlMessage msg(MSG_HTML, MSG_CLICK, _widgetID, uri,
+                         event->x_root, event->y_root);
         SendMessage(_msgObject, &msg);
         delete[] uri;
       }
@@ -1045,7 +1049,8 @@ int OXHtml::HandleMotion(XMotionEvent *event) {
   if (uri != _lastUri) {
     _lastUri = uri;
     if (uri) uri = ResolveUri(uri);
-    OHtmlMessage msg(MSG_HTML, MSG_SELECT, _widgetID, uri);
+    OHtmlMessage msg(MSG_HTML, MSG_SELECT, _widgetID, uri,
+                     event->x_root, event->y_root);
     SendMessage(_msgObject, &msg);
     if (uri) delete[] uri;
   }
@@ -1179,6 +1184,7 @@ int OXHtml::InArea(OHtmlMapArea *p, int left, int top, int x, int y) {
     int dy = top + ip[1] - y;
     return (dx * dx + dy * dy <= ip[2] * ip[2]);
   }
+  return 0;
 }
 
 

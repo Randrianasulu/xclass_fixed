@@ -326,8 +326,8 @@ void HtmlTranslateEscapes(char *z) {
         // Translate the non-standard microsoft characters in the range of
         // 0x80 to 0x9f into something we can see.
 
-        if( v>=0x80 && v<0xa0 ){
-          v = acMsChar[v&0x1f];
+        if (v >= 0x80 && v < 0xa0) {
+          v = acMsChar[v & 0x1f];
         }
 
         // Put the character in the output stream in place of the "&#000;". 
@@ -379,7 +379,7 @@ void HtmlTranslateEscapes(char *z) {
         z[to++] = acMsChar[c & 0x1f];
         from += n;
       } else {
-        while( n-- ) z[to++] = z[from++];
+        while (n--) z[to++] = z[from++];
       }
 #else
     } else if (((unsigned char) z[from]) >= 0x80 &&
@@ -449,7 +449,7 @@ static void HtmlHashStats() {
   int notempty = 0;
   struct sgMap *p;
 
-  for(i=0; i<HTML_MARKUP_COUNT; i++){
+  for (i = 0; i < HTML_MARKUP_COUNT; i++) {
     cnt = 0; 
     p = apMap[i];
     if (p) notempty++;
@@ -459,8 +459,8 @@ static void HtmlHashStats() {
     }
     sum += cnt;
     if (cnt > max) max = cnt;
-    
   }
+
   printf("longest chain=%d  avg=%g  slots=%d  empty=%d (%g%%)\n",
     max, (double)sum/(double)notempty, i, i-notempty,
     100.0*(i-notempty)/(double)i);
@@ -1457,7 +1457,7 @@ OString *OXHtml::ListTokens(OHtmlElement *p, OHtmlElement *pEnd) {
         }
         str->Append(zName);
         str->Append(" ");
-        for(i = 0; i < p->count; ++i) {
+        for (i = 0; i < p->count; ++i) {
           str->Append(((OHtmlMarkupElement *)p)->argv[i]);
           str->Append(" ");
         }

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 #include <sys/wait.h>
 
 #include <xclass/OExec.h>
@@ -128,6 +129,8 @@ int OExec::HandleIdleEvent(OIdleHandler *idle) {
   _idle = NULL;
 
   //_pid = -1;
+
+  return True;
 }
 
 int OExec::Read(char *buf, int len) {
@@ -144,6 +147,8 @@ int OExec::Write(char *buf, int len) {
 
 int OExec::Kill(int signal) {
   if (_pid > 0) return kill(_pid, signal);
+  errno = ESRCH;
+  return -1;
 }
 
 int OExec::Wait(int options) {

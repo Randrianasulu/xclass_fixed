@@ -81,6 +81,9 @@ ICONS = Ghostview.s.xpm \
 	hcode.icon \
 	hdisk.t.xpm \
 	help.xpm \
+	help-contents.xpm \
+	help-next.xpm \
+	help-prev.xpm \
 	home.t.xpm \
 	home1.t.xpm \
 	image.xpm \

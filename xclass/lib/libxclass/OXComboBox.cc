@@ -224,3 +224,8 @@ int OXComboBox::ProcessMessage(OMessage *msg) {
 
   return True;
 }
+
+void OXComboBox::Reconfig() {
+  OXCompositeFrame::Reconfig();
+  _dd->Reconfig();
+}
