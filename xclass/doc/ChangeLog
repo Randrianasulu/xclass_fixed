@@ -2189,3 +2189,8 @@ OPicture.cc
 - Removed OXPopupMenu::HandleCrossing() method, it was no longer neccessary.
 
 - Corrected a bug in OXPopupMenu::HandleMotion().
+
+
+17/07/02
+
+- OXPopupMenu: added support for side pixmaps.

@@ -45,6 +45,10 @@
 #include <xclass/utils.h>
 #include <xclass/version.h>
 
+#include "menu_file.xpm"
+#include "menu_test.xpm"
+#include "menu_help.xpm"
+
 
 #define M_FILE_OPEN      1
 #define M_FILE_SAVE      2
@@ -191,6 +195,8 @@ OXTestMainFrame::OXTestMainFrame(const OXWindow *p, int w, int h) :
   _menuBarHelpLayout = new OLayoutHints(LHINTS_TOP | LHINTS_RIGHT);
 
   _menuFile = new OXPopupMenu(_client->GetRoot());
+  _menuFile->SetSidePic(_client->GetPicture("menu_file.xpm", menu_file_xpm),
+                        _client->GetColorByName("#808080"));
   _menuFile->AddEntry(new OHotString("&Open..."), M_FILE_OPEN);
   _menuFile->AddEntry(new OHotString("&Save"), M_FILE_SAVE);
   _menuFile->AddEntry(new OHotString("S&ave as..."), M_FILE_SAVEAS);
@@ -224,6 +230,8 @@ OXTestMainFrame::OXTestMainFrame(const OXWindow *p, int w, int h) :
   _cascadeMenu->AddPopup(new OHotString("C&ascaded 2"), _cascade2Menu);
 
   _menuTest = new OXPopupMenu(_client->GetRoot());
+  _menuTest->SetSidePic(_client->GetPicture("menu_test.xpm", menu_test_xpm),
+                        _client->GetColorByName("#808080"));
   _menuTest->AddEntry(new OHotString("&Dialog..."), M_TEST_DLG);
   _menuTest->AddEntry(new OHotString("&Message Box..."), M_TEST_MSGBOX);
   _menuTest->AddEntry(new OHotString("&Sliders..."), M_TEST_SLIDER);
@@ -231,6 +239,8 @@ OXTestMainFrame::OXTestMainFrame(const OXWindow *p, int w, int h) :
   _menuTest->AddPopup(new OHotString("&Cascaded menus"), _cascadeMenu);
 
   _menuHelp = new OXPopupMenu(_client->GetRoot());
+  _menuHelp->SetSidePic(_client->GetPicture("menu_help.xpm", menu_help_xpm),
+                        _client->GetColorByName("#808080"));
   _menuHelp->AddEntry(new OHotString("&Contents"), M_HELP_CONTENTS);
   _menuHelp->AddEntry(new OHotString("&Search..."), M_HELP_SEARCH);
   _menuHelp->AddSeparator();

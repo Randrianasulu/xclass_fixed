@@ -309,6 +309,46 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
 
 //-----------------------------------------------------------------
 
+OMenuEntry::OMenuEntry(int type, int id, OHotString *s, const OPicture *p) {
+  _type = type;
+  _entryID = id;
+  _label = s;
+  _pic = p;
+  _popup = NULL;
+  _status = MENU_ENABLE_MASK;
+  _hkeycode = 0;
+  prev = next = NULL;
+}
+
+OMenuEntry::~OMenuEntry() {
+  if (_label) delete _label;
+}
+
+
+//-----------------------------------------------------------------
+
+// space for the radio- and checkmarks:
+#define CHECKMARK_WIDTH  8
+
+// where the label starts (left margin):
+#define LEFT_GAP         (CHECKMARK_WIDTH + 8)
+
+// space between the icon and the text:
+#define PIC_GAP          6
+
+// width of the placeholder for the icon:
+#define PICHOLDER_WIDTH  (PIC_GAP + LEFT_GAP)   
+
+// space between left and right labels:
+#define TEXT_GAP         10
+
+// right margin:
+#define RIGHT_GAP        14
+
+// width of the popup menu symbol:
+#define POPUPMARK_WIDTH  8
+
+
 OXPopupMenu::OXPopupMenu(const OXWindow *p, int w, int h, 
 			 unsigned int options)
   : OXFrame(p, w, h, options | OWN_BKGND ) {
@@ -335,13 +375,18 @@ OXPopupMenu::OXPopupMenu(const OXWindow *p, int w, int h,
     _delay = NULL;
 
     _bw = 3;
-    _xl = _xr = 16;
+    _xl = _xr = LEFT_GAP;
     _first = _last = NULL;
+
+    _sidePic = NULL;
+    _sideBgnd = _backPixel;
+
     _msgObject = p;
     _stick = True;
     _current = NULL;
     _hasgrab = False;
     _popdown = False;
+
     mask = CWOverrideRedirect | CWSaveUnder;
     wattr.override_redirect = True;
     wattr.save_under = True;
@@ -362,97 +407,77 @@ OXPopupMenu::~OXPopupMenu() {
   if (_selbackGC != _defaultSelBckgndGC) delete _selbackGC;
   if (_font != _defaultFont) _client->FreeFont((OXFont *) _font);
   if (_hifont != _hilightFont) _client->FreeFont((OXFont *) _hifont);
+  if (_sidePic) {
+    _client->FreePicture(_sidePic);
+    _client->FreeColor(_sideBgnd);
+  }
 }
 
 void OXPopupMenu::AddEntry(OHotString *s, int ID, const OPicture *p) {
-  OMenuEntry *nw;
+  OMenuEntry *e;
   int hotchar;
 
-  nw = new OMenuEntry;
+  e = new OMenuEntry(MENU_ENTRY, ID, s, p);
 
-  nw->_label   = s;
-  nw->_pic     = p;
-  nw->_type    = MENU_ENTRY;
-  nw->_entryID = ID;
-  nw->_popup   = NULL;
-  nw->_status  = MENU_ENABLE_MASK;
-  nw->_ex  = 2;
-  nw->_ey  = _h-2;
-  nw->next = NULL;
-  nw->prev = NULL;
+  e->_ex = _sidePic ? _sidePic->GetWidth() + 4 : 2;
+  e->_ey = _h - 2;
 
   if ((hotchar = s->GetHotChar()) != 0)
-    nw->_hkeycode = XKeysymToKeycode(GetDisplay(), hotchar);
+    e->_hkeycode = XKeysymToKeycode(GetDisplay(), hotchar);
   else
-    nw->_hkeycode = 0;
+    e->_hkeycode = 0;
 
   if (_last == NULL) {
-    _first = _last = nw;
+    _first = _last = e;
   } else {
-    _last->next = nw;
-    nw->prev = _last;
-    _last = nw;
+    _last->next = e;
+    e->prev = _last;
+    _last = e;
   }
 
   AdjustSize();
 }
 
 void OXPopupMenu::AddSeparator() {
-  OMenuEntry *nw;
+  OMenuEntry *e;
 
-  nw = new OMenuEntry;
+  e = new OMenuEntry(MENU_SEPARATOR);
 
-  nw->_label   = NULL;
-  nw->_pic     = NULL;
-  nw->_type    = MENU_SEPARATOR;
-  nw->_entryID = -1;
-  nw->_popup   = NULL;
-  nw->_status  = MENU_ENABLE_MASK;
-  nw->_ex  = 2;
-  nw->_ey  = _h-2;
-  nw->_hkeycode = 0;
-  nw->next = NULL;
-  nw->prev = NULL;
+  e->_ex = _sidePic ? _sidePic->GetWidth() + 4 : 2;
+  e->_ey = _h - 2;
 
   if (_last == NULL) {
-    _first = _last = nw;
+    _first = _last = e;
   } else {
-    _last->next = nw;
-    nw->prev = _last;
-    _last = nw;
+    _last->next = e;
+    e->prev = _last;
+    _last = e;
   }
 
   AdjustSize();
 }
 
 void OXPopupMenu::AddPopup(OHotString *s, OXPopupMenu *popup) {
-  OMenuEntry *nw;
+  OMenuEntry *e;
   int hotchar;
 
-  nw = new OMenuEntry;
+  e = new OMenuEntry(MENU_POPUP, -2, s);
 
-  nw->_label   = s;
-  nw->_pic     = NULL;
-  nw->_type    = MENU_POPUP;
-  nw->_entryID = -2;
-  nw->_popup   = popup;
-  nw->_status  = MENU_ENABLE_MASK;
-  nw->_ex  = 2;
-  nw->_ey  = _h-2;
-  nw->next = NULL;
-  nw->prev = NULL;
+  e->_popup = popup;
+  e->_ex = _sidePic ? _sidePic->GetWidth() + 4 : 2;
+  e->_ey = _h - 2;
 
   if ((hotchar = s->GetHotChar()) != 0)
-    nw->_hkeycode = XKeysymToKeycode(GetDisplay(), hotchar);
+    e->_hkeycode = XKeysymToKeycode(GetDisplay(), hotchar);
   else
-    nw->_hkeycode = 0;
+    e->_hkeycode = 0;
 
   if (_last == NULL) {
-    _first = _last = nw;
+    _first = _last = e;
   } else {
-    _last->next = nw;
-    nw->prev = _last;
-    _last = nw;
+    _last->next = e;
+    e->prev = _last;
+    _last = e;
   }
 
   if (popup) popup->Associate(_msgObject);
@@ -501,25 +526,44 @@ void OXPopupMenu::RemoveAllEntries() {
   AdjustSize();
 }
 
+void OXPopupMenu::SetSidePic(const OPicture *p, unsigned long color) {
+  if (_sidePic) {
+    _client->FreePicture(_sidePic);
+    _client->FreeColor(_sideBgnd);
+  }
+  _sidePic = p;
+  _sideBgnd = color;
+
+  AdjustSize();
+}
+
 void OXPopupMenu::AdjustSize() {
   AdjustEntries();
   Resize(_mw, _mh);  // Resize(GetDefaultSize());
 }
 
 void OXPopupMenu::AdjustEntries() {
-  int lsize, rsize, sepw, tw, ltw, rtw, pw, w, h;
+  int lsize, rsize, sepw, tw, ltw, rtw, x0, spw, pw, w, h;
   const char *lstr, *rstr;
   OMenuEntry *ptr;
 
-  w = 8;
+  if (_sidePic) {
+    x0 = _sidePic->GetWidth() + 4;
+    spw = _sidePic->GetWidth();
+    w = spw + 8;
+  } else {
+    x0 = 2;
+    spw = 0;
+    w = 8;
+  }
   h = 6;
-  _xl = _xr = 16;
-  sepw = 10;
+  _xl = _xr = LEFT_GAP;
+  sepw = TEXT_GAP;
   lsize = rsize = 0;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next) {
-    ptr->_ex = 2;
-    ptr->_ey = h-2;
+    ptr->_ex = x0;
+    ptr->_ey = h - 2;
     switch (ptr->_type) {
       case MENU_ENTRY:
         lstr = ptr->_label->GetString();
@@ -533,15 +577,15 @@ void OXPopupMenu::AdjustEntries() {
           rtw = 0;
         }
         if (ptr->_pic) {
-          pw = ptr->_pic->GetWidth();
-          if (pw+12 > _xl) { w += pw+12-_xl; _xl = pw+12; }
+          pw = ptr->_pic->GetWidth() + PIC_GAP;
+          if (pw + LEFT_GAP > _xl) _xl = pw + LEFT_GAP;
         } else {
           pw = 0;
         }
         lsize = max(lsize, ltw);
         rsize = max(rsize, rtw);
         tw = (rsize > 0) ? lsize + rsize + sepw : ltw;
-        w = max(w, tw + pw /*+8*/+18+12);
+        w = max(w, spw + _xl + tw + RIGHT_GAP); // _xl already includes pw
         h += _hifont->TextHeight() + 3;
         break;
 
@@ -557,7 +601,7 @@ void OXPopupMenu::AdjustEntries() {
           rtw = 0;
         }
         tw = (rsize > 0) ? lsize + rsize + sepw : ltw;
-        w = max(w, tw +8+18+12);
+        w = max(w, spw + _xl + tw + RIGHT_GAP + POPUPMARK_WIDTH);
         h += _hifont->TextHeight() + 3;
         break;
 
@@ -601,11 +645,11 @@ void OXPopupMenu::PlaceMenu(int x, int y, int stick_mode, int grab_pointer) {
   MapRaised();
 
   if (grab_pointer) {
-    XGrabPointer(GetDisplay(), _id, False/*<<<Onyx True*/,
+    XGrabPointer(GetDisplay(), _id, False,
  		 ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
 		 GrabModeAsync, GrabModeAsync, 
                  None, GetResourcePool()->GetGrabCursor(), CurrentTime);
-    XGrabKeyboard(GetDisplay(), _id, False/*True*/,
+    XGrabKeyboard(GetDisplay(), _id, False,
 		  GrabModeAsync, GrabModeAsync,
                   CurrentTime);
     _hasgrab = True;
@@ -862,8 +906,6 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
 
 //  if (entry == _current) return;
 
-//  _popdown = False;
-
   //-- Deactivate the current entry
 
   if (_current && (_current != entry)) {
@@ -890,14 +932,13 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
 
         XTranslateCoordinates(GetDisplay(), _id,
                               (_current->_popup->GetParent())->GetId(),
-                              _current->_ex + _w, _current->_ey,
-                              &ax, &ay, &wdummy);
+                              _w, _current->_ey, &ax, &ay, &wdummy);
 
         int pw = _current->_popup->GetDefaultWidth();
 
         if (ax + pw > _client->GetDisplayWidth()) ax -= _w + pw - 7;
 
-        _current->_popup->PlaceMenu(ax-5, ay-1, False, False);
+        _current->_popup->PlaceMenu(ax-3, ay-1, False, False);
         _popdown = True;
       }
     } else if (entry->_type == MENU_ENTRY) {
@@ -920,14 +961,13 @@ int OXPopupMenu::HandleTimer(OTimer *t) {
 
       XTranslateCoordinates(GetDisplay(), _id,
                             (_current->_popup->GetParent())->GetId(),
-                            _current->_ex+_w, _current->_ey,
-                            &ax, &ay, &wdummy);
+                            _w, _current->_ey, &ax, &ay, &wdummy);
 
       int pw = _current->_popup->GetDefaultWidth();
 
       if (ax + pw > _client->GetDisplayWidth()) ax -= _w + pw - 7;
 
-      _current->_popup->PlaceMenu(ax-5, ay-1, False, False);
+      _current->_popup->PlaceMenu(ax-3, ay-1, False, False);
       _popdown = True;
     }
 
@@ -941,6 +981,26 @@ void OXPopupMenu::_DoRedraw() {
   OMenuEntry *ptr;
   
   OXFrame::_DoRedraw();
+
+  if (_sidePic) {
+    unsigned long fg = _normGC->GetForeground();
+    _normGC->SetForeground(_sideBgnd);
+    FillRectangle(_normGC->GetGC(), 3, 3, _sidePic->GetWidth(), _h - 6);
+
+    _normGC->SetClipMask(_sidePic->GetMask());
+    int clip_x = 3;
+    int clip_y = _h - _sidePic->GetHeight() - 3;
+    _normGC->SetClipXOrigin(clip_x);
+    _normGC->SetClipYOrigin(clip_y);
+
+    XCopyArea(GetDisplay(), _sidePic->GetPicture(), _id, _normGC->GetGC(),
+              0, 0, _sidePic->GetWidth(), _sidePic->GetHeight(),
+              clip_x, clip_y);
+
+    _normGC->SetClipMask(None);
+    _normGC->SetForeground(fg);
+  }
+
   for (ptr = _first; ptr != NULL; ptr = ptr->next) {
     DrawEntry(ptr);
   }
@@ -965,6 +1025,8 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
   int tr = entry->_ex + _xr;
   int ty = entry->_ey + fm.ascent;
   int th = font->TextHeight() + 3;
+  int px = entry->_ex + LEFT_GAP;
+  int ew = _w - 6 - (_sidePic ? _sidePic->GetWidth() + 2 : 0);
 
   GC sGC  = _selGC->GetGC();
   GC sbGC = _selbackGC->GetGC();
@@ -978,7 +1040,7 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
 
       if (entry->_status & MENU_ACTIVE_MASK) {
         XFillRectangle(GetDisplay(), _id, sbGC,
-                       entry->_ex+1, entry->_ey-1, _w-6, th);
+                       entry->_ex+1, entry->_ey-1, ew, th);
         if (entry->_type == MENU_POPUP)
           DrawTrianglePattern(sGC, _w-10, entry->_ey+3, _w-6, entry->_ey+11);
         if (entry->_status & MENU_CHECKED_MASK)
@@ -986,7 +1048,7 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
         if (entry->_status & MENU_RCHECKED_MASK)
           DrawRCheckMark(sGC, 6, entry->_ey+3, 14, entry->_ey+11);
         if (entry->_pic)
-          entry->_pic->Draw(GetDisplay(), _id, sGC, 8, entry->_ey+1);
+          entry->_pic->Draw(GetDisplay(), _id, sGC, px, entry->_ey+1);
 
         if (rstr) {
           entry->_label->Draw(GetDisplay(), _id,
@@ -1002,8 +1064,8 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
         }
 
       } else {
-//        XFillRectangle(GetDisplay(), _id, _bckgndGC,
-        XClearArea(GetDisplay(), _id, entry->_ex+1, entry->_ey-1, _w-6, th,false);
+//        FillRectangle(_bckgndGC,
+        ClearArea(entry->_ex+1, entry->_ey-1, ew, th, False);
 
         if (entry->_type == MENU_POPUP)
           DrawTrianglePattern(nGC, _w-10, entry->_ey+3, _w-6, entry->_ey+11);
@@ -1012,7 +1074,7 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
         if (entry->_status & MENU_RCHECKED_MASK)
           DrawRCheckMark(nGC, 6, entry->_ey+3, 14, entry->_ey+11);
         if (entry->_pic)
-          entry->_pic->Draw(GetDisplay(), _id, nGC, 8, entry->_ey+1);
+          entry->_pic->Draw(GetDisplay(), _id, nGC, px, entry->_ey+1);
 
         if (rstr) {
           if (entry->_status & MENU_ENABLE_MASK) {
@@ -1039,8 +1101,8 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
       break;
 
    case MENU_SEPARATOR:
-      XDrawLine(GetDisplay(), _id, _shadowGC,  2, entry->_ey, _w-3, entry->_ey);
-      XDrawLine(GetDisplay(), _id, _hilightGC, 2, entry->_ey+1, _w-3, entry->_ey+1);
+      DrawLine(_shadowGC,  entry->_ex, entry->_ey, _w-3, entry->_ey);
+      DrawLine(_hilightGC, entry->_ex, entry->_ey+1, _w-3, entry->_ey+1);
       break;
    }
 
@@ -1052,15 +1114,15 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
 }
 
 void OXPopupMenu::DrawBorder() {
-  XDrawLine (GetDisplay(), _id, _bckgndGC, 0, 0, _w-2, 0);
-  XDrawLine (GetDisplay(), _id, _bckgndGC, 0, 0, 0, _h-2);
-  XDrawLine (GetDisplay(), _id, _hilightGC, 1, 1, _w-3, 1);
-  XDrawLine (GetDisplay(), _id, _hilightGC, 1, 1, 1, _h-3);
+  DrawLine(_bckgndGC, 0, 0, _w-2, 0);
+  DrawLine(_bckgndGC, 0, 0, 0, _h-2);
+  DrawLine(_hilightGC, 1, 1, _w-3, 1);
+  DrawLine(_hilightGC, 1, 1, 1, _h-3);
     
-  XDrawLine (GetDisplay(), _id, _shadowGC,  1, _h-2, _w-2, _h-2);
-  XDrawLine (GetDisplay(), _id, _shadowGC,  _w-2, _h-2, _w-2, 1);
-  XDrawLine (GetDisplay(), _id, _blackGC, 0, _h-1, _w-1, _h-1);
-  XDrawLine (GetDisplay(), _id, _blackGC, _w-1, _h-1, _w-1, 0);
+  DrawLine(_shadowGC,  1, _h-2, _w-2, _h-2);
+  DrawLine(_shadowGC,  _w-2, _h-2, _w-2, 1);
+  DrawLine(_blackGC, 0, _h-1, _w-1, _h-1);
+  DrawLine(_blackGC, _w-1, _h-1, _w-1, 0);
 }
 
 void OXPopupMenu::DrawTrianglePattern(GC gc, int l, int t, int r, int b) {
@@ -1250,10 +1312,18 @@ void OXMenuTitle::SetState(int state) {
       Window wdummy;
 
       XTranslateCoordinates(GetDisplay(), _id, (_menu->GetParent())->GetId(),
-			0, 0, &ax, &ay, &wdummy);
+                            0, 0, &ax, &ay, &wdummy);
 
-      // Place the menu just under the window :
-      _menu->PlaceMenu(ax-1, ay+_h, True, False); //True);
+      int pw = _menu->GetDefaultWidth();
+
+#if 1
+      if (ax + pw > _client->GetDisplayWidth()) ax -= pw - _w - 2;
+#else
+      if (ax + pw > _client->GetDisplayWidth()) ax += _w + 2;
+#endif
+
+      // Place the menu just under the window:
+      _menu->PlaceMenu(ax-1, ay+_h, True, False);
     }
   } else {
     if (_menu) {

@@ -55,9 +55,10 @@ class OXPopupMenu;
 
 class OMenuEntry : public OBaseObject {
 public:
-//  OMenuEntry(...);
-  virtual ~OMenuEntry() { if (_label) delete _label; }
-//
+  OMenuEntry(int type, int id = -1,
+             OHotString *s = NULL, const OPicture *p = NULL);
+  virtual ~OMenuEntry();
+
 //  virtual void DrawEntry(...);
 
   friend class OXPopupMenu;
@@ -86,6 +87,13 @@ public:
 	      unsigned int options = 0);
   virtual ~OXPopupMenu();
 
+  virtual int HandleButton(XButtonEvent *event);
+  virtual int HandleMotion(XMotionEvent *event);
+  virtual int HandleKey(XKeyEvent *event);
+  virtual int HandleTimer(OTimer *t);
+
+  virtual ODimension GetDefaultSize() const;
+
   void AddEntry(OHotString *s, int ID, const OPicture *p = NULL);
   void AddSeparator();
   void AddPopup(OHotString *s, OXPopupMenu *popup);
@@ -103,13 +111,10 @@ public:
   void PlaceMenu(int x, int y, int stick_mode, int grab_pointer);
   int  PopupMenu(int x, int y);
   int  EndMenu();
+  void SetSidePic(const OPicture *pic, unsigned long bgnd_pixel);
+
   virtual void Activate(OMenuEntry *entry, int delayed = True);
   virtual void DrawBorder();
-  virtual int  HandleButton(XButtonEvent *event);
-  virtual int  HandleMotion(XMotionEvent *event);
-  virtual int  HandleKey(XKeyEvent *event);
-  virtual int  HandleTimer(OTimer *t);
-  virtual ODimension GetDefaultSize() const;
 
   friend class OXMenuTitle;
 
@@ -131,6 +136,8 @@ protected:
   int _xl, _xr;
   int _mw, _mh;    // temp!
   OTimer *_delay;
+  const OPicture *_sidePic;
+  unsigned long _sideBgnd;
 };
 
 class OXMenuTitle : public OXFrame {
