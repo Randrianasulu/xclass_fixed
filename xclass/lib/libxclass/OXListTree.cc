@@ -211,6 +211,8 @@ void OXListTree::__NeedFullRedraw(int clrbg) {
 int OXListTree::HandleButton(XButtonEvent *event) {
   OListTreeItem *item;
 
+  if (OXView::HandleButton(event)) return True;  // mouse-wheel scroll
+
   OPosition ep = ToVirtual(OPosition(event->x, event->y));
 
   if (event->type == ButtonPress) {
@@ -241,6 +243,8 @@ int OXListTree::HandleButton(XButtonEvent *event) {
 
 int OXListTree::HandleDoubleClick(XButtonEvent *event) {
   OListTreeItem *item;
+
+  if (event->button != Button1) return False;
 
   OPosition ep = ToVirtual(OPosition(event->x, event->y));
 

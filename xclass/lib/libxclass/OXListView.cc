@@ -367,6 +367,20 @@ OXListView::~OXListView() {
   delete _header;
 }
 
+int OXListView::HandleButton(XButtonEvent *event) {
+
+  if ((_viewMode == LV_LIST) && (event->type == ButtonPress)) {
+    if (event->button == Button4) {
+      ScrollRight(_scrollValue.x);
+      return True;
+    } else if (event->button == Button5) {
+      ScrollLeft(_scrollValue.x);
+      return True;
+    }
+  }
+
+  return OXItemView::HandleButton(event);
+}
 
 //----------------------------------------------------------------------
 
@@ -832,6 +846,7 @@ void OXListView::AddItem(OListViewItem *newItem) {
 
   newItem->SetViewMode(_viewMode);
   CalcMaxItemSize();
+
 //  Layout();
 }
 
@@ -921,7 +936,7 @@ bool OXListView::ItemLayout() {
 
         itemSize = _items[i]->GetDefaultSize();
 
-        itemPos.x = currentPos.x + (maxItemSize.w - itemSize.w) / 2;
+        itemPos.x = currentPos.x + ((int) maxItemSize.w - (int) itemSize.w) / 2;
         itemPos.y = currentPos.y;
 
         if ((_items[i]->GetPosition().x != itemPos.x) ||
@@ -956,7 +971,7 @@ bool OXListView::ItemLayout() {
         itemSize = _items[i]->GetDefaultSize();
 
         itemPos.x = currentPos.x;
-        itemPos.y = currentPos.y + (maxItemSize.h - itemSize.h) / 2;
+        itemPos.y = currentPos.y + ((int) maxItemSize.h - (int) itemSize.h) / 2;
 
         if ((_items[i]->GetPosition().x != itemPos.x) ||
             (_items[i]->GetPosition().y != itemPos.y)) {
@@ -990,7 +1005,7 @@ bool OXListView::ItemLayout() {
         itemSize = _items[i]->GetDefaultSize();
 
         itemPos.x = currentPos.x;
-        itemPos.y = currentPos.y + (maxItemSize.h - itemSize.h) / 2;
+        itemPos.y = currentPos.y + ((int) maxItemSize.h - (int) itemSize.h) / 2;
 
         if ((_items[i]->GetPosition().x != itemPos.x) ||
             (_items[i]->GetPosition().y != itemPos.y)) {

@@ -24,16 +24,20 @@ SRCS = btest.cc \
 	docktest.cc \
 	exec.cc \
 	favordlg.cc \
+	flies.cc \
 	ftest.cc \
 	listview.cc \
 	mditest.cc \
 	progbar.cc \
 	resizer.cc \
+	root_flies.cc \
+	root_trails.cc \
 	spinnertest.cc \
 	shutter.cc \
 	shutter1.cc \
 	test4.cc \
 	textedit.cc \
+	trails.cc \
 	wintest.cc \
 	xdnd.cc
 

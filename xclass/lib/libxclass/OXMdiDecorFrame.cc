@@ -219,8 +219,17 @@ int OXMdiDecorFrame::HandleConfigureNotify(XConfigureEvent *event) {
 }
 
 void OXMdiDecorFrame::SetGrab() {
+#if 1
+  XGrabButton(GetDisplay(), Button1, AnyModifier, _id, True,
+              ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+  XGrabButton(GetDisplay(), Button2, AnyModifier, _id, True,
+              ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+  XGrabButton(GetDisplay(), Button3, AnyModifier, _id, True,
+              ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+#else
   XGrabButton(GetDisplay(), AnyButton, AnyModifier, _id, True,
               ButtonPressMask, GrabModeSync, GrabModeAsync, None, None);
+#endif
 }
 
 void OXMdiDecorFrame::UnsetGrab() {

@@ -365,6 +365,8 @@ int OXItemView::HandleButton(XButtonEvent *event) {
   bool selChange = False;
   int inv, add;
 
+  if (OXView::HandleButton(event)) return True;  // wheel-mouse scroll
+
   if (event->type == ButtonPress) {
 
     if (TakesFocus()) RequestFocus();
@@ -443,7 +445,7 @@ int OXItemView::HandleButton(XButtonEvent *event) {
 }
 
 int OXItemView::HandleDoubleClick(XButtonEvent *event) {
-  if (event->button != Button1) return True;
+  if (event->button != Button1) return False;
 
   if (_selectedItems.size() > 0) {
     OItemViewMessage message(_msgType, MSG_DBLCLICK, _widgetID, event->button,

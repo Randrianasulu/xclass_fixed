@@ -1,6 +1,6 @@
 /**************************************************************************
 
-    This file is part of notepad95, a text editor for fvwm95.
+    This is a test program for xclass OXResizers.
     Copyright (C) 1997, Harald Radke.
 
     This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,6 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 **************************************************************************/
-
 
 #include <stdio.h>
 

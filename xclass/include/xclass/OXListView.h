@@ -112,6 +112,7 @@ public:
   virtual ~OXListView();
 
   virtual int HandleKey(XKeyEvent *event);
+  virtual int HandleButton(XButtonEvent *event);
 
   virtual int ProcessMessage(OMessage *msg);
 

@@ -78,6 +78,7 @@ public:
 
   virtual void Layout();
   virtual int  ProcessMessage(OMessage *msg);
+  virtual int  HandleButton(XButtonEvent *event);
   virtual int  HandleExpose(XExposeEvent *event);
   virtual int  HandleGraphicsExpose(XGraphicsExposeEvent *event);
   virtual void DrawBorder();
@@ -159,27 +160,27 @@ public:
   OXViewCanvas(const OXView *p, int w, int h, unsigned int options = 0);
 
   virtual int HandleSelectionRequest(XSelectionRequestEvent *event)
-    { ((OXView *) _parent)->HandleSelectionRequest(event); return True; }
+    { return ((OXView *) _parent)->HandleSelectionRequest(event); }
   virtual int HandleSelectionClear(XSelectionClearEvent *event)
-    { ((OXView *) _parent)->HandleSelectionClear(event); return True; }
+    { return ((OXView *) _parent)->HandleSelectionClear(event); }
   virtual int HandleSelection(XSelectionEvent *event)
-    { ((OXView *) _parent)->HandleSelection(event); return True; }
+    { return ((OXView *) _parent)->HandleSelection(event); }
   virtual int HandleButton(XButtonEvent *event)
-    { ((OXView *) _parent)->HandleButton(event); return True; }
+    { return ((OXView *) _parent)->HandleButton(event); }
   virtual int HandleDoubleClick(XButtonEvent *event)
-    { ((OXView *) _parent)->HandleDoubleClick(event); return True; }
+    { return ((OXView *) _parent)->HandleDoubleClick(event); }
   virtual int HandleTripleClick(XButtonEvent *event)
-    { ((OXView *) _parent)->HandleTripleClick(event); return True; }
+    { return ((OXView *) _parent)->HandleTripleClick(event); }
   virtual int HandleExpose(XExposeEvent *event)
     { _DoRedraw(); ((OXView *) _parent)->HandleExpose(event); return True; }
   virtual int HandleGraphicsExpose(XGraphicsExposeEvent *event)
     { _DoRedraw(); ((OXView *) _parent)->HandleGraphicsExpose(event); return True; }
   virtual int HandleCrossing(XCrossingEvent *event)
-    { ((OXView *) _parent)->HandleCrossing(event); return True; }
+    { return ((OXView *) _parent)->HandleCrossing(event); }
   virtual int HandleMotion(XMotionEvent *event)
-    { ((OXView *) _parent)->HandleMotion(event); return True; }
+    { return ((OXView *) _parent)->HandleMotion(event); }
   virtual int HandleKey(XKeyEvent *event)
-    { ((OXView *) _parent)->HandleKey(event); return True; }
+    { return ((OXView *) _parent)->HandleKey(event); }
 
   virtual void Reconfig() {}
 

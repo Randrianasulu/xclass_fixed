@@ -87,6 +87,8 @@ OXView::OXView(const OXWindow *p, int w, int h, int id,
     _exposedRegion.empty();
 
     Clear();
+
+    AddInput(ButtonPressMask | ButtonReleaseMask);
 }
 
 OXView::~OXView() {
@@ -129,6 +131,33 @@ void OXView::UpdateBackgroundStart() {
   gcv.ts_x_origin = -_visibleStart.x;
   gcv.ts_y_origin = -_visibleStart.y;
   XChangeGC(GetDisplay(), _backGC, mask, &gcv);
+}
+
+int OXView::HandleButton(XButtonEvent *event) {
+  if (event->type == ButtonPress) {
+    int amount, ch;
+
+    ch = _canvas->GetHeight();
+    if (_scrollValue.y == 1)
+      amount = _scrollValue.y * max(ch / 6, 1);
+    else
+      amount = _scrollValue.y * 5;
+
+    if (event->state & ShiftMask)
+      amount = _scrollValue.y;
+    else if (event->state & ControlMask)
+      amount = ch - max(ch / 20, 1);
+
+    if (event->button == Button4) {
+      ScrollDown(amount);
+      return True;
+    } else if (event->button == Button5) {
+      ScrollUp(amount);
+      return True;
+    }
+
+  }
+  return False;
 }
 
 int OXView::HandleExpose(XExposeEvent *event) {

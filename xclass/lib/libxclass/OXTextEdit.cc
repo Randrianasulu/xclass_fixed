@@ -225,6 +225,8 @@ int OXTextEdit::HandleButton(XButtonEvent *event) {
   int n;
   OTextLine *eventItem = NULL;
 
+  if (OXView::HandleButton(event)) return True;  // wheel-mouse scroll
+
   OPosition eventPos = ToVirtual(OPosition(event->x, event->y));
 
   eventPos = AdjustCoord(eventPos);
@@ -301,6 +303,8 @@ int OXTextEdit::HandleDoubleClick(XButtonEvent *event) {
   int n;
   OTextLine *eventItem = NULL;
 
+  if (event->button != Button1) return False;
+
   OPosition eventPos = ToVirtual(OPosition(event->x, event->y));
 
   eventPos = AdjustCoord(eventPos);
@@ -376,6 +380,8 @@ int OXTextEdit::HandleDoubleClick(XButtonEvent *event) {
 int OXTextEdit::HandleTripleClick(XButtonEvent *event) {
   int n;
   OTextLine *eventItem = NULL;
+
+  if (event->button != Button1) return False;
 
   OPosition eventPos = ToVirtual(OPosition(event->x, event->y));
 

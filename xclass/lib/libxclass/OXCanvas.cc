@@ -46,9 +46,45 @@ OXCanvas::OXCanvas(const OXWindow *p, int w, int h,
     OXCompositeFrame::AddFrame(_hscrollbar, NULL);
     OXCompositeFrame::AddFrame(_vscrollbar, NULL);
     OXCompositeFrame::AddFrame(_vport, NULL);
+
+#if 0
+    XGrabButton(GetDisplay(), Button4, AnyModifier, _id, True/*False*/,
+                ButtonPressMask | ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+
+    XGrabButton(GetDisplay(), Button5, AnyModifier, _id, True/*False*/,
+                ButtonPressMask | ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+#else
+    AddInput(ButtonPressMask);
+#endif
 }
            
 OXCanvas::~OXCanvas() {
+}
+
+int OXCanvas::HandleButton(XButtonEvent *event) {
+  if (event->type == ButtonPress) {
+    int amount, ch;
+
+    ch = _vport->GetHeight();
+    amount = max(ch / 6, 1);
+
+    if (event->state & ShiftMask)
+      amount = 1;
+    else if (event->state & ControlMask)
+      amount = ch - max(ch / 20, 1);
+
+    if (event->button == Button4) {
+      SetVPos(-_vport->GetVPos() - amount);
+      return True;
+    } else if (event->button == Button5) {
+      SetVPos(-_vport->GetVPos() + amount);
+      return True;
+    }
+
+  }
+  return False;
 }
 
 void OXCanvas::AddFrame(OXFrame *f, OLayoutHints *l) {

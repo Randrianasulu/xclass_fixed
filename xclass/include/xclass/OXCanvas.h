@@ -96,6 +96,8 @@ public:
            unsigned int options = SUNKEN_FRAME | DOUBLE_BORDER,
            unsigned long back = _defaultFrameBackground);
   virtual ~OXCanvas();
+  
+  virtual int HandleButton(XButtonEvent *event);
 
   virtual void AddFrame(OXFrame *f, OLayoutHints *l);
   OXFrame *GetContainer() const { return _vport->GetContainer(); }

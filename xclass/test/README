@@ -48,3 +48,13 @@ colorsel - used to test the color select button and color selection dialog.
 mditest  - a simple MDI application, used to test the OXMdi set of classes.
 
 docktest - used to test the "dockable" frame widget.
+
+flies,
+trails   - simple animation programs, used to test OTimer and animation
+           with OXFrames. These programs are based on popular JavaScripts.
+
+root_flies,
+root_trails - similar to the above programs, but they run on the root window
+              of the screen. Used to test the OXRootWindow object, shows how
+              to subclass it. The root_flies program accepts an '-ontop'
+              option to keep the fileson top of all other windows.

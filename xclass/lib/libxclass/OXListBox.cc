@@ -132,8 +132,7 @@ OXLBContainer::OXLBContainer(const OXWindow *p, int w, int h,
 //    SetLayoutManager(new OColumnLayout(this, 0));
 
     XGrabButton(GetDisplay(), AnyButton, AnyModifier, _id, False,
-                ButtonPressMask | ButtonReleaseMask |
-                PointerMotionMask,
+                ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                 GrabModeAsync, GrabModeAsync, None, None);
 }
 
@@ -515,6 +514,12 @@ int OXLBContainer::HandleButton(XButtonEvent *event) {
   int selected = 0;
 
   if (event->type == ButtonPress) {
+    if (event->button == Button4) {
+      return True;
+    } else if (event->button == Button5) {
+      return True;
+    }
+
     if (event->state & ShiftMask) {
       if (_multipleSelect) {
         if (_last_active) {

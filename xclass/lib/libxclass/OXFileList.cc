@@ -867,6 +867,8 @@ int OXFileList::HandleButton(XButtonEvent *event) {
 
   OXListView::HandleButton(event);
 
+  if ((event->button == Button4) || (event->button == Button5)) return True;
+
   if (event->type == ButtonPress) {
     //_xp = event->x;
     //_yp = event->y;
