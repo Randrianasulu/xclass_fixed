@@ -14,6 +14,9 @@
 
 #include "OXIconSelDialog.h"
 
+// shall we substitute the contents of the OXFSDDListBox with the
+// picture pool paths?
+
 
 //----------------------------------------------------------------------
 
