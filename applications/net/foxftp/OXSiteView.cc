@@ -108,7 +108,7 @@ OXSiteView::OXSiteView(OXMdiMainFrame *p, OMimeTypes *mime_types,
   ChangeOptions(VERTICAL_FRAME);
 
   _selectMenu = new OXPopupMenu(_client->GetRoot());
-  _selectMenu->AddPopup(new OHotString("&Transfer"), p->GetWinListMenu());
+  _selectMenu->AddPopup(new OHotString("&Transfer To"), p->GetWinListMenu());
   _selectMenu->AddSeparator();
   _selectMenu->AddEntry(new OHotString("C&opy"), M_FC_COPY);
   _selectMenu->AddEntry(new OHotString("P&aste"), M_FC_PASTE);
