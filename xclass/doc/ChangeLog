@@ -2290,3 +2290,8 @@ OPicture.cc
 
 - OXListTree: added OpenNode() and CloseNode(). These should be used instead
   of directly manipulating the 'open' property of OListTreeItem.
+
+
+23/08/02
+
+- Added RenameEntry() and SetEntryPic() to OXPopupMenu.

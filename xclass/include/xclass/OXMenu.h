@@ -108,6 +108,8 @@ public:
   int  IsEntryChecked(int ID);
   void RCheckEntry(int ID, int IDfirst, int IDlast);
   int  IsEntryRChecked(int ID);
+  int  RenameEntry(int ID, OHotString *s);
+  int  SetEntryPic(int ID, const OPicture *p = NULL);
   void PlaceMenu(int x, int y, int stick_mode, int grab_pointer);
   int  PopupMenu(int x, int y);
   int  EndMenu();

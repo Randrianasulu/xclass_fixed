@@ -487,6 +487,49 @@ void OXPopupMenu::AddPopup(OHotString *s, OXPopupMenu *popup, int ID) {
   AdjustSize();
 }
 
+int OXPopupMenu::RenameEntry(int ID, OHotString *s) {
+  OMenuEntry *ptr;
+  int hotchar;
+
+  if (!s) return False;
+
+  for (ptr = _first; ptr; ptr = ptr->next) {
+    if (ptr->_entryID == ID) break;
+  }
+
+  if (!ptr || (ptr->_type == MENU_SEPARATOR)) return False;
+
+  if (ptr->_label) delete ptr->_label;
+  ptr->_label = s;
+
+  if ((hotchar = s->GetHotChar()) != 0)
+    ptr->_hkeycode = XKeysymToKeycode(GetDisplay(), hotchar);
+  else
+    ptr->_hkeycode = 0;
+
+  AdjustSize();
+
+  return True;
+}
+
+int OXPopupMenu::SetEntryPic(int ID, const OPicture *p) {
+  OMenuEntry *ptr;
+  int hotchar;
+
+  for (ptr = _first; ptr; ptr = ptr->next) {
+    if (ptr->_entryID == ID) break;
+  }
+
+  if (!ptr || (ptr->_type == MENU_SEPARATOR)) return False;
+
+  //if (ptr->_pic) _client->FreePicture(ptr->_pic);
+  ptr->_pic = p;
+
+  AdjustSize();
+
+  return True;
+}
+
 void OXPopupMenu::RemoveEntry(int ID, int type) {
   OMenuEntry *ptr, *ptr2;
 
