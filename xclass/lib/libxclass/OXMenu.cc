@@ -360,6 +360,7 @@ OXPopupMenu::OXPopupMenu(const OXWindow *p, int w, int h,
     if (_defaultBackgroundPicture)
         SetBackgroundPixmap(_defaultBackgroundPicture->GetPicture());
 
+    AddInput(StructureNotifyMask);
     AddInput(PointerMotionMask | EnterWindowMask | LeaveWindowMask);
 }
 
@@ -620,6 +621,14 @@ void OXPopupMenu::PlaceMenu(int x, int y, int stick_mode, int grab_pointer) {
   } else {
     _hasgrab = False;
   }
+}
+
+int OXPopupMenu::PopupMenu(int x, int y) {
+  PlaceMenu(x, y, True, True);
+  _client->WaitForUnmap(this);
+  if (_current && _current->_status & MENU_ENABLE_MASK)
+    return _current->_entryID;
+  return -1;
 }
 
 int OXPopupMenu::EndMenu() {

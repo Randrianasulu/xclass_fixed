@@ -101,6 +101,7 @@ public:
   void RCheckEntry(int ID, int IDfirst, int IDlast);
   int  IsEntryRChecked(int ID);
   void PlaceMenu(int x, int y, int stick_mode, int grab_pointer);
+  int  PopupMenu(int x, int y);
   int  EndMenu();
   virtual void Activate(OMenuEntry *entry, int delayed = True);
   virtual void DrawBorder();

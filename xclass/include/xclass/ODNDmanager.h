@@ -121,7 +121,7 @@ protected:
 protected:
   OXMainFrame *_main;
   Atom _version;           // not really an Atom, but a long
-  Atom *_typelist, *_draggerTypes, _dropType, _acceptedAction;
+  Atom *_typelist, *_draggerTypes, _dropType, _acceptedAction, _localAction;
   Display *_dpy;
 
   int _dragging, _dropAccepted, _statusPending, _useVersion, _proxy_ours;

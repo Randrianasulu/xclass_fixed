@@ -1916,3 +1916,11 @@ OPicture.cc
   None only after HandleDNDdrop has been called.
 
 - ODNDmanager: pass also root coordintes to OXFrame::HandleDNDposition().
+
+
+27/10/01
+
+- OXPopupMenu:: added PopupMenu() convenience method.
+
+- Fixed a minor bug in ODNDmanager. Now the proper action is set in ODNDdata
+  before the drop is sent to the target widget.

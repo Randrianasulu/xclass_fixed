@@ -364,7 +364,6 @@ OXFileList::OXFileList(const OXWindow *p, int id,
     AddColumn(new OString(""), 1000);
 
     _bdown = False;
-    _dndAction = None;
 
     _showDotFiles = True;
 
@@ -800,11 +799,13 @@ Atom OXFileList::HandleDNDposition(int x, int y, Atom action,
                                    int xroot, int yroot) {
   int nx = 0, ny = 0;
 
+  _dropPos = OPosition(xroot, yroot);
+
 #if 1
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(this, x, y, &nx, &ny);
   nx -= _canvas->GetX();
   ny -= _canvas->GetY();
-#else  // won't work until OXView gets composite!
+#else  // this won't work until OXView gets composite!
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(_canvas, x, y, &nx, &ny);
 #endif
 
@@ -827,36 +828,39 @@ Atom OXFileList::HandleDNDposition(int x, int y, Atom action,
       if (S_ISDIR(type) || 
           (type & S_IXUSR) || (type & S_IXGRP) || (type & S_IXOTH)) {
         _dragOver->Select(True);
-        return _dndAction = action;
+        return action;
       }
 #else
       SelectItem(_dragOver, True);
 
       // directories usually would accept any of the standard xdnd actions...
-      if (S_ISDIR(type)) return _dndAction = action;
+      if (S_ISDIR(type)) return action;
 
       // for executable files we should return XdndActionPrivate
       // but remember if the source requested XdndActionAsk in order
       // to give the user a choice using a context menu...
       if ((type & S_IXUSR) || (type & S_IXGRP) || (type & S_IXOTH))
-        return _dndAction = ODNDmanager::DNDactionPrivate;
+        return ODNDmanager::DNDactionPrivate;
 
       // otherwise refuse the drop
-      return _dndAction = None;
+      return None;
 #endif
     }
   }
 
-  return _dndAction = action;
+  return action;
 }
 
 int OXFileList::HandleDNDdrop(ODNDdata *data) {
-  if (_dragOver) {
+  if (_dragOver)
     SelectItem(_dragOver, _dragOverPrevState);
-    _dragOver = NULL;
-  }
-  ODNDmessage msg(_msgType, MSG_DROP, _id, data, _dndAction);
+
+  ODNDmessage msg(_msgType, MSG_DROP, _id, data, data->action,
+                  _dropPos, _dragOver);
   SendMessage(_msgObject, &msg);
+
+  _dragOver = NULL;
+
   return True;
 }
 
@@ -901,10 +905,18 @@ int OXFileList::HandleMotion(XMotionEvent *event) {
     }
   }
   if (_dragging) {
-    _dndManager->Drag(event->x_root, event->y_root,
-                      (event->state & ControlMask) ?
-                      ODNDmanager::DNDactionCopy : ODNDmanager::DNDactionMove,
-                      event->time);
+    int action;
+
+    if (event->state & Button3Mask) {
+      action = ODNDmanager::DNDactionAsk;
+    } else {
+      if (event->state & ControlMask) {
+        action = ODNDmanager::DNDactionCopy;
+      } else {
+        action = ODNDmanager::DNDactionMove;
+      }
+    }
+    _dndManager->Drag(event->x_root, event->y_root, action, event->time);
   }
   return True;
 }
@@ -916,7 +928,7 @@ ODNDdata *OXFileList::GetDNDdata(Atom dataType) {
   if (_anchorItem && dataType == URI_list) {
     char cwd[PATH_MAX];
 
-    sprintf(str, "file:%s/%s\r\n",
+    sprintf(str, "file://localhost/%s/%s\r\n",
                  getcwd(cwd, PATH_MAX),
                  ((OFileItem *)_anchorItem)->GetName(0)->GetString());
     data.data = (void *) str;

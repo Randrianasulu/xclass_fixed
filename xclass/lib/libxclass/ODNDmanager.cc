@@ -97,7 +97,8 @@ ODNDmanager::ODNDmanager(OXClient *client, OXMainFrame *toplevel,
   _targetIsDNDaware = False;
   _statusPending = False;
   _dropAccepted = False;  // this would become obsoleted by _acceptedAction
-  _acceptedAction = None;
+  _acceptedAction = None; // target's accepted action
+  _localAction = None;    // our last specified action when we act as source
   _dragging = False;
   _dragWin = NULL;
   _localSource = NULL;
@@ -646,7 +647,7 @@ int ODNDmanager::_HandleDNDposition(Window source, int x_root, int y_root,
     action = None;
   }
 
-  _SendDNDstatus(source, action);
+  _SendDNDstatus(source, _localAction = action);
 
   return True;
 }
@@ -770,13 +771,14 @@ int ODNDmanager::HandleSelection(XSelectionEvent *event) {
     // send the data to the target widget
 
     if (_localTarget) {
-      ODNDdata dndData(actual, data, count, _acceptedAction);
+      ODNDdata dndData(actual, data, count, _localAction);
       _localTarget->HandleDNDdrop(&dndData);
       if (_draggerTypes) delete[] _draggerTypes;
       _draggerTypes = NULL;
     }
 
     _source = None;
+    _localAction = None;
 
     XFree(data);
 
@@ -831,6 +833,7 @@ int ODNDmanager::StartDrag(OXFrame *src, int x_root, int y_root,
   _dropTimeout = NULL;
   _dropAccepted = False;
   _acceptedAction = None;
+  _localAction = None;
 
   if (!_dragWin && _pic != None && _mask != None) {
     _dragWin = new OXDragWindow(_client->GetRoot(), _pic, _mask);

@@ -49,15 +49,21 @@
 #include <xclass/OMessage.h>
 
 class ODNDmanager;
+class OFileItem;
 
 class ODNDmessage : public OWidgetMessage {
 public:
-  ODNDmessage(int typ, int act, int id, ODNDdata *d, Atom a) :
-    OWidgetMessage(typ, act, id) { data = d; dndAction = a; }
+  ODNDmessage(int typ, int act, int id, ODNDdata *d, Atom a,
+              OPosition p, OFileItem *i) :
+    OWidgetMessage(typ, act, id) {
+      data = d; dndAction = a; pos = p; dragOver = i;
+  }
 
 public:
   ODNDdata *data;
   Atom dndAction;
+  OFileItem *dragOver;
+  OPosition pos;
 };
 
 class OFileItem : public OListViewItem {
@@ -156,12 +162,12 @@ protected:
   const OPicture *_desktop_t, *_desktop_s;
   const OPicture *_rbempty_t, *_rbempty_s;
   const OPicture *_rbfull_t,  *_rbfull_s;
-  Atom _dndAction;
   ODNDmanager *_dndManager;
   char *_recyclePath, *_desktopPath;
 
   int _autoRefresh, _dragging, _dragOverPrevState;
   OFileItem *_dragOver;
+  OPosition _dropPos;
 };
 
 
