@@ -96,9 +96,9 @@ int OXDDPopup::HandleKey(XKeyEvent *event) {
 
 int OXDDPopup::ProcessMessage(OMessage *msg) {
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_LISTBOX:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
           if (!_kev) {
             EndPopup();
@@ -262,7 +262,7 @@ int OXDDListBox::ProcessMessage(OMessage *msg) {
     case MSG_DDLISTBOX:
       lbmsg = (OListBoxMessage *) msg;
       if (lbmsg->id == 0) return True;
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
           e = _lb->GetSelectedEntry();
           if (!e) return True;

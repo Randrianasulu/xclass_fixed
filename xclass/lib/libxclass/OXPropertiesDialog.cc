@@ -731,11 +731,11 @@ void OXPropertiesDialog::ApplyProperties() {
 int OXPropertiesDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch(msg->action) {
+  switch (msg->action) {
     case MSG_CLICK: // same as MSG_TEXTCHANGED for the text entry below...
-      switch(msg->type) {
+      switch (msg->type) {
         case MSG_BUTTON:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case ID_OK:
               ApplyProperties();
               CloseWindow();
@@ -754,7 +754,7 @@ int OXPropertiesDialog::ProcessMessage(OMessage *msg) {
 
         case MSG_RADIOBUTTON:
         case MSG_CHECKBUTTON:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
 
           }
           Apply->Enable();

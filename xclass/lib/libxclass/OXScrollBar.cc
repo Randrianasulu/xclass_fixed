@@ -60,7 +60,7 @@ int OXScrollBar::_init = False;
 void OXScrollBarElt::SetState(int state) {
 
   if (state != _state) {
-    switch(state) {
+    switch (state) {
     case BUTTON_DOWN:
            _options &= ~RAISED_FRAME;
            _options |= SUNKEN_FRAME;

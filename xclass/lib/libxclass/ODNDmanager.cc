@@ -560,7 +560,7 @@ int ODNDmanager::_HandleDNDenter(Window src, long vers, Atom dataTypes[3]) {
 
   if (vers & 1) {  // more than 3 data types?
     Atom type, *a;
-    int format, i;
+    int format, i, j;
     unsigned long count, remaining;
     unsigned char *data = NULL;
 
@@ -574,17 +574,20 @@ int ODNDmanager::_HandleDNDenter(Window src, long vers, Atom dataTypes[3]) {
 
     _draggerTypes = new Atom[count+4];
 
-    _draggerTypes[0] = dataTypes[0];
-    _draggerTypes[1] = dataTypes[1];
-    _draggerTypes[2] = dataTypes[2];
+    j = 0;
+#if 0
+    _draggerTypes[j++] = dataTypes[0];
+    _draggerTypes[j++] = dataTypes[1];
+    _draggerTypes[j++] = dataTypes[2];
+#endif
 
     a = (Atom *) data;
     for (i = 0; i < count; i++)
-      _draggerTypes[i+3] = a[i];
+      _draggerTypes[i+j] = a[i];
 
-    _draggerTypes[i+3] = None;
+    _draggerTypes[i+j] = None;
 
-    if (data)  XFree (data);
+    if (data) XFree (data);
 
   } else {
     _draggerTypes = new Atom[4];

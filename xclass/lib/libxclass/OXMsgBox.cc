@@ -48,7 +48,7 @@ OXMsgBox::OXMsgBox(const OXWindow *p, const OXWindow *main,
   OXTransientFrame(p, main, 10, 10, options) {
     const OPicture *icon_pic;
 
-    switch(icon) {
+    switch (icon) {
       case MB_ICONSTOP:
         icon_pic = _client->GetPicture("mb-stop.s.xpm", XCP_mb_stop);
         break;
@@ -260,9 +260,9 @@ void OXMsgBox::CloseWindow() {
 int OXMsgBox::ProcessMessage(OMessage *msg) {
   OButtonMessage *bmsg;
 
-  switch(msg->type) {
+  switch (msg->type) {
   case MSG_BUTTON:
-    switch(msg->action) {
+    switch (msg->action) {
     case MSG_CLICK:
       bmsg = (OButtonMessage *) msg;
       if (_ret_code) *_ret_code = bmsg->id;

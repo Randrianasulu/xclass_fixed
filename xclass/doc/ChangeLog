@@ -1924,3 +1924,17 @@ OPicture.cc
 
 - Fixed a minor bug in ODNDmanager. Now the proper action is set in ODNDdata
   before the drop is sent to the target widget.
+
+
+03/11/01
+
+- Corrected a bug in OXHorizontalResizer.
+
+- Corrected a bug in OXListTree::_HighlightItem().
+
+
+04/11/01
+
+- Added OExec class.
+
+- Removed call to ReapChildren() from OXClient.

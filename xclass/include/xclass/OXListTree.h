@@ -93,9 +93,10 @@ public:
   int  Sort(OListTreeItem *item);
   int  SortSiblings(OListTreeItem *item);
   int  SortChildren(OListTreeItem *item);
-  void HighlightItem(OListTreeItem *item);
+  void HighlightItem(OListTreeItem *item, int ensure_visible = False);
   void ClearHighlighted();
   void GetPathnameFromItem(OListTreeItem *item, char *path);
+  void EnsureVisible(OListTreeItem *item);
 
   //static int _compare(const void *item1, const void *item2);
 

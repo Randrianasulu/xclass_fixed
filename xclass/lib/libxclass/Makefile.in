@@ -28,6 +28,7 @@ SO_NAME=lib${lib_name}.so.@XCLASS_VERSION@
 
 SRCS = O2ColumnsLayout.cc \
 	ODNDmanager.cc \
+	OExec.cc \
 	OFileHandler.cc \
 	OFocusManager.cc \
 	OGC.cc \

@@ -13,6 +13,7 @@ HEADERS = O2ColumnsLayout.h \
 	OComponent.h \
 	ODNDmanager.h \
 	ODimension.h \
+	OExec.h \
 	OFileHandler.h \
 	OFocusManager.h \
 	OGC.h \

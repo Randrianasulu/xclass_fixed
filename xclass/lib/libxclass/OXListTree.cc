@@ -183,10 +183,8 @@ OXListTree::~OXListTree() {
 
 void OXListTree::_HighlightItem(OListTreeItem *item, int state, int draw) {
   if (item) {
-    if ((item == _selected) && !state) {
-      _selected = NULL;
-      if (draw) _DrawItemName(item);
-    } else if (state != item->active) {
+    if ((item == _selected) && !state) _selected = NULL;
+    if (state != item->active) {
       item->active = state;
       if (draw) _DrawItemName(item);
     }
@@ -295,6 +293,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
           _selected->open = False;
         } else if (_selected != _first) {
           next = _selected->parent;
+          if (_timer) delete _timer;
+          _timer = new OTimer(this, KBD_DELAY);
         }
         break;
 
@@ -305,6 +305,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
           if (_selected->firstchild) _selected->open = True;
         } else if (_selected->firstchild) {
           next = _selected->firstchild;
+          if (_timer) delete _timer;
+          _timer = new OTimer(this, KBD_DELAY);
         }  
         break;
 
@@ -353,6 +355,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
       case XK_Home:
         // go to the very first node
         next = _first;
+        if (_timer) delete _timer;
+        _timer = new OTimer(this, KBD_DELAY);
         break;
 
       case XK_End:
@@ -361,6 +365,8 @@ int OXListTree::HandleKey(XKeyEvent *event) {
         while (next->open && next->firstchild) {
           while (next->nextsibling) next = next->nextsibling;
         }
+        if (_timer) delete _timer;
+        _timer = new OTimer(this, KBD_DELAY);
         break;
 
       case XK_Return:
@@ -1083,15 +1089,20 @@ OListTreeItem *OXListTree::FindChildByName(OListTreeItem *item, char *name) {
   return NULL;
 }
 
-void OXListTree::HighlightItem(OListTreeItem *item) {
+void OXListTree::HighlightItem(OListTreeItem *item, int ensure_visible) {
   _UnselectAll(False);
-  _HighlightItem(item, True, False);
+  _HighlightItem(_selected = item, True, False);
+  if (ensure_visible) _EnsureVisible(item);
   __NeedFullRedraw(False);
 }
 
 void OXListTree::ClearHighlighted() {
   _UnselectAll(False);
   __NeedFullRedraw(False);
+}
+
+void OXListTree::EnsureVisible(OListTreeItem *item) {
+  _EnsureVisible(item);
 }
 
 void OXListTree::GetPathnameFromItem(OListTreeItem *item, char *path) {

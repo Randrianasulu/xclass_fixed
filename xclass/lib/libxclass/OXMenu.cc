@@ -1015,7 +1015,7 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
   GC sbGC = _selbackGC->GetGC();
   GC nGC  = _normGC->GetGC();
 
-  switch(entry->_type) {
+  switch (entry->_type) {
   case MENU_POPUP:
   case MENU_ENTRY:
       lstr = entry->_label->GetString();
@@ -1187,21 +1187,21 @@ void OXPopupMenu::EnableEntry(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) { ptr->_status |= MENU_ENABLE_MASK; break; }
+    if (ptr->_entryID == ID) { ptr->_status |= MENU_ENABLE_MASK; break; }
 }
 
 void OXPopupMenu::DisableEntry(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) { ptr->_status &= ~MENU_ENABLE_MASK; break; }
+    if (ptr->_entryID == ID) { ptr->_status &= ~MENU_ENABLE_MASK; break; }
 }
 
 int OXPopupMenu::IsEntryEnabled(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) return (ptr->_status & MENU_ENABLE_MASK);
+    if (ptr->_entryID == ID) return (ptr->_status & MENU_ENABLE_MASK);
   return 0;
 }
 
@@ -1212,21 +1212,21 @@ void OXPopupMenu::CheckEntry(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) { ptr->_status |= MENU_CHECKED_MASK; break; }
+    if (ptr->_entryID == ID) { ptr->_status |= MENU_CHECKED_MASK; break; }
 }
 
 void OXPopupMenu::UnCheckEntry(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) { ptr->_status &= ~MENU_CHECKED_MASK; break; }
+    if (ptr->_entryID == ID) { ptr->_status &= ~MENU_CHECKED_MASK; break; }
 }
 
 int OXPopupMenu::IsEntryChecked(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) return (ptr->_status & MENU_CHECKED_MASK);
+    if (ptr->_entryID == ID) return (ptr->_status & MENU_CHECKED_MASK);
   return 0;
 }
 
@@ -1238,10 +1238,10 @@ void OXPopupMenu::RCheckEntry(int ID, int IDfirst, int IDlast) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID)
+    if (ptr->_entryID == ID)
       ptr->_status |= MENU_RCHECKED_MASK;
     else
-      if(ptr->_entryID >= IDfirst && ptr->_entryID <= IDlast) 
+      if (ptr->_entryID >= IDfirst && ptr->_entryID <= IDlast) 
         ptr->_status &= ~MENU_RCHECKED_MASK;
 }
 
@@ -1249,7 +1249,7 @@ int OXPopupMenu::IsEntryRChecked(int ID) {
   OMenuEntry *ptr;
 
   for (ptr = _first; ptr != NULL; ptr = ptr->next)
-    if(ptr->_entryID == ID) return (ptr->_status & MENU_RCHECKED_MASK);
+    if (ptr->_entryID == ID) return (ptr->_status & MENU_RCHECKED_MASK);
   return 0;
 }
 

@@ -32,8 +32,13 @@ shutter1  - used to test the OXShutter widget. OXShutter was adapted
 
 progbar  - used to test the OXProgressBar widget.
 
-xdnd     - used to test drag-and-drop operations.
-
 listview - used to test the OXListView widget.
 
+xdnd     - used to test drag-and-drop operations.
+
 textedit - used to test the OXTextEdit widget.
+
+favordlg - used to test the file dialog in normal and favourites mode.
+
+exec     - used to test the OExec class.
+

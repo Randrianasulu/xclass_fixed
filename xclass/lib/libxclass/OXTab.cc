@@ -195,7 +195,7 @@ OXTab::~OXTab() {
   SListFrameElt *ptr, *next;
 
   ptr = _flist;
-  while(ptr) {
+  while (ptr) {
     next = ptr->next;
     delete ptr->frame;
     // delete ptr->layout; // ptr->layout is NULL!

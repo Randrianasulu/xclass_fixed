@@ -154,7 +154,7 @@ OXAboutDialog::~OXAboutDialog() {
 int OXAboutDialog::ProcessMessage(OMessage *msg) {
   switch (msg->type) {
     case MSG_BUTTON:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
           CloseWindow();
           break;

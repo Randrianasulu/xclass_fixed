@@ -50,13 +50,11 @@ public:
   virtual void SendMessage(const OComponent *obj, OMessage *msg) {
     if (obj) ((OComponent*)obj)->ProcessMessage(msg);
   }
-  virtual int ProcessMessage(OMessage *msg) {
-    return False;
-  }
+  virtual int ProcessMessage(OMessage *msg) { return False; }
 
-  virtual int  HandleTimer(OTimer *) { return False; }
-  virtual int  HandleFileEvent(OFileHandler *, unsigned int) { return False; }
-  virtual int  HandleIdleEvent(OIdleHandler *) { return False; }
+  virtual int HandleTimer(OTimer *) { return False; }
+  virtual int HandleFileEvent(OFileHandler *, unsigned int) { return False; }
+  virtual int HandleIdleEvent(OIdleHandler *) { return False; }
 };
 
 

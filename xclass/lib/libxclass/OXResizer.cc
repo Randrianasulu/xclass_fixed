@@ -125,8 +125,8 @@ int OXHorizontalResizer::HandleButton(XButtonEvent *event) {
 	if (_prev)
 	  _prev->Resize(_prev->GetWidth(), _prev->GetHeight() + (_y - py));
 	if (_next) {
-	  _next->Move(_next->GetX(), _next->GetY() + (_y - py));
 	  _next->Resize(_next->GetWidth(), _next->GetHeight() - (_y - py));
+	  _next->Move(_next->GetX(), _next->GetY() + (_y - py));
 	}
 //	((OXCompositeFrame *) _parent)->Layout(); // hmmm...because of OXListBox
       }
@@ -179,7 +179,7 @@ void OXHorizontalResizer::Motion(int xmot, int ymot) {
 
   int y = _y + ymot;
 
-  if (_resMode != RESIZER_NON_OPAQUE) {
+  if (_resMode & RESIZER_OPAQUE) {
     if ((_prev) && (y < _prev->GetY())) {
       _prev->Resize(_prev->GetWidth(), 0);
       Move(_x, _prev->GetY());

@@ -71,7 +71,7 @@ OXButton::OXButton(const OXWindow *p, int ID, unsigned int options)
 void OXButton::SetState(int state) {
 
   if (state != _state) {
-    switch(state) {
+    switch (state) {
     case BUTTON_ENGAGED:
     case BUTTON_DOWN:
        _options &= ~RAISED_FRAME;
@@ -98,7 +98,7 @@ int OXButton::HandleButton(XButtonEvent *event) {
   if ((event->type == ButtonPress) && TakesFocus())
     RequestFocus();
  
-  switch(_type) {
+  switch (_type) {
   default:
   case BUTTON_NORMAL:
     if (event->type == ButtonPress) {
@@ -171,7 +171,7 @@ int OXButton::HandleCrossing(XCrossingEvent *event) {
   if (!IsEnabled()) return True;
   if (!_click) return True;
 
-  switch(_type) {
+  switch (_type) {
   default:
   case BUTTON_NORMAL:
     if (event->type == LeaveNotify) {

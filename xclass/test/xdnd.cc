@@ -73,7 +73,7 @@ public:
     Activate(True);
     for (int i = 0; typelist[i]; ++i)
       if (typelist[i] == URI_list) return URI_list;
-    None;
+    return None;
   }
 
   virtual int HandleDNDleave() {

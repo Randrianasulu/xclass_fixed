@@ -801,9 +801,9 @@ int OXListBox::ProcessMessage(OMessage *msg) {
   OScrollBarMessage *sbmsg;
   OContainerMessage *cmsg;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_VSCROLL:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_SLIDERTRACK:
         case MSG_SLIDERPOS:
           sbmsg = (OScrollBarMessage *) msg;
@@ -814,7 +814,7 @@ int OXListBox::ProcessMessage(OMessage *msg) {
 
     case MSG_CONTAINER:
       cmsg = (OContainerMessage *) msg;
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_CLICK:
 	  {
           if (TakesFocus()) RequestFocus();  // hmmmm.... here?!?

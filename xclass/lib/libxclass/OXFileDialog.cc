@@ -258,7 +258,7 @@ OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
       _ftypes->Select(0);
 
       _fname->Clear();
-      switch(_dlg_type & TYPE_MASK) {
+      switch (_dlg_type & TYPE_MASK) {
         case FDLG_OPEN:
         case FDLG_BROWSE:
           _fname->AddText(0, _file_info->file_types[1]);
@@ -527,12 +527,12 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
 
     default:
       break;
-    } // switch(msg->action)
+    } // switch (msg->action)
     break;
 
   case MSG_LISTVIEW:
     cmsg = (OItemViewMessage *) msg;
-    switch(cmsg->action) {
+    switch (cmsg->action) {
     case MSG_CLICK:
       if (cmsg->button == Button1) {
         if (_fv->NumSelected() == 1) {
@@ -566,13 +566,13 @@ int OXFileDialog::ProcessMessage(OMessage *msg) {
     default:
       break;
 
-    } // switch(msg->action)
+    } // switch (msg->action)
     break;
 
   default:
     break;
 
-  } // switch(msg->type)
+  } // switch (msg->type)
 
   return True;
 }

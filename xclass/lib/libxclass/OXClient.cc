@@ -39,16 +39,6 @@
 #include <xclass/OIdleHandler.h>
 
 
-//--- This is tmp here...
-
-#include <sys/wait.h>
-#ifdef HAVE_WAITPID
-#define ReapChildren()  while ((waitpid(-1, NULL, WNOHANG)) > 0);
-#else
-#define ReapChildren()  while ((wait3(NULL, WNOHANG, NULL)) > 0);
-#endif
-
-
 Atom WM_DELETE_WINDOW;
 Atom _MOTIF_WM_HINTS;
 Atom _XCLASS_MESSAGE;
@@ -154,7 +144,7 @@ unsigned long OXClient::GetColorByName(const char *name) const {
   color.pixel = 0;
   if (!XParseColor(_dpy, _defaultColormap, name, &color)) 
     Debug(DBG_WARN, "OXClient: Couldn't parse color %s\n",name);
-  else if(!XAllocColor(_dpy, _defaultColormap, &color)) 
+  else if (!XAllocColor(_dpy, _defaultColormap, &color)) 
     Debug(DBG_WARN, "OXClient: Couldn't retrieve color %s\n",name);
   return color.pixel;
 }
@@ -204,7 +194,7 @@ unsigned long OXClient::GetShadow(const unsigned long base_color) const {
   color.blue  = (unsigned short)(color.blue  * 2 / 3);
 #endif
   
-  if(!XAllocColor(_dpy, _defaultColormap, &color))
+  if (!XAllocColor(_dpy, _defaultColormap, &color))
     Debug(DBG_WARN, "OXClient: Couldn't allocate shadow color\n");
   
   return color.pixel;
@@ -437,7 +427,6 @@ int OXClient::ProcessOneEvent(int EventType, Window wid) {
     //--- 5: do any pending redraws...
 
     if (_DoRedraw()) return True;
-    ReapChildren();  // <-- to be removed...
 
     //--- 6: check for ready file events...
 

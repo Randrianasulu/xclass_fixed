@@ -136,9 +136,9 @@ void OXCanvas::Layout() {
 int OXCanvas::ProcessMessage(OMessage *msg) {
   OScrollBarMessage *sbmsg;
 
-  switch(msg->type) {
+  switch (msg->type) {
     case MSG_HSCROLL:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_SLIDERTRACK:
         case MSG_SLIDERPOS:
           sbmsg = (OScrollBarMessage *) msg;
@@ -148,7 +148,7 @@ int OXCanvas::ProcessMessage(OMessage *msg) {
       break;
 
     case MSG_VSCROLL:
-      switch(msg->action) {
+      switch (msg->action) {
         case MSG_SLIDERTRACK:
         case MSG_SLIDERPOS:
           sbmsg = (OScrollBarMessage *) msg;
