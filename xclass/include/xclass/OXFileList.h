@@ -124,7 +124,7 @@ public:
 
   virtual Atom HandleDNDenter(Atom *typelist);
   virtual int  HandleDNDleave();
-  virtual Atom HandleDNDposition(int x, int y, Atom action);
+  virtual Atom HandleDNDposition(int x, int y, Atom action, int xr, int yr);
   virtual int  HandleDNDdrop(ODNDdata *DNDdata);
   virtual int  HandleDNDfinished();
   virtual ODNDdata *GetDNDdata(Atom dataType);
@@ -137,6 +137,8 @@ public:
 
   int FileMatch(const char *filename);
   int IsEmptyDir(const char *dir);
+  
+  int IsDragging() const { return _dragging; }
 
 protected:
   void _CreateFileList();

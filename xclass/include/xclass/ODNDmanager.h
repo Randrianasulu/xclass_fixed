@@ -89,6 +89,9 @@ public:
   int Drop();
   int EndDrag();
   
+  Window GetSource() const { return _source; }
+  Window GetTarget() const { return _target; }
+  
 protected:
   void _InitAtoms();
   void _SetAware(Atom *typelist);

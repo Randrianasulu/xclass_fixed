@@ -376,14 +376,16 @@ int OXItemView::HandleButton(XButtonEvent *event) {
       DrawDragOutline();
     }
 
+#if 0
     if (_selectedItems.size() > 0) {
       OItemViewMessage message(_msgType, MSG_CLICK, _widgetID, event->button,
                                OPosition(event->x_root, event->y_root));
       SendMessage(_msgObject, &message);
-
     }
+#endif
 
-  } else {
+  } else {  // ButtonRelease
+
     if (_isScrolling) _isScrolling = False;
     if (_scrollTimer) delete _scrollTimer;
     _scrollTimer = NULL;
@@ -391,6 +393,11 @@ int OXItemView::HandleButton(XButtonEvent *event) {
       _dragSelecting = False;
       DrawDragOutline();
     }
+
+    OItemViewMessage message(_msgType, MSG_CLICK, _widgetID, event->button,
+                             OPosition(event->x_root, event->y_root));
+    SendMessage(_msgObject, &message);
+
   }
 
   return True;

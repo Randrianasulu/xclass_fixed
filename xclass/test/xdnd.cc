@@ -81,7 +81,7 @@ public:
     return True;
   }
 
-  virtual Atom HandleDNDposition(int x, int y, Atom action) {
+  virtual Atom HandleDNDposition(int x, int y, Atom action, int xr, int yr) {
     if (action == ODNDmanager::DNDactionCopy) return action;
     return None;
   }
@@ -142,7 +142,7 @@ public:
 
   virtual int ProcessMessage(OMessage *msg);
 
-  virtual Atom HandleDNDposition(int x, int y, Atom action);
+  virtual Atom HandleDNDposition(int x, int y, Atom action, int xr, int yr);
   virtual Atom HandleDNDenter(Atom *typelist);
   virtual int  HandleDNDleave();
   virtual int  HandleDNDdrop(ODNDdata *);
@@ -412,7 +412,7 @@ int OXMain::HandleDNDdrop(ODNDdata *data) {
   return True;
 }
 
-Atom OXMain::HandleDNDposition(int x, int y, Atom action) {
+Atom OXMain::HandleDNDposition(int x, int y, Atom action, int xr, int yr) {
   char tmp[256];
 
   sprintf(tmp, "Accepting action %#d", action);

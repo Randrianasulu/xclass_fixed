@@ -225,7 +225,8 @@ int OXFileItem::HandleDNDdrop(ODNDdata *data) {
   return True;
 }
 
-Atom OXFileItem::HandleDNDposition(int x, int y, Atom action) {
+Atom OXFileItem::HandleDNDposition(int x, int y, Atom action,
+                                   int xroot, int yroot) {
   // directories usually would accept any of the standard xdnd actions...
   if (S_ISDIR(_type)) return action;
 
@@ -453,6 +454,7 @@ void OXFileList::GetFilePictures(const OPicture **pic,
              char *name, int small) {
   char temp[BUFSIZ];
 
+#if 0
   *pic = MimeTypesList->GetIcon(name, small);
   if (*pic == NULL) {
     *pic = small ? _doc_t : _doc_s;
@@ -471,6 +473,28 @@ void OXFileList::GetFilePictures(const OPicture **pic,
     if (S_ISDIR(file_type))
       *pic = small ? _folder_t : _folder_s;
   }
+#else
+  if (S_ISDIR(file_type)) {
+    *pic = small ? _folder_t : _folder_s;
+  } else {
+    *pic = MimeTypesList->GetIcon(name, small);
+    if (!*pic) {
+      *pic = small ? _doc_t : _doc_s;
+      if (S_ISREG(file_type) &&
+                 (file_type) & S_IXUSR) {
+        if (small) {
+          sprintf(temp, "%s.t.xpm", name);
+          *pic = _client->GetPicture(temp);
+          if (!*pic) *pic = _app_t;
+        } else {
+          sprintf(temp, "%s.s.xpm", name);
+          *pic = _client->GetPicture(temp);
+          if (!*pic) *pic = _app_s;
+        }
+      }
+    }
+  }
+#endif
 
   if (is_link)
     *lpic = small ? _slink_t : _slink_s;
@@ -772,10 +796,17 @@ int OXFileList::HandleDNDleave() {
   return True;
 }
 
-Atom OXFileList::HandleDNDposition(int x, int y, Atom action) {
+Atom OXFileList::HandleDNDposition(int x, int y, Atom action,
+                                   int xroot, int yroot) {
   int nx = 0, ny = 0;
 
+#if 1
   ((OXMainFrame *)_toplevel)->TranslateCoordinates(this, x, y, &nx, &ny);
+  nx -= _canvas->GetX();
+  ny -= _canvas->GetY();
+#else  // won't work until OXView gets composite!
+  ((OXMainFrame *)_toplevel)->TranslateCoordinates(_canvas, x, y, &nx, &ny);
+#endif
 
   OFileItem *fi = (OFileItem *) GetItemByPos(OPosition(nx, ny));
 

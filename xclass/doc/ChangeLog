@@ -1899,3 +1899,20 @@ OPicture.cc
 
 - OResourcePool: must search for xclassrc file exactly as specified in
   doc/INSTALL.
+
+
+20/10/01 (0.5.9)
+
+- OXFileList: show regular folders always as folders, regardless of their
+  mime-types.
+
+
+25/10/01 (0.6.1)
+
+- OXItemView: send MSG_CLICK after the mouse button is released (that
+  allows right-button drags in OXFileList).
+
+- ODNDmanager: added GetSource() and GetTarget() methods. Set _source to
+  None only after HandleDNDdrop has been called.
+
+- ODNDmanager: pass also root coordintes to OXFrame::HandleDNDposition().

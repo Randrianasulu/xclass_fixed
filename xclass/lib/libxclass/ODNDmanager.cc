@@ -639,9 +639,9 @@ int ODNDmanager::_HandleDNDposition(Window source, int x_root, int y_root,
 
   if (_localTarget) {
     action = (_dropType == None) ? None :
-              _localTarget->HandleDNDposition(x, y, action);
+              _localTarget->HandleDNDposition(x, y, action, x_root, y_root);
   } else if (_proxy_ours) {
-    action = _main->HandleDNDposition(x, y, action);
+    action = _main->HandleDNDposition(x, y, action, x_root, y_root);
   } else {
     action = None;
   }
@@ -766,7 +766,6 @@ int ODNDmanager::HandleSelection(XSelectionEvent *event) {
     }
 
     if (_source != None) _SendDNDfinished(_source);
-    _source = None;
 
     // send the data to the target widget
 
@@ -776,6 +775,8 @@ int ODNDmanager::HandleSelection(XSelectionEvent *event) {
       if (_draggerTypes) delete[] _draggerTypes;
       _draggerTypes = NULL;
     }
+
+    _source = None;
 
     XFree(data);
 

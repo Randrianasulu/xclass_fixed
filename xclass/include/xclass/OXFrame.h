@@ -194,8 +194,8 @@ public:
 
   virtual ODNDdata *GetDNDdata(Atom /*dataType*/) { return NULL; }
   virtual int  HandleDNDdrop(ODNDdata * /*DNDdata*/) { return False; }
-  virtual Atom HandleDNDposition(int /*x*/, int /*y*/, Atom /*action*/)
-               { return None; }
+  virtual Atom HandleDNDposition(int /*x*/, int /*y*/, Atom /*action*/,
+                        int /*xroot*/, int /*yroot*/) { return None; }
   virtual Atom HandleDNDenter(Atom */*typelist*/) { return None; }
   virtual int  HandleDNDleave() { return False; }
   virtual int  HandleDNDfinished() { return False; }
