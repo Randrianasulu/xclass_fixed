@@ -186,7 +186,7 @@ void OXItemView::DeleteSelection() {
   for (i = 0; i < _items.size(); ++i) {
     item = _items[i];
     if (item->IsSelected()) {
-      _items.erase(&_items[i]);
+      _items.erase(_items.begin() + i);  //_items.erase(&_items[i]);
       delete item;
       --i;
     }
@@ -292,9 +292,19 @@ void OXItemView::SelectItem(OItem *item, bool state) {
 	}
     }
     item->Select(state);
+#if 0
     _hasSelection = state;
-    for (i = 0; i < _items.size(); i++)
-      _hasSelection = _hasSelection | _items[i]->IsSelected();
+    if (!state) {
+      for (i = 0; i < _items.size(); i++)
+        _hasSelection = _hasSelection | _items[i]->IsSelected();
+    }
+#else
+    if (state) {
+      _hasSelection = state;
+    } else {
+      _hasSelection = (_selectedItems.size() > 0);
+    }
+#endif
   }
 
   // can't use NeedRedraw here...
@@ -613,22 +623,22 @@ int OXItemView::HandleTimer(OTimer *t) {
 
 void OXItemView::DrawRegion(OPosition coord, ODimension size, int clear) {
 
+  OPosition pcoord = ToPhysical(coord);
+
   // check whether the rectangle is within the visible area
 
-  if ((ToPhysical(coord).y + size.h < 0) &&
-      (ToPhysical(coord).y > _canvas->GetHeight()))
+  if ((pcoord.y + (int) size.h < 0) || (pcoord.y > _canvas->GetHeight()))
     return;
 
-  if ((ToPhysical(coord).x + size.w < 0) &&
-      (ToPhysical(coord).x > _canvas->GetWidth()))
+  if ((pcoord.x + (int) size.w < 0) || (pcoord.x > _canvas->GetWidth()))
     return;
 
   // clip the size argument to the canvas size
 
-  if (ToPhysical(coord).x + size.w > _canvas->GetWidth())
-    size.w = _canvas->GetWidth() - ToPhysical(coord).x;
-  if (ToPhysical(coord).y + size.h > _canvas->GetHeight())
-    size.h = _canvas->GetHeight() - ToPhysical(coord).y;
+  if (pcoord.x + (int) size.w > _canvas->GetWidth())
+    size.w = _canvas->GetWidth() - pcoord.x;
+  if (pcoord.y + (int) size.h > _canvas->GetHeight())
+    size.h = _canvas->GetHeight() - pcoord.y;
 
   // clear parts that are outside the object
 

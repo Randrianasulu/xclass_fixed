@@ -41,6 +41,7 @@ clean:
 		echo Cleaning in $$i ; \
 		(cd $$i; ${MAKE} clean) ; \
 	done
+	rm -f *~ *.bak core
 
 distclean:
 	@for i in ${subdirs}; do \

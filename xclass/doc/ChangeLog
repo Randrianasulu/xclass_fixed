@@ -2033,3 +2033,27 @@ OPicture.cc
 27/11/01
 
 - Added OXItemView::DeleteSelection().
+
+
+06/12/01  (0.6.3)
+
+- Corrected a bug in OXItemView::DrawRegion().
+
+
+12/02/02
+
+- Added SetEventMask() method to OFileHandler.
+
+
+21/03/02
+
+- Corrected a coding mistake in OXItemView.cc and OXTextEdit.cc: 
+  std::vector::erase() and insert() both take an iterator as argument,
+  and not an actual element.
+
+- Corrected the configure script: added the AC_LANG_CPLUSPLUS macro to
+  ensure that all the tests are done using the c++ compiler, and *not*
+  simply cc. That should correct the const problem in Solaris machines
+  with gcc. (Well, it didn't, so I just disabled the test).
+
+- Corrected the Makefile.in for the icons directory.

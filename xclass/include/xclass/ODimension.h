@@ -32,16 +32,16 @@ public:
 
   // Constructors
   ODimension() {}
-  ODimension(unsigned int width, unsigned int height)
+  ODimension(const unsigned int width, const unsigned int height)
                { w = width; h = height; }
   ODimension(const ODimension &d)
                { w = d.w; h = d.h; }
 
-  bool operator == (ODimension b) const 
+  bool operator == (const ODimension &b) const 
                { return ((w == b.w) && (h == b.h)); }
-  ODimension operator - (const ODimension b) const
+  ODimension operator - (const ODimension &b) const
                { return ODimension(w - b.w, h - b.h); }
-  ODimension operator + (const ODimension b) const
+  ODimension operator + (const ODimension &b) const
                { return ODimension(w + b.w, h + b.h); }
 };
 
@@ -53,16 +53,16 @@ public:
 
   // Constructors
   OPosition() {}
-  OPosition(int xc, int yc)
+  OPosition(const int xc, const int yc)
                { x = xc; y = yc; }
   OPosition(const OPosition &p)
                { x = p.x; y = p.y; }
 
-  bool operator == (const OPosition b) const
+  bool operator == (const OPosition &b) const
                { return ((x == b.x) && (y == b.y)); }
-  OPosition operator - (const OPosition b) const
+  OPosition operator - (const OPosition &b) const
                { return OPosition(x - b.x, y - b.y); }
-  OPosition operator + (const OPosition b) const
+  OPosition operator + (const OPosition &b) const
                { return OPosition(x + b.x, y + b.y); }
 };
 

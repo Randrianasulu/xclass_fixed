@@ -48,6 +48,8 @@ public:
 
   int GetFd() const { return _fd; }
   int GetEventMask() const { return _eventMask; }
+  
+  void SetEventMask(unsigned int event_mask) { _eventMask = event_mask; } 
 
   friend class OXClient;
   friend class OXSList;

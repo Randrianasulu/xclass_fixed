@@ -1484,7 +1484,7 @@ void OXTextEdit::SplitLine(int lnum, int charpos) {
   OTextLine *newline = new OTextLine(this, tmp);
 
   if (lnum < _items.size()-1)
-    _items.insert(&_items[lnum+1], newline);
+    _items.insert(_items.begin() + lnum + 1, newline); // .insert(&_items[lnum+1], newline);
   else
     _items.push_back(newline);
 
@@ -1504,7 +1504,7 @@ void OXTextEdit::JoinLine(int lnum) {
     line->Append(((OTextLine *) _items[lnum+1])->GetString());
     line->Resize(line->GetDefaultSize());
     delete _items[lnum+1];
-    _items.erase(&_items[lnum+1]);
+    _items.erase(_items.begin() + lnum + 1); // .erase(&_items[lnum+1]);
     _changed = True;
     Layout();
     NeedRedraw(ORectangle(line->GetPosition(), _canvas->GetSize()));
@@ -1554,7 +1554,7 @@ void OXTextEdit::DeleteSelection() {
       if ((charStart == 0) && (charEnd == line->GetTextLength())
           && (i < _items.size()-1) && _items[i+1]->IsSelected()) {
         delete _items[i];  // delete line;
-        _items.erase(&_items[i]);
+        _items.erase(_items.begin() + i);   // .erase(&_items[i]);
         --i;
       } else {
         line->RemoveText(charStart, charEnd - charStart);
