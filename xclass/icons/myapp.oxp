@@ -1,0 +1,33 @@
+#!./OnyX
+OnyXVersion 0 3 0
+ApplicationName myapp
+ToolboxItem OnyxBase
+ToolboxItem OnyxWindow
+ToolboxItem OnyxCheckBox
+ToolboxItem OnyxMenuBar
+ToolboxItem OnyxMenu
+ToolboxItem OnyxMenuItem
+ToolboxItem OnyxButton
+ToolboxItem OnyxFileDialog
+ToolboxItem OnyxIcon
+ToolboxItem OnyxLabel
+ToolboxItem OnyxScreen
+ToolboxItem OnyxTextBox
+ToolboxItem OnyxMsgBox
+ToolboxItem OnyxRadioButton
+ToolboxItem OnyxDropBox
+ToolboxItem OnyxHScrollBar
+ToolboxItem OnyxListBox
+ToolboxItem OnyxTree
+StartObject
+ObjectName OnyxHScrollBar1
+ObjectType OnyxHScrollBar
+ObjectParent OnyxWindow1
+X 43
+Y 196
+Width 100
+Height 16
+Range 100
+PageSize 10
+Position 0
+EndObject

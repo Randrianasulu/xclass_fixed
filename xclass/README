@@ -1,0 +1,3 @@
+This directory contains the base xclass library code and include files.
+Note that the client applications are no longer included here, they are
+available separatedly.

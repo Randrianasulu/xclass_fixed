@@ -1,0 +1,123 @@
+
+SHELL=/bin/sh
+
+prefix=@prefix@
+lib_dir=@prefix@/lib
+icon_dir=@prefix@/xclass/icons
+
+INSTALL = @INSTALL@
+INSTALL_DATA = @INSTALL_DATA@
+
+
+ICONS = app.s.xpm \
+	app.t.xpm \
+	arrow-down.xpm \
+	arrow-left.xpm \
+	arrow-right.xpm \
+	arrow-up.xpm \
+	audio.s.xpm \
+	briefcase.t.xpm \
+	cdrom.t.xpm \
+	desktop.t.xpm \
+	doc.s.xpm \
+	doc.t.xpm \
+	emacs.xpm \
+	fax.t.xpm \
+	fdisk.t.xpm \
+	folder.s.xpm \
+	folder.t.xpm \
+	gv.xpm \
+	hdisk.t.xpm \
+	home.t.xpm \
+	home1.t.xpm \
+	image.xpm \
+	key1.xpm \
+	login-bckgnd-0.xpm \
+	login-bckgnd.xpm \
+	login.xpm \
+	mail.t.xpm \
+	mb-asterisk-old.s.xpm \
+	mb-asterisk.s.xpm \
+	mb-exclamation-old.s.xpm \
+	mb-exclamation.s.xpm \
+	mb-question-old.s.xpm \
+	mb-question.s.xpm \
+	mb-stop-old.s.xpm \
+	mb-stop.s.xpm \
+	midi.s.xpm \
+	mini-ofolder.xpm \
+	mini-x.xpm \
+	mini-x2.xpm \
+	mrecycle.xpm \
+	multiwin.dlg.xpm \
+	netscape.xpm \
+	ofolder.t.xpm \
+	onewin.dlg.xpm \
+	pdf.xpm \
+	ps.xpm \
+	quit.xpm \
+	rbutton.off.xpm \
+	rbutton.on.xpm \
+	recycle-empty.s.xpm \
+	recycle-empty.t.xpm \
+	recycle-full.s.xpm \
+	recycle-full.t.xpm \
+	run-config.xpm \
+	run.xpm \
+	run1616.xpm \
+	settings.xpm \
+	slider1h.xpm \
+	slider1v.xpm \
+	slider2h.xpm \
+	slider2v.xpm \
+	slink.s.xpm \
+	slink.t.xpm \
+	srecycle.xpm \
+	tb-bigicons.xpm \
+	tb-copy.xpm \
+	tb-cut.xpm \
+	tb-delete.xpm \
+	tb-details.xpm \
+	tb-dscntw.xpm \
+	tb-list.xpm \
+	tb-mapntw.xpm \
+	tb-newfolder.xpm \
+	tb-open.xpm \
+	tb-paste.xpm \
+	tb-print.xpm \
+	tb-prop.xpm \
+	tb-save.xpm \
+	tb-smicons.xpm \
+	tb-undo.xpm \
+	tb-uplevel.xpm \
+	tex.xpm \
+	video.s.xpm \
+	xcd-continue.xpm \
+	xcd-diskremain.xpm \
+	xcd-eject.xpm \
+	xcd-forward.xpm \
+	xcd-intro.xpm \
+	xcd-next.xpm \
+	xcd-pause.xpm \
+	xcd-play.xpm \
+	xcd-previous.xpm \
+	xcd-random.xpm \
+	xcd-rewind.xpm \
+	xcd-select.xpm \
+	xcd-stop.xpm \
+	xcd-trackelapsed.xpm \
+        xcd-trackremain.xpm \
+	xv.xpm \
+
+all:
+
+install_shared: install
+install:
+	mkdir -p ${icon_dir}
+	for i in ${ICONS} ; do \
+		${INSTALL_DATA} ./$$i ${icon_dir} ; \
+	done
+
+clean:
+
+distclean:

@@ -1,0 +1,794 @@
+/**************************************************************************
+
+    This file is part of Xclass95, a Win95-looking GUI toolkit.
+    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+
+    This code is partially based on Robert W. McMullen's ListTree-3.0
+    widget. Copyright (C) 1995.
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
+
+    You should have received a copy of the GNU Library General Public
+    License along with this library; if not, write to the Free
+    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  
+**************************************************************************/
+
+#include <stdio.h>
+
+#include <xclass/OXClient.h>
+#include <xclass/OXCanvas.h>
+#include <xclass/OXFrame.h>
+#include <xclass/OXFont.h>
+#include <xclass/OXListTree.h>
+#include <xclass/OString.h>
+#include <xclass/OPicture.h>
+#include <xclass/OResourcePool.h>
+
+//--------------------------------------------------------------------
+
+OListTreeItem::OListTreeItem(OXClient *client, char *name, 
+                             const OPicture *opened,
+                             const OPicture *closed) {
+  length = strlen(name);
+  text = new char[length+1];
+  strcpy(text, name);
+
+  open_pic = opened;
+  closed_pic = closed;
+  picWidth = max(open_pic->GetWidth(), closed_pic->GetWidth());
+
+  open =
+  active = False;
+
+  parent =
+  firstchild =
+  prevsibling =
+  nextsibling = NULL;
+
+  _client = client;
+}
+
+OListTreeItem::~OListTreeItem() {
+  delete[] text;
+  _client->FreePicture(open_pic);
+  _client->FreePicture(closed_pic);
+}
+
+void OListTreeItem::Rename(char *new_name) {
+  delete[] text;
+  length = strlen(new_name);
+  text = new char[length + 1];
+  strcpy(text, new_name);
+}
+
+//--------------------------------------------------------------------
+
+OXListTree::OXListTree(const OXWindow *p, int w, int h,
+                       unsigned int options, unsigned long back) :
+  OXFrame(p, w, h, options|OWN_BKGND, back) {
+    XGCValues gcv;
+    unsigned int gcmask;
+    OFontMetrics fm;
+
+    //_widgetID = ID;
+    _widgetType = "OXListTree";
+    _msgObject = p;
+
+    _font = GetResourcePool()->GetIconFont();
+    _font->GetFontMetrics(&fm);
+
+    _th = fm.linespace;
+    _ascent = fm.ascent;
+
+    _grayPixel = _client->GetColorByName("#808080");
+
+    gcv.line_style = LineSolid;
+    gcv.line_width = 0;
+    gcv.fill_style = FillSolid;
+    gcv.font = _font->GetId();
+    gcv.background = _whitePixel;
+    gcv.foreground = _blackPixel;
+
+    gcmask = GCLineStyle | GCLineWidth | GCFillStyle |
+             GCForeground | GCBackground | GCFont;
+    _drawGC = XCreateGC(GetDisplay(), _id, gcmask, &gcv);
+
+    gcv.fill_style = FillStippled;
+    gcmask |= GCStipple;
+    gcv.stipple = _client->GetResourcePool()->GetCheckeredBitmap();
+    gcv.foreground = _grayPixel;
+    _lineGC = XCreateGC(GetDisplay(), _id, gcmask, &gcv);
+
+    gcv.background = _defaultSelectedBackground;
+    gcv.foreground = _whitePixel;
+    gcv.line_style = LineSolid;
+    gcmask = GCLineStyle | GCLineWidth | GCFillStyle |
+             GCForeground | GCBackground | GCFont;
+    _highlightGC = XCreateGC(GetDisplay(), _id, gcmask, &gcv);
+
+    _first = _selected = NULL;
+
+    _defw = _defh = 1;
+
+    _hspacing = 2;
+    _vspacing = 2;  // 0;
+    _indent = 3;    // 0;
+    _margin = 2;
+
+    XGrabButton(GetDisplay(), Button1, AnyModifier, _id, True,
+                ButtonPressMask | ButtonReleaseMask,
+                GrabModeAsync, GrabModeAsync, None, None);
+}
+
+OXListTree::~OXListTree() {
+  OListTreeItem *item, *sibling;
+
+  XFreeGC(GetDisplay(), _drawGC);
+  XFreeGC(GetDisplay(), _highlightGC);
+  item = _first;
+  while (item) {
+    if (item->firstchild) _DeleteChildren(item->firstchild);
+    sibling = item->nextsibling;
+    delete item;
+    item = sibling;
+  }
+}
+
+
+//-------------------------------------------- highlighting utilities
+
+void OXListTree::_HighlightItem(OListTreeItem *item, int state, int draw) {
+  if (item) {
+    if ((item == _selected) && !state) {
+      _selected = NULL;
+      if (draw) _DrawItemName(item);
+    } else if (state != item->active) {
+      item->active = state;
+      if (draw) _DrawItemName(item);
+    }
+  }
+}
+
+void OXListTree::_HighlightChildren(OListTreeItem *item, int state, int draw) {
+  while (item) {
+    _HighlightItem(item, state, draw);
+    if (item->firstchild)
+      _HighlightChildren(item->firstchild, state, (item->open) ? draw : False);
+    item = item->nextsibling;
+  }
+}
+
+void OXListTree::_UnselectAll(int draw) {
+  _HighlightChildren(_first, False, draw);
+}
+
+int OXListTree::HandleButton(XButtonEvent *event) {
+  OListTreeItem *item;
+
+  if (event->type == ButtonPress) {
+    if ((item = _FindItem(event->y)) != NULL) {
+      if (item->xnode > 0) {
+        if ((event->x > item->xnode-5) && (event->x < item->xnode+5)) {
+          // toggle open 
+          item->open = !item->open;
+          NeedRedraw(True);
+        }
+      }
+      if (_selected) _selected->active = False;
+      _last_y = event->y;
+      _UnselectAll(True);
+      _selected = item;
+      //item->active = True; // this is done below w/redraw
+      _HighlightItem(item, True, True);
+      NeedRedraw(False);
+      OContainerMessage msg(MSG_LISTTREE, MSG_CLICK, -1,
+                            event->button, 0, 0,
+                            event->x_root, event->y_root);
+      SendMessage(_msgObject, &msg);
+    }
+  }
+  return True;
+}
+
+int OXListTree::HandleDoubleClick(XButtonEvent *event) {
+  OListTreeItem *item;
+
+  if ((item = _FindItem(event->y)) != NULL) {
+    if (item->xnode > 0) {
+      if ((event->x > item->xnode-5) && (event->x < item->xnode+5)) {
+        return False;
+      }
+    }
+    item->open = !item->open;
+    if (_selected) _selected->active = False;
+    _UnselectAll(True);
+    _selected = item;
+    //item->active = True; // this is done below w/redraw
+    _HighlightItem(item, True, True);
+    NeedRedraw();
+    OContainerMessage msg(MSG_LISTTREE, MSG_DBLCLICK, -1, event->button,
+                          0, 0, event->x_root, event->y_root);
+    SendMessage(_msgObject, &msg);
+  }
+
+  return True;
+}
+
+int OXListTree::HandleExpose(XExposeEvent *event) {
+  _Draw(event->y, event->height);
+  return True;
+}
+
+//--------------------------------------------------- drawing functions
+
+void OXListTree::_DoRedraw() {
+  if (_clearBgnd) ClearWindow();
+  _Draw(0, _h);
+}
+
+void OXListTree::_Draw(int yevent, int hevent) {
+  OListTreeItem *item;
+  int x, y, width, height, old_width, old_height;
+  int xbranch;
+
+  // Overestimate the expose region to be sure to draw an item that gets
+  // cut by the region
+  _exposeTop = yevent - _th;
+  _exposeBottom = yevent + hevent + _th;
+  old_width  = _defw;
+  old_height = _defh;
+  _defw = _defh = 1;
+
+  x = _margin;
+  y = _margin;
+  item = _first;
+  while (item) {
+    xbranch = -1;
+    _DrawItem(item, x, y, &xbranch, &width, &height);
+
+    width += x + _hspacing + _margin;
+
+    if (width > _defw) _defw = width;
+
+    y += height + _vspacing;
+    if (item->firstchild && item->open)
+      y = _DrawChildren(item->firstchild, x, y, xbranch);
+
+    item = item->nextsibling;
+  }
+
+  _defh = y + _margin;
+
+  if ((old_width != _defw) || (old_height != _defh))
+    ((OXCanvas *)GetParent()->GetParent())->Layout();
+
+}
+
+int OXListTree::_DrawChildren(OListTreeItem *item, int x, int y, int xroot) {
+  int width, height;
+  int xbranch;
+
+  x += _indent + item->picWidth;
+  while (item) {
+    xbranch = xroot;
+    _DrawItem(item, x, y, &xbranch, &width, &height);
+
+    width += x + _hspacing + _margin;
+
+    if (width > _defw) _defw = width;
+
+    y += height + _vspacing;
+    if ((item->firstchild) && (item->open))
+      y = _DrawChildren(item->firstchild, x, y, xbranch);
+
+    item = item->nextsibling;
+  }
+  return y;
+}
+
+void OXListTree::_DrawItem(OListTreeItem *item, int x, int y, int *xroot,
+                           int *retwidth, int *retheight) {
+  int height, xpic, ypic, xbranch, ybranch, xtext, ytext, yline, xc;
+  const OPicture *pic;
+
+  // Select the pixmap to use, if any
+  if (item->open)
+    pic = item->open_pic;
+  else
+    pic = item->closed_pic;
+
+  // Compute the height of this line
+  height = _th;
+  xpic = x;
+  xtext = x + _hspacing + item->picWidth;
+  if (pic) {
+    if (pic->GetHeight() > height) {
+      ytext = y + ((pic->GetHeight() - height) >> 1);
+      height = pic->GetHeight();
+      ypic = y;
+    } else {
+      ytext = y;
+      ypic = y + ((height - pic->GetHeight()) / 2);
+    }
+    xbranch = xpic + (item->picWidth >> 1);
+    ybranch = ypic + pic->GetHeight();
+    yline = ypic + (pic->GetHeight() >> 1);
+  } else {
+    ypic = ytext = y;
+    xbranch = xpic + (item->picWidth >> 1);
+    yline = ybranch = ypic + (height >> 1);
+    yline = ypic + (height >> 1);
+  }
+
+  // height must be even, otherwise our dashed line wont appear properly
+  ++height; height &= ~1;
+
+  // Save the basic graphics info for use by other functions
+  item->y = y;
+  item->xnode = *xroot;
+  item->xtext = xtext;
+  item->ytext = ytext;
+  item->height = height;
+
+  if ((y+height >= _exposeTop) && (y <= _exposeBottom)) {
+    if (*xroot >= 0) {
+      xc = *xroot;
+
+      if (item->nextsibling)
+        DrawLine(_lineGC, xc, y, xc, y+height +1);
+      else
+        DrawLine(_lineGC, xc, y, xc, yline);
+
+      OListTreeItem *p = item->parent;
+      while (p) {
+        xc -= (_indent + item->picWidth);
+        if (p->nextsibling)
+          DrawLine(_lineGC, xc, y, xc, y+height +1);
+        p = p->parent;
+      }
+      DrawLine(_lineGC, *xroot, yline, xpic/*xbranch*/, yline);
+      _DrawNode(item, *xroot, yline);
+
+    }
+    if (item->open && item->firstchild)
+      DrawLine(_lineGC, xbranch, ybranch/*yline*/, xbranch, y+height +1);
+
+//    if (pic)
+//      pic->Draw(GetDisplay(), _id, _drawGC, xpic, ypic);
+    ClearArea(xpic, ypic, item->picWidth, height);
+    if (item->active || (item == _selected))
+      item->open_pic->Draw(GetDisplay(), _id, _drawGC, xpic, ypic);
+    else
+      item->closed_pic->Draw(GetDisplay(), _id, _drawGC, xpic, ypic);
+
+    _DrawItemName(item);
+  }
+
+  *xroot = xbranch;
+  *retwidth = _font->TextWidth(item->text) + item->picWidth;
+  *retheight = height;
+}
+
+void OXListTree::_DrawItemName(OListTreeItem *item) {
+  int width;
+
+  width = _font->TextWidth(item->text);
+  if (item->active || item == _selected) {
+    XSetForeground(GetDisplay(), _drawGC, _defaultSelectedBackground);
+    FillRectangle(_drawGC, item->xtext, item->ytext, width, _th);
+    XSetForeground(GetDisplay(), _drawGC, _blackPixel);
+    DrawString(_highlightGC,
+		item->xtext, item->ytext + _ascent,
+		item->text, item->length);
+  } else {
+    FillRectangle(_highlightGC, item->xtext, item->ytext, width, _th);
+    DrawString(_drawGC,
+		item->xtext, item->ytext + _ascent,
+		item->text, item->length);
+  }
+}
+
+void OXListTree::_DrawNode(OListTreeItem *item, int x, int y) {
+  if (item->firstchild) {
+    FillRectangle(_highlightGC, x-3, y-3, 7, 7);
+    XSetForeground(GetDisplay(), _highlightGC, _blackPixel);
+    DrawLine(_highlightGC, x-2, y, x+2, y);
+    if (!item->open) DrawLine(_highlightGC, x, y-2, x, y+2);
+    XSetForeground(GetDisplay(), _highlightGC, _grayPixel);
+    DrawRectangle(_highlightGC, x-4, y-4, 8, 8);
+    XSetForeground(GetDisplay(), _highlightGC, _whitePixel);
+  }
+}
+
+//-----------------------------------------------------------------
+
+// This function removes the specified item from the linked list.
+// It does not do anything with the data contained in the item, though.
+
+void OXListTree::_RemoveReference(OListTreeItem *item) {
+
+  // If there exists a previous sibling, just skip over item to be
+  // dereferenced
+  if (item->prevsibling) {
+    item->prevsibling->nextsibling = item->nextsibling;
+    if (item->nextsibling)
+      item->nextsibling->prevsibling = item->prevsibling;
+  }
+  // If not, then the deleted item is the first item in some branch.
+  else {
+    if (item->parent)
+      item->parent->firstchild = item->nextsibling;
+    else
+      _first = item->nextsibling;
+    if (item->nextsibling)
+      item->nextsibling->prevsibling = NULL;
+  }
+}
+
+void OXListTree::_DeleteChildren(OListTreeItem *item) {
+  OListTreeItem *sibling;
+
+  while (item) {
+    if (item->firstchild) {
+      _DeleteChildren(item->firstchild);
+      item->firstchild = NULL;
+    }
+    sibling = item->nextsibling;
+    delete item;
+    item = sibling;
+  }
+}
+
+void OXListTree::_InsertChild(OListTreeItem *parent, OListTreeItem *item) {
+  OListTreeItem *i;
+
+  item->parent = parent;
+  item->nextsibling = item->prevsibling = NULL;
+  if (parent) {
+
+    if (parent->firstchild) {
+      i = parent->firstchild;
+      while (i->nextsibling) i = i->nextsibling;
+      i->nextsibling = item;
+      item->prevsibling = i;
+    } else {
+      parent->firstchild = item;
+    }
+
+  } else {  // if parent == NULL, this is a top level entry
+
+    if (_first) {
+      i = _first;
+      while (i->nextsibling) i = i->nextsibling;
+      i->nextsibling = item;
+      item->prevsibling = i;
+    } else {
+      _first = item;
+    }
+
+  }
+}
+
+// Insert a list of ALREADY LINKED children into another list
+
+void OXListTree::_InsertChildren(OListTreeItem *parent, OListTreeItem *item) {
+  OListTreeItem *next, *newnext;
+
+//  while (item) {
+//    next = item->nextsibling;
+//    _InsertChild(parent, item);
+//    item = next;
+//  }
+//  return;
+
+  // Save the reference for the next item in the new list
+  next = item->nextsibling;
+
+  // Insert the first item in the new list into the existing list
+  _InsertChild(parent, item);
+
+  // The first item is inserted, with its prev and next siblings updated
+  // to fit into the existing list. So, save the existing list reference
+  newnext = item->nextsibling;
+
+  // Now, mark the first item's next sibling to point back to the new list
+  item->nextsibling = next;
+
+  // Mark the parents of the new list to the new parent. The order of the
+  // rest of the new list should be OK, and the second item should still
+  // point to the first, even though the first was reparented.
+  while (item->nextsibling) {
+    item->parent = parent;
+    item = item->nextsibling;
+  }
+
+  // Fit the end of the new list back into the existing list
+  item->nextsibling = newnext;
+  if (newnext)
+    newnext->prevsibling = item;
+}
+
+int OXListTree::_SearchChildren(OListTreeItem *item, int y, int findy,
+                                OListTreeItem **finditem) {
+  int height;
+  const OPicture *pic;
+
+  while (item) {
+    // Select the pixmap to use, if any
+    if (item->open)
+      pic = item->open_pic;
+    else
+      pic = item->closed_pic;
+
+    // Compute the height of this line
+    height = _th;
+    if (pic && (pic->GetHeight() > height))
+      height = pic->GetHeight();
+
+    if ((findy >= y) && (findy <= y + height)) {
+      *finditem = item;
+      return -1;
+    }
+
+    y += height + _vspacing;
+    if ((item->firstchild) && (item->open)) {
+      y = _SearchChildren(item->firstchild, y, findy, finditem);
+      if (*finditem) return -1;
+    }
+
+    item = item->nextsibling;
+  }
+
+  return y;
+}
+
+OListTreeItem *OXListTree::_FindItem(int findy) {
+  int y, height;
+  OListTreeItem *item, *finditem;
+  const OPicture *pic;
+
+  y = _margin;
+  item = _first;
+  finditem = NULL;
+  while (item && !finditem) {
+    // Select the pixmap to use, if any
+    if (item->open)
+      pic = item->open_pic;
+    else
+      pic = item->closed_pic;
+
+    // Compute the height of this line
+    height = _th;
+    if (pic && (pic->GetHeight() > height))
+      height = pic->GetHeight();
+
+    if ((findy >= y) && (findy <= y + height))
+      return item;
+
+    y += height + _vspacing;
+    if ((item->firstchild) && (item->open)) {
+      y = _SearchChildren(item->firstchild,
+	 		  y, findy, &finditem);
+      // if (finditem) return finditem;
+    }
+    item = item->nextsibling;
+  }
+
+  return finditem;
+}
+
+//----------------------------------------------- Public Functions
+
+OListTreeItem *OXListTree::AddItem(OListTreeItem *parent, char *string,
+                                   const OPicture *open,
+                                   const OPicture *closed) {
+  OListTreeItem *item;
+
+  if (!open) open = _client->GetPicture("ofolder.t.xpm");
+  if (!closed) closed = _client->GetPicture("folder.t.xpm");
+
+  item = new OListTreeItem(_client, string, open, closed);
+  _InsertChild(parent, item);
+
+  NeedRedraw();
+
+  return item;
+}
+
+void OXListTree::RenameItem(OListTreeItem *item, char *string) {
+  item->Rename(string);
+  NeedRedraw();
+}
+
+int OXListTree::DeleteItem(OListTreeItem *item) {
+
+  if (item->firstchild)
+    _DeleteChildren(item->firstchild);
+
+  item->firstchild = NULL;
+  _RemoveReference(item);
+  delete item;
+
+  NeedRedraw();
+
+  return 1;
+}
+
+int OXListTree::DeleteChildren(OListTreeItem *item) {
+
+  if (item->firstchild)
+    _DeleteChildren(item->firstchild);
+
+  item->firstchild = NULL;
+
+  NeedRedraw();
+
+  return 1;
+}
+
+int OXListTree::Reparent(OListTreeItem *item, OListTreeItem *newparent) {
+
+  // Remove the item from its old location.
+  _RemoveReference(item);
+
+  // The item is now unattached. Reparent it.
+  _InsertChild(newparent, item);
+
+  NeedRedraw();
+
+  return 1;
+}
+
+int OXListTree::ReparentChildren(OListTreeItem *item,
+                                 OListTreeItem *newparent) {
+  OListTreeItem *first;
+
+  if (item->firstchild) {
+    first = item->firstchild;
+    item->firstchild = NULL;
+
+    _InsertChildren(newparent, first);
+
+    NeedRedraw();
+    return 1;
+  }
+  return 0;
+}
+
+//static int OXListTree::_compare(const void *item1, const void *item2) {
+int _compare(const void *item1, const void *item2) {
+  return strcmp((*((OListTreeItem **) item1))->text,
+		(*((OListTreeItem **) item2))->text);
+}
+
+int OXListTree::Sort(OListTreeItem *item) {
+  OListTreeItem *first, *parent, **list;
+  size_t i, count;
+
+  // Get first child in list;
+  while (item->prevsibling) item = item->prevsibling;
+
+  first = item;
+  parent = first->parent;
+
+  // Count the children
+  count = 1;
+  while (item->nextsibling) item = item->nextsibling, count++;
+  if (count <= 1) return 1;
+
+  list = new OListTreeItem* [count];
+  list[0] = first;
+  count = 1;
+  while (first->nextsibling) {
+    list[count] = first->nextsibling;
+    count++;
+    first = first->nextsibling;
+  }
+
+  qsort(list, count, sizeof(OListTreeItem*), _compare);
+
+  list[0]->prevsibling = NULL;
+  for (i = 0; i < count; i++) {
+    if (i < count - 1)
+      list[i]->nextsibling = list[i + 1];
+    if (i > 0)
+      list[i]->prevsibling = list[i - 1];
+  }
+  list[count - 1]->nextsibling = NULL;
+  if (parent)
+    parent->firstchild = list[0];
+  else
+    _first = list[0];
+
+  delete[] list;
+
+  NeedRedraw();
+
+  return 1;
+}
+
+int OXListTree::SortSiblings(OListTreeItem *item) {
+  return Sort(item);
+}
+
+int OXListTree::SortChildren(OListTreeItem *item) {
+  OListTreeItem *first = NULL;
+
+  if (item) {
+    first = item->firstchild;
+  } else {
+    if (_first) first = _first->firstchild;
+  }
+  if (first)
+    SortSiblings(first);
+  return 1;
+}
+
+OListTreeItem *OXListTree::FindSiblingByName(OListTreeItem *item, char *name) {
+  OListTreeItem *first;
+
+  // Get first child in list;
+  if (item) {
+    while (item->prevsibling)
+      item = item->prevsibling;
+    first = item;
+
+    while (item) {
+      if (strcmp(item->text, name) == 0)
+	return item;
+      item = item->nextsibling;
+    }
+    return item;
+  }
+  return NULL;
+}
+
+OListTreeItem *OXListTree::FindChildByName(OListTreeItem *item, char *name) {
+
+  // Get first child in list
+  if (item && item->firstchild) {
+    item = item->firstchild;
+  } else if (!item && _first) {
+    item = _first;
+  } else {
+    item = NULL;
+  }
+
+  while (item) {
+    if (strcmp(item->text, name) == 0)
+      return item;
+    item = item->nextsibling;
+  }
+  return NULL;
+}
+
+void OXListTree::HighlightItem(OListTreeItem *item) {
+  _UnselectAll(False);
+  _HighlightItem(item, True, False);
+  NeedRedraw(False);
+}
+
+void OXListTree::ClearHighlighted() {
+  _UnselectAll(False);
+  NeedRedraw(False);
+}
+
+void OXListTree::GetPathnameFromItem(OListTreeItem *item, char *path) {
+  char tmppath[1024];
+
+  *path = '\0';
+  while (item) {
+    sprintf(tmppath, "/%s%s", item->text, path);
+    strcpy(path, tmppath);
+    item = item->parent;
+  }
+}

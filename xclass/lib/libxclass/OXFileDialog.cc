@@ -1,0 +1,542 @@
+/**************************************************************************
+
+    This file is part of xclass, a Win95-looking GUI toolkit.
+    Copyright (C) 1996, 1997 David Barth, Ricky Ralston, Hector Peraza.
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Library General Public
+    License as published by the Free Software Foundation; either
+    version 2 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Library General Public License for more details.
+
+    You should have received a copy of the GNU Library General Public
+    License along with this library; if not, write to the Free
+    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+**************************************************************************/
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <limits.h>
+#include <errno.h>
+#include <sys/stat.h>
+
+#include <X11/keysym.h>
+
+#include <xclass/utils.h>
+#include <xclass/OXMsgBox.h>
+#include <xclass/OXFileDialog.h>
+#include <xclass/OResourcePool.h>
+
+
+#define IDF_CDUP        0
+#define IDF_NEW_FOLDER  1
+#define IDF_LIST        2
+#define IDF_DETAILS     3
+
+#define IDF_FSLB        4
+#define IDF_FTYPESLB    5
+
+
+static char *defaultFiletypes[] = { "All files",      "*",
+                                    "Document files", "*.doc",
+                                    "Text files",     "*.txt",
+                                    NULL,             NULL };
+
+
+//--------------------------------------------------------------
+
+OFileInfo::OFileInfo() { 
+  filename = NULL;
+  ini_dir = NULL;
+  file_types = NULL;
+}
+  
+OFileInfo::~OFileInfo() { 
+  if (filename) delete[] filename;
+  if (ini_dir) delete[] ini_dir;
+}
+
+
+//--------------------------------------------------------------
+
+OXFileDialog::OXFileDialog(const OXWindow *p, const OXWindow *main,
+                           int dlg_type, OFileInfo *file_info) :
+  OXTransientFrame(p, main, 10, 10, MAIN_FRAME | VERTICAL_FRAME) {
+    int  i, ax, ay;
+    Window wdummy;
+    const  OPicture *pcdup, *pnewf, *plist, *pdetails;
+    char *lookinString;
+    char *okButtonString;
+    char *windowNameString;
+
+    _init = False;
+    _file_info = file_info;
+
+    if (!_file_info->file_types)
+      _file_info->file_types = defaultFiletypes;
+
+    _htop = new OXHorizontalFrame(this, 10, 10);
+
+    _lmain = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 4, 4, 3, 1);
+
+    //--- top toolbar elements
+    _dlg_type = dlg_type;
+
+    switch(dlg_type) {
+      default:
+      case FDLG_OPEN:
+        lookinString     = "Look &in";
+        okButtonString   = "&Open";
+        windowNameString = "Open";
+        break;
+
+      case FDLG_SAVE:
+        lookinString     = "Save &in";
+        okButtonString   = "&Save";
+        windowNameString = "Save as...";
+        break;
+
+      case FDLG_BROWSE:
+        lookinString     = "Look &in";
+        okButtonString   = "&Ok";
+        windowNameString = "Browse";
+        break;
+     }
+
+    _lookin = new OXLabel(_htop, new OHotString(lookinString));
+    _tree_lb = new OXFileSystemDDListBox(_htop, IDF_FSLB);
+    _tree_lb->Associate(this);
+
+    pcdup = _client->GetPicture("tb-uplevel.xpm");
+    pnewf = _client->GetPicture("tb-newfolder.xpm");
+    plist = _client->GetPicture("tb-list.xpm");
+    pdetails = _client->GetPicture("tb-details.xpm");
+
+    if (!(plist && pnewf && plist && pdetails))
+      FatalError("OXFileDialog: missing toolbar pixmap(s).\n");
+
+    _cdup = new OXPictureButton(_htop, pcdup, IDF_CDUP);
+    _newf = new OXPictureButton(_htop, pnewf, IDF_NEW_FOLDER);
+    _list = new OXPictureButton(_htop, plist, IDF_LIST);
+    _details = new OXPictureButton(_htop, pdetails, IDF_DETAILS);
+
+    _cdup->Associate(this);
+    _newf->Associate(this);
+    _list->Associate(this);
+    _details->Associate(this);
+
+    _list->SetType(BUTTON_STAYDOWN);
+    _details->SetType(BUTTON_STAYDOWN);
+
+    _lhl = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  5,  5, 2, 2); 
+    _lht = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y, 10,  0, 2, 2); 
+    _lb1 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  8,  0, 2, 2); 
+    _lb2 = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y,  0, 15, 2, 2);
+
+    _tree_lb->Resize(200, _tree_lb->GetDefaultHeight());
+
+    _htop->AddFrame(_lookin, _lhl);
+    _htop->AddFrame(_tree_lb, _lht); 
+    _htop->AddFrame(_cdup, _lb1);
+    _htop->AddFrame(_newf, _lb1);
+    _htop->AddFrame(_list, _lb1);
+    _htop->AddFrame(_details, _lb2);
+
+    AddFrame(_htop, _lmain);
+
+    //--- file view
+
+    _fv = new OXFileList(this, -1, GetResourcePool()->GetMimeTypes(),
+                         NULL, 400, 161);
+    _fv->Associate(this);
+
+    // The initialization of OXFileList and OXFileSystemDDlistBox
+    // contents is done in HandleMapNotify()
+
+    _fv->SetViewMode(LV_LIST);
+    _fv->Sort(SORT_BY_TYPE);
+
+    _list->SetState(BUTTON_ENGAGED);
+
+    AddFrame(_fv, _lmain);
+
+    //--- file name and types
+
+    _hf = new OXHorizontalFrame(this, 10, 10);
+
+    _vf = new OXVerticalFrame(_hf, 10, 10);
+    _lvf = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y |
+                            LHINTS_EXPAND_X);
+
+    _hfname = new OXHorizontalFrame(_vf, 10, 10);
+
+    _lfname = new OXLabel(_hfname, new OHotString("File &name:"));
+    _fname = new OXTextEntry(_hfname, new OTextBuffer(PATH_MAX+10));
+    _fname->Resize(220, _fname->GetDefaultHeight());
+
+    _lht1 = new OLayoutHints(LHINTS_RIGHT | LHINTS_EXPAND_Y, 0, 20, 2, 2); 
+
+    _hfname->AddFrame(_lfname, _lhl);
+    _hfname->AddFrame(_fname, _lht1);
+
+    _vf->AddFrame(_hfname, _lvf);
+
+    _hftype = new OXHorizontalFrame(_vf, 10, 10);
+
+    _lftypes = new OXLabel(_hftype, new OHotString("Files of &type:"));
+    _ftypes = new OXDDListBox(_hftype, IDF_FTYPESLB);
+    _ftypes->Associate(this);
+    _ftypes->Resize(220, /*_fname*/_ftypes->GetDefaultHeight());
+
+    if (_file_info->file_types) {
+      for (i = 0; _file_info->file_types[i] != NULL; i += 2)
+        _ftypes->AddEntry(new OString(_file_info->file_types[i]), i);
+      _ftypes->Select(0);
+
+      _fname->Clear();
+      switch(_dlg_type) {
+        case FDLG_OPEN:
+        case FDLG_BROWSE:
+          _fname->AddText(0, _file_info->file_types[1]);
+          break;
+
+        case FDLG_SAVE:
+      	  if (_file_info->filename) {
+            _fname->AddText(0, _file_info->filename);
+            _defName = StrDup(_file_info->filename);
+          }
+          break;
+      }
+      _fv->SetFileFilter(_file_info->file_types[1], False);
+    }
+
+    _hftype->AddFrame(_lftypes, _lhl);
+    _hftype->AddFrame(_ftypes, _lht1);
+
+    _vf->AddFrame(_hftype, _lvf);
+
+    _hf->AddFrame(_vf, _lvf);
+
+    //--- Open/Save and Cancel buttons
+
+    _vbf = new OXVerticalFrame(_hf, 10, 10, FIXED_WIDTH);
+    _lvbf = new OLayoutHints(LHINTS_LEFT | LHINTS_CENTER_Y);
+//    _lvbf = new OLayoutHints(LHINTS_LEFT | LHINTS_EXPAND_Y);
+
+    _lb = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X, 0, 0, 2, 2);
+
+    _ok = new OXTextButton(_vbf, new OHotString(okButtonString), ID_OK);
+    _cancel = new OXTextButton(_vbf, new OHotString("Cancel"), ID_CANCEL);
+
+    _ok->Associate(this);
+    _cancel->Associate(this);
+
+    SetDefaultAcceptButton(_ok);
+    SetDefaultCancelButton(_cancel);
+    SetFocusOwner(_fname);
+
+    _vbf->AddFrame(_ok, _lb);
+    _vbf->AddFrame(_cancel, _lb);
+
+    int width = max(_ok->GetDefaultWidth(), _cancel->GetDefaultWidth()) + 20;
+    _vbf->Resize(width, _vbf->GetDefaultHeight());
+
+    _hf->AddFrame(_vbf, _lvbf);
+
+    AddFrame(_hf, _lmain);
+
+    MapSubwindows();
+    Resize(GetDefaultSize());
+
+    //---- position relative to the parent's window
+
+    if (main) {
+      XTranslateCoordinates(GetDisplay(),
+                            main->GetId(), GetParent()->GetId(),
+                            (((OXFrame *) main)->GetWidth() - _w) >> 1,
+                            (((OXFrame *) main)->GetHeight() - _h) >> 1,
+                            &ax, &ay, &wdummy);
+
+      int dw = _client->GetDisplayWidth();
+      int dh = _client->GetDisplayHeight();
+
+      if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
+      if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _h - 50;
+
+      Move(ax, ay);
+      SetWMPosition(ax, ay);
+    }
+    
+    //---- make the message box non-resizable
+
+    SetWMSize(_w, _h);
+    SetWMSizeHints(_w, _h, _w, _h, 0, 0);
+
+    SetWindowName(windowNameString);
+    SetIconName(windowNameString);
+    SetClassHints("FileDialog", "FileDialog");
+
+    SetMWMHints(MWM_DECOR_ALL | MWM_DECOR_RESIZEH | MWM_DECOR_MAXIMIZE |
+                                MWM_DECOR_MINIMIZE | MWM_DECOR_MENU,
+                MWM_FUNC_ALL | MWM_FUNC_RESIZE | MWM_FUNC_MAXIMIZE |
+                               MWM_FUNC_MINIMIZE,
+                MWM_INPUT_MODELESS);
+
+    //---- grab accelerators
+
+    _GrabAltKey(XK_i);
+    _GrabAltKey(XK_n);
+    _GrabAltKey(XK_t);
+
+    MapWindow();
+    _client->WaitFor(this);
+}
+
+OXFileDialog::~OXFileDialog() {
+  delete _lb; delete _lvbf;
+  delete _lb1; delete _lb2; delete _lhl;
+  delete _lht; delete _lht1; delete _lvf;
+  delete _lmain;
+}
+
+void OXFileDialog::CloseWindow() {
+  if (_file_info->filename) delete[] _file_info->filename;
+  _file_info->filename = NULL;
+  delete this;
+}
+
+int OXFileDialog::HandleKey(XKeyEvent *event) {
+  if ((event->type == KeyPress) && (event->state & Mod1Mask)) {
+    int keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
+    switch (keysym) {
+      case XK_i: _tree_lb->RequestFocus(); break;
+      case XK_n: _fname->RequestFocus(); break;
+      case XK_t: _ftypes->RequestFocus(); break;
+      default: return OXTransientFrame::HandleKey(event);
+    }
+    return True;
+  }
+  return OXTransientFrame::HandleKey(event);
+}
+
+int OXFileDialog::HandleMapNotify(XMapEvent *event) {
+
+  OXTransientFrame::HandleMapNotify(event);
+
+  if (!_init) {
+    char path[PATH_MAX];
+
+    DefineCursor(GetResourcePool()->GetWaitCursor());
+    XFlush(GetDisplay());
+
+    if (_file_info->ini_dir) {
+      _fv->ChangeDirectory(_file_info->ini_dir);
+      delete[] _file_info->ini_dir;  // in case ChangeDirectory fails...
+    } else {
+      _fv->ChangeDirectory(".");
+    }
+
+    _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
+    _file_info->ini_dir = StrDup(path);
+
+    DefineCursor(None);
+
+    _init = True;
+  }
+
+  return True;
+}
+
+int OXFileDialog::ProcessMessage(OMessage *msg) {
+  int sel;
+  OWidgetMessage *wmsg;
+  OContainerMessage *cmsg;
+  OXTreeLBEntry *e;
+  OXTextLBEntry *te;
+  OFileItem *f;
+  char path[PATH_MAX], tmp[256];
+  void *p = NULL;
+  struct stat sbuf;
+  vector<OItem *> items;
+
+  switch (msg->type) {
+  case MSG_BUTTON:
+  case MSG_DDLISTBOX:
+    wmsg = (OButtonMessage *) msg;
+    switch (wmsg->action) { 
+    case MSG_CLICK:
+      switch (wmsg->id) {
+
+      //---- buttons
+
+      case ID_OK:
+        if (stat(_fname->GetString(), &sbuf) == 0 && S_ISDIR(sbuf.st_mode)) {
+          DefineCursor(GetResourcePool()->GetWaitCursor());
+          XFlush(GetDisplay());
+          if (_fv->ChangeDirectory(_fname->GetString()) != 0) {
+            sprintf(tmp, "Can't read directory \"%s\": %s.",
+                    _fname->GetString(), strerror(errno));
+            new OXMsgBox(_client->GetRoot(), _toplevel,
+                         new OString("Error"), new OString(tmp),
+                         MB_ICONSTOP, ID_OK);
+          }
+          _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
+          if (_file_info->ini_dir) delete[] _file_info->ini_dir;
+          _file_info->ini_dir = StrDup(path);
+          DefineCursor(None);
+        } else if (strspn(_fname->GetString(), "?*") > 0) {
+          _fv->SetFileFilter(_fname->GetString());
+        } else {
+          if (_file_info->filename) delete[] _file_info->filename;
+          _file_info->filename = StrDup(_fname->GetString());
+          delete this;
+        }
+        break;
+
+      case ID_CANCEL:
+        if (_file_info->filename) delete[] _file_info->filename;
+        _file_info->filename = NULL;
+        delete this;
+        break;
+
+      case IDF_CDUP:
+        DefineCursor(GetResourcePool()->GetWaitCursor());
+        XFlush(GetDisplay());
+        _fv->ChangeDirectory("..");
+        _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
+        if (_file_info->ini_dir) delete[] _file_info->ini_dir;
+        _file_info->ini_dir = StrDup(path);
+        DefineCursor(None);
+        break;
+
+      case IDF_NEW_FOLDER:
+        break;
+
+      case IDF_LIST:
+        _fv->SetViewMode(LV_LIST);
+        _details->SetState(BUTTON_UP);
+        break;
+
+      case IDF_DETAILS:
+        _fv->SetViewMode(LV_DETAILS);
+        _list->SetState(BUTTON_UP);
+        break;
+
+      //---- drop-down list boxes
+
+      case IDF_FSLB:
+        e = (OXTreeLBEntry *) _tree_lb->GetSelectedEntry();
+        if (e) {
+          DefineCursor(GetResourcePool()->GetWaitCursor());
+          XFlush(GetDisplay());
+          if (_fv->ChangeDirectory(e->GetPath()->GetString()) != 0) {
+            sprintf(tmp, "Can't read directory \"%s\": %s.",
+                    e->GetPath()->GetString(), strerror(errno));
+            new OXMsgBox(_client->GetRoot(), _toplevel,
+                         new OString("Error"), new OString(tmp),
+                         MB_ICONSTOP, ID_OK);
+          }
+          _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
+          if (_file_info->ini_dir) delete[] _file_info->ini_dir;
+          _file_info->ini_dir = StrDup(path);
+          DefineCursor(None);
+        }
+        break;
+
+      case IDF_FTYPESLB:
+        te = (OXTextLBEntry *) _ftypes->GetSelectedEntry();
+        if (te) {
+          if (_dlg_type != FDLG_SAVE) {
+            _fname->Clear();
+            _fname->AddText(0, _file_info->file_types[te->ID()+1]);
+          }
+          _fv->SetFileFilter(_file_info->file_types[te->ID()+1]);
+          _client->NeedRedraw(_fname);
+        }
+        break;
+      }
+      break;
+
+    default:
+      break;
+    } // switch(msg->action)
+    break;
+
+  case MSG_LISTVIEW:
+    cmsg = (OContainerMessage *) msg;
+    switch(cmsg->action) {
+    case MSG_CLICK:
+      if (cmsg->button == Button1) {
+        if ((sel = _fv->NumSelected()) == 1) {
+          items = _fv->GetSelectedItems();
+	  f = (OFileItem *) items[0];
+          if (/*_dlg_type == FDLG_SAVE && */S_ISDIR(f->GetFileType()))
+            return True;
+          _fname->Clear();
+          _fname->AddText(0, f->GetName()->GetString());
+          _client->NeedRedraw(_fname);
+        }
+      }
+      break;
+
+    case MSG_DBLCLICK:
+      if (cmsg->button == Button1) {
+        if ((sel = _fv->NumSelected()) == 1) {
+          items = _fv->GetSelectedItems();
+          f = (OFileItem *) items[0];
+          if (S_ISDIR(f->GetFileType())) {
+            DefineCursor(GetResourcePool()->GetWaitCursor());
+            XFlush(GetDisplay());
+            if (_fv->ChangeDirectory(f->GetName()->GetString()) != 0) {
+              sprintf(tmp, "Can't read directory \"%s\": %s.",
+                      f->GetName()->GetString(), strerror(errno));
+              new OXMsgBox(_client->GetRoot(), _toplevel,
+                           new OString("Error"), new OString(tmp),
+                           MB_ICONSTOP, ID_OK);
+            }
+            _tree_lb->UpdateContents(getcwd(path, PATH_MAX));
+            if (_file_info->ini_dir) delete[] _file_info->ini_dir;
+            _file_info->ini_dir = StrDup(path);
+            DefineCursor(None);
+          } else {
+            if (_file_info->filename) delete[] _file_info->filename;
+            _file_info->filename = StrDup(f->GetName()->GetString());
+            delete this;
+          }
+        }
+      }
+      break;
+
+    default:
+      break;
+
+    } // switch(msg->action)
+    break;
+
+  default:
+    break;
+
+  } // switch(msg->type)
+
+  return True;
+}
+
+void OXFileDialog::_GrabAltKey(int keysym) {
+
+  int keycode = XKeysymToKeycode(GetDisplay(), keysym);
+
+  XGrabKey(GetDisplay(), keycode, Mod1Mask,
+           _id, True, GrabModeAsync, GrabModeAsync);
+  XGrabKey(GetDisplay(), keycode, Mod1Mask | Mod2Mask,
+           _id, True, GrabModeAsync, GrabModeAsync);
+  XGrabKey(GetDisplay(), keycode, Mod1Mask | LockMask,
+           _id, True, GrabModeAsync, GrabModeAsync);
+  XGrabKey(GetDisplay(), keycode, Mod1Mask | Mod2Mask | LockMask,
+           _id, True, GrabModeAsync, GrabModeAsync);
+}

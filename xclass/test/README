@@ -1,0 +1,39 @@
+Here you will find some programs used to test the different
+widgets and features of the xclass library.
+
+wintest  - used to test the dialog and message boxes, as
+           well as the following widgets:
+             - menu bar and popup menus
+             - scrollable canvas
+             - buttons
+             - tab
+             - sliders
+             - text entries
+
+ftest    - used to test timers and file event handlers, just open
+           a big file (try the unstripped libxclass.a one) and
+           watch the count of bytes read fly. The interface keeps 
+           operational and the clock keeps updating the time during
+           the read operation. To cancel the file access, do a
+           File/Open again and answer 'yes' to the message box.
+
+test4    - used to test the OXClient::Run() loop, the method should
+           return everytime the last top-level window is closed.
+
+combotest - used to test the combo box widget.
+
+spinnertest - used to test the spinner (text entry with spin buttons)
+              widget.
+
+shutter,
+shutter1  - used to test the OXShutter widget. OXShutter was adapted
+            from FXShutter from the FOX (not fOX) library of Jeroen
+            van der Zijp.
+
+progbar  - used to test the OXProgressBar widget.
+
+xdnd     - used to test drag-and-drop operations.
+
+listview - used to test the OXListView widget.
+
+textedit - used to test the OXTextEdit widget.
