@@ -1,7 +1,7 @@
 /**************************************************************************
 
     This file is part of xcpaint, a XPM pixmap editor.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    Copyright (C) 1996-2004 David Barth, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,14 +24,15 @@
 #include <unistd.h>
 
 #include <X11/keysym.h>
+
 #include <xclass/OXMsgBox.h>
+#include <xclass/OXColorDialog.h>
 
 #include "OColorTable.h"
 #include "OXDialogs.h"
 #include "OXPaintCanvas.h"
 #include "OXPaletteFrame.h"
 #include "main.h"
-
 
 #include "ptb-point.xpm"
 #include "ptb-mark.xpm"
@@ -48,10 +49,14 @@
 
 #include "pbg.xpm"
 
-#define XCPAINT_VERSION "0.7.4"
+#define XCPAINT_VERSION "0.7.5"
+
+#ifndef max
+#define max(a,b) (((a)>(b)) ? (a) : (b))
+#endif
 
 struct _popup file_popup = {
-  0, {
+  NULL, {
   { "&New...",         M_FILE_NEW,        0,             NULL },
   { "",                -1,                0,             NULL },
   { "&Open...",        M_FILE_OPEN,       0,             NULL },
@@ -65,7 +70,7 @@ struct _popup file_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup edit_popup = {
-  0, {
+  NULL, {
   { "&Undo",           M_EDIT_UNDO,       0,             NULL },
   { "",                -1,                0,             NULL },
   { "Cu&t",            M_EDIT_CUT,        0,             NULL },
@@ -76,7 +81,7 @@ struct _popup edit_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup view_popup = {
-  0, {
+  NULL, {
   { "&Toolbar",        M_VIEW_TOOLBAR,    MENU_CHECKED,  NULL },
   { "Status &Bar",     M_VIEW_STATUSBAR,  MENU_CHECKED,  NULL },
   { "Color &Palette",  M_VIEW_PALETTE,    MENU_CHECKED,  NULL },
@@ -88,19 +93,19 @@ struct _popup view_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup rotate_popup = {
-  0, {
+  NULL, {
   { "90 Deg &Right",   M_ROTATE_RIGHT,    0,             NULL },
   { "90 Deg &Left",    M_ROTATE_LEFT,     0,             NULL },
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup flip_popup = {
-  0, {
+  NULL, {
   { "&Horizontal",     M_FLIP_HORIZONTAL, 0,             NULL },
   { "&Vertical",       M_FLIP_VERTICAL,   0,             NULL },
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup shift_popup = {
-  0, {
+  NULL, {
   { "&Up",             M_SHIFT_UP,        0,             NULL },
   { "&Down",           M_SHIFT_DOWN,      0,             NULL },
   { "&Left",           M_SHIFT_LEFT,      0,             NULL },
@@ -108,7 +113,7 @@ struct _popup shift_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup image_popup = {
-  0, {
+  NULL, {
   { "&Resize...",      M_IMAGE_RESIZE,    0,             NULL },
   { "Re&scale...",     M_IMAGE_RESCALE,   0,             NULL },
   { "",                -1,                0,             NULL },
@@ -121,7 +126,7 @@ struct _popup image_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup palette_popup = {
-  0, {
+  NULL, {
   { "&Load...",        M_PALETTE_LOAD,    0,             NULL },
   { "&Save...",        M_PALETTE_SAVE,    0,             NULL },
   { "",                -1,                0,             NULL },
@@ -129,7 +134,7 @@ struct _popup palette_popup = {
   { NULL,              -1,                0,             NULL } } };
 
 struct _popup help_popup = {
-  0, {
+  NULL, {
   { "&Contents...",    M_HELP_CONTENTS,   MENU_DISABLED, NULL },
   { "&Search...",      M_HELP_SEARCH,     MENU_DISABLED, NULL },
   { "",                -1,                0,             NULL },
@@ -263,12 +268,15 @@ OXAppMainFrame::OXAppMainFrame(const OXWindow *p, int w, int h) :
                                     HORIZONTAL_FRAME | OWN_BKGND);
   _container->SetBackgroundPixmap(_cbkgnd->GetPicture());
   _canvas->SetContainer(_container);
+  _canvas->SetScrollDelay(30, 20);
+  _canvas->SetScrollMode(SB_ACCELERATED);
 
   _pcanvas = new OXPaintCanvas(_container, 10, 10, 
                                HORIZONTAL_FRAME | OWN_BKGND,
                                _whitePixel);
   _container->AddFrame(_pcanvas, new OLayoutHints(LHINTS_LEFT | LHINTS_TOP));
 
+  _pcanvas->Associate(this);
   _pcanvas->SetZoom(ZoomFactor = 1);
   _pcanvas->SetGrid(Grid = True);
 
@@ -401,179 +409,192 @@ void OXAppMainFrame::_InitToolBar() {
 int OXAppMainFrame::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
 
-  switch (msg->action) {
+  switch (msg->type) {
 
-    case MSG_CLICK:
-      switch(msg->type) {
+    case MSG_BUTTON:
+      if (msg->action == MSG_CLICK) {
+        if (wmsg->id == 1011)
+          DoZoomIn();
+        else if (wmsg->id == 1012)
+          DoZoomOut();
+        else
+          DoSetMode(wmsg->id);
+        break;
+      }
+      break;
 
-        case MSG_BUTTON:
-          if (wmsg->id == 1011)
+    case MSG_DDLISTBOX:
+      if (msg->action == MSG_CLICK) {
+        if (wmsg->id == MISC_DDLB_SELECT) {
+          DoZoomSet();
+        }
+      }
+      break;
+
+    case MSG_PALETTE:
+      if (msg->action == MSG_CLICK) {
+        DoSetColor(wmsg->id);
+      }
+      break;
+
+    case MSG_MENU:
+      if (msg->action == MSG_CLICK) {
+        switch (wmsg->id) {
+
+          //--------------------------------------------- File
+
+          case M_FILE_NEW:
+            DoNew();
+            break;
+
+          case M_FILE_OPEN:
+            DoLoad();
+            break;
+
+          case M_FILE_SAVE:
+            DoSave();
+            break;
+
+          case M_FILE_SAVEAS:
+            DoSaveAs();
+            break;
+
+          case M_FILE_EXIT:
+            CloseWindow();
+            break;
+
+          //--------------------------------------------- Edit
+
+          case M_EDIT_UNDO:
+            _pcanvas->Undo();
+            break;
+
+          case M_EDIT_CUT:
+            DoCut();
+            break;
+
+          case M_EDIT_COPY:
+            DoCopy();
+            break;
+
+          case M_EDIT_PASTE:
+            DoPaste();
+            break;
+
+          case M_EDIT_SELECTALL:
+            _pcanvas->Select(0, 0,
+                             _pcanvas->GetImageWidth() - 1,
+                             _pcanvas->GetImageHeight() - 1,
+                             CurrentTime);
+            break;
+
+          //--------------------------------------------- View
+
+          case M_VIEW_TOOLBAR:
+            DoToggleToolBar();
+            break;
+
+          case M_VIEW_STATUSBAR:
+            DoToggleStatusBar();
+            break;
+
+          case M_VIEW_PALETTE:
+            DoTogglePalette();
+            break;
+
+          case M_VIEW_GRID:
+            DoToggleGrid();
+            break;
+
+          case M_VIEW_ZOOMIN:
             DoZoomIn();
-          else if (wmsg->id == 1012)
+            break;
+
+          case M_VIEW_ZOOMOUT:
             DoZoomOut();
-          else
-            DoSetMode(wmsg->id);
-          break;
+            break;
 
-        case MSG_DDLISTBOX:
-          switch(wmsg->id) {
+          //--------------------------------------------- Image
 
-            case MISC_DDLB_SELECT:
-              DoZoomSet();
-              break;
+          case M_FLIP_HORIZONTAL:
+            _pcanvas->FlipVert();
+            break;
 
-            default:
-              break;
+          case M_FLIP_VERTICAL:
+            _pcanvas->FlipHoriz();
+            break;
 
-          } // switch(id)
-          break;
+          case M_ROTATE_LEFT:
+            _pcanvas->RotateLeft();
+            break;
 
-        case MSG_PALETTE:
-          DoSetColor(wmsg->id);
-          break;
+          case M_ROTATE_RIGHT:
+            _pcanvas->RotateRight();
+            break;
 
-        case MSG_MENU:
-          switch(wmsg->id) {
+          case M_SHIFT_UP:
+            _pcanvas->ShiftUp();
+            break;
 
-            //--------------------------------------------- File
+          case M_SHIFT_DOWN:
+            _pcanvas->ShiftDown();
+            break;
 
-            case M_FILE_NEW:
-              DoNew();
-              break;
+          case M_SHIFT_LEFT:
+            _pcanvas->ShiftLeft();
+            break;
 
-            case M_FILE_OPEN:
-              DoLoad();
-              break;
+          case M_SHIFT_RIGHT:
+            _pcanvas->ShiftRight();
+            break;
 
-            case M_FILE_SAVE:
-              DoSave();
-              break;
+          case M_IMAGE_RESIZE:
+            DoResize();
+            break;
 
-            case M_FILE_SAVEAS:
-              DoSaveAs();
-              break;
+          case M_IMAGE_RESCALE:
+            DoRescale();
+            break;
 
-            case M_FILE_EXIT:
-              CloseWindow();
-              break;
+          case M_IMAGE_SETFONT:
+            DoSetFont();
+            break;
 
-            //--------------------------------------------- Edit
+          case M_IMAGE_SETTEXT:
+            DoSetText();
+            break;
 
-            case M_EDIT_UNDO:
-              _pcanvas->Undo();
-              break;
+          //--------------------------------------------- Palette
 
-            case M_EDIT_CUT:
-              break;
+          case M_PALETTE_ADDCOLOR:
+            DoAddColor();
+            break;
 
-            case M_EDIT_COPY:
-              break;
+          //--------------------------------------------- Help
 
-            case M_EDIT_PASTE:
-              _pcanvas->Paste();
-              _palette->UpdateColors(_pcanvas->GetColorTable());
-              break;
+          case M_HELP_CONTENTS:
+            break;
 
-            //--------------------------------------------- View
+          case M_HELP_ABOUT:
+            DoHelpAbout();
+            break;
 
-            case M_VIEW_TOOLBAR:
-              DoToggleToolBar();
-              break;
+          default:
+            break;
+        }
+      }
+      break;
 
-            case M_VIEW_STATUSBAR:
-              DoToggleStatusBar();
-              break;
-
-            case M_VIEW_PALETTE:
-              DoTogglePalette();
-              break;
-
-            case M_VIEW_GRID:
-              DoToggleGrid();
-              break;
-
-            case M_VIEW_ZOOMIN:
-              DoZoomIn();
-              break;
-
-            case M_VIEW_ZOOMOUT:
-              DoZoomOut();
-              break;
-
-            //--------------------------------------------- Image
-
-            case M_FLIP_HORIZONTAL:
-              _pcanvas->FlipVert();
-              break;
-
-            case M_FLIP_VERTICAL:
-              _pcanvas->FlipHoriz();
-              break;
-
-            case M_ROTATE_LEFT:
-              _pcanvas->RotateLeft();
-              break;
-
-            case M_ROTATE_RIGHT:
-              _pcanvas->RotateRight();
-              break;
-
-            case M_SHIFT_UP:
-              _pcanvas->ShiftUp();
-              break;
-
-            case M_SHIFT_DOWN:
-              _pcanvas->ShiftDown();
-              break;
-
-            case M_SHIFT_LEFT:
-              _pcanvas->ShiftLeft();
-              break;
-
-            case M_SHIFT_RIGHT:
-              _pcanvas->ShiftRight();
-              break;
-
-            case M_IMAGE_RESIZE:
-              DoResize();
-              break;
-
-            case M_IMAGE_RESCALE:
-              DoRescale();
-              break;
-
-            case M_IMAGE_SETFONT:
-              DoSetFont();
-              break;
-
-            case M_IMAGE_SETTEXT:
-              DoSetText();
-              break;
-
-            //--------------------------------------------- Help
-
-            case M_HELP_CONTENTS:
-              break;
-
-            case M_HELP_ABOUT:
-              DoHelpAbout();
-              break;
-
-            default:
-              break;
-          } // switch(id)
-          break;
-
-        default:
-          break;
-
-      } // switch(type)
+    case MSG_PAINTCANVAS:
+      if (msg->action == MSG_IMAGEPASTED) {
+        _palette->UpdateColors(_pcanvas->GetColorTable());
+      }
       break;
 
     default:
       break;
 
-  } // switch(action)
+  }
 
   return True;
 }
@@ -807,6 +828,8 @@ void OXAppMainFrame::DoCopy() {
 
 
 void OXAppMainFrame::DoPaste() {
+  _pcanvas->Paste();
+  _palette->UpdateColors(_pcanvas->GetColorTable());
 }
 
 
@@ -924,6 +947,7 @@ void OXAppMainFrame::DoResize() {
   newH = max(newH, 1);
   _pcanvas->ResizeImage(newW, newH);
   _canvas->Layout();
+  UpdateStatus();
 }
 
 
@@ -938,6 +962,7 @@ void OXAppMainFrame::DoRescale() {
   newH = max(newH, 1);
   _pcanvas->RescaleImage(newW, newH);
   _canvas->Layout();
+  UpdateStatus();
 }
 
 
@@ -957,6 +982,26 @@ void OXAppMainFrame::DoSetText() {
 
   new OXTextDialog(_client->GetRoot(), this, text);
   if (*text) _pcanvas->SetText(text);
+}
+
+void OXAppMainFrame::DoAddColor() {
+  int retc;
+  static OColor color(255, 255, 255);
+
+  new OXColorDialog(_client->GetRoot(), this, &retc, &color);
+
+  if (retc == ID_OK) {
+    char tmp[10];
+
+    OColorTable *ct = _pcanvas->GetColorTable();
+
+    sprintf(tmp, "#%02x%02x%02x",
+                 color.GetR(), color.GetG(), color.GetB());
+
+    ct->UseColorInTable(_client->GetColorByName(tmp), NULL,
+                        NULL, NULL, NULL, NULL, tmp);
+    _palette->UpdateColors(ct);
+  }
 }
 
 void OXAppMainFrame::DoSetColor(unsigned long color) {

@@ -149,6 +149,7 @@ public:
   void DoRescale();
   void DoSetFont();
   void DoSetText();
+  void DoAddColor();
   void DoSetColor(unsigned long color);
   void DoToggleGrid();
   void DoToggleToolBar();

@@ -12,6 +12,10 @@
 #include "OColorTable.h"
 
 
+#define MSG_PAINTCANVAS  (MSG_USERMSG+60)
+#define MSG_IMAGEPASTED  1
+
+
 //--- Pixmap pixel defines
 
 #define NOT_SET    -1
@@ -43,6 +47,7 @@
 typedef enum { Lazy, NotLazy }        DrawingMode;
 typedef enum { Right, Left }          RotateDirection;
 typedef enum { Horizontal, Vertical } FlipAxis;
+
 
 //-------------------------------------------------------------------------
 
@@ -94,6 +99,7 @@ typedef enum { Horizontal, Vertical } FlipAxis;
      && (_GetPxl(x, y) == value))
 
 #define Flood(x, y, value) _DrawPoint(x, y, value, NotLazy)
+
 
 //-------------------------------------------------------------------------
 

@@ -3132,6 +3132,11 @@ int OXPaintCanvas::_PasteSelection(Atom type, unsigned char *value) {
 
 // hmmm... pixmap should be rather freed by selection owner
 	XFreePixmap(GetDisplay(), *pixmap);
+
+        { // notify main application to update the palette frame
+          OWidgetMessage msg(MSG_PAINTCANVAS, MSG_IMAGEPASTED, -1);
+          SendMessage(_msgObject, &msg);
+        }
 	break;
 	
     case XA_STRING:
