@@ -72,7 +72,7 @@ Implemented features
 Unimplemented features (or TODO list)
 -------------------------------------
 
-- There is now way to create a new desktop icon. You'll have to drag an
+- There is no way to create a new desktop icon. You'll have to drag an
   existing object using the explorer application and to place it on the
   desktop.
 
