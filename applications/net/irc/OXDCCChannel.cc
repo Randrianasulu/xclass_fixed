@@ -333,7 +333,7 @@ int OXDCCChannel::ProcessMessage(OMessage *msg) {
 	      //printf("DCC Sending Message: %s\n", char1);
               if (strlen(_sayentry->GetString()) > 0) {
                 if (_connected) {
-		  if (!ProcessDCCCommand(char1)) {
+		  if (!ProcessCommand(char1)) {
                     OTcpMessage message(OUTGOING_TCP_MSG, 0, char1);
                     SendMessage(_dccServer, &message);
                     Say(_server->GetNick(), char1, DCC);
@@ -370,7 +370,7 @@ int OXDCCChannel::ProcessMessage(OMessage *msg) {
   return True;
 }
 
-int OXDCCChannel::ProcessDCCCommand(char *cmd) {
+int OXDCCChannel::ProcessCommand(char *cmd) {
   char char1[IRC_MSG_LENGTH];
   int  cmdsize;
   

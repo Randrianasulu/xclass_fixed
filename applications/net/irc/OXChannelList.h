@@ -5,6 +5,7 @@
 #include <xclass/OXListView.h>
 
 class OXIrc;
+class OXButton;
 
 
 //----------------------------------------------------------------------
@@ -24,6 +25,7 @@ public:
 protected:
   OXIrc *_irc;
   OXListView *_listView;
+  OXButton *_filt, *_cl, *_join;
 };
 
 

@@ -25,6 +25,7 @@
 #include <errno.h>
 
 #include <xclass/utils.h>
+#include <xclass/OXTextButton.h>
 
 #include "OIrcMessage.h"
 #include "OXChannelList.h"
@@ -39,7 +40,38 @@ OXChannelList::OXChannelList(const OXWindow *p, const OXWindow *main,
 
   _irc = irc;
 
+  SetLayoutManager(new OHorizontalLayout(this));
+
+  //---- buttons
+
+  OXCompositeFrame *vf = new OXVerticalFrame(this, 10, 10, FIXED_WIDTH);
+  AddFrame(vf, new OLayoutHints(LHINTS_TOP | LHINTS_RIGHT, 5, 5, 5, 5));
+
+  OLayoutHints *bl = new OLayoutHints(LHINTS_TOP | LHINTS_EXPAND_X,
+                                      0, 0, 0, 5);
+
+  int width = 0;
+
+  _join = new OXTextButton(vf, new OHotString("&Join"), 101);
+  _join->Associate(this);
+  vf->AddFrame(_join, bl);
+  width = max(width, _join->GetDefaultWidth());
+
+  _filt = new OXTextButton(vf, new OHotString("&Filter..."), 102);
+  _filt->Associate(this);
+  vf->AddFrame(_filt, bl);
+  width = max(width, _filt->GetDefaultWidth());
+
+  _cl = new OXTextButton(vf, new OHotString("&Close"), 103);
+  _cl->Associate(this);
+  vf->AddFrame(_cl, bl);
+  width = max(width, _cl->GetDefaultWidth());
+
+  vf->Resize(width * 3 / 2, vf->GetDefaultHeight());
+
   //---- list view
+
+  OLayoutHints *layout = new OLayoutHints(LHINTS_EXPAND_ALL, 5, 5, 5, 5);
 
   _listView = new OXListView(this, 10, 10, 1);
 
@@ -48,14 +80,17 @@ OXChannelList::OXChannelList(const OXWindow *p, const OXWindow *main,
   _listView->AddColumn(new OString("Title"), 2, TEXT_LEFT);
   _listView->AddColumn(new OString(""), 3);  // end dummy
 
-  OLayoutHints *layout = new OLayoutHints(LHINTS_EXPAND_ALL);
-
   AddFrame(_listView, layout);
   _listView->SetViewMode(LV_DETAILS);
   _listView->Associate(this);
 
   SetWindowName("Channel list");
   SetClassHints("fOXIrc", "dialog");
+
+  SetDefaultAcceptButton(_join);
+  SetDefaultCancelButton(_cl);
+
+  _join->Disable();
 
   MapSubwindows();
   Resize(560, 320);
@@ -82,6 +117,25 @@ int OXChannelList::ProcessMessage(OMessage *msg) {
 
         case MSG_CLICK:
           switch (wmsg->id) {
+            case 101:
+              if (_listView->NumSelected() > 0) {
+                const OListViewItem *e;
+                vector<OItem *> items;
+
+                items = _listView->GetSelectedItems();
+                for (int i = 0; i < items.size(); ++i) {
+                  e = (OListViewItem *) items[i];
+                  _irc->JoinChannel(e->GetName()->GetString());
+                }
+              }
+              break;
+
+            case 102:
+              break;
+
+            case 103:
+              CloseWindow();
+              break;
 
             default:
               break;
@@ -99,19 +153,23 @@ int OXChannelList::ProcessMessage(OMessage *msg) {
         case MSG_DBLCLICK:
           if (vmsg->button == Button1) {
             if (_listView->NumSelected() == 1) {
-              const OListViewItem *i;
+              const OListViewItem *e;
               vector<OItem *> items;
 
               items = _listView->GetSelectedItems();
-              i = (OListViewItem *) items[0];
+              e = (OListViewItem *) items[0];
 
-              _irc->JoinChannel(i->GetName()->GetString());
+              _irc->JoinChannel(e->GetName()->GetString());
             }
           }
           break;
 
         case MSG_SELCHANGED:
-          // enable/disable join buttons...
+          if (_listView->NumSelected() == 0) {
+            _join->Disable();
+          } else {
+            _join->Enable();
+          }
           break;
       }
       break;

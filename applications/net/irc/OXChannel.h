@@ -103,6 +103,8 @@ public:
   virtual void Log(const char *message);
   virtual void Log(const char *message, int color);
 
+  virtual int ProcessCommand(char *cmd);
+
   const char *GetName() const { return _name; }
 
   friend class OXIrc;

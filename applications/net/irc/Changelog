@@ -137,3 +137,22 @@
 - Dropped TDDList in favour of STL's vector.
 
 - Added a tree view window for the LINKS command.
+
+
+20/08/02
+
+- Added KILL command processing.
+
+- Corrected a bug in OTcp.cc: the input buffer index should be reset to zero
+  after a (re)connect. Also, check for closed connection on Receive()
+  (reentrancy case -- we should really implement an OXClient message queue!)
+
+
+21/08/02
+
+- Added description group frame and connect/close buttons to OXServerTree.
+
+- Added join/filter/close buttons to OXChannelList.
+
+- Calculate lag only from the PONG commands we requested, any other should
+  go to info.

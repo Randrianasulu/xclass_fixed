@@ -28,10 +28,11 @@ public:
   virtual int ProcessMessage(OMessage *msg);
   virtual int HandleFileEvent(OFileHandler *fh, unsigned int mask);
 
+  virtual int ProcessCommand(char *cmd);
+
   int  Connect(const char *server, int port);
   int  Listen(unsigned long *host, unsigned short *port);
   void Disconnect(int log = True);
-  int  ProcessDCCCommand(char *cmd);
 
 protected:
   void _UpdateStatusBar();

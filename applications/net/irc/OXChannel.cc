@@ -367,16 +367,21 @@ int OXChannel::ProcessMessage(OMessage *msg) {
 
           switch (tmsg->keysym) {
             case XK_Return:
+
               strcpy(char1, _sayentry->GetString());
               if (strlen(char1) > 0) {
-		strtmp = strtok(char1, "\n");
-		while (strtmp) {
-                  sprintf(char3, "PRIVMSG %s :%s", _name, strtmp);
-                  _server->SendRawCommand(char3);
-                  Say(_server->GetNick(), strtmp, PRIVMSG);
-                  _AddToHistory(strtmp);
-                  strtmp = strtok(NULL, "\n");
-		}
+                if (!ProcessCommand(char1)) {
+                  strtmp = strtok(char1, "\n");
+		  while (strtmp) {
+                    sprintf(char3, "PRIVMSG %s :%s", _name, strtmp);
+                    _server->SendRawCommand(char3);
+                    Say(_server->GetNick(), strtmp, PRIVMSG);
+                    _AddToHistory(strtmp);
+                    strtmp = strtok(NULL, "\n");
+                  }
+		} else if (*char1 == '/') {
+                  _AddToHistory(char1);
+                }
 		_historyCurrent = _history.size();
 	        _sayentry->Clear();
               }
@@ -416,5 +421,47 @@ int OXChannel::ProcessMessage(OMessage *msg) {
       }
       break;
   }
+  return True;
+}
+
+int OXChannel::ProcessCommand(char *cmd) {
+  char char1[IRC_MSG_LENGTH],
+       char2[IRC_MSG_LENGTH];
+
+  if (!cmd || *cmd != '/') return False;
+
+  if (!strncmp(cmd, "/me ", 4)) {
+    sprintf(char1, "\1ACTION %s\1", &cmd[4]);
+    sprintf(char2, "PRIVMSG %s :%s", _name, char1);
+    _server->SendRawCommand(char2);
+    Say(_server->GetNick(), char1, PRIVMSG);
+
+  } else if (!strncmp(cmd, "/notice ", 8)) {
+    sprintf(char1, "NOTICE %s :%s", _name, &cmd[8]);
+    _server->SendRawCommand(char1);
+    Say(_server->GetNick(), &cmd[8], NOTICE);
+
+  } else if (!strncmp(cmd, "/msg ", 5)) {
+    if (strlen(&cmd[5]) > 0)
+      _server->GetChannel(&cmd[5])->MapRaised();
+
+  } else if (!strncmp(cmd, "/raw ", 5)) {
+    if (strlen(&cmd[5]) > 0)
+      _server->SendRawCommand(&cmd[5]);
+
+  } else if (!strncmp(cmd, "/quote ", 7)) {
+    if (strlen(&cmd[7]) > 0)
+      _server->SendRawCommand(&cmd[7]);
+
+  } else if (!strncmp(cmd, "/whois ", 7)) {
+    if (strlen(&cmd[7]) > 0)
+      _server->SendRawCommand(&cmd[1]);
+
+  } else if (!strncmp(cmd, "/whowas ", 8)) {
+    if (strlen(&cmd[8]) > 0)
+      _server->SendRawCommand(&cmd[1]);
+
+  }
+
   return True;
 }

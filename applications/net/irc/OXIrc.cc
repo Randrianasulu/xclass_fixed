@@ -423,6 +423,7 @@ OXIrc::OXIrc(const OXWindow *p, char *nick, char *server, int port) :
 
   _connected = False;
   _pingTimer = NULL;
+  _pingTime = (time_t) 0;
 
   _statusBar->SetWidth(0, 300);
   _statusBar->AddLabel(100, LHINTS_RIGHT);
@@ -729,7 +730,8 @@ int OXIrc::HandleTimer(OTimer *t) {
   if (_connected) {
     char cmd[IRC_MSG_LENGTH];
 
-    sprintf(cmd, "PING %lu %s", time(NULL), _realserver);
+    _pingTime = time(NULL);
+    sprintf(cmd, "PING %lu %s", _pingTime, _realserver);
     SendRawCommand(cmd);
     _pingTimer = new OTimer(this, PING_INTERVAL * 1000);
   }
@@ -750,7 +752,7 @@ OXChannel *OXIrc::GetChannel(const char *channel) {
   else
     main = NULL;
 
-  if (channel && (*channel == '#' || *channel == '&')) {
+  if (channel && (*channel == '#' || *channel == '&' || *channel == '+')) {
     char str[IRC_MSG_LENGTH];
 
     ch = new OXChatChannel(_client->GetRoot(), main, this, channel);
@@ -1100,7 +1102,7 @@ int OXIrc::ProcessMessage(OMessage *msg) {
             //--------------------------------- ISON
 
             case RPL_ISON:            // 303
-              {
+              if (ircmsg->argv[1] && *ircmsg->argv[1]) {
                 time_t now = time(NULL);
                 if (foxircSettings->SendToInfo(P_LOG_ISON)) {
                   sprintf(str, "%s: signon by %s detected",
@@ -1108,13 +1110,14 @@ int OXIrc::ProcessMessage(OMessage *msg) {
                   Log(str, P_COLOR_NOTICE);
                 } else {
                   sprintf(str, "%s:\nSignon by %s detected.", 
-                                str, ircmsg->argv[1]);
+                               DateString(now), ircmsg->argv[1]);
                   new OXMsgBox(_client->GetRoot(), this,
                                new OString("Notify"),
                                new OString(str),
                                MB_ICONASTERISK, ID_OK);
                 }
-              }
+              }   // otherwise is a signoff. We should periodically issue
+                  // ISON commands in order to detect signon/signoffs.
               break;
 
             //--------------------------------- AWAY
@@ -1351,6 +1354,8 @@ int OXIrc::ProcessMessage(OMessage *msg) {
             case RPL_YOUREOPER:       // 381 :you are now an ircop..
             case 396:                 // 396 :info set to
               Log(ircmsg->argv[1], P_COLOR_NOTICE);
+              _umode |= UMODE_IRCOP;
+              UpdateStatusBar(2);
               break;
 
             case RPL_REHASHING:       // 382 - 'config-file' :rehashing
@@ -1512,12 +1517,18 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
         } else if (strcasecmp(ircmsg->command, "PONG") == 0) {
 
-          // this is a response to our PING command: calculate lag 
+          // if this is a response to our PING command then calculate lag 
           time_t tm;
 
           tm = strtoul(ircmsg->argv[1], (char **) 0, 10);
-          _lag = time(NULL) - tm;
-          UpdateStatusBar(1);
+          if (tm == _pingTime) {
+            _lag = time(NULL) - tm;
+            UpdateStatusBar(1);
+          } else {
+            sprintf(str, "PONG from %s (%s)",
+                         ircmsg->argv[0], ircmsg->argv[1]);
+            Log(str, P_COLOR_SERVER_2);
+          }
 
         } else if (strcasecmp(ircmsg->command, "NOTICE") == 0) {
 
@@ -1588,7 +1599,8 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
           if (strcmp(ircmsg->argv[0], _nick) == 0) {
             // the server decided to change *our* nick!
-            // (some ChanServ/NickServ services might do that)
+            // (some ChanServ/NickServ services might do that, although
+            // most of them would notify us first)
             sprintf(str, "Your nick has been changed to %s", ircmsg->argv[0]);
             if (_nick) delete[] _nick;
             _nick = StrDup(ircmsg->argv[0]);
@@ -1602,6 +1614,23 @@ int OXIrc::ProcessMessage(OMessage *msg) {
 
           for (OXChannel *i = _channels; i; i= i->_next)
             SendMessage(i, msg);  // OK to send it to all windows???
+
+        } else if ((strcasecmp(ircmsg->command, "KILL") == 0)) {
+
+          if (foxircSettings->SendToInfo(P_LOG_KILL)) {
+            sprintf(str, "You have been KILLED by %s (%s)",
+                         *nick ? nick : ircmsg->prefix,
+                         ircmsg->argv[ircmsg->argc-1]);
+            Log(str, P_COLOR_NOTICE);
+          } else {
+            sprintf(str, "You have been KILLED by %s:\n%s",
+                         *nick ? nick : ircmsg->prefix,
+                         ircmsg->argv[ircmsg->argc-1]);
+            new OXMsgBox(_client->GetRoot(), this,
+                         new OString("KILL"),
+                         new OString(str),
+                         MB_ICONASTERISK, ID_OK);
+          }
 
         } else if ((strcasecmp(ircmsg->command, "SILENCE") == 0)) {
 
@@ -2290,25 +2319,26 @@ void OXIrc::ProcessUMode(const char *modestr) {
 
 void OXIrc::ProcessLink(int cmd, OIrcMessage *msg) {
   char str[512];
+  OServerLink *link;
 
   switch (cmd) {
     case RPL_LINKS:
       if (msg->argc == 4) {
-        OServerLink *link;
 
         char *s = msg->argv[3];
         while (isdigit(*s)) ++s;
         while (*s == ' ') ++s;
 
-        link = new OServerLink(msg->argv[1], msg->argv[2],
-                               s, atoi(msg->argv[3]));
+        if (foxircSettings->SendToInfo(P_LOG_LINKS)) {
+          sprintf(str, "%s (%s) is connected to %s [%d]",
+                       msg->argv[1], s, msg->argv[2], atoi(msg->argv[3]));
+          Log(str, P_COLOR_SERVER_2);
+        } else {
+          link = new OServerLink(msg->argv[1], msg->argv[2],
+                                 s, atoi(msg->argv[3]));
 
-        GetServerTree()->AddLink(link);
-
-        sprintf(str, "%s (%s) is connected to %s [%d]",
-                     link->serverName, link->serverMsg,
-                     link->connectedTo, link->hop);
-        Log(str, P_COLOR_SERVER_2);
+          GetServerTree()->AddLink(link);
+        }
 
       } else {
         sprintf(str, "Invalid Link (argc %d)", msg->argc);
@@ -2317,8 +2347,11 @@ void OXIrc::ProcessLink(int cmd, OIrcMessage *msg) {
       break;
 
     case RPL_ENDOFLINKS:
-      GetServerTree()->BuildTree();
-      Log("End of LINKS", P_COLOR_SERVER_2);
+      if (foxircSettings->SendToInfo(P_LOG_LINKS)) {
+        Log("End of LINKS", P_COLOR_SERVER_2);
+      } else {
+        GetServerTree()->BuildTree();
+      }
       break;
   }
 }

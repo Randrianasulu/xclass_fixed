@@ -98,6 +98,7 @@ int OTcp::_Connect(int fd, int async) {
   int status, curState, origState;
 
   _fd = fd;
+  _rem_bytes = 0;
 
   if (_fd > 0) {
 
@@ -209,6 +210,7 @@ int OTcp::Receive() {
           //printf("%s\n", msg);
 	  OTcpMessage message(INCOMING_TCP_MSG, 0, msg);
           SendMessage(_msgObject, &message);
+          if (_fd < 0) return 0;  // can happen due to reentrancy
 	}
         msg = _buffer + i + 1;
       }

@@ -136,7 +136,7 @@ OSettings::OSettings(OXClient *c) {
 
   _confirm    = P_CONFIRM_QUIT | P_CONFIRM_LEAVE | P_CONFIRM_SQUIT;
   _sendToInfo = P_LOG_WHO  | P_LOG_WHOIS | P_LOG_WHOWAS | P_LOG_ERROR |
-                P_LOG_INFO | P_LOG_CLOSE;
+                P_LOG_CLOSE;
   _misc = P_MISC_ENABLE_CMD | P_MISC_SHOW_OPS | P_MISC_AUTO_REJOIN;
 
   _changed = False;
@@ -555,9 +555,9 @@ struct _ButtonDef stinfo[] = {
   { "Whois",      1104, P_LOG_WHOIS,     NULL },
   { "Whowas",     1105, P_LOG_WHOWAS,    NULL },
   { "List",       1106, P_LOG_CHAN_LIST, NULL },
-  { "Error",      1107, P_LOG_ERROR,     NULL },
-  { "Ison",       1108, P_LOG_ISON,      NULL },
-  { "Info",       1109, P_LOG_INFO,      NULL },
+  { "Links",      1107, P_LOG_LINKS,     NULL },
+  { "Error",      1108, P_LOG_ERROR,     NULL },
+  { "Ison",       1109, P_LOG_ISON,      NULL },
   { "Kill",       1110, P_LOG_KILL,      NULL },
   { "Close",      1111, P_LOG_CLOSE,     NULL },
   { NULL,         -1,   -1,              NULL }
@@ -1211,23 +1211,6 @@ void OXChannelTab::_DoEdit(){
 
 
 //----------------------------------------------------------------------
-
-#if 0
-struct _ButtonDef stinfo[] = {
-  { "CTCP",       1101, P_LOG_CTCP,      NULL },
-  { "Signoff",    1102, P_LOG_SIGNOFF,   NULL },
-  { "Who",        1103, P_LOG_WHO,       NULL },
-  { "Whois",      1104, P_LOG_WHOIS,     NULL },
-  { "Whowas",     1105, P_LOG_WHOWAS,    NULL },
-  { "List",       1106, P_LOG_CHAN_LIST, NULL },
-  { "Error",      1107, P_LOG_ERROR,     NULL },
-  { "Ison",       1108, P_LOG_ISON,      NULL },
-  { "Info",       1109, P_LOG_INFO,      NULL },
-  { "Kill",       1110, P_LOG_KILL,      NULL },
-  { "Close",      1111, P_LOG_CLOSE,     NULL },
-  { NULL,         -1,   -1,              NULL }
-};
-#endif
 
 OXInfoTab::OXInfoTab(const OXWindow *p, OSettings *settings) :
   OXHorizontalFrame(p, 10, 10, CHILD_FRAME) {

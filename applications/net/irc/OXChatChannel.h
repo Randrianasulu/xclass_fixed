@@ -25,7 +25,8 @@ public:
   virtual int CloseWindow();
   virtual int ProcessMessage(OMessage *msg);
 
-  int  ProcessCommand(char *cmd);
+  virtual int ProcessCommand(char *cmd);
+
   void SetChannelMode(const char *mode_str);
   void SetChannelMode(unsigned long mode_bits);
   void SetUserMode(unsigned long mode_bits);

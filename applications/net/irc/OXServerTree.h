@@ -7,6 +7,8 @@
 #include <xclass/OXListTree.h>
 
 class OXIrc;
+class OXLabel;
+class OXButton;
 
 
 //----------------------------------------------------------------------
@@ -22,6 +24,15 @@ public:
   char *connectedTo;  
   char *serverMsg;
   int  hop;
+};
+
+
+class OLinkTreeItem : public OListTreeItem {
+public:
+  OLinkTreeItem(OXClient *_client, const char *name, int i);
+
+public:
+  int id;
 };
         
 
@@ -41,9 +52,12 @@ public:
 protected:
   OListTreeItem *_FindServer(OListTreeItem *root,
                              const char *name, int hopcnt);
+  void _UpdateLabels(OServerLink *link = NULL);
 
   OXIrc *_irc;
   OXListTree *_listTree;
+  OXLabel *_servName, *_connTo, *_servMsg;
+  OXButton *_conn, *_cl;
   vector<OServerLink *> _links;
   int _clearPending;
 };

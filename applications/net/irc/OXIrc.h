@@ -145,7 +145,7 @@ protected:
   OFileHandler *_fh;
   OTimer *_pingTimer;
   
-  time_t _lag;
+  time_t _pingTime, _lag;
 
   OXTextEntry *_channelentry;
 

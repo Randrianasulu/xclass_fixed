@@ -8,12 +8,13 @@ interface.
 Installation
 ------------
 
-This version of fOXIrc requires xclass 0.7.3 or newer. To build the
+This version of fOXIrc requires xclass 0.7.4 or newer. To build the
 executable, cd to the directory where you unpacked the sources and type
 'make'. Copy the resulting 'foxirc' executable to a directory somewhere in
 your $PATH.
 
 foxircrc
+
 
 Usage
 -----
@@ -28,8 +29,43 @@ the hostname, change the nick and/or irc name, then click "Connect". You
 should see the connection details in the info window,
 
 
-...
 
+
+The program also recognizes a few of ircII-style commands, the following can
+be typed on the channel window:
+
+/me <action>
+/notice <nick> <message>
+/names -- works only for the current channel, refreshes the name list.
+/leave
+/msg <nick> [<message>]
+/nick <newnick>
+/raw <command>
+/quote <command>
+/wallops <message>
+/mode <mode> [<mode arguments>]  -- note: the channel must not be specified,
+                                    it works only for the current channel
+/umode <usermode>
+/whois <nick>
+/whowas <nick>
+/invite <nick>  -- like in /mode above, you do not have to specify the
+                   channel name
+/kick <nick>
+/command --> sends command as raw, that way you can type such commands
+             as /who, /silence, etc...
+
+
+Private chat (/msg) windows also recognize a few of these commands:
+
+/me <action>
+/notice <message>
+/msg <nick> [<message>]
+/raw <command>
+/quote <command>
+/whois <nick>
+/whowas <nick>
+
+DCC chat windows only recognize the /me command.
 
 
 Enjoy it!

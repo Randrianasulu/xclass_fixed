@@ -430,41 +430,17 @@ int OXChatChannel::ProcessMessage(OMessage *msg) {
       if (msg->action == MSG_TEXTCHANGED) {
         if (tmsg->id == T_SAY) {
 
-          if (tmsg->keysym == XK_Return) {
-
-            strcpy(char1, _sayentry->GetString());
-            if (strlen(char1) > 0) {
-              if (!ProcessCommand(char1)) {
-//                strcpy(char2, char1);
-                strtmp = strtok(char1, "\n");
-                while (strtmp) {
-                  sprintf(char3, "PRIVMSG %s :%s", _name, strtmp);
-                  _server->SendRawCommand(char3);
-                  Say(_server->GetNick(), strtmp, PRIVMSG);
-                  _AddToHistory(strtmp);
-                  strtmp = strtok(NULL,"\n");
-                }
-              } else if (*char1 == '/') {
-                _AddToHistory(char1);
-              }
-            }
-            _sayentry->Clear();
-            _historyCurrent = _history.size();
-
-          } else {
-
-            // handle other keys (up and down arrows)
-            return OXChannel::ProcessMessage(msg);
-
-          }
+          return OXChannel::ProcessMessage(msg);
 
         } else if (tmsg->id == T_TOPIC) {
+
           if (tmsg->keysym == XK_Return) {
             sprintf(char3, "TOPIC %s :%s", _name, _topic->GetString());
             _server->SendRawCommand(char3);
             _topic->Clear();
           }
         }
+
       }
       break;
 
