@@ -177,6 +177,33 @@ void OXItemView::InvertSelection() {
     SelectItem(_items[i], !_items[i]->IsSelected());
 }
 
+void OXItemView::DeleteSelection() {
+  int i;
+  OItem *item;
+
+  if (!_hasSelection) return;
+
+  for (i = 0; i < _items.size(); ++i) {
+    item = _items[i];
+    if (item->IsSelected()) {
+      _items.erase(&_items[i]);
+      delete item;
+      --i;
+    }
+  }
+
+  _selectedItems.clear();
+  _hasSelection = False;
+  _anchorItem = NULL;
+
+  CalcMaxItemSize();
+  _needItemLayout = True;
+  Layout();
+  NeedRedraw(ORectangle(_visibleStart, _canvas->GetSize()));
+
+  OItemViewMessage message(_msgType, MSG_SELCHANGED, _id);
+  SendMessage(_msgObject, &message);
+}
 
 void OXItemView::AddItem(OItem *newItem) {
 

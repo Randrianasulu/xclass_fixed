@@ -93,6 +93,7 @@ bool OIniFile::GetBool(const char *item, bool _default) {
         while (tmp && (*tmp == ' ')) tmp++;
         if (tmp) {
           if (strncasecmp(tmp, "true", 4) == 0) return true;
+          if (strncasecmp(tmp, "yes", 3)  == 0) return true;
         }
         return false;
       }

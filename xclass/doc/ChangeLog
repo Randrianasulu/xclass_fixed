@@ -2026,3 +2026,10 @@ OPicture.cc
 25/11/01
 
 - OListViewItem: allow NULL icons.
+
+- OIniFile::GetBool(): accept "yes" as a synonym for "true".
+
+
+27/11/01
+
+- Added OXItemView::DeleteSelection().

@@ -133,6 +133,7 @@ public:
   virtual void InvertSelection();
   virtual void SelectItem(OItem *item, bool state);
   virtual void SelectToPos(OPosition pos);
+  virtual void DeleteSelection();
 
   virtual ODimension GetMaxItemSize() const { return _maxItemSize; }
   OXClient *GetClient() const { return _client; }  // this is not good...
