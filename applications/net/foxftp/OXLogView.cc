@@ -285,8 +285,8 @@ int OXLogView::ProcessMessage(OMessage *msg) {
 void OXLogView::Layout() {
   int lines, vlines, tcw, tch;
 
-  tch = _h - _inset.t - _inset.b;
-  tcw = _w - _inset.l - _inset.r;
+  tch = _h - _insets.t - _insets.b;
+  tcw = _w - _insets.l - _insets.r;
   _textCanvas->SetHeight(tch);
   lines = _textCanvas->GetLines();
   vlines = _textCanvas->GetVisibleLines();
@@ -295,11 +295,11 @@ void OXLogView::Layout() {
     _vsb->UnmapWindow();
   } else {
     tcw -= _vsb->GetDefaultWidth();
-    _vsb->MoveResize(_inset.l + tcw, _inset.t, _vsb->GetDefaultWidth(), tch);
+    _vsb->MoveResize(_insets.l + tcw, _insets.t, _vsb->GetDefaultWidth(), tch);
     _vsb->MapWindow();
     _vsb->SetRange(lines, vlines);
     _vsb->SetPosition(_textCanvas->GetTopLine());
   }
 
-  _textCanvas->MoveResize(_inset.l, _inset.t, tcw, tch);
+  _textCanvas->MoveResize(_insets.l, _insets.t, tcw, tch);
 }
