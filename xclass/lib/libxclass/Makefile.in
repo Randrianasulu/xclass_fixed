@@ -35,7 +35,11 @@ SRCS = O2ColumnsLayout.cc \
 	OFileHandler.cc \
 	OFocusManager.cc \
 	OGC.cc \
+	OGifImage.cc \
 	OHashTable.cc \
+	OHtmlElement.cc \
+	OHtmlTokenMap.cc \
+	OHtmlUri.cc \
 	OIdleHandler.cc \
 	OIniFile.cc \
 	OLayout.cc \
@@ -68,6 +72,15 @@ SRCS = O2ColumnsLayout.cc \
 	OXFontDialog.cc \
 	OXFrame.cc \
 	OXGroupFrame.cc \
+	OXHtml.cc \
+	OXHtmlDraw.cc \
+	OXHtmlForm.cc \
+	OXHtmlImage.cc \
+	OXHtmlIndex.cc \
+	OXHtmlLayout.cc \
+	OXHtmlParse.cc \
+	OXHtmlSizer.cc \
+	OXHtmlTable.cc \
 	OXIcon.cc \
 	OXItemView.cc \
 	OXLabel.cc \

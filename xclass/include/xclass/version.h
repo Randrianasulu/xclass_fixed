@@ -24,10 +24,10 @@
 
 
 #define XCLASS_MAJOR_VERSION  "0"
-#define XCLASS_MINOR_VERSION  "7"
-#define XCLASS_PATCH_LEVEL    "5"
-#define XCLASS_VERSION        "0.7.5"
-#define XCLASS_RELEASE_DATE   "12-May-2003"
+#define XCLASS_MINOR_VERSION  "8"
+#define XCLASS_PATCH_LEVEL    "1"
+#define XCLASS_VERSION        "0.8.1"
+#define XCLASS_RELEASE_DATE   "14-May-2003"
 
 
 #endif  // __VERSION_H

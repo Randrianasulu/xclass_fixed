@@ -2368,3 +2368,20 @@ OPicture.cc
 - Added OXComboBox::Select().
 
 - OXColorDialog now remembers custom color settingg.
+
+
+13/05/03  (0.8.1)
+
+- Added OXHtml, a quite complete implementation of an html widget. The code
+  is heavily based on tkhtml. Supported features:
+  * tables
+  * images (only static and animated GIFs)
+  * forms (selection listboxes and drop-down lists do not work quite OK yet)
+  * background images, most text styles
+  Bugs and unsupported features:
+  * missing </td> in tables (allowed by the standard) are not handled
+    correctly
+  * some modifiers, like "hspace" and "vspace" in tables, and "absbottom"
+    alignment in images are not processed.
+  * scattered images built with tables may not render always in the
+    expected way.

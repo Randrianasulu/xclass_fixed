@@ -19,8 +19,12 @@ HEADERS = O2ColumnsLayout.h \
 	OFileHandler.h \
 	OFocusManager.h \
 	OGC.h \
+	OGifImage.h \
 	OHashTable.h \
+	OHtmlTokens.h \
+	OHtmlUri.h \
 	OIdleHandler.h \
+	OImage.h \
 	OIniFile.h \
 	OLayout.h \
 	OListViewLayout.h \
@@ -54,6 +58,7 @@ HEADERS = O2ColumnsLayout.h \
 	OXFontDialog.h \
 	OXFrame.h \
 	OXGroupFrame.h \
+	OXHtml.h \
 	OXIcon.h \
 	OXItemView.h \
 	OXLabel.h \
