@@ -101,7 +101,8 @@ void OXProgressBar::SetColor(unsigned int color) {
 void OXProgressBar::_Redraw() {
   if (_max == _min) return;
 
-  int stop = ((_w - 3) * _pos) / (_max - _min);
+  double ds = ((double) (_w - 3.0) * (double) _pos) / (double) (_max - _min);
+  int stop = (int) ds;
 
   // do we really need a Redraw ?
   if (_laststop == stop) return;
@@ -114,7 +115,13 @@ void OXProgressBar::_DoRedraw() {
 
   if (_max == _min) return;
 
+#if 1
+  double ds = ((double) (_w - 3.0) * (double) _pos) / (double) (_max - _min);
+  int stop = (int) ds;
+#else
   int stop = ((_w - 3) * _pos) / (_max - _min);
+#endif
+
   _laststop = stop;
 
   OXFrame::_DoRedraw();
@@ -128,6 +135,7 @@ void OXProgressBar::_DoRedraw() {
     int x, step = 9;
     for (x = 0; x < stop && x < _w; x += step+1) {
       if (x + 14 > _w) step = _w - x - 4;
+      if (step <= 0) break;
       FillRectangle(_gc_marked, x + 2, 2, step, _h - 4);
       DrawLine(_bckgndGC, x + step + 2, 2, x + step + 2, _h - 3);
     }

@@ -92,8 +92,14 @@
 
 #define MSG_MDI            24
 
+#define MSG_DOCKABLE       25
+#define MSG_SHOW                     10
+#define MSG_HIDE                     11
+#define MSG_DOCK                     12
+#define MSG_UNDOCK                   13
 
-#define MSG_MSGMAX         24
+
+#define MSG_MSGMAX         25
 #define MSG_USERMSG       100
 
 

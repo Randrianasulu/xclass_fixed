@@ -89,6 +89,7 @@ protected:
   OXPopupMenu *_menuFile, *_menuWindow, *_menuHelp;
 };
 
+#include "pbg.xpm"
 
 //----------------------------------------------------------------------
 
@@ -100,6 +101,9 @@ OXAppMainFrame::OXAppMainFrame(const OXWindow *p, int w, int h) :
 
   _mainFrame = new OXMdiMainFrame(this, _menuBar, 300, 300);
   AddFrame(_mainFrame, new OLayoutHints(LHINTS_EXPAND_X | LHINTS_EXPAND_Y));
+
+  const OPicture *pbg = _client->GetPicture("pbg", pbg_xpm);
+  _mainFrame->GetContainer()->SetBackgroundPixmap(pbg->GetPicture());
 
   OXMdiFrame *mdiFrame;
 

@@ -29,9 +29,9 @@
 
 //-------------------------------------------------------------------
 
-OXToolBar::OXToolBar(const OXWindow *p, int x, int y,
+OXToolBar::OXToolBar(const OXWindow *p, int w, int h,
                      unsigned int options) :
-  OXHorizontalFrame(p, x, y, options) {
+  OXHorizontalFrame(p, w, h, options) {
 
   _msgObject = p;
   _spacing = 0;

@@ -57,6 +57,7 @@ SRCS = O2ColumnsLayout.cc \
 	OXComboBox.cc \
 	OXCompositeFrame.cc \
 	OXDDListBox.cc \
+	OXDockableFrame.cc \
 	OXDragWindow.cc \
 	OXFSDDListBox.cc \
 	OXFileDialog.cc \

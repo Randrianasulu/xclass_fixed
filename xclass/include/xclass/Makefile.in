@@ -44,6 +44,7 @@ HEADERS = O2ColumnsLayout.h \
 	OXComboBox.h \
 	OXCompositeFrame.h \
 	OXDDListBox.h \
+	OXDockableFrame.h \
 	OXDragWindow.h \
 	OXFSDDListBox.h \
 	OXFileDialog.h \

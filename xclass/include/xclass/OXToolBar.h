@@ -45,7 +45,7 @@ struct SToolBarData {
 
 class OXToolBar : public OXHorizontalFrame {
 public:
-  OXToolBar(const OXWindow *p, int x = 10, int y = 10,
+  OXToolBar(const OXWindow *p, int w = 1, int h = 1,
             unsigned int options = CHILD_FRAME);
   virtual ~OXToolBar();
 

@@ -81,4 +81,5 @@ void OXWindow::ReparentWindow(const OXWindow *p, int x, int y) {
   if (p == _parent) return;
   XReparentWindow(GetDisplay(), _id, p->GetId(), x, y);
   _parent = p;
+  _toplevel = p->GetTopLevel();
 }

@@ -2163,3 +2163,16 @@ OPicture.cc
   things that still need to be done and bugs to correct, specially
   concerning focus management. The doc/MDI.notes file contains the
   ChangeLog and TODO lists.
+
+
+12/07/02 (0.7.2)
+
+- OXProgressBar: use double in calculations to avoid integer overflows.
+  Also corrected a possible infinite loop condition in _DoRedraw().
+
+
+13/07/02
+
+- Added a "dockable" frame widget (originally from H. Radke).
+
+- OXWindow::ReparentWindow(): update the _toplevel field too.
