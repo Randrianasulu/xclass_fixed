@@ -15,6 +15,7 @@ SRCS = main.cc \
 	OXCopyBox.cc \
 	OXOptions.cc \
 	OXEditMime.cc \
+	OXOpenWith.cc \
 	ORecycledFiles.cc
 
 OBJS = $(SRCS:.cc=.o)

@@ -43,7 +43,7 @@
 #include "ORecycledFiles.h"
 
 
-#define EXPLORER_VERSION        "0.5"
+#define EXPLORER_VERSION        "0.6"
 
 
 //----- Operation modes:
@@ -141,15 +141,19 @@ public:
   void UpdateListBox();
   void UpdateTree();
   void SetupContextMenu(int mode, int ftype);
-  void DoAction(OFileItem *f);
+  void DoOpen(const OFileItem *f);
+  void DoOpenWith(const OFileItem *f);
+  void DoExplore(const OFileItem *f);
+  void DoChangeDirectory(const char *path);
   void CopyFile(const char *from, const char *to);
   void MoveFile(const char *from, const char *to);
   void DeleteFiles();
+  void DoToggleToolBar();
+  void DoToggleStatusBar();
   void About();
 
   void ReadDir(char *cdir, OListTreeItem *parent);
   void ReadSubDirs(char *cdir, OListTreeItem *parent);
-  void ChangeDir(char *cdir) { _fileWindow->ChangeDirectory(cdir); }
   void DisplayDir() { _fileWindow->DisplayDirectory(); }
 
   OXFileList *GetFileWindow() const { return _fileWindow; }

@@ -418,13 +418,13 @@ int OXOptionsDialog::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg;
   OListBoxMessage *lbmsg;
 
-  switch(msg->action) {
+  switch (msg->action) {
     case MSG_CLICK:
 
       wmsg = (OWidgetMessage *) msg;
-      switch(msg->type) {
+      switch (msg->type) {
         case MSG_BUTTON:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
             case ID_OK:
               NewBrowser = _NewBrowser;
               if (DispFullPath != _DispFullPath) {
@@ -478,7 +478,7 @@ int OXOptionsDialog::ProcessMessage(OMessage *msg) {
 
         case MSG_CHECKBUTTON:
         case MSG_RADIOBUTTON:
-          switch(wmsg->id) {
+          switch (wmsg->id) {
 
             // process the radio buttons
             case 81:
@@ -520,12 +520,12 @@ int OXOptionsDialog::ProcessMessage(OMessage *msg) {
 
             } else {
 
-              const char *str;
+              char *str;
               OMime *mime;
   
               e = (OXTreeLBEntry *) lbf->GetSelectedEntry();
               if (e->GetPath()) {
-                str = e->GetPath()->GetString();
+                str = (char *) e->GetPath()->GetString();
                 sscanf(str, "%ld", (long *)&(mime)); /********/
                 pic = MimeTypeList->GetIcon(mime, False);
                 str = StrDup(mime->action);
@@ -534,6 +534,7 @@ int OXOptionsDialog::ProcessMessage(OMessage *msg) {
                 icf->SetPicture(pic);
                 lblex2->SetText(new OString(mime->pattern));
                 lblop2->SetText(new OString(str));
+                delete[] str;
               } else {
                 lblex2->SetText(new OString(""));
                 lblop2->SetText(new OString(""));

@@ -53,6 +53,7 @@
 #include <xclass/ODNDmanager.h>
 
 #include "OXOptions.h"
+#include "OXOpenWith.h"
 #include "ORecycledFiles.h"
 #include "OXCopyBox.h"
 #include "OXExplorer.h"
@@ -479,7 +480,7 @@ void OXExplorer::CloseWindow() {
 
 int OXExplorer::HandleMapNotify(XMapEvent *event) {
 
-  ChangeDir(_startDir);
+  DoChangeDirectory(_startDir);
   UpdateListBox();
   UpdateTree();
 
@@ -695,18 +696,40 @@ void OXExplorer::UpdateListBox() {
 
 void OXExplorer::UpdateTree() {
   if (_mainMode == EXPLORER_MODE) {
-    OListTreeItem *root;
-    char *dir = "/";
+    OListTreeItem *i;
+    char *p, *dir = "/";
+    char wd[PATH_MAX+1];
 
-    root = _lt->AddItem(NULL, dir,
-                        _client->GetPicture("fdisk.t.xpm"),
-                        _client->GetPicture("fdisk.t.xpm"));
-    root->open = True;
+    wd[0] = '/';
+    getcwd(&wd[1], PATH_MAX);
+
+    // make entry for root dir
+    i = _lt->AddItem(NULL, dir,
+                     _client->GetPicture("fdisk.t.xpm"),
+                     _client->GetPicture("fdisk.t.xpm"));
+    i->open = True;
 
     DefineCursor(GetResourcePool()->GetWaitCursor());
     XFlush(GetDisplay());
 
-    ReadDir(dir, root);
+    dir = wd;
+    p = strchr(dir+1, '/');
+    if (p) *p++ = '\0';
+    while (dir) {
+chdir(dir);
+      ReadDir(".", i);  // ReadDir(dir, i);
+      dir = p;
+      if (p) p = strchr(p, '/');
+      if (p) {
+        *p++ = '\0';
+        i = _lt->FindChildByName(i, dir);
+        if (i) {
+          i->open = True;
+          _lt->HighlightItem(i);
+        //_lt->SortChildren(i);
+        }
+      }
+    }
     _lt->SortChildren(NULL);
 
     DefineCursor(None);
@@ -729,7 +752,7 @@ void OXExplorer::ReadDir(char *cdir, OListTreeItem *parent) {
 
   if (chdir(cdir) != 0) return;
 
-  //printf("entering %s...\n", cdir);
+//printf("ReadDir: entering %s...\n", cdir);
 
   if ((dirp = opendir(".")) == NULL) {
     chdir(tmp);
@@ -749,7 +772,7 @@ void OXExplorer::ReadDir(char *cdir, OListTreeItem *parent) {
               pic1 = _client->GetPicture("desktop.t.xpm");
               pic2 = _client->GetPicture("desktop.t.xpm");
             // and here as well... ==!==
-            } else if (strcmp(name, ".xclass.recycle") == 0) {
+            } else if (strcmp(name, ".recycle") == 0) {
               // here we should check for empty recycle bin! ==!==
               pic1 = _client->GetPicture("recycle-empty.t.xpm");
               pic2 = _client->GetPicture("recycle-empty.t.xpm");
@@ -786,7 +809,7 @@ void OXExplorer::ReadSubDirs(char *cdir, OListTreeItem *parent) {
 
   if (chdir(cdir) != 0) return;
 
-  //printf("entering %s...\n", cdir);
+//printf("ReadSubDirs: entering %s...\n", cdir);
   _lt->DeleteChildren(parent);
 
   if ((dirp = opendir(".")) == NULL) {
@@ -815,6 +838,8 @@ void OXExplorer::ReadSubDirs(char *cdir, OListTreeItem *parent) {
 }
 
 
+//----------------------------------------------------------------------
+
 int OXExplorer::ProcessMessage(OMessage *msg) {
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
   OItemViewMessage *vmsg;
@@ -830,16 +855,35 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
           switch (wmsg->id) {
 
             case M_FILE_OPEN:
-              {
-              int sel;
-              OFileItem *f;
-              vector<OItem *> items;
+              if (_fileWindow->NumSelected() == 1) {
+                const OFileItem *f;
+                vector<OItem *> items;
 
-              if ((sel = _fileWindow->NumSelected()) == 1) {
                 items = _fileWindow->GetSelectedItems();
                 f = (OFileItem *) items[0];
-                DoAction(f);
+                DoOpen(f);
               }
+              break;
+
+            case M_FILE_OPENWITH:
+              if (_fileWindow->NumSelected() == 1) {
+                const OFileItem *f;
+                vector<OItem *> items;
+
+                items = _fileWindow->GetSelectedItems();
+                f = (OFileItem *) items[0];
+                DoOpenWith(f);
+              }
+              break;
+
+            case M_FILE_EXPLORE:
+              if (_fileWindow->NumSelected() == 1) {
+                const OFileItem *f;
+                vector<OItem *> items;
+
+                items = _fileWindow->GetSelectedItems();
+                f = (OFileItem *) items[0];
+                DoExplore(f);
               }
               break;
 
@@ -875,25 +919,11 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
               break;
 
             case M_VIEW_TOOLBAR:
-              if (_toolBar->IsVisible()) {
-                HideFrame(_toolBar);
-                HideFrame(_toolBarSep);
-                _menuView->UnCheckEntry(M_VIEW_TOOLBAR);
-              } else {
-                ShowFrame(_toolBarSep);
-                ShowFrame(_toolBar);
-                _menuView->CheckEntry(M_VIEW_TOOLBAR);
-              }
+              DoToggleToolBar();
               break;
 
             case M_VIEW_STATUS:
-              if (_statusBar->IsVisible()) {
-                HideFrame(_statusBar);
-                _menuView->UnCheckEntry(M_VIEW_STATUS);
-              } else {
-                ShowFrame(_statusBar);
-                _menuView->CheckEntry(M_VIEW_STATUS);
-              }
+              DoToggleStatusBar();
               break;
 
             case M_VIEW_OPTIONS:
@@ -917,6 +947,7 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
             case M_VIEW_REFRESH:
               _fileWindow->DisplayDirectory();
               UpdateListBox();
+UpdateTree();
               break;
 
             case M_HELP_ABOUT:
@@ -924,8 +955,9 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
               break;
 
             case 99:
-              _fileWindow->ChangeDirectory("..");
+              DoChangeDirectory("..");
               UpdateListBox();
+UpdateTree();
               break;
 
             default:
@@ -944,8 +976,9 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
       if ((msg->action == MSG_CLICK) && (wmsg->id == 1010)) {
         OXTreeLBEntry *e = (OXTreeLBEntry *) _ddlb->GetSelectedEntry();
         if (e) {
-          _fileWindow->ChangeDirectory(e->GetPath()->GetString());
+          DoChangeDirectory(e->GetPath()->GetString());
           UpdateListBox();
+UpdateTree();
         }
       }
       break;
@@ -954,34 +987,31 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
       vmsg = (OItemViewMessage *) msg;
       switch (msg->action) {
         case MSG_CLICK:
-          {
-          int sel;
-          OFileItem *f;
-          vector<OItem *> items;
+          if (_fileWindow->NumSelected() == 1) {
+            const OFileItem *f;
+            vector<OItem *> items;
 
-          if ((sel = _fileWindow->NumSelected()) == 1) {
             items = _fileWindow->GetSelectedItems();
             f = (OFileItem *) items[0];
             SetupContextMenu(CONTEXT_MENU_FILE, f->GetFileType());
           } else {
             SetupContextMenu(CONTEXT_MENU_NONE, 0);
           }
-          }
           if (vmsg->button == Button3) {
-            _contextMenu->PlaceMenu(vmsg->pos.x, vmsg->pos.y, True, True);
+            if (!_fileWindow->IsDragging())
+              _contextMenu->PlaceMenu(vmsg->pos.x, vmsg->pos.y, True, True);
           }
           break;
 
         case MSG_DBLCLICK:
           if (vmsg->button == Button1) {
-            int sel;
-            OFileItem *f;
-            vector<OItem *> items;
+            if (_fileWindow->NumSelected() == 1) {
+              const OFileItem *f;
+              vector<OItem *> items;
 
-            if ((sel = _fileWindow->NumSelected()) == 1) {
               items = _fileWindow->GetSelectedItems();
               f = (OFileItem *) items[0];
-              DoAction(f);
+              DoOpen(f);
             }
           }
           break;
@@ -1041,46 +1071,23 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
     case MSG_LISTTREE:
       switch (msg->action) {
         case MSG_DBLCLICK:
-          { OListTreeItem *h;
-            if ((h = _lt->GetSelected()) != NULL) {
-              char *p, tmp[2048], hdr[2048];
-              _lt->GetPathnameFromItem(h, tmp);
-              p = tmp;
-              while (*p && *(p+1) == '/') ++p;
-              //sprintf(hdr, "Contents of \"%s\"", p);
-              //_lbl2->SetText(new OString(hdr));
-              //_listHdr->Layout();
-              DefineCursor(GetResourcePool()->GetWaitCursor());
-              XFlush(GetDisplay());
-              //if (strcmp(p, _currentDir) != 0) {
-              //  _fileWindow->ChangeDirectory(p);
-              //  UpdateListBox();
-              //}
-              DefineCursor(None);
-            }
-          }
           break;
 
         case MSG_CLICK:
           { OListTreeItem *h;
             if ((h = _lt->GetSelected()) != NULL) {
-//              if (h->open) {
-                char *p, tmp[2048], hdr[2048];
-                _lt->GetPathnameFromItem(h, tmp);
-                p = tmp; 
-                while (*p && *(p+1) == '/') ++p;
-                sprintf(hdr, "Contents of \"%s\"", p);
-                _lbl2->SetText(new OString(hdr));
-                _listHdr->Layout();  // so the label gets resized accordingly...
-                DefineCursor(GetResourcePool()->GetWaitCursor());
-                XFlush(GetDisplay());
-                ReadDir(p, h);
-                if (strcmp(p, _currentDir) != 0) {
-                  _fileWindow->ChangeDirectory(p);
-                  UpdateListBox();
-                }
-                DefineCursor(None);
-//              }
+              char *p, tmp[PATH_MAX];
+              _lt->GetPathnameFromItem(h, tmp);
+              p = tmp;
+              while (*p && *(p+1) == '/') ++p;
+              DefineCursor(GetResourcePool()->GetWaitCursor());
+              XFlush(GetDisplay());
+              ReadDir(p, h);
+              if (strcmp(p, _currentDir) != 0) {
+                DoChangeDirectory(p);
+                UpdateListBox();
+              }
+              DefineCursor(None);
             }
           }
           break;
@@ -1094,6 +1101,9 @@ int OXExplorer::ProcessMessage(OMessage *msg) {
 
   return True;
 }
+
+
+//--- Setup right-click context menu according to object type
 
 void OXExplorer::SetupContextMenu(int mode, int ftype) {
   _contextMenu->RemoveAllEntries();
@@ -1130,6 +1140,45 @@ void OXExplorer::SetupContextMenu(int mode, int ftype) {
     _menuFile->AddSeparator();
     _menuFile->AddPopup(new OHotString("Se&nd To"), _sendToMenu);
     _menuFile->AddSeparator();
+
+  } else if (mode == CONTEXT_MENU_RECYCLE) {
+
+/*
+                 File menu                        Context menu
+
+  no file        Empty Recycle &Bin               &View           >
+  selected       ------------------               -----------------
+                 (Create &Shortcut)               Arrange &Icons  >
+                 (&Delete)                        Line &Up Icons
+                 (Rena&me)                        -----------------
+                 (P&roperties)                    Re&fesh
+                 ------------------               -----------------
+                 &Close                           (&Paste)
+                                                  (Paste &Shortcut)
+                                                  -----------------
+                                                  P&roperties
+
+  file           R&estore                         R&estore
+  selected       ------------------               -----------------
+                 Empty Recycle &Bin               Cu&t
+                 ------------------               -----------------
+                 (Create &Shortcut)               &Delete
+                 &Delete                          -----------------
+                 (Rena&me)                        >P&roperties<      (default)
+                 P&roperties
+                 ------------------
+                 &Close
+
+
+                                                  >&Open<
+                                                  &Explore
+                                                  Empty Recycle &Bin
+                                                  ------------------
+                                                  Create &Shortcut
+                                                  -----------------
+                                                  P&roperties
+*/
+
 
   } else if (mode == CONTEXT_MENU_NONE) {
 
@@ -1168,11 +1217,29 @@ void OXExplorer::SetupContextMenu(int mode, int ftype) {
   }
 }
 
-void OXExplorer::DoAction(OFileItem *f) {
+
+//--- Change directory
+
+void OXExplorer::DoChangeDirectory(const char *path) {
+
+  _fileWindow->ChangeDirectory(path);
+
+  if (_mainMode == EXPLORER_MODE) {
+    char cwd[PATH_MAX], hdr[PATH_MAX];
+
+    getcwd(cwd, PATH_MAX);
+    sprintf(hdr, "Contents of \"%s\"", cwd);
+    _lbl2->SetText(new OString(hdr));
+    _listHdr->Layout();  // so the label gets resized accordingly...
+  }
+}
+
+
+//--- Execute the "open" action for the specified object
+
+void OXExplorer::DoOpen(const OFileItem *f) {
   int   pid, ftype;
   char  action[PATH_MAX];
-  char  fullaction[PATH_MAX];
-  char  command[PATH_MAX];
   char  filename[PATH_MAX];
   char  path[PATH_MAX]; 
   char *argv[PATH_MAX]; 
@@ -1196,9 +1263,7 @@ void OXExplorer::DoAction(OFileItem *f) {
         exit(1);
       }
     } else {
-      _fileWindow->ChangeDirectory(f->GetName()->GetString());
-//      OMessage msg(FW_DIRCHANGED, 0L, 0L, 0L);
-//      SendMessage(_msgWindow, msg);
+      DoChangeDirectory(f->GetName()->GetString());
       UpdateListBox();
     }
 
@@ -1208,15 +1273,10 @@ void OXExplorer::DoAction(OFileItem *f) {
     sprintf(filename, "%s/%s", path, f->GetName()->GetString());
     argptr = strtok(action, " ");
     while (argptr != NULL) {
-      if (strcmp(argptr, "%s") == 0) {
-        argv[argc] = new char[strlen(filename)+1];
-        strcpy(argv[argc], filename);
-        argc++;  
-      } else {
-        argv[argc] = new char[strlen(argptr)+1];
-        strcpy(argv[argc], argptr);
-        argc++;   
-      }
+      if (strcmp(argptr, "%s") == 0)
+        argv[argc++] = StrDup(filename);
+      else
+        argv[argc++] = StrDup(argptr);
       argptr = strtok(NULL, " ");
     }
     argv[argc] = NULL;
@@ -1243,9 +1303,64 @@ void OXExplorer::DoAction(OFileItem *f) {
   }
 }
 
+
+//--- Execute the "open with" action for the specified object
+
+void OXExplorer::DoOpenWith(const OFileItem *f) {
+  int  pid;
+  char path[PATH_MAX], filename[PATH_MAX];
+
+  OString progname("");
+
+  new OXOpenWithDialog(_client->GetRoot(), this, f->GetName(), &progname);
+  if (progname.GetLength() == 0) return;  // user cancelled dialog
+
+  // execute the program
+  getcwd(path, PATH_MAX);
+  sprintf(filename, "%s/%s", path, f->GetName()->GetString());
+
+  pid = fork();
+  if (pid == 0) {
+    execlp(progname.GetString(), progname.GetString(), filename, NULL);
+    // if we are here then execlp failed!
+    fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", progname.GetString());
+    exit(1);
+  }
+}
+
+
+//--- Execute the "explore" action for the specified folder
+
+void OXExplorer::DoExplore(const OFileItem *f) {
+  int pid;
+
+  // must be a directory!
+  if (S_ISDIR(f->GetFileType())) { 
+    pid = fork();
+    if (pid == 0) {
+      char FullPath[PATH_MAX];
+
+      if (!realpath(AppPath, FullPath)) strcpy(FullPath, AppPath);
+      chdir(f->GetName()->GetString());
+
+      execlp(FullPath, FullPath, NULL);
+
+      // if we are here then execlp failed!
+      fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", AppPath);
+      exit(1);
+    }
+  }
+}
+
+
+//--- Copy a single file
+
 void OXExplorer::CopyFile(const char *from, const char *to) {
   new OXCopyBox(_client->GetRoot(), this, from, to);
 }
+
+
+//--- Move a single file
 
 void OXExplorer::MoveFile(const char *from, const char *to) {
   // need to check for the existence of the destination
@@ -1277,9 +1392,11 @@ void OXExplorer::MoveFile(const char *from, const char *to) {
   }
 }
 
+
+//--- Delete selected files
+
 void OXExplorer::DeleteFiles() {
-  OFileItem   *f;  
-  void        *iterator = NULL;
+  const OFileItem *f;  
   struct stat  inode;
   const  char *basename;
   char         dirname[PATH_MAX];
@@ -1352,6 +1469,28 @@ void OXExplorer::DeleteFiles() {
   _fileWindow->DisplayDirectory();
 }
 
+void OXExplorer::DoToggleToolBar() {
+  if (_toolBar->IsVisible()) {
+    HideFrame(_toolBar);
+    HideFrame(_toolBarSep);
+    _menuView->UnCheckEntry(M_VIEW_TOOLBAR);
+  } else {
+    ShowFrame(_toolBarSep);
+    ShowFrame(_toolBar);
+    _menuView->CheckEntry(M_VIEW_TOOLBAR);
+  }
+}
+
+void OXExplorer::DoToggleStatusBar() {
+  if (_statusBar->IsVisible()) {
+    HideFrame(_statusBar);
+    _menuView->UnCheckEntry(M_VIEW_STATUS);
+  } else {
+    ShowFrame(_statusBar);
+    _menuView->CheckEntry(M_VIEW_STATUS);
+  }
+}
+
 void OXExplorer::About() {
   OAboutInfo info;
   
@@ -1368,3 +1507,54 @@ void OXExplorer::About() {
 
   new OXAboutDialog(_client->GetRoot(), this, &info);
 }
+
+/*
+
+Object-dependent actions:
+
+  Context menu
+  File menu
+  Drop action
+  Properties
+  Open (double-click) action
+  
+Object types:
+
+  Regular folders (directories)
+  Special folders (recycle bin, desktop)
+  Executable files
+  Documents of known type (associated to a mime action)
+  Documents of unknown type
+
+Properties dialog (multiple files and/or dirs):
+
+  46 Files, 8 Folders
+  -------------------
+  Type:     All of type File Folder (or Multiple Types)
+  Location: All in C:\Windows (or Various Folders --from Find dialog)
+  Size:     4.67MB (4,897,852 bytes), 4,988,928 bytes used.
+  --------------------
+  Attributes:
+    -as usual- partly set attribute bits have ligth-grayed bgnd w/ #808080
+               check mark.
+
+  4 Files, 0 Folders
+
+Properties dialog (recycle bin):
+
+  "Global" Tab:
+
+  ( ) &Configure drives independently
+  (*) &Use one setting for all drives ---group frame----+
+   [ ] Do not remove files to the &Recycle Bin.\n       |
+       Remove files immediately when deleted            |
+                                                        |
+     --V------------                                    |
+     | | | | | | | |                                    |
+           10%                                          |
+                                                        |
+   &Maximum size of Recycle Bin (percent of each drive) |
+  ------------------------------------------------------+
+  [x] &Display delete confirmation dialog box.
+
+*/

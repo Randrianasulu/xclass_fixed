@@ -67,6 +67,8 @@ Implemented features
 
 - Settings are saved on a $HOME/.xclass/etc/explorerrc file.
 
+- The "Open With..." dialog is there, but is not finished.
+
 
 Unimplemented features (or TODO list)
 -------------------------------------
@@ -84,7 +86,8 @@ Unimplemented features (or TODO list)
 
 - Missing dialogs:
   * Change Icon for MIME types.
-  * "Open with..."
+  * Properties dialog for multiple files
+  * Properties dialog for special folders
 
 
 Compilation and install
