@@ -1,7 +1,7 @@
 /**************************************************************************
  
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    This file is part of xcdiff, a front-end to the diff command.              
+    Copyright (C) 1998-2002 Matzka Gerald, Hector Peraza.            
  
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,68 +25,9 @@
 #include "OXDiff.h"
 #include "OXDiffView.h"
 
-int OXDiff::DoDiff() {
-  char cmd[256];
-  FILE *pipe;
 
-  if (!leftFile || !rightFile) return 0;
-	
-  ODifference *curr, *ptr = firstDiff;
-  while (ptr) {
-    curr = ptr->next;
-    delete ptr;
-    ptr = curr;
-  }
+//----------------------------------------------------------------------
 
-  sprintf(cmd, "diff -w %s %s", leftFile, rightFile);
-  if ((pipe = popen(cmd, "r")) == NULL) {
-    return 0;
-  }
-	
-  firstDiff = NULL;
-  numDiffs = 0;
-
-  while (fgets(cmd, 256, pipe) != NULL) {
-    if (cmd[0] != '<' && cmd[0] != '>' && cmd[0] != '-') {
-      ptr = new ODifference(cmd);
-      numDiffs++;
-
-      if (!firstDiff)
-        firstDiff = ptr;
-      else
-        curr->next = ptr;
-
-      curr = ptr;
-    }
-  }
-
-  pclose(pipe);
-  _bodyLeft->LoadFile(leftFile);
-  _bodyRight->LoadFile(rightFile);
-  ParseOutput();
-  _bodyLeft->Layout();
-  _bodyRight->Layout();
-
-  return 1;
-}
-
-char *OXDiff::GetDiffStr(int index) {
-  ODifference *curr = GetDifference(index);
-  if (curr) return curr->str;
-  return NULL;
-}
-
-ODifference *OXDiff::GetDifference(int index) {
-  ODifference *curr = firstDiff;
-  int i = 1;
-  while (curr && i != index) {
-    curr = curr->next;
-    i++;
-  }
-  return curr;
-}
-
- 
 ODifference::ODifference(char *line) {
 
   leftStart = leftEnd = rightStart = rightEnd = 0;
@@ -151,7 +92,7 @@ ODifference::ODifference(char *line) {
   if (str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0';
 }
 
-//------------------------------------------------------------------
+//----------------------------------------------------------------------
 
 OXDiff::OXDiff(const OXWindow *p, int w, int h, unsigned int options) :
   OXCompositeFrame(p, w, h, options),
@@ -194,7 +135,7 @@ OXDiff::OXDiff(const OXWindow *p, int w, int h, unsigned int options) :
 OXDiff::~OXDiff() {
   ODifference *curr, *ptr = firstDiff;
 
-  while(ptr) {
+  while (ptr) {
     curr = ptr->next;
     delete ptr;
     ptr = curr;
@@ -204,8 +145,8 @@ OXDiff::~OXDiff() {
   if (rightFile) delete[] rightFile;
 }
 
-int OXDiff::SetLeftFile(char *left) {
-  char buf[128], *p;
+void OXDiff::SetLeftFile(char *left) {
+  char buf[256], *p;
 
   if (leftFile) delete[] leftFile;
 	
@@ -225,8 +166,8 @@ int OXDiff::SetLeftFile(char *left) {
   UnDoDiff();
 }
 
-int OXDiff::SetRightFile(char *right) {
-  char buf[128], *p;
+void OXDiff::SetRightFile(char *right) {
+  char buf[256], *p;
 
   if (rightFile) delete[] rightFile;
 	
@@ -246,7 +187,52 @@ int OXDiff::SetRightFile(char *right) {
   UnDoDiff();
 }
 
-int OXDiff::UnDoDiff() {
+int OXDiff::DoDiff() {
+  char cmd[256];
+  FILE *pipe;
+
+  if (!leftFile || !rightFile) return 0;
+	
+  ODifference *curr, *ptr = firstDiff;
+  while (ptr) {
+    curr = ptr->next;
+    delete ptr;
+    ptr = curr;
+  }
+
+  sprintf(cmd, "diff -w %s %s", leftFile, rightFile);
+  if ((pipe = popen(cmd, "r")) == NULL) {
+    return 0;
+  }
+	
+  firstDiff = NULL;
+  numDiffs = 0;
+
+  while (fgets(cmd, sizeof(cmd), pipe) != NULL) {
+    if (cmd[0] != '<' && cmd[0] != '>' && cmd[0] != '-') {
+      ptr = new ODifference(cmd);
+      numDiffs++;
+
+      if (!firstDiff)
+        firstDiff = ptr;
+      else
+        curr->next = ptr;
+
+      curr = ptr;
+    }
+  }
+
+  pclose(pipe);
+  _bodyLeft->LoadFile(leftFile);
+  _bodyRight->LoadFile(rightFile);
+  ParseOutput();
+  _bodyLeft->Layout();
+  _bodyRight->Layout();
+
+  return 1;
+}
+
+void OXDiff::UnDoDiff() {
   if (leftFile)
     _bodyLeft->LoadFile(leftFile);
   else
@@ -258,7 +244,7 @@ int OXDiff::UnDoDiff() {
     _bodyRight->Clear();
 }
 
-int OXDiff::ShowDiff(int index) {
+void OXDiff::ShowDiff(int index) {
   ODifference *curr = GetDifference(index);
   int rstart, rend;
   int ldiff, rdiff;
@@ -314,11 +300,9 @@ int OXDiff::ShowDiff(int index) {
     _bodyLeft->AdjustScrollBar();
 
   }
-
-  return 1;
 }
 
-int OXDiff::CenterDiff() {
+void OXDiff::CenterDiff() {
   OXDiffFrame *leftFrame = _bodyLeft->GetTextFrame();
   OXDiffFrame *rightFrame = _bodyRight->GetTextFrame();
 
@@ -334,18 +318,16 @@ int OXDiff::CenterDiff() {
   _bodyLeft->AdjustScrollBar();
 }
 
-int OXDiff::SetLineNumOn(int on) {
+void OXDiff::SetLineNumOn(int on) {
   _bodyLeft->SetLineNumOn(on);
   _bodyRight->SetLineNumOn(on);
 }
 
-int OXDiff::ParseOutput() {
+void OXDiff::ParseOutput() {
   ODifference *curr = firstDiff;
   OXDiffFrame *leftFrame = _bodyLeft->GetTextFrame();
   OXDiffFrame *rightFrame = _bodyRight->GetTextFrame();
-  int i, n;
-  char buf[256];
-  int ldiff, rdiff;
+  int i, ldiff, rdiff;
 	
   while (curr) {
     switch (curr->type) {
@@ -409,8 +391,6 @@ int OXDiff::ParseOutput() {
 	
     curr = curr->next;
   }
-
-  return 1;
 }
 
 void OXDiff::SetFont(OXFont *f) {
@@ -421,4 +401,27 @@ void OXDiff::SetFont(OXFont *f) {
   rightFrame->SetFont(f);
 
   Layout();
+}
+
+void OXDiff::SetColors(ODiffColors *colors) {
+  OXDiffFrame *leftFrame = _bodyLeft->GetTextFrame();
+  OXDiffFrame *rightFrame = _bodyRight->GetTextFrame();
+
+  leftFrame->SetColors(colors);
+  rightFrame->SetColors(colors);
+
+  Layout();
+}
+
+char *OXDiff::GetDiffStr(int index) {
+  ODifference *curr = GetDifference(index);
+  if (curr) return curr->str;
+  return NULL;
+}
+
+ODifference *OXDiff::GetDifference(int index) {
+  ODifference *curr = firstDiff;
+
+  for (int i = 1; curr && i != index; ++i) curr = curr->next;
+  return curr;
 }

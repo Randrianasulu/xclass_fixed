@@ -1,8 +1,8 @@
 /**************************************************************************
  
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
- 
+    This file is part of xcdiff, a front-end to the diff command.              
+    Copyright (C) 1998-2002 Matzka Gerald, Hector Peraza.            
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
@@ -23,6 +23,7 @@
 #define __OXDIFF_H
 
 #include "OXDiffView.h"
+#include "OXDialogs.h"
 
 
 #define DIFF_LRC      1  // Left Right Change
@@ -34,11 +35,13 @@
 #define DIFF_NOTREL   7	 // Undefined
 
 
+//----------------------------------------------------------------------
+
 struct ODifference {
   ODifference(char *line);
-  int leftStart, leftEnd, rightStart, rightEnd;
-  int type;
-  char str[20];
+
+  int  type, leftStart, leftEnd, rightStart, rightEnd;
+  char str[21];
   ODifference *next;
 };
 
@@ -48,24 +51,29 @@ class OXDiff : public OXCompositeFrame {
 public:
   OXDiff(const OXWindow *p, int w, int h,
          unsigned int options = HORIZONTAL_FRAME);
-  ~OXDiff();
+  virtual ~OXDiff();
     
-  int SetLineNumOn(int);
-  int SetLeftFile(char * = NULL);
-  int SetRightFile(char * = NULL);
+  void SetLineNumOn(int);
+  void SetLeftFile(char * = NULL);
+  void SetRightFile(char * = NULL);
 
-  int GetNumDiffs() { return numDiffs; }
-  int DoDiff();
-  int UnDoDiff();
-  int ParseOutput();
-  int ShowDiff(int);
-  int CenterDiff();
-  int CanDoDiff() { return (leftFile && rightFile); }
+  int  GetNumDiffs() { return numDiffs; }
+  int  DoDiff();
+  void UnDoDiff();
+  void ParseOutput();
+  void ShowDiff(int);
+  void CenterDiff();
+  int  CanDoDiff() { return (leftFile && rightFile); }
 	
   char *GetDiffStr(int index);
   
-  OXFont *GetFont() const { return _bodyLeft->GetTextFrame()->GetFont(); }
+  OXFont *GetFont() const
+     { return _bodyLeft->GetTextFrame()->GetFont(); }
   void SetFont(OXFont *f);
+  
+  ODiffColors *GetColors() const
+     { return _bodyLeft->GetTextFrame()->GetColors(); }
+  void SetColors(ODiffColors *colors);
 
 private:
   OXDiffView *_bodyLeft, *_bodyRight;

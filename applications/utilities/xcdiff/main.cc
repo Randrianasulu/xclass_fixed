@@ -1,7 +1,7 @@
 /**************************************************************************
 
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    This file is part of xcdiff, a front-end to the diff command.
+    Copyright (C) 1998-2002 Matzka Gerald, Hector Peraza.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,20 +24,20 @@
 #include <unistd.h>
 #include <limits.h>
 
+#include <xclass/utils.h>
 #include <xclass/OXClient.h>
 #include <xclass/OXMainFrame.h>
 #include <xclass/OX3dLines.h>
-#include <xclass/OXButton.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXLabel.h>
 #include <xclass/OXFileDialog.h>
 #include <xclass/OXToolBar.h>
 #include <xclass/OXStatusBar.h>
 #include <xclass/OXMsgBox.h>
-#include <xclass/version.h>
 #include <xclass/OXAboutDialog.h>
 #include <xclass/OXFontDialog.h>
-#include <xclass/utils.h>
+#include <xclass/OIniFile.h>
+#include <xclass/version.h>
 
 #include "df-openl.xpm"
 #include "df-openr.xpm"
@@ -48,9 +48,10 @@
 #include "df-next.xpm"
 
 #include "OXDiff.h"
+#include "OXDialogs.h"
 
 
-#define XCDIFF_VERSION    "V0.6"
+#define XCDIFF_VERSION    "V0.7"
 
 
 #define MENU_DISABLED     (1<<0)
@@ -78,6 +79,7 @@
 
 
 //----- Popup stuff...
+
 struct _popup {
   OXPopupMenu *ptr;
   struct {
@@ -112,6 +114,7 @@ struct _popup diff_popup = {
   { NULL }, {
   { "&Do",       M_DIFF_DO,       MENU_DISABLED, NULL },
   { "&Undo",     M_DIFF_UNDO,     0,             NULL },
+  { "",          -1,              0,             NULL },
   { "&Previous", M_DIFF_PREVIOUS, MENU_DISABLED, NULL },
   { "&Center",   M_DIFF_CENTER,   MENU_DISABLED, NULL },
   { "&Next",     M_DIFF_NEXT,     MENU_DISABLED, NULL },
@@ -154,6 +157,10 @@ protected:
   void EnableDiffMenu();
   void DisableDiffMenu();
   void ErrorMsg(int icon_type, char *msg);
+  void DoChangeFont();
+  void DoChangeColors();
+  void ReadIniFile();
+  void SaveIniFile();
   void About();
 
   OXStatusBar *_statusBar;
@@ -167,37 +174,34 @@ protected:
   OXDDListBox *_diffBox;
   OXLabel *_diffLabel;
   
+  int _winx, _winy;
   char *_leftFile, _leftPath[PATH_MAX];
   char *_rightFile, _rightPath[PATH_MAX];
 };
 
 
-//---------------------------------------------------------------------
-
-OMimeTypes *MimeTypeList;  // currently we need this for OXFileDialog
+//----------------------------------------------------------------------
 
 int main(int argc, char **argv) {
   char mimerc[PATH_MAX];
 
-  OXClient clientX;
+  OXClient clientX(argc, argv);
 
-  OXDiffMainFrame *mainw = new OXDiffMainFrame(clientX.GetRoot(), 10, 10,
+  OXDiffMainFrame *mainw = new OXDiffMainFrame(clientX.GetRoot(), 600, 400,
                                                argc, argv);
-
-  sprintf(mimerc, "%s/.mime.types", getenv("HOME"));
-  MimeTypeList = new OMimeTypes(&clientX, mimerc);
-
-  mainw->Resize(600, 400);
   mainw->MapWindow();
 
   clientX.Run();
-  delete MimeTypeList;
+
+  return 0;
 }
 
 OXDiffMainFrame::OXDiffMainFrame(const OXWindow *p, int w, int h,
 			 int argc, char **argv) :
   OXMainFrame(p, w, h) {
-  char tmp[BUFSIZ];
+
+  _winx = w;
+  _winy = h;
 
   getcwd(_leftPath, PATH_MAX);
   getcwd(_rightPath, PATH_MAX);
@@ -258,7 +262,11 @@ OXDiffMainFrame::OXDiffMainFrame(const OXWindow *p, int w, int h,
   SetWindowName("XC Diff "XCDIFF_VERSION);
   SetClassHints("XCDiff", "XCDiff");
 
+  ReadIniFile();
+
+  Resize(_winx, _winy);
   MapSubwindows();
+  Layout();
 
   if (argc >= 3) {
     _leftFile = new char[strlen(argv[1])+1];
@@ -288,20 +296,19 @@ OXDiffMainFrame::~OXDiffMainFrame() {
 }
 
 int OXDiffMainFrame::ProcessMessage(OMessage *msg) {
-  char *_ptr;
-  int curr, val;
   OWidgetMessage *wmsg = (OWidgetMessage *) msg;
+  char *_ptr;
+  int  curr;
   
   switch (msg->action) {
     case MSG_CLICK:
-      switch(msg->type) {
+      switch (msg->type) {
         case MSG_BUTTON:
         case MSG_MENU:
-          switch(wmsg->id) {
-            case M_OPTIONS_LINES:
-              DoToggleLineNum();
-              break;
-              
+          switch (wmsg->id) {
+
+            //------------------------------------------------ File
+
             case M_FILE_OPENLEFT:
               if ((_ptr = DoOpen(_leftPath)) != NULL) {
                	if (_leftFile) delete[] _leftFile;
@@ -331,6 +338,8 @@ int OXDiffMainFrame::ProcessMessage(OMessage *msg) {
               exit(0);
               break;
 
+            //------------------------------------------------ Difference
+
             case M_DIFF_PREVIOUS:
               curr = _diffBox->GetSelected();
               if (--curr == 0) curr = _diffView->GetNumDiffs();
@@ -355,13 +364,25 @@ int OXDiffMainFrame::ProcessMessage(OMessage *msg) {
               UnDoDiff();
               break;
 
-            case M_OPTIONS_FONT:
-              {
-              OString f(_diffView->GetFont()->NameOfFont());
-              new OXFontDialog(_client->GetRoot(), this, &f);
-              _diffView->SetFont(_client->GetFont(f.GetString()));
-              }
+            //------------------------------------------------ Options
+
+            case M_OPTIONS_LINES:
+              DoToggleLineNum();
               break;
+              
+            case M_OPTIONS_FONT:
+              DoChangeFont();
+              break;
+
+            case M_OPTIONS_COLORS:
+              DoChangeColors();
+              break;
+
+            case M_OPTIONS_SAVE:
+              SaveIniFile();
+              break;
+
+            //------------------------------------------------ Help
 
             case M_HELP_ABOUT:
               About();
@@ -380,15 +401,14 @@ int OXDiffMainFrame::ProcessMessage(OMessage *msg) {
 }
 
 void OXDiffMainFrame::ShowDiff(int i) {
-  int start, end, type;
-  char buf1[128];
+  char buf[128];
 	
   int num = _diffView->GetNumDiffs();
   if (i <= num) {
     _diffBox->Select(i);
     _diffView->ShowDiff(i);
-    sprintf(buf1, "Difference %d of %d", i, num);
-    _diffLabel->SetText(new OString(buf1));
+    sprintf(buf, "Difference %d of %d", i, num);
+    _diffLabel->SetText(new OString(buf));
     _diffLabel->Resize(_diffLabel->GetDefaultSize());
   }
 }
@@ -456,7 +476,7 @@ char *OXDiffMainFrame::DoOpen(char *path) {
   char *_filename = NULL;
   
   chdir(path);
-  fi.MimeTypesList = MimeTypeList;
+  fi.MimeTypesList = NULL;
   fi.file_types = NULL;
   new OXFileDialog(_client->GetRoot(), this, FDLG_OPEN, &fi);
   if (fi.filename) {
@@ -507,12 +527,184 @@ void OXDiffMainFrame::DoToggleLineNum() {
   }
 }
 
+void OXDiffMainFrame::DoChangeFont() {
+  OString f(_diffView->GetFont()->NameOfFont());
+  new OXFontDialog(_client->GetRoot(), this, &f);
+  _diffView->SetFont(_client->GetFont(f.GetString()));
+}
+
+void OXDiffMainFrame::DoChangeColors() {
+  int retc;
+  ODiffColors colors = *_diffView->GetColors();
+
+  new OXDiffColorsDialog(_client->GetRoot(), this, &colors, &retc);
+  if (retc == ID_OK) _diffView->SetColors(&colors);
+}
+
+void OXDiffMainFrame::ReadIniFile() {
+  char *inipath, line[1024], arg[256];
+
+  inipath = GetResourcePool()->FindIniFile("xcdiffrc", INI_READ);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_READ);
+
+  while (ini.GetNext(line)) {
+
+    if (strcasecmp(line, "defaults") == 0) {
+      if (ini.GetItem("window size", arg)) {
+        if (sscanf(arg, "%d x %d", &_winx, &_winy) == 2) {
+          if (_winx < 10 || _winx > 32000 || _winy < 10 || _winy > 32000) {
+            _winx = 600;
+            _winy = 400;
+          }
+        } else {
+          _winx = 600;
+          _winy = 400;
+        }
+      }
+      if (ini.GetItem("font", arg)) {
+        _diffView->SetFont(_client->GetFont(arg));
+      }
+      if (ini.GetBool("show line numbers", false)) {
+        _menuOptions->CheckEntry(M_OPTIONS_LINES);
+        _diffView->SetLineNumOn(1);
+      } else {
+        _menuOptions->UnCheckEntry(M_OPTIONS_LINES);
+        _diffView->SetLineNumOn(0);
+      }
+
+    } else if (strcasecmp(line, "colors") == 0) {
+      int r, g, b;
+      ODiffColors colors = *_diffView->GetColors();
+
+      if (ini.GetItem("normal fg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.normal_fg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("normal bg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.normal_bg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("changed fg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.changed_fg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("changed bg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.changed_bg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("added fg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.added_fg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("added bg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.added_bg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("deleted fg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.deleted_fg.SetRGB(r, g, b);
+        }
+      }
+      if (ini.GetItem("deleted bg", arg)) {
+        if (sscanf(arg, "%d,%d,%d", &r, &g, &b) == 3) {
+          if (r >= 0 && r <= 255 &&
+              g >= 0 && g <= 255 &&
+              b >= 0 && b <= 255) colors.deleted_bg.SetRGB(r, g, b);
+        }
+      }
+      _diffView->SetColors(&colors);
+
+    }
+
+  }
+
+  delete[] inipath;
+}
+
+void OXDiffMainFrame::SaveIniFile() {
+  char *inipath, tmp[256];
+
+  inipath = GetResourcePool()->FindIniFile("xcdiffrc", INI_WRITE);
+  if (!inipath) return;
+
+  OIniFile ini(inipath, INI_WRITE);
+
+  ini.PutNext("defaults");
+  sprintf(tmp, "%d x %d", _w, _h);
+  ini.PutItem("window size", tmp);
+  ini.PutItem("font", _diffView->GetFont()->NameOfFont());
+  ini.PutBool("show line numbers",
+              _menuOptions->IsEntryChecked(M_OPTIONS_LINES));
+  ini.PutNewLine();
+
+  ini.PutNext("colors");
+  ODiffColors colors = *_diffView->GetColors();
+  sprintf(tmp, "%d,%d,%d", colors.normal_fg.GetR(),
+                           colors.normal_fg.GetG(),
+                           colors.normal_fg.GetB());
+  ini.PutItem("normal fg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.normal_bg.GetR(),
+                           colors.normal_bg.GetG(),
+                           colors.normal_bg.GetB());
+  ini.PutItem("normal bg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.changed_fg.GetR(),
+                           colors.changed_fg.GetG(),
+                           colors.changed_fg.GetB());
+  ini.PutItem("changed fg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.changed_bg.GetR(),
+                           colors.changed_bg.GetG(),
+                           colors.changed_bg.GetB());
+  ini.PutItem("changed bg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.added_fg.GetR(),
+                           colors.added_fg.GetG(),
+                           colors.added_fg.GetB());
+  ini.PutItem("added fg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.added_bg.GetR(),
+                           colors.added_bg.GetG(),
+                           colors.added_bg.GetB());
+  ini.PutItem("added bg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.deleted_fg.GetR(),
+                           colors.deleted_fg.GetG(),
+                           colors.deleted_fg.GetB());
+  ini.PutItem("deleted fg", tmp);
+  sprintf(tmp, "%d,%d,%d", colors.deleted_bg.GetR(),
+                           colors.deleted_bg.GetG(),
+                           colors.deleted_bg.GetB());
+  ini.PutItem("deleted bg", tmp);
+  ini.PutNewLine();
+
+  delete[] inipath;
+}
+
 void OXDiffMainFrame::About() {
   OAboutInfo info;
 
   info.wname = "About xcdiff";
   info.title = "XCDiff "XCDIFF_VERSION"\nA frontend to the \"diff\" command";
-  info.copyright = "Copyright © 1998-1999 Matzka Gerald";
+  info.copyright = "Copyright © 1998-1999 Matzka Gerald\n"
+                   "Copyright © 1999-2002 Héctor Peraza";
   info.text = "This program is free software; you can redistribute it "
               "and/or modify it under the terms of the GNU "
               "General Public License.";

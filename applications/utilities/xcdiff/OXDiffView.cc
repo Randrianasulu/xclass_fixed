@@ -1,7 +1,7 @@
 /**************************************************************************
  
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    This file is part of xcdiff, a front-end to the diff command.              
+    Copyright (C) 1998-2002 Matzka Gerald, Hector Peraza.            
  
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,9 +26,9 @@
 #include <xclass/ODimension.h>
 #include <xclass/OResourcePool.h>
 
-
 #include "OXDiffView.h"
 #include "OXDiff.h"
+
 
 //----------------------------------------------------------------------
 
@@ -42,24 +42,37 @@ OXDiffFrame::OXDiffFrame(OXWindow *parent, int x, int y,
 
     _th = _font->TextHeight();
 
-    SetBackgroundColor(back);
+    SetBackgroundColor(back);  // ==!==
+
+    _colors = new ODiffColors();
 
     unsigned long black = GetResourcePool()->GetDocumentFgndColor();
-    gcv.foreground = black;
-    gcv.background = back;
+
+    _normal_fg  = _client->GetColor(_colors->normal_fg); //black;
+    _normal_bg  = _client->GetColor(_colors->normal_bg); //back;
+    _changed_fg = _client->GetColor(_colors->changed_fg); //black;
+    _changed_bg = _client->GetColor(_colors->changed_bg); //green
+    _added_fg   = _client->GetColor(_colors->added_fg); //black;
+    _added_bg   = _client->GetColor(_colors->added_bg); //red
+    _deleted_fg = _client->GetColor(_colors->deleted_fg); //black;
+    _deleted_bg = _client->GetColor(_colors->deleted_bg); //blue
+
     gcv.font = _font->GetId();
+
+    gcv.foreground = _normal_fg;
+    gcv.background = _normal_bg;
     _gc = XCreateGC(GetDisplay(), _id, mask, &gcv);
     
-    gcv.foreground = black;
-    gcv.background = _client->GetColorByName("green");
+    gcv.foreground = _changed_fg;
+    gcv.background = _changed_bg;
     _gc_change = XCreateGC(GetDisplay(), _id, mask, &gcv);
 
-    gcv.foreground = black;
-    gcv.background = _client->GetColorByName("red");
+    gcv.foreground = _deleted_fg;
+    gcv.background = _deleted_bg;
     _gc_ladd = XCreateGC(GetDisplay(), _id, mask, &gcv);
 
-    gcv.foreground = black;
-    gcv.background = _client->GetColorByName("blue");
+    gcv.foreground = _added_fg;
+    gcv.background = _added_bg;
     _gc_radd = XCreateGC(GetDisplay(), _id, mask, &gcv);
 
     for (int i=0; i<MAXLINES; i++) {
@@ -76,13 +89,25 @@ OXDiffFrame::OXDiffFrame(OXWindow *parent, int x, int y,
 OXDiffFrame::~OXDiffFrame() {
   int i;
 
-  for (i=0; i<nlines; ++i)
+  for (i = 0; i < nlines; ++i)
     if (chars[i]) delete[] chars[i];
+
   XFreeGC(GetDisplay(), _gc);
   XFreeGC(GetDisplay(), _gc_change);
   XFreeGC(GetDisplay(), _gc_ladd);
   XFreeGC(GetDisplay(), _gc_radd);
   _client->FreeFont(_font);
+
+  _client->FreeColor(_normal_fg);
+  _client->FreeColor(_normal_bg);
+  _client->FreeColor(_changed_fg);
+  _client->FreeColor(_changed_bg);
+  _client->FreeColor(_added_fg);
+  _client->FreeColor(_added_bg);
+  _client->FreeColor(_deleted_fg);
+  _client->FreeColor(_deleted_bg);
+
+  delete _colors;
 }
 
 void OXDiffFrame::SetFont(OXFont *f) {
@@ -90,12 +115,54 @@ void OXDiffFrame::SetFont(OXFont *f) {
     _client->FreeFont(_font);
     _font = f;
     _th = _font->TextHeight();
+
     XSetFont(GetDisplay(), _gc, _font->GetId());
     XSetFont(GetDisplay(), _gc_change, _font->GetId());
     XSetFont(GetDisplay(), _gc_ladd, _font->GetId());
     XSetFont(GetDisplay(), _gc_radd, _font->GetId());
+
     XClearArea(GetDisplay(), _id, 0, 0, _w, _h, True);
     //DrawRegion(0, 0, _w, _h);
+  }
+}
+
+void OXDiffFrame::SetColors(ODiffColors *colors) {
+  if (colors) {
+    *_colors = *colors;
+
+    _client->FreeColor(_normal_fg);
+    _client->FreeColor(_normal_bg);
+    _client->FreeColor(_changed_fg);
+    _client->FreeColor(_changed_bg);
+    _client->FreeColor(_added_fg);
+    _client->FreeColor(_added_bg);
+    _client->FreeColor(_deleted_fg);
+    _client->FreeColor(_deleted_bg);
+
+    _normal_fg  = _client->GetColor(_colors->normal_fg);
+    _normal_bg  = _client->GetColor(_colors->normal_bg);
+    _changed_fg = _client->GetColor(_colors->changed_fg);
+    _changed_bg = _client->GetColor(_colors->changed_bg);
+    _added_fg   = _client->GetColor(_colors->added_fg);
+    _added_bg   = _client->GetColor(_colors->added_bg);
+    _deleted_fg = _client->GetColor(_colors->deleted_fg);
+    _deleted_bg = _client->GetColor(_colors->deleted_bg);
+
+    XSetForeground(GetDisplay(), _gc, _normal_fg);
+    XSetBackground(GetDisplay(), _gc, _normal_bg);
+
+    XSetForeground(GetDisplay(), _gc_change, _changed_fg);
+    XSetBackground(GetDisplay(), _gc_change, _changed_bg);
+
+    XSetForeground(GetDisplay(), _gc_radd, _added_fg);
+    XSetBackground(GetDisplay(), _gc_radd, _added_bg);
+
+    XSetForeground(GetDisplay(), _gc_ladd, _deleted_fg);
+    XSetBackground(GetDisplay(), _gc_ladd, _deleted_bg);
+
+    SetBackgroundColor(_normal_bg);
+
+    XClearArea(GetDisplay(), _id, 0, 0, _w, _h, True);
   }
 }
 
@@ -108,7 +175,7 @@ void OXDiffFrame::SetLineNumOn(int on) {
 void OXDiffFrame::Clear() {
   int i;
 
-  for (i=0; i<nlines; ++i)
+  for (i = 0; i < nlines; ++i)
     if (chars[i]) delete[] chars[i];
   nlines = top = 0;
   XClearWindow(GetDisplay(), _id);
@@ -125,24 +192,24 @@ int OXDiffFrame::SetLineType(int line, int type) {
 }
 
 int OXDiffFrame::InsLine(int at, char *buf, int type) {
-  char line[256], c, *src, *dst;
+  char line[MAXLINESIZE], c, *src, *dst;
   int i, cnt = 0;
 
   if (nlines + 1 >= MAXLINES) return 0;
 
   src = buf;
   dst = line;
-  while (c = *src++) {
+  while ((c = *src++) != '\0') {
     // Expand tabs
-      if (c == 0x0D || c == 0x0A)
-        break;
-      else if (c == 0x09)
-        do
-          *dst++ = ' ';
-        while (((dst-line) & 0x7) && (cnt++ < MAXLINESIZE-1));
-      else
-        *dst++ = c;
-      if (cnt++ >= MAXLINESIZE-1) break;
+    if (c == 0x0D || c == 0x0A)
+      break;
+    else if (c == 0x09)
+      do
+        *dst++ = ' ';
+      while (((dst-line) & 0x7) && (cnt++ < MAXLINESIZE-2));
+    else
+      *dst++ = c;
+    if (cnt++ >= MAXLINESIZE-2) break;
   }
   *dst = '\0';
 
@@ -165,10 +232,12 @@ int OXDiffFrame::InsLine(int at, char *buf, int type) {
     lnnum[i] = i;
 
   ++nlines;
+
+  return 1;
 }
 
 int OXDiffFrame::AppendLine(char *buf, int type) {
-  InsLine(nlines, buf, type);
+  return InsLine(nlines, buf, type);
 }
 
 void OXDiffFrame::PrintText() {
@@ -200,7 +269,7 @@ int OXDiffFrame::LoadFile(char *filename) {
 void OXDiffFrame::DrawRegion(int x, int y, int w, int h) {
   int yloc = 0, index = top, i, j;
   XRectangle rect;
-  char buf[256], fmt[16], c;
+  char buf[MAXLINESIZE+20], fmt[16], c;
   OFontMetrics fm;
   GC gc;
 
@@ -222,7 +291,7 @@ void OXDiffFrame::DrawRegion(int x, int y, int w, int h) {
   int _space = 5, _space2;
   if (_numbering) {
     for (i = 1, j = 10; j < nlines; j *=10, i++) {}
-    sprintf(fmt, "%%%dd %%c %%s", i, i);
+    sprintf(fmt, "%%%dd %%c %%s", i);
     sprintf(buf, fmt, nlines, 'C', "");
   } else {
     strcpy(fmt, "%c %s");
@@ -235,7 +304,7 @@ void OXDiffFrame::DrawRegion(int x, int y, int w, int h) {
     yloc += _th;
     if ((yloc - _th <= rect.y + rect.height) && (yloc >= rect.y) &&
         index >= 0) {
-      memset(buf, ' ', 256);
+      memset(buf, ' ', sizeof(buf));
 
       if (lntype[index] & DISPLAY_CHANGE)
         gc = _gc_change, c = 'C';
@@ -252,9 +321,9 @@ void OXDiffFrame::DrawRegion(int x, int y, int w, int h) {
         } else {
           sprintf(buf, fmt, c, chars[index]);
         }
-        memset(buf + strlen(buf), ' ', 256 - strlen(buf));
+        memset(buf + strlen(buf), ' ', sizeof(buf) - strlen(buf));
         XDrawImageString(GetDisplay(), _id, gc, _space,
-                         yloc - fm.descent, buf, 256);
+                         yloc - fm.descent, buf, sizeof(buf));
       } else {
         if (_numbering) {
           sprintf(buf, fmt, lnnum[index]+1, c, "");
@@ -265,9 +334,9 @@ void OXDiffFrame::DrawRegion(int x, int y, int w, int h) {
                          yloc - fm.descent, buf, strlen(buf));
 
         sprintf(buf, "%s", chars[index]);
-        memset(buf + strlen(buf), ' ', 256 - strlen(buf));
+        memset(buf + strlen(buf), ' ', sizeof(buf) - strlen(buf));
         XDrawImageString(GetDisplay(), _id, _gc, _space + _space2,
-                         yloc - fm.descent, buf, 256);
+                         yloc - fm.descent, buf, sizeof(buf));
       }
     }
     ++index;
@@ -457,24 +526,4 @@ void OXDiffView::Layout() {
   }
 
   _textCanvas->MoveResize(_bw, _bw, tcw, tch);
-}
-
-void OXDiffView::DrawBorder() {
-  switch (_options & (SUNKEN_FRAME | RAISED_FRAME | DOUBLE_BORDER)) {
-  case SUNKEN_FRAME | DOUBLE_BORDER:
-    XDrawLine (GetDisplay(), _id, _shadowGC, 0, 0, _w-2, 0);
-    XDrawLine (GetDisplay(), _id, _shadowGC, 0, 0, 0, _h-2);
-    XDrawLine (GetDisplay(), _id, _blackGC, 1, 1, _w-3, 1);
-    XDrawLine (GetDisplay(), _id, _blackGC, 1, 1, 1, _h-3);
-
-    XDrawLine (GetDisplay(), _id, _hilightGC, 0, _h-1, _w-1, _h-1);
-    XDrawLine (GetDisplay(), _id, _hilightGC, _w-1, _h-1, _w-1, 0);
-    XDrawLine (GetDisplay(), _id, _bckgndGC,  1, _h-2, _w-2, _h-2);
-    XDrawLine (GetDisplay(), _id, _bckgndGC,  _w-2, 1, _w-2, _h-2);
-    break;
-
-  default:
-    OXCompositeFrame::DrawBorder();
-    break;
-  }
 }

@@ -11,7 +11,7 @@ MAKEDEPEND=@MAKEDEPEND@
 .cc.o:
 	$(CXX) $(CXXFLAGS) -c $<
 
-SRCS = main.cc OXDiff.cc OXDiffView.cc
+SRCS = main.cc OXDiff.cc OXDiffView.cc OXDialogs.cc
 
 OBJS = $(SRCS:.cc=.o)
 

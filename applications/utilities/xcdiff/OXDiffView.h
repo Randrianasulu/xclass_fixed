@@ -1,7 +1,7 @@
 /**************************************************************************
  
-    This file is part of Xclass95, a Win95-looking GUI toolkit.
-    Copyright (C) 1996, 1997 David Barth, Hector Peraza.
+    This file is part of xcdiff, a front-end to the diff command.              
+    Copyright (C) 1998-2002 Matzka Gerald, Hector Peraza.            
  
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,10 +39,19 @@
 #define MAXLINES    5000
 #define MARGIN      5
 
+class ODiffColors;
+
+
+//----------------------------------------------------------------------
 
 class OXDiffFrame : public OXFrame {
 protected:
   OXFont *_font;
+  ODiffColors *_colors;
+  unsigned long _normal_fg,  _normal_bg,
+                _changed_fg, _changed_bg,
+                _added_fg,   _added_bg,
+                _deleted_fg, _deleted_bg;
   GC _gc, _gc_change, _gc_ladd, _gc_radd;
   int _numbering;
   int _marked_start, _marked_end;
@@ -60,7 +69,7 @@ public:
   int  GetLines() const { return nlines; }
   int  GetVisibleLines() const { return (_h / _th); }
   void SetTopLine(int new_top);
-  const int GetTopLine() const { return top; }
+  int  GetTopLine() const { return top; }
   void SetLineNumOn(int on);
   void CalcMarkRegion(int start, int end, int &realstart, int &realend);
   void MarkRegion(int start, int end);
@@ -79,6 +88,9 @@ public:
   OXFont *GetFont() const { return _font; }
   void SetFont(OXFont *f);
   
+  ODiffColors *GetColors() const { return _colors; }
+  void SetColors(ODiffColors *colors);
+  
 protected:
   void DrawRegion(int x, int y, int w, int h);
   void ScrollWindow(int new_top);
@@ -89,6 +101,8 @@ protected:
   int _th, nlines, top;
 };
 
+
+//----------------------------------------------------------------------
 
 class OXDiffView : public OXCompositeFrame {
 public:
@@ -102,10 +116,10 @@ public:
   void CenterDiff();
   void AdjustScrollBar();
 
-  virtual int SetLineNumOn(int on) { _textCanvas->SetLineNumOn(on); }
-  virtual int ProcessMessage(OMessage *msg);
+  virtual void SetLineNumOn(int on) { _textCanvas->SetLineNumOn(on); }
+  virtual int  ProcessMessage(OMessage *msg);
   virtual void Layout();
-  virtual void DrawBorder();
+
   virtual ODimension GetDefaultSize() const { return ODimension(_w, _h); }
 
   OXDiffFrame *GetTextFrame() const { return _textCanvas; }
