@@ -31,6 +31,8 @@
 #include <xclass/OXListView.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXMsgBox.h>
+#include <xclass/OXToolBar.h>
+#include <xclass/OXToolBarButton.h>
 #include <xclass/OXAboutDialog.h>
 #include <xclass/OXStatusBar.h>
 
@@ -169,9 +171,8 @@ static struct _popup help_popup = {
 
 #include "icons/bm-file.xpm"
 
-#include "OXToolBarButton.h"
 
-static _tb_data ftp_tb[] = {
+static SToolBarDataEx ftp_tb[] = {
   { "tb-quick.xpm", tb_quick_xpm, NULL, NULL, NULL, NULL, "Quick",
     "Quick Connect", BUTTON_NORMAL, M_FILE_QUICK, NULL },
   { "tb-connect.xpm", tb_connect_xpm,  NULL, NULL, NULL, NULL,
@@ -285,9 +286,11 @@ OXFtpMain::OXFtpMain(const OXWindow *p, char *homepath, int w, int h) :
   _menuWindow->AddSeparator();
   _menuWindow->AddPopup(new OHotString("Windows"), _mainFrame->GetWinListMenu());
 
+  _showLabels = False;
+
   _toolBarSep = new OXHorizontal3dLine(this);
-  _toolBar = new OXCompositeFrame(this, 60, 20, HORIZONTAL_FRAME);
-  _InitToolBar();
+  _toolBar = new OXToolBar(this);
+  _toolBar->AddButtons(ftp_tb, _showLabels);
 
   _statusBar = new OXStatusBar(this);
 
@@ -370,61 +373,6 @@ OXPopupMenu *OXFtpMain::_MakePopup(struct _popup *p) {
   }
   p->ptr = popup;
   return popup;
-}
-
-void OXFtpMain::_InitToolBar() {
-  int i, spacing = 0;
-  OXToolBarButton *button;
-  const OPicture *pic;
-
-  _showLabels = False;
- 
-  for (i = 0; ftp_tb[i].pixmap_name != NULL; ++i) {
-
-    if (strlen(ftp_tb[i].pixmap_name) > 0) {
-      pic = _client->GetPicture(ftp_tb[i].pixmap_name,
-                                ftp_tb[i].pixmap_data);
-
-      button = new OXToolBarButton(_toolBar, pic,
-                                   new OHotString(ftp_tb[i].label),
-                                   ftp_tb[i].id);
-      button->ShowLabel(_showLabels);
-
-      _toolBar->AddFrame(button,
-                         new OLayoutHints(LHINTS_CENTER_Y | LHINTS_LEFT,
-                                          spacing, 0, 2, 2));
-
-      if (ftp_tb[i].pixmap_on_data) {
-        pic = _client->GetPicture(ftp_tb[i].pixmap_on_name,
-                                  ftp_tb[i].pixmap_on_data);
-        button->SetOnPic(pic);
-      }
-      if (ftp_tb[i].pixmap_disabled_data) {
-        pic = _client->GetPicture(ftp_tb[i].pixmap_disabled_name,
-                                  ftp_tb[i].pixmap_disabled_data);
-        button->SetDisabledPic(pic);
-      }
-
-      button->Associate(this);
-      button->SetType(ftp_tb[i].type);
-
-      if (ftp_tb[i].id == -1) {
-        button->Disable();
-        button->ChangeOptions(CHILD_FRAME);
-      } else {
-        button->SetTip(ftp_tb[i].tip_text);
-      }
-      ftp_tb[i].button = button;
-
-    } else {
-
-      _toolBar->AddFrame(new OXVertical3dLine(_toolBar),
-                         new OLayoutHints(LHINTS_EXPAND_Y | LHINTS_LEFT,
-                                          spacing + 4, 4, 2, 2));
-
-    }
-    spacing = 4;
-  }
 }
 
 void OXFtpMain::SetViewByMode(int new_mode) {

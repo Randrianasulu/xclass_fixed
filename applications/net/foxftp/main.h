@@ -26,12 +26,13 @@ class OXStatusBar;
 class OXSiteView;
 class OXFtpManager;
 class OXFtpConfig;
+class OXToolBar;
 
 #include <xclass/OXMainFrame.h>
 #include <xclass/OXMdi.h>
 
 
-#define FOXFTP_VERSION  "0.5.5"
+#define FOXFTP_VERSION  "0.5.6"
 
 
 #define M_FILE_NEW		1
@@ -126,7 +127,6 @@ protected:
   void SetControls();
 
   OXPopupMenu *_MakePopup(struct _popup *);
-  void _InitToolBar();
 
   char *_homepath;
   bool _showLabels;
@@ -139,7 +139,7 @@ protected:
   OXMdiMainFrame *_mainFrame;
 
   OXHorizontal3dLine *_toolBarSep;
-  OXCompositeFrame *_toolBar;
+  OXToolBar *_toolBar;
   OXStatusBar *_statusBar;
 
   OXFtpManager *_manager;

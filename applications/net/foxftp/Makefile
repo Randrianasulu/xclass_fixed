@@ -25,7 +25,6 @@ SRCS = OFile.cc \
 	OXLogView.cc \
 	OXProperties.cc \
 	OXSiteView.cc \
-	OXToolBarButton.cc \
 	main.cc
 
 OBJS = $(SRCS:.cc=.o)
