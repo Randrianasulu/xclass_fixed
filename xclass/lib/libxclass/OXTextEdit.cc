@@ -40,6 +40,7 @@ Atom  OXTextEdit::_XC_SELECTION_DATA = None;
 // - enable/disable
 // - shift-click select
 // - optimize/rewrite drawing/layout/selection code
+// - add AutoUpdate() option
 // - INCR-type selection
 
 //----------------------------------------------------------------------
@@ -906,6 +907,7 @@ void OXTextEdit::InsertText(const char *string, int len) {
     line->Resize(line->GetDefaultSize());
     _textIndex.x += j;
   }
+  _changed = True;
   _UpdateCursor(_textIndex);
   _cursorLastX = _cursorPos.x;
   CalcMaxItemSize();

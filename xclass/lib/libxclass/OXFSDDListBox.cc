@@ -37,7 +37,7 @@ struct _lbc lbc[] = {
   { "Floppy",      "/floppy",               "fdisk.t.xpm",         2000, 1, 0 },
   { "CD-ROM",      "/cdrom",                "cdrom.t.xpm",         3000, 1, 0 },
   { "Home",        "$HOME",                 "home.t.xpm",          4000, 1, 0 },
-  { "Desktop",     "$HOME/.desktop",        "desktop.t.xpm",       5000, 2, 0 },
+  { "Desktop",     "$HOME/.xclass/desktop", "desktop.t.xpm",       5000, 2, 0 },
   { "Recycle Bin", "$HOME/.xclass/recycle", "recycle-empty.t.xpm", 6000, 2, 0 },
   { NULL,          NULL,                    NULL,                  7000, 0, 0 }
 };

@@ -29,8 +29,26 @@
 #include <xclass/OXWindow.h>
 #include <xclass/OXView.h>
 #include <xclass/OPicture.h>
+#include <xclass/OMessage.h>
 
 class OXFont;
+class OTimer;
+
+//----------------------------------------------------------------------
+
+class OListTreeMessage : public OWidgetMessage {
+public:
+  OListTreeMessage(int typ, int act, int wid,
+                   int b = 0, int xr = 0, int yr = 0) :
+    OWidgetMessage(typ, act, wid) {
+      button   = b;
+      xroot    = xr;
+      yroot    = yr;
+  }
+
+  int button, xroot, yroot;
+};
+
 
 //----------------------------------------------------------------------
 
@@ -61,6 +79,7 @@ public:
   virtual int HandleButton(XButtonEvent *event);
   virtual int HandleDoubleClick(XButtonEvent *event);
   virtual int HandleKey(XKeyEvent *event);
+  virtual int HandleTimer(OTimer *t);
 
   OListTreeItem *AddItem(OListTreeItem *parent, char *string,
                          const OPicture *open = NULL,
@@ -106,6 +125,7 @@ protected:
   void _UnselectAll(int draw);
 
   void ShowFocusHilite(int onoff);
+  void _EnsureVisible(OListTreeItem *item);
 
   void _RemoveReference(OListTreeItem *item);
   void _DeleteChildren(OListTreeItem *item);
@@ -122,6 +142,7 @@ protected:
   const OXFont *_font;
   int _th, _ascent, _focused;
   int _exposeTop, _exposeBottom;
+  OTimer *_timer;
 
   void __NeedFullRedraw(int);
 };

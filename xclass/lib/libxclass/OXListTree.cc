@@ -24,16 +24,26 @@
 
 #include <stdio.h>
 
+#include <X11/keysym.h>
+
 #include <xclass/OXClient.h>
 #include <xclass/OXFont.h>
 #include <xclass/OXListTree.h>
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
 #include <xclass/OResourcePool.h>
+#include <xclass/OTimer.h>
 #include <xclass/OGC.h>
 
 
-#include <xclass/OXCanvas.h>  // tmp for OContainerMessage
+#define KBD_DELAY   500
+
+
+// TODO:
+// - add support for drag and drop
+// - optimize redrawings, get rid of __NeedFullRedraw()
+// - send more descriptive messages to the application
+// - implement a new OXFileSystemTree class
 
 
 //--------------------------------------------------------------------
@@ -82,8 +92,8 @@ OXListTree::OXListTree(const OXWindow *p, int w, int h, int id,
     unsigned int gcmask;
     OFontMetrics fm;
 
-    //_widgetID = ID;
     _widgetType = "OXListTree";
+    _msgType = MSG_LISTTREE;
     _msgObject = p;
 
     XSetWindowAttributes wattr;
@@ -136,6 +146,7 @@ OXListTree::OXListTree(const OXWindow *p, int w, int h, int id,
     _indent = 3;    // 0;
     _margin = 2;
 
+    _timer = NULL;
     _focused = False;
     AddInput(FocusChangeMask);
 
@@ -163,6 +174,8 @@ OXListTree::~OXListTree() {
     delete item;
     item = sibling;
   }
+
+  if (_timer) delete _timer;
 }
 
 
@@ -220,9 +233,8 @@ int OXListTree::HandleButton(XButtonEvent *event) {
       //item->active = True; // this is done below w/redraw
       _HighlightItem(item, True, True);
       __NeedFullRedraw(False);
-      OContainerMessage msg(MSG_LISTTREE, MSG_CLICK, -1,
-                            event->button, 0, 0,
-                            event->x_root, event->y_root);
+      OListTreeMessage msg(_msgType, MSG_CLICK, _widgetID,
+                           event->button, event->x_root, event->y_root);
       SendMessage(_msgObject, &msg);
     }
   }
@@ -247,8 +259,8 @@ int OXListTree::HandleDoubleClick(XButtonEvent *event) {
     //item->active = True; // this is done below w/redraw
     _HighlightItem(item, True, True);
     __NeedFullRedraw(99);
-    OContainerMessage msg(MSG_LISTTREE, MSG_DBLCLICK, -1, event->button,
-                          0, 0, event->x_root, event->y_root);
+    OListTreeMessage msg(_msgType, MSG_DBLCLICK, _widgetID,
+                         event->button, event->x_root, event->y_root);
     SendMessage(_msgObject, &msg);
   }
 
@@ -261,6 +273,149 @@ void OXListTree::DrawRegion(OPosition coord, ODimension size, int clear) {
 }
 
 int OXListTree::HandleKey(XKeyEvent *event) {
+  OListTreeItem *next = _selected;
+
+  if (!_selected) {
+    _selected = _first;
+    _HighlightItem(_selected, True, True);
+    __NeedFullRedraw(99);
+    return True;
+  }
+
+  if (event->type == KeyPress) {
+    KeySym keysym = XKeycodeToKeysym(GetDisplay(), event->keycode, 0);
+
+    OListTreeMessage msg(_msgType, 0, _widgetID, 0, 0, 0);
+
+    switch (keysym) {
+      case XK_Left:
+        // if the current node is open, close it
+        // otherwise go to parent node
+        if (_selected->open) {
+          _selected->open = False;
+        } else if (_selected != _first) {
+          next = _selected->parent;
+        }
+        break;
+
+      case XK_Right:
+        // if the current node is closed, open it
+        // otherwise go to the first child
+        if (!_selected->open) {
+          if (_selected->firstchild) _selected->open = True;
+        } else if (_selected->firstchild) {
+          next = _selected->firstchild;
+        }  
+        break;
+
+      case XK_Up:
+        // traverse tree up
+        if (_selected->prevsibling) {
+          next = _selected->prevsibling;
+          while (next->open && next->firstchild) {
+            next = next->firstchild;
+            while (next->nextsibling) next = next->nextsibling;
+          }
+        } else if (_selected != _first) {
+          next = _selected->parent;
+        }
+        if (_timer) delete _timer;
+        _timer = new OTimer(this, KBD_DELAY);
+        break;
+
+      case XK_Down:
+        // traverse tree down
+        if (_selected->open && _selected->firstchild) {
+          next = _selected->firstchild;
+        } else if (_selected->nextsibling) {
+          next = _selected->nextsibling;
+        } else {
+          next = _selected;
+          while (next != _first) {
+            next = next->parent;
+            if (next->nextsibling) {
+              next = next->nextsibling;
+              break;
+            }
+          }
+          if (next == _first) next = _selected;
+        }
+        if (_timer) delete _timer;
+        _timer = new OTimer(this, KBD_DELAY);
+        break;
+
+      case XK_Page_Up:
+        break;
+
+      case XK_Page_Down:
+        break;
+
+      case XK_Home:
+        // go to the very first node
+        next = _first;
+        break;
+
+      case XK_End:
+        // go to the end of the tree
+        next = _first;
+        while (next->open && next->firstchild) {
+          while (next->nextsibling) next = next->nextsibling;
+        }
+        break;
+
+      case XK_Return:
+      case XK_KP_Enter:
+        break;
+
+      case XK_space:
+        break;
+
+      case XK_plus:
+      case XK_KP_Add:
+        // expand one level
+        _selected->open = True;
+        msg.action = MSG_DBLCLICK;
+        SendMessage(_msgObject, &msg);
+        break;
+
+      case XK_minus:
+      case XK_KP_Subtract:
+        // collapse one level
+        _selected->open = False;
+        msg.action = MSG_DBLCLICK;
+        SendMessage(_msgObject, &msg);
+        break;
+
+      case XK_asterisk:
+      case XK_KP_Multiply:
+        // fully expand this node
+        break;
+
+      default:
+        break;
+    }
+
+    if (next != _selected) {
+      _selected->active = False;
+      _selected = next;
+      _EnsureVisible(_selected);
+    }
+    _HighlightItem(_selected, True, True);
+    __NeedFullRedraw(99);
+  }
+
+  return True;
+}
+
+int OXListTree::HandleTimer(OTimer *t) {
+  if (t != _timer) return False;
+
+  OListTreeMessage msg(_msgType, MSG_CLICK, _widgetID, 0, 0, 0);
+  SendMessage(_msgObject, &msg);
+
+  delete _timer;
+  _timer = NULL;
+
   return True;
 }
 
@@ -277,7 +432,7 @@ void OXListTree::_LostFocus() {
   _focused = False;
   ShowFocusHilite(False);
 
-  OContainerMessage message(_msgType, MSG_FOCUSLOST, _widgetID);
+  OListTreeMessage message(_msgType, MSG_FOCUSLOST, _widgetID);
   SendMessage(_msgObject, &message);
 }
 
@@ -285,6 +440,28 @@ void OXListTree::ShowFocusHilite(int onoff) {
   if (_selected) {
     NeedRedraw(ORectangle(0, _selected->y,
                _canvas->GetWidth(), _selected->height));
+  }
+}
+
+void OXListTree::_EnsureVisible(OListTreeItem *item) {
+  if (item) {
+    OPosition p = OPosition(item->xpic, item->y);
+
+    if (p.y < _visibleStart.y + _margin) {
+      ScrollToPosition(OPosition(_visibleStart.x, p.y - _margin));
+    } else if (p.y > _visibleStart.y + _canvas->GetHeight()
+                     - item->height - _margin) {
+      ScrollToPosition(OPosition(_visibleStart.x, p.y - _canvas->GetHeight()
+                     + item->height + _margin));
+    }
+
+    if (p.x < _visibleStart.x + _margin) {
+      ScrollToPosition(OPosition(p.x - _margin, _visibleStart.y));
+    } else if (p.x > _visibleStart.x + _canvas->GetWidth()
+                     - (item->picWidth * 2) - _margin) {
+      ScrollToPosition(OPosition(p.x - _canvas->GetWidth() +
+                       (item->picWidth * 2) + _margin, _visibleStart.y));
+    }
   }
 }
 

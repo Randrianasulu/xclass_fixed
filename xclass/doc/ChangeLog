@@ -1879,3 +1879,10 @@ OPicture.cc
 
 - OXClient::handleMaskEvent(): allow dispatching of pointer enter/leave
   events during WaitFor().
+
+
+11/10/01
+
+- OXTextEdit::InsertText(): flag text as changed.
+
+- Added preliminary keyboard support to OXListTree.
