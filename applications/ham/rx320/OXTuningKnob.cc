@@ -65,15 +65,15 @@ int OXTuningKnob::HandleMotion(XMotionEvent *event) {
     if (dx > 0) a = 90; else a = 270;
   } else {
     a = (int) (atan((double) dx / (double) -dy) * 180.0 / M_PI + 0.5);
-    // make theshold symmetrical around the 18 degree step
-    // and round the angle to the closest step value
+    // make the threshold symmetrical around the 18 degree step
+    // and round the angle value to the closest step value
     if (a >= 0) a += 9; else a -= 9;
     a /= 18;
     a *= 18;
     if (dy > 0) a += 180;
   }
 
-  // normalize to 0...360-1
+  // normalize the result to 0...360-1
   if (a > 360) a -= 360; else if (a < 0) a += 360;
 
   if (a != _a) {
