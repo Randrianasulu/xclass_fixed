@@ -52,28 +52,28 @@ OXTransientFrame::~OXTransientFrame() {
 
 void OXTransientFrame::CenterOnParent(int croot) {
   int ax, ay;
-  unsigned int root_w, root_h, dummy;
   Window wdummy;
 
+  int dw = _client->GetDisplayWidth();
+  int dh = _client->GetDisplayHeight();
+
   if (_main) {
+
     XTranslateCoordinates(GetDisplay(),
                           _main->GetId(), GetParent()->GetId(),
                           (_main->GetWidth() - _w) >> 1,
                           (_main->GetHeight() - _h) >> 1,
                           &ax, &ay, &wdummy);
-    int dw = _client->GetDisplayWidth();
-    int dh = _client->GetDisplayHeight();
-
     if (ax < 10) ax = 10; else if (ax + _w + 10 > dw) ax = dw - _w - 10;
     if (ay < 20) ay = 20; else if (ay + _h + 50 > dh) ay = dh - _h - 50;
 
   } else if (croot) {
-    XGetGeometry(GetDisplay(), _client->GetRoot()->GetId(), &wdummy,
-                 &ax, &ay, &root_w, &root_h, &dummy, &dummy);
-    ax = (root_w - _w) >> 1;
-    ay = (root_h - _h) >> 1;
+
+    ax = (dw - _w) >> 1;
+    ay = (dh - _h) >> 1;
 
   } else {
+
     return;
 
   }

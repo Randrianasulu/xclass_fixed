@@ -106,7 +106,7 @@ public:
   OListTreeItem *FindSiblingByName(OListTreeItem *item, char *name);
   OListTreeItem *FindChildByName(OListTreeItem *item, char *name);
 
-  virtual void DrawRegion(OPosition coord, ODimension size, int clear = True);
+  virtual int DrawRegion(OPosition coord, ODimension size, int clear = True);
 
 protected:
   virtual void _GotFocus();

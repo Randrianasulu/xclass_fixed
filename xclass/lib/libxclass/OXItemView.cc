@@ -621,22 +621,37 @@ int OXItemView::HandleTimer(OTimer *t) {
   return True;
 }
 
-void OXItemView::DrawRegion(OPosition coord, ODimension size, int clear) {
+int OXItemView::DrawRegion(OPosition coord, ODimension size, int clear) {
 
   OPosition pcoord = ToPhysical(coord);
 
   // check whether the rectangle is within the visible area
 
   if ((pcoord.y + (int) size.h < 0) || (pcoord.y > _canvas->GetHeight()))
-    return;
+    return False;
 
   if ((pcoord.x + (int) size.w < 0) || (pcoord.x > _canvas->GetWidth()))
-    return;
+    return False;
 
   // clip the size argument to the canvas size
 
+  if (pcoord.x < 0) {
+    if (-pcoord.x > (int) size.w) return False;
+    coord.x += -pcoord.x;
+    size.w -= -pcoord.x;
+    pcoord.x = 0;
+  }
+
+  if (pcoord.y < 0) {
+    if (-pcoord.y > (int) size.h) return False;
+    coord.y += -pcoord.y;
+    size.h -= -pcoord.y;
+    pcoord.y = 0;
+  }
+
   if (pcoord.x + (int) size.w > _canvas->GetWidth())
     size.w = _canvas->GetWidth() - pcoord.x;
+
   if (pcoord.y + (int) size.h > _canvas->GetHeight())
     size.h = _canvas->GetHeight() - pcoord.y;
 
@@ -646,11 +661,11 @@ void OXItemView::DrawRegion(OPosition coord, ODimension size, int clear) {
 
   // well, no items, no jobs
 
-  if (_items.size() == 0) return;
+  if (_items.size() == 0) return False;
 
   // check whether the area is inside the virtual window
 
-  if ((coord.y > _virtualSize.h) || (coord.x > _virtualSize.w)) return;
+  if ((coord.y > _virtualSize.h) || (coord.x > _virtualSize.w)) return False;
 
   // ok, at this point it is almost for sure that there has to be
   // redisplayed something
@@ -663,4 +678,6 @@ void OXItemView::DrawRegion(OPosition coord, ODimension size, int clear) {
       DrawItem(_items[i], coord, size);
     }
   }
+
+  return True;
 }

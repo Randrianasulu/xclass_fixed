@@ -99,12 +99,8 @@ void OXMenuBar::AddPopup(OHotString *s, OXPopupMenu *menu, OLayoutHints *l) {
 int OXMenuBar::HandleButton(XButtonEvent *event) {
   SListFrameElt *ptr;
 
-//// OnyX
-////      if (_current && _current->HandleButton(event)) return True;
-//// OnyX
-
   // Here we are looking for a _child_ of a menu bar, so it can _ONLY_ be
-  // a OXMenuTitle : BEWARE !
+  // a OXMenuTitle: BEWARE!
 
   OXMenuTitle *target;
   
@@ -113,31 +109,29 @@ int OXMenuBar::HandleButton(XButtonEvent *event) {
 
   if (event->type == ButtonPress) {
 
-//// OnyX
     if (_current && _current->HandleButton(event)) return True;
-//// OnyX
 
-    target = (OXMenuTitle*)_client->GetWindowById(event->subwindow);
+    target = (OXMenuTitle *) _client->GetWindowById(event->subwindow);
 
     _x0 = event->x;
     _y0 = event->y;
 
-    if (target != NULL) {
+    if (target) {
       _stick = True;
 
       if (target != _current) {
         // Deactivate all others :
         for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-          ((OXMenuTitle*)ptr->frame)->SetState(False);
+          ((OXMenuTitle *)ptr->frame)->SetState(False);
 
         target->SetState(True);
         _current = target;
 
-        XGrabPointer(GetDisplay(), _id, False, //// <-OnyX Normal-> True,
+        XGrabPointer(GetDisplay(), _id, False,
                      ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                      GrabModeAsync, GrabModeAsync,
                      None, GetResourcePool()->GetGrabCursor(), CurrentTime);
-        XGrabKeyboard(GetDisplay(), _id, False/*True*/,
+        XGrabKeyboard(GetDisplay(), _id, False,
                       GrabModeAsync, GrabModeAsync,
                       CurrentTime);
       }
@@ -145,10 +139,6 @@ int OXMenuBar::HandleButton(XButtonEvent *event) {
   }
   
   if (event->type == ButtonRelease) {
-
-//// OnyX
-////    if (_current && _current->HandleButton(event)) /*return True*/;
-//// OnyX
 
     if (_stick) {
       _stick = False;
@@ -159,10 +149,10 @@ int OXMenuBar::HandleButton(XButtonEvent *event) {
     XFlush(GetDisplay());
 
     for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-      ((OXMenuTitle*)ptr->frame)->SetState(False);
+      ((OXMenuTitle *)ptr->frame)->SetState(False);
 
-    if (_current != NULL) {
-      target = _current; // tricky, because WaitFor
+    if (_current) {
+      target = _current; // tricky, because WaitFor()
       _current = NULL;
       target->DoSendMessage();
     }
@@ -184,18 +174,16 @@ int OXMenuBar::HandleMotion(XMotionEvent *event) {
 
   _stick = False;
 
-//// OnyX
-      if (_current && _current->HandleMotion(event)) return True;
-//// OnyX
+  if (_current && _current->HandleMotion(event)) return True;
 
   XTranslateCoordinates(GetDisplay(), _id, _id, event->x, event->y,
                         &dummy, &dummy, &wtarget);
-  target = (OXMenuTitle*)_client->GetWindowById(wtarget);
+  target = (OXMenuTitle *)_client->GetWindowById(wtarget);
 
-  if (target != NULL && target != _current) {
+  if (target && target != _current) {
     // Deactivate all others :
     for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-      ((OXMenuTitle*)ptr->frame)->SetState(False);
+      ((OXMenuTitle *)ptr->frame)->SetState(False);
 
     target->SetState(True);
     _stick = True;
@@ -267,7 +255,7 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
       if (target != _current) {
         // Deactivate all others :
         for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-          ((OXMenuTitle*)ptr->frame)->SetState(False);
+          ((OXMenuTitle *)ptr->frame)->SetState(False);
 
         target->SetState(True);
         _stick = True;
@@ -277,12 +265,12 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
                      ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
                      GrabModeAsync, GrabModeAsync,
                      None, GetResourcePool()->GetGrabCursor(), CurrentTime);
-/* Because of the way the key binding mechanism currently works, we have
-   to grab the keyboard _after_ releasing the first key!
-        XGrabKeyboard(GetDisplay(), _id, True,
-                      GrabModeAsync, GrabModeAsync,
-                      CurrentTime);
-*/
+
+        // Because of the way the OXMainFrame key binding mechanism
+        // currently works, we can't grab the keyboard right here.
+        // We'll do it instead after the first key has been released
+        // (see below).
+
       }
     }
   }
@@ -290,9 +278,10 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
   if (event->type == KeyRelease) {
     if (_stick) {
       _stick = False;
-      // grab the keyboard HERE!
 
-      XGrabKeyboard(GetDisplay(), _id, False/*True*/,
+      // Grab the keyboard HERE!
+
+      XGrabKeyboard(GetDisplay(), _id, False,
                     GrabModeAsync, GrabModeAsync,
                     CurrentTime);
       return True;
@@ -305,10 +294,10 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
     XFlush(GetDisplay());
 
     for (ptr = _flist; ptr != NULL; ptr = ptr->next)
-      ((OXMenuTitle*)ptr->frame)->SetState(False);
+      ((OXMenuTitle *)ptr->frame)->SetState(False);
 
     if (_current) {
-      target = _current; // tricky, because WaitFor
+      target = _current; // tricky, because WaitFor()
       _current = NULL;
       target->DoSendMessage();
     }
@@ -317,9 +306,10 @@ int OXMenuBar::HandleKey(XKeyEvent *event) {
   return True;
 }
 
+
 //-----------------------------------------------------------------
 
-OXPopupMenu::OXPopupMenu(const OXWindow *p, int w, int h,
+OXPopupMenu::OXPopupMenu(const OXWindow *p, int w, int h, 
 			 unsigned int options)
   : OXFrame(p, w, h, options | OWN_BKGND ) {
     XSetWindowAttributes wattr;
@@ -527,7 +517,7 @@ void OXPopupMenu::AdjustEntries() {
   sepw = 10;
   lsize = rsize = 0;
 
-  for (ptr=_first; ptr!=NULL; ptr=ptr->next) {
+  for (ptr = _first; ptr != NULL; ptr = ptr->next) {
     ptr->_ex = 2;
     ptr->_ey = h-2;
     switch (ptr->_type) {
@@ -595,16 +585,17 @@ void OXPopupMenu::PlaceMenu(int x, int y, int stick_mode, int grab_pointer) {
   Window wdummy;
   
   _stick = stick_mode;
-  Activate(NULL); // _current = NULL;
+  Activate(NULL);
+  _current = NULL;
 
   // Parent is root window for a popup menu:
   XGetGeometry(GetDisplay(), _parent->GetId(), &wdummy,
                &rx, &ry, &rw, &rh, &dummy, &dummy);
 
+  if (x + _w > rw) x -= _w;  //x = rw - _w;
   if (x < 0) x = 0;
-  if (x + _w > rw) x = rw - _w;
+  if (y + _h > rh) y -= _h;  //y = rh - _h;
   if (y < 0) y = 0;
-  if (y + _h > rh) y = rh - _h;
 
   Move(x, y);
   MapRaised();
@@ -673,23 +664,6 @@ int OXPopupMenu::HandleButton(XButtonEvent *event) {
       return True;
     }
 
-//// OnyX
-/*
-  if (_current && _current->_type == MENU_POPUP && _popdown) {
-    OXPopupMenu *p = _current->_popup;
-    if (p) {
-      int retc = p->HandleButton(event);
-      if (retc) return retc;
-    }
-  }
-  if (!(event->x_root >= _x &&
-        event->x_root <  _x+_w &&
-        event->y_root >= _y &&
-        event->y_root <  _y+_h)) return False;
-*/
-//// OnyX
-
-//    if (_current && _current->_type == MENU_POPUP) return True;
     ID = EndMenu();
     if (_hasgrab) {
       XUngrabPointer(GetDisplay(), CurrentTime);
@@ -707,29 +681,6 @@ int OXPopupMenu::HandleButton(XButtonEvent *event) {
   return True;
 }
 
-int OXPopupMenu::HandleCrossing(XCrossingEvent *event) {
-
-  if (event->type == EnterNotify) {
-    OMenuEntry *ptr;
-    int h;
-
-    for (ptr = _first; ptr != NULL; ptr=ptr->next) {
-      if (ptr->_type == MENU_SEPARATOR) {
-        h = 4;
-      } else {
-        h = _hifont->TextHeight() + 3 +2;
-      }
-      if ((event->x >= ptr->_ex) && (event->x <= ptr->_ex+_w-10) &&
-          (event->y >= ptr->_ey) && (event->y <= ptr->_ey+h)) break;
-    }
-    Activate(ptr);
-  } else {
-    Activate(NULL);
-  }
-
-  return True;
-}
-
 int OXPopupMenu::HandleMotion(XMotionEvent *event) {
   OMenuEntry *ptr;
   int h;
@@ -737,7 +688,6 @@ int OXPopupMenu::HandleMotion(XMotionEvent *event) {
   OXFrame::HandleMotion(event);
   _stick = False;
 
-//// OnyX
   if (_current && _current->_type == MENU_POPUP && _popdown) {
     OXPopupMenu *p = _current->_popup;
     if (p) {
@@ -746,20 +696,16 @@ int OXPopupMenu::HandleMotion(XMotionEvent *event) {
       ev.y = ev.y_root - p->GetY();
       int retc = p->HandleMotion(&ev);
       if (retc) return retc;
+      if (!Contains(event->x, event->y)) return False;
     }
   }
 
-#if 0
-  if (!(event->x_root >= _x &&
-        event->x_root <  _x+_w &&
-        event->y_root >= _y &&
-        event->y_root <  _y+_h)) return False;
-#else
-  if (!Contains(event->x, event->y)) { Activate(NULL); return False; }
-#endif
-//// OnyX
+  if (!Contains(event->x, event->y)) {
+    Activate(NULL);
+    return False;
+  }
 
-  for (ptr = _first; ptr != NULL; ptr=ptr->next) {
+  for (ptr = _first; ptr != NULL; ptr = ptr->next) {
     if (ptr->_type == MENU_SEPARATOR) {
       h = 4;
     } else {
@@ -916,13 +862,14 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
 
 //  if (entry == _current) return;
 
-  _popdown = False;
+//  _popdown = False;
 
   //-- Deactivate the current entry
 
   if (_current && (_current != entry)) {
     if (entry == NULL && _current->_type == MENU_POPUP) return;
     if (_current->_type == MENU_POPUP) _current->_popup->EndMenu();
+    _popdown = False;
     _current->_status &= ~MENU_ACTIVE_MASK;
     DrawEntry(_current);
   }
@@ -943,8 +890,12 @@ void OXPopupMenu::Activate(OMenuEntry *entry, int delayed) {
 
         XTranslateCoordinates(GetDisplay(), _id,
                               (_current->_popup->GetParent())->GetId(),
-                              _current->_ex+_w, _current->_ey,
+                              _current->_ex + _w, _current->_ey,
                               &ax, &ay, &wdummy);
+
+        int pw = _current->_popup->GetDefaultWidth();
+
+        if (ax + pw > _client->GetDisplayWidth()) ax -= _w + pw - 7;
 
         _current->_popup->PlaceMenu(ax-5, ay-1, False, False);
         _popdown = True;
@@ -971,6 +922,10 @@ int OXPopupMenu::HandleTimer(OTimer *t) {
                             (_current->_popup->GetParent())->GetId(),
                             _current->_ex+_w, _current->_ey,
                             &ax, &ay, &wdummy);
+
+      int pw = _current->_popup->GetDefaultWidth();
+
+      if (ax + pw > _client->GetDisplayWidth()) ax -= _w + pw - 7;
 
       _current->_popup->PlaceMenu(ax-5, ay-1, False, False);
       _popdown = True;
@@ -1030,13 +985,9 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
           DrawCheckMark(sGC, 6, entry->_ey+3, 14, entry->_ey+11);
         if (entry->_status & MENU_RCHECKED_MASK)
           DrawRCheckMark(sGC, 6, entry->_ey+3, 14, entry->_ey+11);
-        if (entry->_pic != NULL)
+        if (entry->_pic)
           entry->_pic->Draw(GetDisplay(), _id, sGC, 8, entry->_ey+1);
-#if 0
-        entry->_label->Draw(GetDisplay(), _id,
-                       (entry->_status & MENU_ENABLE_MASK) ? sGC : _shadowGC,
-                       tx, ty);
-#else
+
         if (rstr) {
           entry->_label->Draw(GetDisplay(), _id,
                        (entry->_status & MENU_ENABLE_MASK) ? sGC : _shadowGC,
@@ -1049,7 +1000,7 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
                        (entry->_status & MENU_ENABLE_MASK) ? sGC : _shadowGC,
                        tx, ty);
         }
-#endif
+
       } else {
 //        XFillRectangle(GetDisplay(), _id, _bckgndGC,
         XClearArea(GetDisplay(), _id, entry->_ex+1, entry->_ey-1, _w-6, th,false);
@@ -1060,16 +1011,9 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
           DrawCheckMark(nGC, 6, entry->_ey+3, 14, entry->_ey+11);
         if (entry->_status & MENU_RCHECKED_MASK)
           DrawRCheckMark(nGC, 6, entry->_ey+3, 14, entry->_ey+11);
-        if (entry->_pic != NULL)
+        if (entry->_pic)
           entry->_pic->Draw(GetDisplay(), _id, nGC, 8, entry->_ey+1);
-#if 0
-        if (entry->_status & MENU_ENABLE_MASK) {
-          entry->_label->Draw(GetDisplay(), _id, nGC, tx, ty);
-        } else {
-          entry->_label->Draw(GetDisplay(), _id, _hilightGC, tx+1, ty+1);
-          entry->_label->Draw(GetDisplay(), _id, _shadowGC, tx, ty);
-        }
-#else
+
         if (rstr) {
           if (entry->_status & MENU_ENABLE_MASK) {
             entry->_label->Draw(GetDisplay(), _id, nGC, tx, ty, rstr - lstr);
@@ -1090,7 +1034,7 @@ void OXPopupMenu::DrawEntry(OMenuEntry *entry) {
             entry->_label->Draw(GetDisplay(), _id, _shadowGC, tx, ty);
           }
         }
-#endif
+
       }
       break;
 
@@ -1301,7 +1245,7 @@ OXMenuTitle::~OXMenuTitle() {
 void OXMenuTitle::SetState(int state) {
   _state = state;
   if (state) {
-    if (_menu != NULL) {
+    if (_menu) {
       int ax, ay;
       Window wdummy;
 
@@ -1312,7 +1256,7 @@ void OXMenuTitle::SetState(int state) {
       _menu->PlaceMenu(ax-1, ay+_h, True, False); //True);
     }
   } else {
-    if (_menu != NULL) {
+    if (_menu) {
       _ID = _menu->EndMenu();
     }
   }
@@ -1338,7 +1282,7 @@ void OXMenuTitle::_DoRedraw() {
 }
 
 void OXMenuTitle::DoSendMessage() {
-  if (_menu != NULL)
+  if (_menu)
     if (_ID != -1) {
       OMenuMessage message(MSG_MENU, MSG_CLICK, _ID);
       SendMessage(_menu->_msgObject, &message);
@@ -1349,8 +1293,6 @@ int OXMenuTitle::HandleKey(XKeyEvent *event) {
   if (_menu && _state) return _menu->HandleKey(event);
   return False;
 }
-
-//// OnyX:
 
 int OXMenuTitle::HandleButton(XButtonEvent *event) {
   if (_menu && _state) return _menu->HandleButton(event);

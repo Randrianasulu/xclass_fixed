@@ -107,7 +107,6 @@ public:
   virtual void DrawBorder();
   virtual int  HandleButton(XButtonEvent *event);
   virtual int  HandleMotion(XMotionEvent *event);
-  virtual int  HandleCrossing(XCrossingEvent *event);
   virtual int  HandleKey(XKeyEvent *event);
   virtual int  HandleTimer(OTimer *t);
   virtual ODimension GetDefaultSize() const;

@@ -2176,3 +2176,16 @@ OPicture.cc
 - Added a "dockable" frame widget (originally from H. Radke).
 
 - OXWindow::ReparentWindow(): update the _toplevel field too.
+
+
+16/07/02 (0.7.3)
+
+- Corrected a redrawing bug in OXListView::DrawRegion(). The bug triggered
+  only when there were more than 10000 items.
+
+- OXClient: update _Root everytime a new OXRootWindow or derivated object
+  is created.
+
+- Removed OXPopupMenu::HandleCrossing() method, it was no longer neccessary.
+
+- Corrected a bug in OXPopupMenu::HandleMotion().

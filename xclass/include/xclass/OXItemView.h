@@ -100,9 +100,9 @@ public:
   virtual ~OXItemView();
 
   virtual void Clear();
-
   virtual void Layout();
-  virtual void DrawRegion(OPosition coord, ODimension size, int clear = True);
+
+  virtual int DrawRegion(OPosition coord, ODimension size, int clear = True);
 
   // override the following if you don't like the default behaviour or need
   // a special mouse behaviour

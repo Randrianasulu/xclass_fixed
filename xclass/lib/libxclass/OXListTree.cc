@@ -265,9 +265,10 @@ int OXListTree::HandleDoubleClick(XButtonEvent *event) {
   return True;
 }
 
-void OXListTree::DrawRegion(OPosition coord, ODimension size, int clear) {
+int OXListTree::DrawRegion(OPosition coord, ODimension size, int clear) {
   OXView::DrawRegion(coord, size, clear);
   _Draw(coord.y, size.h);
+  return True;
 }
 
 int OXListTree::HandleKey(XKeyEvent *event) {

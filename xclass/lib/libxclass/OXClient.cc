@@ -66,6 +66,8 @@ OXClient::OXClient(int argc, char *argv[]) {
 void OXClient::_Init(const char *DpyName) {
   XWindowAttributes root_attr;
 
+  _Root = NULL;
+
   //--- Open the connection to the display
 
   if (!(_dpy = XOpenDisplay(DpyName)))
@@ -135,6 +137,8 @@ OXClient::~OXClient() {
   delete _siglist;
 
   delete _resourcePool;
+
+  delete _Root;
 
   XSync(GetDisplay(), False);
 
@@ -343,6 +347,11 @@ void OXClient::FreeFont(OXFont *font) {
 // Register / unregister windows...
 
 int OXClient::RegisterWindow(OXWindow *w, char *name) {
+  if (_Root && (w->_id == _Root->_id)) {
+    // someone has created a new OXRootWindow object...
+    delete _Root;
+    _Root = w;
+  }
   return (_wlist->Add(w->_id, (XPointer) w) != NULL);
 }
 

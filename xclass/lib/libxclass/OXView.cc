@@ -174,7 +174,7 @@ void OXView::NeedRedraw(ORectangle area) {
   OXWindow::NeedRedraw(False);
 }
 
-void OXView::DrawRegion(OPosition coord, ODimension size, int clear) {
+int OXView::DrawRegion(OPosition coord, ODimension size, int clear) {
 
   OPosition endpt = ToPhysical(OPosition(_virtualSize.w, _virtualSize.h));
 
@@ -196,6 +196,8 @@ void OXView::DrawRegion(OPosition coord, ODimension size, int clear) {
                            ToPhysical(coord).x, ToPhysical(coord).y,
                            size.w, size.h);
   }
+
+  return True;
 }
 
 int OXView::ProcessMessage(OMessage *msg) {

@@ -84,7 +84,7 @@ public:
 
   void NeedRedraw(ORectangle area);
 
-  virtual void DrawRegion(OPosition coord, ODimension size, int clear = True);
+  virtual int DrawRegion(OPosition coord, ODimension size, int clear = True);
 
   void SetScrollValues(OPosition value) { _scrollValue = value; }
   void SetScrollOptions(int sboptions) { _sboptions = sboptions; Layout(); }

@@ -138,7 +138,7 @@ public:
   void SetColumnWidth(int column, int width);
   int  GetColumnWidth(int column);
   
-  virtual void DrawRegion(OPosition coord, ODimension size, int clear = True);
+  virtual int DrawRegion(OPosition coord, ODimension size, int clear = True);
   
 protected:
   virtual bool ItemLayout();

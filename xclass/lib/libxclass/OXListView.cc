@@ -1036,10 +1036,36 @@ bool OXListView::ItemLayout() {
   return needRedraw;
 }
 
-void OXListView::DrawRegion(OPosition coord, ODimension size, int clear) {
-  OXItemView::DrawRegion(coord, size, clear);
+int OXListView::DrawRegion(OPosition coord, ODimension size, int clear) {
 
-  if ((coord.y > _virtualSize.h) || (coord.x > _virtualSize.w)) return;
+  if (!OXItemView::DrawRegion(coord, size, clear)) return False;
+
+#if 1
+  OPosition pcoord = ToPhysical(coord);
+
+  if (pcoord.x < 0) {
+    if (-pcoord.x > (int) size.w) return False;
+    coord.x += -pcoord.x;
+    size.w -= -pcoord.x;
+    pcoord.x = 0;
+  }
+
+  if (pcoord.y < 0) {
+    if (-pcoord.y > (int) size.h) return False;
+    coord.y += -pcoord.y;
+    size.h -= -pcoord.y;
+    pcoord.y = 0;
+  }
+
+  if (pcoord.x + (int) size.w > _canvas->GetWidth())
+    size.w = _canvas->GetWidth() - pcoord.x;
+
+  if (pcoord.y + (int) size.h > _canvas->GetHeight())
+    size.h = _canvas->GetHeight() - pcoord.y;
+
+  // check whether the area is inside the virtual window
+
+  if ((coord.y > _virtualSize.h) || (coord.x > _virtualSize.w)) return False;
 
   if (_viewMode == LV_DETAILS) {
     for (unsigned int i = 0; i < _items.size(); ++i) {
@@ -1048,6 +1074,9 @@ void OXListView::DrawRegion(OPosition coord, ODimension size, int clear) {
         DrawItem(_items[i], coord, size);
     }
   }
+#endif
+
+  return True;
 }
 
 struct SLVSortAscending : public binary_function<OItem*, OItem*, bool> {
