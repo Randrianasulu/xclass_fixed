@@ -93,6 +93,10 @@
 #define M_HELP_SEARCH		402
 #define M_HELP_ABOUT		403
 
+#define M_DND_MOVE              501
+#define M_DND_COPY              502
+#define M_DND_SYMLINK           503
+
 
 //----- Struct and #defines for default icons
 
@@ -147,6 +151,7 @@ public:
   void DoChangeDirectory(const char *path);
   void CopyFile(const char *from, const char *to);
   void MoveFile(const char *from, const char *to);
+  void SymlinkFile(const char *from, const char *to);
   void DeleteFiles();
   void DoToggleToolBar();
   void DoToggleStatusBar();
@@ -178,7 +183,7 @@ protected:
   OXPopupMenu *_menuFile, *_menuEdit, *_menuView, *_menuTools,
               *_menuHelp;
   OXPopupMenu *_newMenu, *_sortMenu, *_findMenu;
-  OXPopupMenu *_contextMenu, *_sendToMenu;
+  OXPopupMenu *_contextMenu, *_sendToMenu, *_dndMenu;
 
   char *_rcfilename;
   char _currentDir[PATH_MAX];

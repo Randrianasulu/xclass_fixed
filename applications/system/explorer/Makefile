@@ -11,6 +11,7 @@ LDFLAGS=
 	$(CXX) $(CXXFLAGS) -c $<
 
 SRCS = main.cc \
+	URL.cc \
 	OXExplorer.cc \
 	OXCopyBox.cc \
 	OXOptions.cc \

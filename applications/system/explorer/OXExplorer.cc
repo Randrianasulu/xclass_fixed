@@ -52,6 +52,7 @@
 #include <xclass/OXAboutDialog.h>
 #include <xclass/ODNDmanager.h>
 
+#include "URL.h"
 #include "OXOptions.h"
 #include "OXOpenWith.h"
 #include "ORecycledFiles.h"
@@ -318,6 +319,15 @@ OXExplorer::OXExplorer(const OXWindow *p, const char *startDir, int mainMode) :
   _menuBar->AddPopup(new OHotString("&Help"), _menuHelp, _menuBarItemLayout);
 
   AddFrame(_menuBar, _menuBarLayout);
+
+  _dndMenu = new OXPopupMenu(_client->GetRoot());
+  _dndMenu->AddEntry(new OHotString("&Move here"), M_DND_MOVE);
+  _dndMenu->AddEntry(new OHotString("&Copy here"), M_DND_COPY);
+  _dndMenu->AddEntry(new OHotString("Create &soft link here"), M_DND_SYMLINK);
+  _dndMenu->AddSeparator();
+  _dndMenu->AddEntry(new OHotString("Cancel"), -1);
+  _dndMenu->SetDefaultEntry(M_DND_MOVE);
+  _dndMenu->Associate(NULL);
 
   //-------------- tool bar and separator
 
@@ -1029,28 +1039,86 @@ UpdateTree();
           ODNDmessage *dndmsg = (ODNDmessage *) msg;
           char *data = (char *) dndmsg->data->data;
 
+          // TODO:
+          // - put all this in a separate routine
+          // - check for special cases: drop on same icon, drop on
+          //   same dir, dest is recycle bin, etc.
+
           if (data) {
             char from[PATH_MAX], to[PATH_MAX], cwd[PATH_MAX], *p;
 
-            p = strchr(data, '\n');
-            if (p) *p = '\0';
-            p = strchr(data, '\r');
-            if (p) *p = '\0';
-            p = strstr(data, "file:");
-            if (!p) p = data; else p += 5;
-
             getcwd(cwd, PATH_MAX);
 
-            strcpy(from, p);
-            strcpy(to, cwd);
-            strcat(to, "/");
-            strcat(to, basename(p));
+            URL url(data);
+
+            strcpy(from, url.full_path);
+
+            if (dndmsg->dragOver) {
+              int type = dndmsg->dragOver->GetFileType();
+              if (S_ISDIR(type)) {
+                // drop on a directory
+                strcpy(to, cwd);
+                strcat(to, "/");
+                strcat(to, dndmsg->dragOver->GetName()->GetString());
+                strcat(to, "/");
+                strcat(to, url.filename);
+              } else {
+                if ((type & S_IXUSR) || (type & S_IXGRP) || (type & S_IXOTH)) {
+                  // drop on an executable
+                  int pid = fork();
+                  if (pid == 0) {
+                    strcpy(to, cwd);
+                    strcat(to, "/");
+                    strcat(to, dndmsg->dragOver->GetName()->GetString());
+                    execlp(to, to, url.full_path, NULL);
+                    // if we are here then execlp failed!
+                    fprintf(stderr, "Cannot spawn \"%s\": execlp failed!\n", to);
+                    exit(1);
+                  }
+                  return True;
+                } else {
+                  // drop on a regular document
+                  return True;
+                }
+              }
+            } else {
+              // drop on empty space
+              strcpy(to, cwd);
+              strcat(to, "/");
+              strcat(to, url.filename);  // basename(url.full_path);
+            }
 
             if (strcmp(from, to) != 0) {
-              if (dndmsg->dndAction == ODNDmanager::DNDactionCopy) {
+              int action = dndmsg->dndAction;
+
+              if (action == ODNDmanager::DNDactionAsk) {
+                int choice = _dndMenu->PopupMenu(dndmsg->pos.x, dndmsg->pos.y);
+                switch (choice) {
+                  case M_DND_MOVE:
+                    action = ODNDmanager::DNDactionMove;
+                    break;
+
+                  case M_DND_COPY:
+                    action = ODNDmanager::DNDactionCopy;
+                    break;
+
+                  case M_DND_SYMLINK:
+                    action = ODNDmanager::DNDactionLink;
+                    break;
+
+                  default:
+                    return True;
+                }
+              }
+
+              //printf("action %d from \"%s\" to \"%s\"\n", action, from, to);
+
+              if (action == ODNDmanager::DNDactionCopy) {
                 CopyFile(from, to);
-              } else if (dndmsg->dndAction == ODNDmanager::DNDactionMove) {
+              } else if (action == ODNDmanager::DNDactionMove) {
                 MoveFile(from, to);
+              } else if (action == ODNDmanager::DNDactionLink) {
+                SymlinkFile(from, to);
               } else {
                 // unknown action...
               }
@@ -1393,6 +1461,31 @@ void OXExplorer::MoveFile(const char *from, const char *to) {
 }
 
 
+//--- Create a softlink to a file
+
+void OXExplorer::SymlinkFile(const char *from, const char *to) {
+#if 0
+  // check first for the existence of the destination
+  int retc = ID_YES;
+  if (access(to, F_OK) == 0) {
+    new OXMsgBox(_client->GetRoot(), this,
+                 new OString("Move"),
+                 new OString("A file with the same name already "
+                             "exists. Overwrite?"),
+                 MB_ICONQUESTION, ID_YES | ID_NO, &retc);
+    if (retc != ID_YES) return;
+  }
+#endif
+  if (symlink(from, to) == 0) return;
+
+  char tmp[PATH_MAX*3];
+  sprintf(tmp, "Cannot move file \"%s\"\n"
+               "to \"%s\":\n%s.", from, to, strerror(errno));
+  new OXMsgBox(_client->GetRoot(), this, new OString("Error"),
+               new OString(tmp), MB_ICONSTOP, ID_OK);
+}
+
+
 //--- Delete selected files
 
 void OXExplorer::DeleteFiles() {
@@ -1516,7 +1609,7 @@ Object-dependent actions:
   File menu
   Drop action
   Properties
-  Open (double-click) action
+  Open (double-click) action  (same as default (bold) menu entry)
   
 Object types:
 
