@@ -118,8 +118,8 @@ public:
   void DoSaveMarked();
   void DoPrint();
   void DoRefresh();
-  void DoPagePrev();
-  void DoPageNext();
+  int  DoPagePrev();
+  int  DoPageNext();
   void DoMark();
   void DoUnmark();
   void DoToggleDefaultOrientation();

@@ -754,30 +754,38 @@ void OXMain::DoPrint() {
 
 }
 
-void OXMain::DoPageNext() {
+int OXMain::DoPageNext() {
   int new_page;
 
   if (has_toc && doc) {
     new_page = current_page + 1;
-    if (new_page < doc->numpages)
+    if (new_page < doc->numpages) {
       _ShowPage(new_page);
-    else
+      return True;
+    } else {
       XBell(GetDisplay(), 0);
+      return False;
+    }
   } else {
     _ShowPage(0);
+    return True;
   }
 }
 
-void OXMain::DoPagePrev() {
+int OXMain::DoPagePrev() {
   int new_page;
 
   if (has_toc) {
     new_page = current_page - 1;
-    if (new_page >= 0)
+    if (new_page >= 0) {
       _ShowPage(new_page);
-    else
+      return True;
+    } else {
       XBell(GetDisplay(), 0);
+      return False;
+    }
   }
+  return False;
 }
 
 void OXMain::DoToggleDefaultOrientation() {
@@ -1701,9 +1709,10 @@ int OXMain::HandleKey(XKeyEvent *event) {
           _canvas->SetVPos(po);
           _client->NeedRedraw(_canvas->GetViewPort());
         } else {
-          DoPagePrev();
-          po = _container->GetHeight()-_canvas->GetViewPort()->GetHeight();
-          _canvas->SetVPos(po);
+          if (DoPagePrev()) {
+            po = _container->GetHeight()-_canvas->GetViewPort()->GetHeight();
+            _canvas->SetVPos(po);
+          }
         }
 #else
     	DoPagePrev();
@@ -1721,9 +1730,10 @@ int OXMain::HandleKey(XKeyEvent *event) {
           _canvas->SetVPos(po);
           _client->NeedRedraw(_canvas->GetViewPort());
         } else {
-          DoPageNext();
-          po = 0;
-          _canvas->SetVPos(po);
+          if (DoPageNext()) {
+            po = 0;
+            _canvas->SetVPos(po);
+          }
         }
 #else
     	DoPageNext();
