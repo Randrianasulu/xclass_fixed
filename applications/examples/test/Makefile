@@ -18,6 +18,7 @@ SRCS = btest.cc \
 	favordlg.cc \
 	ftest.cc \
 	listview.cc \
+	mditest.cc \
 	progbar.cc \
 	resizer.cc \
 	spinnertest.cc \
