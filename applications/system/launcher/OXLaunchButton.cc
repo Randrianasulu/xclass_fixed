@@ -21,6 +21,7 @@
 
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
+#include <xclass/OResourcePool.h>
 #include <xclass/OXCanvas.h>
 
 #include "OXLaunchButton.h"
@@ -35,7 +36,7 @@ OXLaunchButton::OXLaunchButton(const OXWindow *p, const OPicture *pic,
   OXButton(p, ID, option) {
 
   if (_defaultFont == NULL) {
-    _defaultFont = _client->GetFont("helvetica -10");
+    _defaultFont = _client->GetResourcePool()->GetIconFont();
   }
 
   _font = _defaultFont;
@@ -109,29 +110,29 @@ void OXLaunchButton::_DoRedraw() {
   switch (_options & (RAISED_FRAME | SUNKEN_FRAME)) {
   case SUNKEN_FRAME:
     _gc->SetForeground(_shadowPixel);
-    DrawLine(_gc->GetGC(),  0,    0,    _w-2, 0);
-    DrawLine(_gc->GetGC(),  0,    0,    0,    _h-2);
+    DrawLine(_gc->GetGC(), 0, 0, _w-2, 0);
+    DrawLine(_gc->GetGC(), 0, 0, 0, _h-2);
     _gc->SetForeground(_hilitePixel);
-    DrawLine(_gc->GetGC(), 0,    _h-1, _w-1, _h-1);
+    DrawLine(_gc->GetGC(), 0, _h-1, _w-1, _h-1);
     DrawLine(_gc->GetGC(), _w-1, _h-1, _w-1, 0);
     break;
 
   case RAISED_FRAME:
     _gc->SetForeground(_hilitePixel);
-    DrawLine(_gc->GetGC(), 0,    0,    _w-2, 0);
-    DrawLine(_gc->GetGC(), 0,    0,    0,    _h-2);
+    DrawLine(_gc->GetGC(), 0, 0, _w-2, 0);
+    DrawLine(_gc->GetGC(), 0, 0, 0, _h-2);
     _gc->SetForeground(_shadowPixel);
-    DrawLine(_gc->GetGC(),  0,    _h-1, _w-1, _h-1);
-    DrawLine(_gc->GetGC(),  _w-1, _h-1, _w-1, 0);
+    DrawLine(_gc->GetGC(), 0, _h-1, _w-1, _h-1);
+    DrawLine(_gc->GetGC(), _w-1, _h-1, _w-1, 0);
     break;
 
 /*
   default:
     _gc->SetForeground(_backPixel);
-    DrawLine(_gc->GetGC(), 0,    0,    _w-2, 0);
-    DrawLine(_gc->GetGC(), 0,    0,    0,    _h-2);
-    DrawLine(_gc->GetGC(),  0,    _h-1, _w-1, _h-1);
-    DrawLine(_gc->GetGC(),  _w-1, _h-1, _w-1, 0);
+    DrawLine(_gc->GetGC(), 0, 0, _w-2, 0);
+    DrawLine(_gc->GetGC(), 0, 0, 0, _h-2);
+    DrawLine(_gc->GetGC(), 0, _h-1, _w-1, _h-1);
+    DrawLine(_gc->GetGC(), _w-1, _h-1, _w-1, 0);
     break;
 */
   }

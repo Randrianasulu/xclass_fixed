@@ -22,8 +22,8 @@ $PATH.
 Optionally, copy the supplied xclauncher.rc file to the directory where
 the xclass ini files reside (usually ~/.xclass/etc).
 
-If you're using fvwm95 you might want to make the application sticky, to
-make it to remain present on the screen after you change desktops or virtual
+If you're using fvwm95 you might want to make the application sticky, so
+it would remain present on the screen after you change desktops or virtual
 windows. Just add the following line to your .fvwm95rc file:
 
   Style "xclauncher" Sticky
@@ -148,6 +148,6 @@ The following command line options are recongnized:
 
   -geometry geometryspec
 
-    Specifies the window size and/or location. The geometryspec argument is
-    a standard X11 window geometry specification. When specified, this
-    option overrides any .ini file settings.
+    Specifies the startup window size and/or location. The geometryspec
+    argument is a standard X11 window geometry specification. This option
+    overrides the geometry specified in the .ini file.

@@ -31,7 +31,7 @@
 #include <xclass/OXShutter.h>
 #include <xclass/OXMenu.h>
 
-#define XCLAUNCHER_VERSION  "0.8"
+#define XCLAUNCHER_VERSION  "0.8.1"
 
 class OXLaunchButton;
 
