@@ -934,7 +934,7 @@ void OGifImage::AllocColor(_color *Table, int ColorMapSize) {
 
 void OGifImage::AllocClosestColor(int ColorMapSize) {
   int i, j, Index = 0, Count = 0, XNumOfColors;
-  unsigned long D, Distance, AvgDistance = 0, Red, Green, Blue;
+  long D, Distance, AvgDistance = 0, Red, Green, Blue;
   bool Failed = false;
   XColor *XOldColorTable;
 

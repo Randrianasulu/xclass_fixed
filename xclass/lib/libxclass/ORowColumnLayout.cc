@@ -19,6 +19,8 @@
 
 **************************************************************************/
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXCompositeFrame.h>
 
@@ -53,7 +55,7 @@ ODimension ORowLayout::GetDefaultSize() const {
   for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     if (ptr->frame->IsVisible()) {
       dsize   = ptr->frame->GetDefaultSize();
-      size.h  = max(size.h, dsize.h);
+      size.h  = std::max(size.h, dsize.h);
       size.w += dsize.w + sep;
     }
   }
@@ -99,7 +101,7 @@ ODimension OColumnLayout::GetDefaultSize() const {
     if (ptr->frame->IsVisible()) {
       dsize   = ptr->frame->GetDefaultSize();
       size.h += dsize.h + sep;
-      size.w  = max(size.w, dsize.w);
+      size.w  = std::max(size.w, dsize.w);
     }
   }
 

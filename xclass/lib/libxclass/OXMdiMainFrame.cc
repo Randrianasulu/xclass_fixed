@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <algorithm>
+
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
 
@@ -995,8 +997,8 @@ ODimension OXMdiContainer::GetDefaultSize() const {
   int xpos = -_main->GetViewPort()->GetHPos();
   int ypos = -_main->GetViewPort()->GetVPos();
 
-  return ODimension(max(xpos + _w, rect.right_bottom().x + 1),
-                    max(ypos + _h, rect.right_bottom().y + 1));
+  return ODimension(std::max(xpos + _w, rect.right_bottom().x + 1),
+                    std::max(ypos + _h, rect.right_bottom().y + 1));
 }
 
 int OXMdiContainer::HandleConfigureNotify(XConfigureEvent *event) {
@@ -1009,8 +1011,8 @@ int OXMdiContainer::HandleConfigureNotify(XConfigureEvent *event) {
     int vw = _main->GetViewPort()->GetWidth();
     int vh = _main->GetViewPort()->GetHeight();
 
-    int w = max(vw, rect.right_bottom().x + 1);
-    int h = max(vh, rect.right_bottom().y + 1);
+    int w = std::max(vw, rect.right_bottom().x + 1);
+    int h = std::max(vh, rect.right_bottom().y + 1);
 
     if ((w != _w) || (h != _h)) {
       ((OXMainFrame *)_main)->Layout();

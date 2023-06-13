@@ -27,6 +27,8 @@
 #include <sys/time.h>
 #include <sys/types.h>
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXClient.h>
 #include <xclass/OXRootWindow.h>
@@ -217,13 +219,13 @@ unsigned long OXClient::GetHilite(unsigned long base_color) const {
   XQueryColor(_dpy, _defaultColormap, &white_p);
   
 #if 1
-  color.red   = max((white_p.red/5),   color.red);
-  color.green = max((white_p.green/5), color.green);
-  color.blue  = max((white_p.blue/5),  color.blue);
+  color.red   = std::max((white_p.red/5),   (int)color.red);
+  color.green = std::max((white_p.green/5), (int)color.green);
+  color.blue  = std::max((white_p.blue/5),  (int)color.blue);
   
-  color.red   = min(white_p.red,   (color.red*140)/100);
-  color.green = min(white_p.green, (color.green*140)/100);
-  color.blue  = min(white_p.blue,  (color.blue*140)/100);
+  color.red   = std::min((int)white_p.red,   (color.red*140)/100);
+  color.green = std::min((int)white_p.green, (color.green*140)/100);
+  color.blue  = std::min((int)white_p.blue,  (color.blue*140)/100);
 #else
   color.red   = white_p.red   - (white_p.red   - color.red   - 1) / 2;
   color.green = white_p.green - (white_p.green - color.green - 1) / 2;

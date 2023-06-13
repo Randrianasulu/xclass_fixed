@@ -23,6 +23,7 @@
 #define __OXFILELIST_H
 
 #include <vector>
+#include <algorithm>
 
 #include <regex.h>
 #include <X11/Xlib.h>

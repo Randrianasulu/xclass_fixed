@@ -21,6 +21,8 @@
 
 #include <string.h>
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXMenu.h>
 #include <xclass/OXMainFrame.h>
@@ -631,10 +633,10 @@ void OXPopupMenu::AdjustEntries() {
         } else {
           pw = 0;
         }
-        lsize = max(lsize, ltw);
-        rsize = max(rsize, rtw);
+        lsize = std::max(lsize, ltw);
+        rsize = std::max(rsize, rtw);
         tw = (rsize > 0) ? lsize + rsize + sepw : ltw;
-        w = max(w, spw + _xl + tw + RIGHT_GAP); // _xl already includes pw
+        w = std::max(w, spw + _xl + tw + RIGHT_GAP); // _xl already includes pw
         h += _hifont->TextHeight() + 3;
         break;
 
@@ -650,7 +652,7 @@ void OXPopupMenu::AdjustEntries() {
           rtw = 0;
         }
         tw = (rsize > 0) ? lsize + rsize + sepw : ltw;
-        w = max(w, spw + _xl + tw + RIGHT_GAP + POPUPMARK_WIDTH);
+        w = std::max(w, spw + _xl + tw + RIGHT_GAP + POPUPMARK_WIDTH);
         h += _hifont->TextHeight() + 3;
         break;
 

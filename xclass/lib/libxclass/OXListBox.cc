@@ -21,6 +21,8 @@
 
 #include <X11/keysym.h>
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXListBox.h>
 #include <xclass/ODimension.h>
@@ -714,13 +716,13 @@ void OXListBox::AddEntry(OString *s, int ID) {
 
   lbe = new OXTextLBEntry(_lbc, s, ID);
   lhints = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP);
-  _itemVsize = max(_itemVsize, lbe->GetDefaultHeight());
+  _itemVsize = std::max(_itemVsize, lbe->GetDefaultHeight());
   _lbc->AddEntry(lbe, lhints);
   if (_autoUpdate) Update();
 }
 
 void OXListBox::AddEntry(OXLBEntry *lbe, OLayoutHints *lhints) {
-  _itemVsize = max(_itemVsize, lbe->GetDefaultHeight());
+  _itemVsize = std::max(_itemVsize, lbe->GetDefaultHeight());
   _lbc->AddEntry(lbe, lhints);
   if (_autoUpdate) Update();
 }
@@ -731,13 +733,13 @@ void OXListBox::InsertEntry(OString *s, int ID, int afterID) {
 
   lbe = new OXTextLBEntry(_lbc, s, ID);
   lhints = new OLayoutHints(LHINTS_EXPAND_X | LHINTS_TOP);
-  _itemVsize = max(_itemVsize, lbe->GetDefaultHeight());
+  _itemVsize = std::max(_itemVsize, lbe->GetDefaultHeight());
   _lbc->InsertEntry(lbe, lhints, afterID);
   if (_autoUpdate) Update();
 }
 
 void OXListBox::InsertEntry(OXLBEntry *lbe, OLayoutHints *lhints, int afterID) {
-  _itemVsize = max(_itemVsize, lbe->GetDefaultHeight());
+  _itemVsize = std::max(_itemVsize, lbe->GetDefaultHeight());
   _lbc->InsertEntry(lbe, lhints, afterID);
   if (_autoUpdate) Update();
 }
@@ -757,7 +759,7 @@ void OXListBox::Update() {
 void OXListBox::Resize(int w, int h) {
   if (_integralHeight) {
     int ih = _insets.t + _insets.b;
-    h = max(_itemVsize, ((h - ih) / _itemVsize) * _itemVsize) + ih;
+    h = std::max(_itemVsize, ((h - ih) / _itemVsize) * _itemVsize) + ih;
   }
   OXCompositeFrame::Resize(w, h);
 }
@@ -765,7 +767,7 @@ void OXListBox::Resize(int w, int h) {
 void OXListBox::MoveResize(int x, int y, int w, int h) {
   if (_integralHeight) {
     int ih = _insets.t + _insets.b;
-    h = max(_itemVsize, ((h - ih) / _itemVsize) * _itemVsize) + ih;
+    h = std::max(_itemVsize, ((h - ih) / _itemVsize) * _itemVsize) + ih;
   }
   OXCompositeFrame::MoveResize(x, y, w, h);
 }
@@ -775,7 +777,7 @@ ODimension OXListBox::GetDefaultSize() const {
 
   if (_integralHeight) {
     int ih = _insets.t + _insets.b;
-    h = max(_itemVsize, ((_h - ih) / _itemVsize) * _itemVsize) + ih;
+    h = std::max(_itemVsize, ((_h - ih) / _itemVsize) * _itemVsize) + ih;
   } else {
     h = _h;
   }
@@ -822,7 +824,7 @@ void OXListBox::Layout() {
 
   _vport->MoveResize(_insets.l, _insets.t, cw, ch);
   _container->Layout();
-  tch = max(_container->GetDefaultHeight(), ch);
+  tch = std::max(_container->GetDefaultHeight(), ch);
   _container->SetHeight(0); // force a resize in OXFrame::Resize
   _container->Resize(cw, tch);
 //  _vport->SetPos(0, 0);

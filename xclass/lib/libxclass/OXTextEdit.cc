@@ -23,6 +23,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <algorithm>
+
 #include <X11/keysym.h>
 
 #include <xclass/utils.h>
@@ -1647,8 +1649,8 @@ void OXTextEdit::SelectToPos(OPosition mousePos) {
 
     } else {
 
-      lineSelStart = min(mousePos.x, _selAnchor.x);
-      lineSelEnd = max(mousePos.x, _selAnchor.x);
+      lineSelStart = std::min(mousePos.x, _selAnchor.x);
+      lineSelEnd = std::max(mousePos.x, _selAnchor.x);
 
     }
 
@@ -1663,10 +1665,10 @@ void OXTextEdit::SelectToPos(OPosition mousePos) {
 
     // update the coordinates of the selection area
 
-    _selDragStart.x = min(_selAnchor.x, mousePos.x);
-    _selDragStart.y = min(_selAnchor.y, mousePos.y);
-    _selDragEnd.x = max(_selAnchor.x, mousePos.x);
-    _selDragEnd.y = max(_selAnchor.y, mousePos.y);
+    _selDragStart.x = std::min(_selAnchor.x, mousePos.x);
+    _selDragStart.y = std::min(_selAnchor.y, mousePos.y);
+    _selDragEnd.x = std::max(_selAnchor.x, mousePos.x);
+    _selDragEnd.y = std::max(_selAnchor.y, mousePos.y);
 
     // all lines that are inside the selection area are selected and their
     // selection is adjusted

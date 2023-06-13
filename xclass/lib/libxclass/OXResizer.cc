@@ -22,6 +22,8 @@
 #include <X11/X.h>
 #include <X11/cursorfont.h>
 
+#include <algorithm>
+
 #include <xclass/OXCompositeFrame.h>
 #include <xclass/OXResizer.h>
 
@@ -244,12 +246,12 @@ void OXHorizontalResizer::Move(int x, int y) {
 }
 
 void OXHorizontalResizer::Resize(int w, int h) {
-  if (_handle) _handle->Resize(max(w, 1), max(h, 1));
+  if (_handle) _handle->Resize(std::max(w, 1), std::max(h, 1));
   OXFrame::Resize(w, h);
 }
 
 void OXHorizontalResizer::MoveResize(int x, int y, int w, int h) {
-  if (_handle) _handle->MoveResize(x + hx, y + hy, max(w, 1), max(h, 1));;
+  if (_handle) _handle->MoveResize(x + hx, y + hy, std::max(w, 1), std::max(h, 1));;
   OXFrame::MoveResize(x, y, w, h);
 }
 
@@ -492,12 +494,12 @@ void OXVerticalResizer::Move(int x, int y) {
 }
 
 void OXVerticalResizer::Resize(int w, int h) {
-  if (_handle) _handle->Resize(max(w, 1), max(h, 1));
+  if (_handle) _handle->Resize(std::max(w, 1), std::max(h, 1));
   OXFrame::Resize(w, h);
 }
 
 void OXVerticalResizer::MoveResize(int x, int y, int w, int h) {
-  if (_handle) _handle->MoveResize(x + hx, y + hy, max(w, 1), max(h, 1));;
+  if (_handle) _handle->MoveResize(x + hx, y + hy, std::max(w, 1), std::max(h, 1));;
   OXFrame::MoveResize(x, y, w, h);
 }
 

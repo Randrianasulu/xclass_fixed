@@ -19,6 +19,8 @@
 
 **************************************************************************/
 
+#include <algorithm>
+
 #include <xclass/OString.h>
 #include <xclass/OPicture.h>
 #include <xclass/OXToolBarButton.h>
@@ -136,16 +138,16 @@ int OXToolBarButton::HandleCrossing(XCrossingEvent *event) {
 ODimension OXToolBarButton::GetDefaultSize() const {
   ODimension size(_tw, 0);
   if (_normalPic) {
-    size.w = max(size.w, _normalPic->GetWidth());
-    size.h = max(size.h, _normalPic->GetHeight());
+    size.w = std::max((int)size.w, _normalPic->GetWidth());
+    size.h = std::max((int)size.h, _normalPic->GetHeight());
   }
   if (_onPic) {
-    size.w = max(size.w, _onPic->GetWidth());
-    size.h = max(size.h, _onPic->GetHeight());
+    size.w = std::max((int)size.w, _onPic->GetWidth());
+    size.h = std::max((int)size.h, _onPic->GetHeight());
   }
   if (_disabledPic) {
-    size.w = max(size.w, _disabledPic->GetWidth());
-    size.h = max(size.h, _disabledPic->GetHeight());
+    size.w = std::max((int)size.w, _disabledPic->GetWidth());
+    size.h = std::max((int)size.h, _disabledPic->GetHeight());
   }
   size.w += 6;
   size.h += _th + 6;

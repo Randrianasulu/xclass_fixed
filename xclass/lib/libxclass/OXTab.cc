@@ -20,6 +20,7 @@
 **************************************************************************/
 
 #include <string.h>
+#include <algorithm>
 
 #include <xclass/utils.h>
 #include <xclass/OXTab.h>
@@ -56,7 +57,7 @@ OXTabElt::OXTabElt(const OXWindow *p, OString *text, int w, int h,
     _tw = _font->TextWidth(_text->GetString(), _text->GetLength());
     _th = _font->TextHeight();
     _yt = fm.ascent;
-    Resize(max(_tw+12, 45), _th+6);
+    Resize(std::max(_tw+12, 45), _th+6);
 }
 
 OXTabElt::~OXTabElt() {
@@ -81,7 +82,7 @@ void OXTabElt::DrawBorder() {
 }
 
 ODimension OXTabElt::GetDefaultSize() const {
-  return ODimension(max(_tw+12, 40), _th+6);
+  return ODimension(std::max(_tw+12, 40), _th+6);
 }
 
 void OXTabElt::ShowFocusHilite(int onoff) {

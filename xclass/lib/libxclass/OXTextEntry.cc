@@ -18,6 +18,7 @@
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 **************************************************************************/
+#include <algorithm>
 
 #include <xclass/utils.h>
 #include <xclass/OXTextEntry.h>
@@ -165,8 +166,8 @@ void OXTextEntry::DrawCursor(bool mode) {
       drawGC->SetBackground(_backPixel);
 
       if (_selection_on &&
-          _cursor_ix >= min(_start_ix, _end_ix) && 
-          _cursor_ix < max(_start_ix, _end_ix)) {
+          _cursor_ix >= std::min(_start_ix, _end_ix) && 
+          _cursor_ix < std::max(_start_ix, _end_ix)) {
         drawGC = _selGC;
         drawGC->SetFont(_normGC->GetFont());
         drawGC->SetBackground(_defaultSelectedBackground);
@@ -236,8 +237,8 @@ void OXTextEntry::_DoRedraw() {
   if (_selection_on) {
     int xs, ws, ixs, iws;
     
-    xs = min(_start_x, _end_x);
-    ixs = min(_start_ix, _end_ix);
+    xs = std::min(_start_x, _end_x);
+    ixs = std::min(_start_ix, _end_ix);
 
     if ((_vstart_x > xs) && (start_char > ixs)) {
       xs  = _vstart_x;
@@ -317,8 +318,8 @@ int OXTextEntry::_GetCharacterIndex(int xcoord) {
   ix = down;
 
   // safety check...
-  ix = max(ix, 0);
-  ix = min(ix, len); // len-1
+  ix = std::max(ix, 0);
+  ix = std::min(ix, len); // len-1
   return ix;
 }
 
@@ -500,7 +501,7 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
       if (_selection_on) {
         int start, ns;   
        
-        start = min(_start_ix, _end_ix);
+        start = std::min(_start_ix, _end_ix);
         ns = abs(_end_ix - _start_ix);
         _text->RemoveText(start, ns);
         _selection_on = False;
@@ -516,7 +517,7 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
       if (_selection_on) {
         int start, ns;
       
-        start = min(_start_ix, _end_ix);
+        start = std::min(_start_ix, _end_ix);
         ns = abs(_end_ix - _start_ix);
         _text->RemoveText(start, ns);
         _selection_on = False;
@@ -549,7 +550,7 @@ int OXTextEntry::HandleKey(XKeyEvent *event) {
       if (_selection_on && (strlen(tmp) > 0)) {
         int start, ns;
         
-        start = min(_start_ix, _end_ix);
+        start = std::min(_start_ix, _end_ix);
         ns = abs(_end_ix - _start_ix);
         _text->RemoveText(start, ns);
         _selection_on = False;
@@ -659,7 +660,7 @@ void OXTextEntry::_PastePrimary(Window wid, Atom property, int Delete) {
     if (_selection_on) {
       int start, ns;
 
-      start = min(_start_ix, _end_ix);
+      start = std::min(_start_ix, _end_ix);
       ns = abs(_end_ix - _start_ix);
       _text->RemoveText(start, ns);
       _selection_on = False;

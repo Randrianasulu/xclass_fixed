@@ -23,6 +23,7 @@
 #define __OXHELPDOC_H
 
 #include <vector>
+#include <algorithm>
 
 #include <xclass/utils.h>
 #include <xclass/OHtmlUri.h>

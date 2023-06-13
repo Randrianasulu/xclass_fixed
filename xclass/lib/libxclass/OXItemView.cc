@@ -19,6 +19,8 @@
 
 **************************************************************************/
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXItemView.h>
 
@@ -473,15 +475,15 @@ void OXItemView::DrawDragOutline() {
   OPosition start = ToPhysical(_selDragStart);
   OPosition end = ToPhysical(_selDragEnd);
 
-  start.y = max(start.y, 0);
-  start.x = max(start.x, 0);
-  start.y = min(start.y, _canvas->GetHeight());
-  start.x = min(start.x, _canvas->GetWidth());
+  start.y = std::max(start.y, 0);
+  start.x = std::max(start.x, 0);
+  start.y = std::min(start.y, _canvas->GetHeight());
+  start.x = std::min(start.x, _canvas->GetWidth());
 
-  end.y = max(end.y, 0);
-  end.x = max(end.x, 0);
-  end.y = min(end.y, _canvas->GetHeight());
-  end.x = min(end.x, _canvas->GetWidth());
+  end.y = std::max(end.y, 0);
+  end.x = std::max(end.x, 0);
+  end.y = std::min(end.y, _canvas->GetHeight());
+  end.x = std::min(end.x, _canvas->GetWidth());
 
   _canvas->DrawRectangle(_lineGC->GetGC(),
                          start.x, start.y, end.x - start.x, end.y - start.y);
@@ -496,10 +498,10 @@ void OXItemView::SelectToPos(OPosition mousePos) {
   if (_items.size() == 0) return;
 
   if (_dragSelecting) {
-    _selDragStart.x = min(_selAnchor.x, mousePos.x);
-    _selDragEnd.x = max(_selAnchor.x, mousePos.x);
-    _selDragStart.y = min(_selAnchor.y, mousePos.y);
-    _selDragEnd.y = max(_selAnchor.y, mousePos.y);
+    _selDragStart.x = std::min(_selAnchor.x, mousePos.x);
+    _selDragEnd.x = std::max(_selAnchor.x, mousePos.x);
+    _selDragStart.y = std::min(_selAnchor.y, mousePos.y);
+    _selDragEnd.y = std::max(_selAnchor.y, mousePos.y);
 
     selected = 0;
     for (unsigned int i = 0; i < _items.size(); i++) {

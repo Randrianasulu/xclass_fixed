@@ -25,6 +25,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include <time.h>
+
 #include <xclass/OXClient.h>
 #include <xclass/OXWindow.h>
 #include <xclass/OXFrame.h>

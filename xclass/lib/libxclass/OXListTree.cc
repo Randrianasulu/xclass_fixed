@@ -59,7 +59,7 @@ OListTreeItem::OListTreeItem(OXClient *client, const char *name,
 
   open_pic = opened;
   closed_pic = closed;
-  picWidth = max(open_pic->GetWidth(), closed_pic->GetWidth());
+  picWidth = std::max(open_pic->GetWidth(), closed_pic->GetWidth());
 
   open =
   active = False;

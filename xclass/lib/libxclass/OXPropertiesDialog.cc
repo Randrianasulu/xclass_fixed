@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXClient.h>
 #include <xclass/OResourcePool.h>
@@ -131,8 +133,8 @@ OXPropertiesDialog::OXPropertiesDialog(const OXWindow *p, const OXWindow *main,
     bf->AddFrame(Apply, bly);
 
     width = Ok->GetDefaultWidth();   
-    width = max(width, Cancel->GetDefaultWidth());
-    width = max(width, Apply->GetDefaultWidth());
+    width = std::max(width, Cancel->GetDefaultWidth());
+    width = std::max(width, Apply->GetDefaultWidth());
     bf->Resize((width + 20) * 3, bf->GetDefaultHeight());
 
     // the "Apply" button is initially disabled,

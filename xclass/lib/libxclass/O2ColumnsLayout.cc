@@ -19,6 +19,7 @@
 
 **************************************************************************/
 
+#include <algorithm>
 #include <xclass/O2ColumnsLayout.h>
 
 //----------------------------------------------------------------------
@@ -39,16 +40,16 @@ void O2ColumnsLayout::Layout() {
   for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     ++count;
     csize = ptr->frame->GetDefaultSize();
-    c1size.w = max(c1size.w, csize.w);
-    c1size.h = max(c1size.h, csize.h);
+    c1size.w = std::max(c1size.w, csize.w);
+    c1size.h = std::max(c1size.h, csize.h);
     ptr = ptr->next;
     if (ptr == NULL) break;
     csize = ptr->frame->GetDefaultSize();
-    c2size.w = max(c2size.w, csize.w);
-    c2size.h = max(c2size.h, csize.h);
+    c2size.w = std::max(c2size.w, csize.w);
+    c2size.h = std::max(c2size.h, csize.h);
   }
 
-  h = max(c1size.h, c2size.h);
+  h = std::max(c1size.h, c2size.h);
 
   for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     csize = ptr->frame->GetDefaultSize();
@@ -72,17 +73,17 @@ ODimension O2ColumnsLayout::GetDefaultSize() const {
   for (ptr = *_list; ptr != NULL; ptr = ptr->next) {
     ++count;
     csize = ptr->frame->GetDefaultSize();
-    c1size.w = max(c1size.w, csize.w);
-    c1size.h = max(c1size.h, csize.h);
+    c1size.w = std::max(c1size.w, csize.w);
+    c1size.h = std::max(c1size.h, csize.h);
     ptr = ptr->next;
     if (ptr == NULL) break;
     csize = ptr->frame->GetDefaultSize();
-    c2size.w = max(c2size.w, csize.w);
-    c2size.h = max(c2size.h, csize.h);
+    c2size.w = std::max(c2size.w, csize.w);
+    c2size.h = std::max(c2size.h, csize.h);
   }
 
   size.w = c1size.w + _hsep + c2size.w + ins.l + ins.r;
-  size.h = (max(c1size.h, c2size.h) + _vsep) * count + ins.t + ins.b;
+  size.h = (std::max(c1size.h, c2size.h) + _vsep) * count + ins.t + ins.b;
 
   return size;
 }

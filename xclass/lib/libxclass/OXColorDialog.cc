@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <algorithm>
+
 #include <X11/keysym.h>
 
 #include <xclass/OXLabel.h>
@@ -976,7 +978,7 @@ OXColorDialog::OXColorDialog(const OXWindow *p, const OXWindow *m,
     hf->AddFrame(cancel, new OLayoutHints(LHINTS_BOTTOM | LHINTS_EXPAND_X));
 
     int w = ok->GetDefaultWidth();
-    w = max(w, cancel->GetDefaultWidth());
+    w = std::max(w, cancel->GetDefaultWidth());
     hf->Resize(2 * (w + 20), hf->GetDefaultHeight());
 
     ok->Associate(this);

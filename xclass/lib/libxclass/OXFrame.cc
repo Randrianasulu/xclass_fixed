@@ -345,8 +345,8 @@ int OXFrame::HandleEvent(XEvent *event) {
   case ButtonPress:
     if ((event->xbutton.time - _lastclick < 350) &&
         (event->xbutton.button == _lastbutton) &&
-        (abs(event->xbutton.x_root - _dbx) < 3) &&
-        (abs(event->xbutton.y_root - _dby) < 3) &&
+        (abs(int(event->xbutton.x_root - _dbx) < 3)) &&
+        (abs(int(event->xbutton.y_root - _dby) < 3)) &&
         (event->xbutton.window == _dbw))
       ++_clickcount;
     else

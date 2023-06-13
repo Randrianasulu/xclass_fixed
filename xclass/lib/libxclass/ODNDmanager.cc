@@ -25,6 +25,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include <algorithm>
+
 #include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 
@@ -216,7 +218,7 @@ int ODNDmanager::_IsDNDAware(Window win, Atom *typelist) {
   }
 
   types = (Atom *) data;
-  _useVersion = min(_version, types[0]);
+  _useVersion = std::min(_version, types[0]);
   Debug(DBG_MISC, "Using XDND version %d\n", _useVersion);
 
   if ((count > 1) && typelist) {

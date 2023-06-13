@@ -26,6 +26,8 @@
 #include <errno.h>
 #include <sys/stat.h>
 
+#include <algorithm>
+
 #include <X11/keysym.h>
 
 #include <xclass/utils.h>
@@ -374,7 +376,7 @@ void OXFileDialog::_FileDialog(int dlg_type, OFileInfo *file_info) {
   _vbf->AddFrame(_ok, _lb);
   _vbf->AddFrame(_cancel, _lb);
 
-  int width = max(_ok->GetDefaultWidth(), _cancel->GetDefaultWidth()) + 20;
+  int width = std::max(_ok->GetDefaultWidth(), _cancel->GetDefaultWidth()) + 20;
   _vbf->Resize(width, _vbf->GetDefaultHeight());
 
   _hf->AddFrame(_vbf, _lvbf);

@@ -158,7 +158,7 @@ ODimension OListViewItem::GetDefaultSize() const {
   switch (_viewMode) {
     default:
     case LV_LARGE_ICONS:
-      size.w = max(isize.w, lsize.w);
+      size.w = std::max(isize.w, lsize.w);
       size.h = isize.h + lsize.h + 6;
       break;
 
@@ -166,7 +166,7 @@ ODimension OListViewItem::GetDefaultSize() const {
     case LV_LIST:
     case LV_DETAILS:
       size.w = isize.w + lsize.w + 4;
-      size.h = max(isize.h, lsize.h);
+      size.h = std::max(isize.h, lsize.h);
       if (_fullLine && (_viewMode == LV_DETAILS)) size.w = _parent->GetVirtualSize().w;
       break;
   }
@@ -213,7 +213,7 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
       w->FillRectangle(rectGC, -_parent->GetScrollPosition().x, pos.y, size.w, size.h);
     } else {
       w->FillRectangle(rectGC, pos.x + _textPos.x, pos.y + _textPos.y,
-                       min(_tw, columnData[0]->width - _textPos.x - 2), _th + 1);
+                       std::min(_tw, columnData[0]->width - _textPos.x - 2), _th + 1);
     }
 
     if (_focused && (_tw > 0)) {
@@ -225,10 +225,10 @@ void OListViewItem::Draw(OXWindow *w, OPosition pos) {
       } else {
         w->DrawRectangle(_client->GetResourcePool()->GetDocumentBckgndGC()->GetGC(),
                          pos.x + _textPos.x, pos.y + _textPos.y,
-                         min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
+                         std::min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
         w->DrawRectangle(_client->GetResourcePool()->GetFocusHiliteGC()->GetGC(),
                          pos.x + _textPos.x, pos.y + _textPos.y,
-                         min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
+                         std::min(_tw, columnData[0]->width - _textPos.x - 2)-1, _th);
       }
     }
 
@@ -960,7 +960,7 @@ bool OXListView::ItemLayout() {
     case LV_LARGE_ICONS:
       currentPos.x = _itemSep.w;
       currentPos.y = _itemSep.h;
-      _virtualSize.w = max(canvasSize.w, maxItemSize.w + _itemSep.w * 2);
+      _virtualSize.w = std::max(canvasSize.w, maxItemSize.w + _itemSep.w * 2);
       _rows = 0;
       for (i = 0; i < _items.size(); i++) {
 
@@ -994,7 +994,7 @@ bool OXListView::ItemLayout() {
     case LV_SMALL_ICONS:
       currentPos.x = _itemSep.w;
       currentPos.y = _itemSep.h;
-      _virtualSize.w = max(canvasSize.w, maxItemSize.w + _itemSep.w * 2);
+      _virtualSize.w = std::max(canvasSize.w, maxItemSize.w + _itemSep.w * 2);
       _rows = 0;
       for (i = 0; i < _items.size(); i++) {
 
@@ -1028,7 +1028,7 @@ bool OXListView::ItemLayout() {
     case LV_LIST:
       currentPos.x = _itemSep.w;
       currentPos.y = _itemSep.h;
-      _virtualSize.h = max(canvasSize.h, maxItemSize.h + _itemSep.h * 2);
+      _virtualSize.h = std::max(canvasSize.h, maxItemSize.h + _itemSep.h * 2);
       _cols = 0;
       for (i = 0; i < _items.size(); i++) {
 

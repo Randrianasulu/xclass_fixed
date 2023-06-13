@@ -26,7 +26,8 @@
 #include <xclass/OBaseObject.h>
 #include <xclass/ODimension.h>
 
-
+#include <algorithm>
+/*
 #ifndef min
 #define min(a,b) (((a)<(b)) ? (a) : (b))
 #endif
@@ -34,7 +35,7 @@
 #ifndef max
 #define max(a,b) (((a)>(b)) ? (a) : (b))
 #endif
-
+*/
 
 //----------------------------------------------------------------------
 
@@ -72,8 +73,8 @@ public:
   OPosition right_bottom() const
                { return OPosition(x + (int) w - 1, y + (int) h - 1); }
   void merge(ORectangle &r)
-               { int max_x = max(x + (int) w, r.x + (int) r.w); x = min(x, r.x);
-                 int max_y = max(y + (int) h, r.y + (int) r.h); y = min(y, r.y);
+               { int max_x = std::max(x + (int) w, r.x + (int) r.w); x = std::min(x, r.x);
+                 int max_y = std::max(y + (int) h, r.y + (int) r.h); y = std::min(y, r.y);
                  w = max_x - x;
                  h = max_y - y; }
   void empty() { x = y = 0; w = h = 0; }

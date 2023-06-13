@@ -18,6 +18,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 **************************************************************************/
+#include <algorithm>
 
 #include <xclass/utils.h>
 #include <xclass/OXLabel.h>
@@ -73,7 +74,7 @@ OXAboutDialog::OXAboutDialog(const OXWindow *p, const OXWindow *main,
       f1->AddFrame(l = new OXLabel(f1, new OString(info->copyright)), _lh2);
       l->SetTextJustify(info->cprt_justify);
       if (info->cprt_font) l->SetFont(info->cprt_font);
-      width = max(width, l->GetDefaultWidth());
+      width = std::max(width, l->GetDefaultWidth());
     }
 
     if (info->text) {

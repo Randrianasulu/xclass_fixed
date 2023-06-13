@@ -55,7 +55,7 @@
 
 #undef NULL
 #define NULL 0
-
+/*
 #ifndef min
 #define min(a,b) (((a)<(b)) ? (a) : (b))
 #endif
@@ -63,7 +63,7 @@
 #ifndef max
 #define max(a,b) (((a)>(b)) ? (a) : (b))
 #endif
-
+*/
 char *StrDup(const char *s);
 int  MakePath(const char *path, mode_t mode);
 void FatalError(const char *fmt, ...);

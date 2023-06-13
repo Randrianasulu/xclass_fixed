@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/ODimension.h>
 #include <xclass/OXFSDDListBox.h>
@@ -138,7 +140,7 @@ ODimension OXTreeLBEntry::GetDefaultSize() const {
   ODimension isize(_pic->GetWidth(), _pic->GetHeight());
   ODimension lsize(_tw, _th+1);
 
-  return ODimension(isize.w + lsize.w + 5, max(isize.h, lsize.h) + 2);
+  return ODimension(isize.w + lsize.w + 5, std::max(isize.h, lsize.h) + 2);
 }
 
 void OXTreeLBEntry::UpdateEntry(OXLBEntry *e) {

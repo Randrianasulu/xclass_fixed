@@ -26,6 +26,8 @@
 #include <errno.h>
 #include <ctype.h>
 
+#include <algorithm>
+
 #include <xclass/OXClient.h>
 #include <xclass/OXTransientFrame.h>
 #include <xclass/OXMenu.h>
@@ -369,12 +371,12 @@ OXCmdDlg::OXCmdDlg(const OXWindow *p, const OXWindow *main,
     Ok->SetDefault();
     Ok->Associate(this);
     ButtonFrame->AddFrame(Ok, L1);
-    width = max(width, Ok->GetDefaultWidth());
+    width = std::max(width, Ok->GetDefaultWidth());
 
     Cancel = new OXTextButton(ButtonFrame, new OHotString("&Cancel"), ID_CANCEL);
     Cancel->Associate(this);
     ButtonFrame->AddFrame(Cancel, L1);
-    width = max(width, Cancel->GetDefaultWidth());
+    width = std::max(width, Cancel->GetDefaultWidth());
 
     //--- place buttons at the bottom
 

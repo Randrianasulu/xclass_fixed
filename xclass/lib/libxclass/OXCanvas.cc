@@ -19,6 +19,8 @@
 
 **************************************************************************/
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXClient.h>
 #include <xclass/OXWidget.h>
@@ -68,12 +70,12 @@ int OXCanvas::HandleButton(XButtonEvent *event) {
     int amount, ch;
 
     ch = _vport->GetHeight();
-    amount = max(ch / 6, 1);
+    amount = std::max(ch / 6, 1);
 
     if (event->state & ShiftMask)
       amount = 1;
     else if (event->state & ControlMask)
-      amount = ch - max(ch / 20, 1);
+      amount = ch - std::max(ch / 20, 1);
 
     if (event->button == Button4) {
       SetVPos(-_vport->GetVPos() - amount);
@@ -156,8 +158,8 @@ void OXCanvas::Layout() {
 
   _vport->MoveResize(_insets.l, _insets.t, cw, ch);
 
-  tcw = max(_container->GetDefaultWidth(), cw);
-  tch = max(_container->GetDefaultHeight(), ch);
+  tcw = std::max(_container->GetDefaultWidth(), cw);
+  tch = std::max(_container->GetDefaultHeight(), ch);
   _container->SetHeight(0); // force a resize in OXFrame::Resize
   _container->Resize(tcw, tch);
 

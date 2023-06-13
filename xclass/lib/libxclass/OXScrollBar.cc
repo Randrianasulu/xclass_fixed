@@ -19,6 +19,8 @@
 
 **************************************************************************/
 
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OResourcePool.h>
 #include <xclass/OXCompositeFrame.h>
@@ -205,10 +207,10 @@ OXHScrollBar::OXHScrollBar(const OXWindow *p, int w, int h,
                 GrabModeAsync, GrabModeAsync, None, None);
 
     _dragging = False;
-    _x0 = _y0 = (_sb_width = max(_sb_width, 5));
+    _x0 = _y0 = (_sb_width = std::max(_sb_width, 5));
     _pos = 0;
 
-    _range = max(h - (_sb_width << 1), 1);
+    _range = std::max(h - (_sb_width << 1), 1);
     _psize = _range >> 1;
     
     _slsize = 50;
@@ -266,7 +268,7 @@ int OXHScrollBar::HandleButton(XButtonEvent *event) {
    
       IN_RANGE(_pos, 0, _range - _psize);
 
-      _x0 = _sb_width + _pos * _slrange / max(_range-_psize, 1);
+      _x0 = _sb_width + _pos * _slrange / std::max(_range-_psize, 1);
     
       IN_RANGE(_x0, _sb_width, _sb_width + _slrange);
 
@@ -342,15 +344,15 @@ int OXHScrollBar::HandleTimer(OTimer *t) {
 
 void OXHScrollBar::SetRange(int range, int page_size, int sendMsg) {
 
-  _range = max(range, 1);
-  _psize = max(page_size, 0);
+  _range = std::max(range, 1);
+  _psize = std::max(page_size, 0);
       
-  _slsize = max(_psize * (_w - (_sb_width << 1)) / _range, 6);
-  _slsize = min(_slsize, _w - (_sb_width << 1));
+  _slsize = std::max(_psize * (_w - (_sb_width << 1)) / _range, 6);
+  _slsize = std::min(_slsize, _w - (_sb_width << 1));
 
-  _slrange = max(_w - (_sb_width << 1) - _slsize, 1);
+  _slrange = std::max(_w - (_sb_width << 1) - _slsize, 1);
 
-  _x0 = _sb_width + _pos * _slrange / max(_range-_psize, 1);
+  _x0 = _sb_width + _pos * _slrange / std::max(_range-_psize, 1);
   IN_RANGE(_x0, _sb_width, _sb_width + _slrange);
 
   _slider->MoveResize(_x0, 0, _slsize, _sb_width);
@@ -374,7 +376,7 @@ void OXHScrollBar::SetPosition(int pos, int sendMsg) {
   _pos = pos;
   IN_RANGE(_pos, 0, _range - _psize);
 
-  _x0 = _sb_width + _pos * _slrange / max(_range-_psize, 1);
+  _x0 = _sb_width + _pos * _slrange / std::max(_range-_psize, 1);
   IN_RANGE(_x0, _sb_width, _sb_width + _slrange);
 
   _slider->MoveResize(_x0, 0, _slsize, _sb_width);
@@ -414,10 +416,10 @@ OXVScrollBar::OXVScrollBar(const OXWindow *p, int w, int h,
                 GrabModeAsync, GrabModeAsync, None, None);
 
     _dragging = False;
-    _x0 = _y0 = (_sb_width = max(_sb_width, 5));
+    _x0 = _y0 = (_sb_width = std::max(_sb_width, 5));
     _pos = 0;
 
-    _range = max(h - (_sb_width << 1), 1);
+    _range = std::max(h - (_sb_width << 1), 1);
     _psize = _range >> 1;
     
     _slsize = 50;
@@ -475,7 +477,7 @@ int OXVScrollBar::HandleButton(XButtonEvent *event) {
         
       IN_RANGE(_pos, 0, _range - _psize);
   
-      _y0 = _sb_width + _pos * _slrange / max(_range-_psize, 1);
+      _y0 = _sb_width + _pos * _slrange / std::max(_range-_psize, 1);
         
       IN_RANGE(_y0, _sb_width, _sb_width + _slrange);
 
@@ -549,15 +551,15 @@ int OXVScrollBar::HandleTimer(OTimer *t) {
 
 void OXVScrollBar::SetRange(int range, int page_size, int sendMsg) {
 
-  _range = max(range, 1);
-  _psize = max(page_size, 0);
+  _range = std::max(range, 1);
+  _psize = std::max(page_size, 0);
 
-  _slsize = max(_psize * (_h - (_sb_width << 1)) / _range, 6);
-  _slsize = min(_slsize, _h - (_sb_width << 1));
+  _slsize = std::max(_psize * (_h - (_sb_width << 1)) / _range, 6);
+  _slsize = std::min(_slsize, _h - (_sb_width << 1));
 
-  _slrange = max(_h - (_sb_width << 1) - _slsize, 1);
+  _slrange = std::max(_h - (_sb_width << 1) - _slsize, 1);
 
-  _y0 = _sb_width + _pos * _slrange / max(_range-_psize, 1);
+  _y0 = _sb_width + _pos * _slrange / std::max(_range-_psize, 1);
   IN_RANGE(_y0, _sb_width, _sb_width + _slrange);
 
   _slider->MoveResize(0, _y0, _sb_width, _slsize);
@@ -581,7 +583,7 @@ void OXVScrollBar::SetPosition(int pos, int sendMsg) {
   _pos = pos;
   IN_RANGE(_pos, 0, _range - _psize);
 
-  _y0 = _sb_width + _pos * _slrange / max(_range-_psize, 1);
+  _y0 = _sb_width + _pos * _slrange / std::max(_range-_psize, 1);
   IN_RANGE(_y0, _sb_width, _sb_width + _slrange);
 
   _slider->MoveResize(0, _y0, _sb_width, _slsize);

@@ -19,6 +19,9 @@
 
 **************************************************************************/
 
+
+#include <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXClient.h>
 #include <xclass/OXCompositeFrame.h>
@@ -42,11 +45,11 @@ void OTileLayout::Layout() {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     csize = ptr->frame->GetDefaultSize();
-    max_osize.w = max(max_osize.w, csize.w);
-    max_osize.h = max(max_osize.h, csize.h);
+    max_osize.w = std::max(max_osize.w, csize.w);
+    max_osize.h = std::max(max_osize.h, csize.h);
   }
 
-  max_width = max(msize.w, max_osize.w + (_sep << 1));
+  max_width = std::max(msize.w, max_osize.w + (_sep << 1));
   x = _sep; y = _sep << 1;
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
 
@@ -85,11 +88,11 @@ ODimension OTileLayout::GetDefaultSize() const {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     max_size = ptr->frame->GetDefaultSize();
-    max_osize.w = max(max_osize.w, max_size.w);
-    max_osize.h = max(max_osize.h, max_size.h);
+    max_osize.w = std::max(max_osize.w, max_size.w);
+    max_osize.h = std::max(max_osize.h, max_size.h);
   }
 
-  max_size.w = max(msize.w, max_osize.w + (_sep << 1));
+  max_size.w = std::max(msize.w, max_osize.w + (_sep << 1));
 
   x = _sep; y = _sep << 1;
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
@@ -100,7 +103,7 @@ ODimension OTileLayout::GetDefaultSize() const {
     }
   }
   if (x != _sep) y += max_osize.h + _sep;
-  max_size.h = max(y, msize.h);
+  max_size.h = std::max(y, (int)msize.h);
 
   return max_size;
 }
@@ -117,11 +120,11 @@ void OListLayout::Layout() {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     csize = ptr->frame->GetDefaultSize();
-    max_osize.w = max(max_osize.w, csize.w);
-    max_osize.h = max(max_osize.h, csize.h);
+    max_osize.w = std::max(max_osize.w, csize.w);
+    max_osize.h = std::max(max_osize.h, csize.h);
   }
 
-  max_height = max(msize.h, max_osize.h + (_sep << 1));
+  max_height = std::max(msize.h, max_osize.h + (_sep << 1));
 
   x = _sep; y = _sep << 1;
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
@@ -161,11 +164,11 @@ ODimension OListLayout::GetDefaultSize() const {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     max_size = ptr->frame->GetDefaultSize();
-    max_osize.w = max(max_osize.w, max_size.w);
-    max_osize.h = max(max_osize.h, max_size.h);
+    max_osize.w = std::max(max_osize.w, max_size.w);
+    max_osize.h = std::max(max_osize.h, max_size.h);
   }
 
-  max_size.h = max(msize.h, max_osize.h + (_sep << 1));
+  max_size.h = std::max(msize.h, max_osize.h + (_sep << 1));
 
   x = _sep; y = _sep << 1;
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
@@ -176,7 +179,7 @@ ODimension OListLayout::GetDefaultSize() const {
     }
   }
   if (y != (_sep << 1)) x += max_osize.w + _sep;
-  max_size.w = max(x, msize.w);
+  max_size.w = std::max(x, (int)msize.w);
 
   return max_size;
 }
@@ -190,7 +193,7 @@ void OListDetailsLayout::Layout() {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     csize = ptr->frame->GetDefaultSize();
-    max_oh = max(max_oh, csize.h);
+    max_oh = std::max(max_oh, (int)csize.h);
   }
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
@@ -210,8 +213,8 @@ ODimension OListDetailsLayout::GetDefaultSize() const {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     csize = ptr->frame->GetDefaultSize();
-    max_osize.w = max(max_osize.w, csize.w);
-    max_osize.h = max(max_osize.h, csize.h);
+    max_osize.w = std::max(max_osize.w, csize.w);
+    max_osize.h = std::max(max_osize.h, csize.h);
   }
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {

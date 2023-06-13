@@ -19,6 +19,8 @@
 
 **************************************************************************/
 
+#include  <algorithm>
+
 #include <xclass/utils.h>
 #include <xclass/OXWindow.h>
 
@@ -34,7 +36,7 @@ OXWindow::OXWindow(const OXWindow *p, int x, int y,
     _parent = p;
     _toplevel = p->_toplevel;
     _id = XCreateWindow(GetDisplay(), _parent->_id, x, y, 
-                        max(w, 1), max(h, 1), max(border, 0),
+                        std::max(w, 1), std::max(h, 1), std::max(border, 0),
     			depth, clss, visual, vmask, attr);
     _windowExists = (_id != None);
     _client->RegisterWindow(this);
@@ -64,11 +66,11 @@ void OXWindow::Move(int x, int y) {
 }
 
 void OXWindow::Resize(int w, int h) {
-  XResizeWindow(GetDisplay(), _id, max(w, 1), max(h, 1));
+  XResizeWindow(GetDisplay(), _id, std::max(w, 1), std::max(h, 1));
 }
 
 void OXWindow::MoveResize(int x, int y, int w, int h) {
-  XMoveResizeWindow(GetDisplay(), _id, x, y, max(w, 1), max(h, 1));
+  XMoveResizeWindow(GetDisplay(), _id, x, y, std::max(w, 1), std::max(h, 1));
 }
 
 int OXWindow::IsMapped() {

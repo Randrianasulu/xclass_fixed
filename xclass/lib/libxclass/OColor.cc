@@ -18,6 +18,7 @@
     Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 **************************************************************************/
+#include <algorithm>
 
 #include <X11/X.h>
 
@@ -95,8 +96,8 @@ void OColor::RGB2HLS(int r, int g, int b, int *h, int *l, int *s) {
   _G = g / (double) COLOR_MAX;
   _B = b / (double) COLOR_MAX;
 
-  Cmax = max(_R, max(_G, _B));
-  Cmin = min(_R, min(_G, _B));
+  Cmax = std::max(_R, std::max(_G, _B));
+  Cmin = std::min(_R, std::min(_G, _B));
 
   // calculate luminosity
   _L = (Cmax + Cmin) / 2.0;

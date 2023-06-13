@@ -140,7 +140,7 @@ protected:
   void _InsertChildren(OListTreeItem *parent, OListTreeItem *item);
   int  _SearchChildren(OListTreeItem *item, int y, int findy,
                        OListTreeItem **finditem);
-  OListTreeItem *OXListTree::_FindItem(int findy);
+  OListTreeItem *_FindItem(int findy);
 
   OListTreeItem *_first, *_selected;
   int _hspacing, _vspacing, _indent, _margin, _last_y;

@@ -18,6 +18,7 @@
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 **************************************************************************/
+#include <algorithm>
 
 #include <xclass/utils.h>
 #include <xclass/OXClient.h>
@@ -98,7 +99,7 @@ void OXMsgBox::_MsgBox(const OXWindow *main,
     Yes = new OXTextButton(ButtonFrame, new OHotString("&Yes"), ID_YES);
     Yes->Associate(this);
     ButtonFrame->AddFrame(Yes, L1);
-    width = max(width, Yes->GetDefaultWidth()); ++nb;
+    width = std::max(width, Yes->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_YESALL) {
@@ -106,63 +107,63 @@ void OXMsgBox::_MsgBox(const OXWindow *main,
                               ID_YESALL);
     YesAll->Associate(this);
     ButtonFrame->AddFrame(YesAll, L1);
-    width = max(width, YesAll->GetDefaultWidth()); ++nb;
+    width = std::max(width, YesAll->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_NO) {
     No = new OXTextButton(ButtonFrame, new OHotString("&No"), ID_NO);
     No->Associate(this);
     ButtonFrame->AddFrame(No, L1);
-    width = max(width, No->GetDefaultWidth()); ++nb;
+    width = std::max(width, No->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_OK) {
     OK = new OXTextButton(ButtonFrame, new OHotString("&OK"), ID_OK);
     OK->Associate(this);
     ButtonFrame->AddFrame(OK, L1);
-    width = max(width, OK->GetDefaultWidth()); ++nb;
+    width = std::max(width, OK->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_APPLY) {
     Apply = new OXTextButton(ButtonFrame, new OHotString("&Apply"), ID_APPLY);
     Apply->Associate(this);
     ButtonFrame->AddFrame(Apply, L1);
-    width = max(width, Apply->GetDefaultWidth()); ++nb;
+    width = std::max(width, Apply->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_RETRY) {
     Retry = new OXTextButton(ButtonFrame, new OHotString("&Retry"), ID_RETRY);
     Retry->Associate(this);
     ButtonFrame->AddFrame(Retry, L1);
-    width = max(width, Retry->GetDefaultWidth()); ++nb;
+    width = std::max(width, Retry->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_IGNORE) {
     Ignore = new OXTextButton(ButtonFrame, new OHotString("&Ignore"), ID_IGNORE);
     Ignore->Associate(this);
     ButtonFrame->AddFrame(Ignore, L1);
-    width = max(width, Ignore->GetDefaultWidth()); ++nb;
+    width = std::max(width, Ignore->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_CANCEL) {
     Cancel = new OXTextButton(ButtonFrame, new OHotString("&Cancel"), ID_CANCEL);
     Cancel->Associate(this);
     ButtonFrame->AddFrame(Cancel, L1);
-    width = max(width, Cancel->GetDefaultWidth()); ++nb;
+    width = std::max(width, Cancel->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_CLOSE) {
     Close = new OXTextButton(ButtonFrame, new OHotString("C&lose"), ID_CLOSE);
     Close->Associate(this);
     ButtonFrame->AddFrame(Close, L1);
-    width = max(width, Close->GetDefaultWidth()); ++nb;
+    width = std::max(width, Close->GetDefaultWidth()); ++nb;
   }
 
   if (buttons & ID_DISMISS) {
     Dismiss = new OXTextButton(ButtonFrame, new OHotString("&Dismiss"), ID_DISMISS);
     Dismiss->Associate(this);
     ButtonFrame->AddFrame(Dismiss, L1);
-    width = max(width, Dismiss->GetDefaultWidth()); ++nb;
+    width = std::max(width, Dismiss->GetDefaultWidth()); ++nb;
   }
 
   //--- place buttons at the bottom

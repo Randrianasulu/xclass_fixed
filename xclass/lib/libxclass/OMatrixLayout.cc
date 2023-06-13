@@ -18,6 +18,7 @@
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 **************************************************************************/
+#include <algorithm>
 
 #include <xclass/utils.h>
 #include <xclass/OXCompositeFrame.h>
@@ -62,8 +63,8 @@ ODimension OMatrixLayout::GetDefaultSize() const {
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     count++;
     csize = ptr->frame->GetDefaultSize();
-    maxsize.w = max(maxsize.w, csize.w);
-    maxsize.h = max(maxsize.h, csize.h);
+    maxsize.w = std::max(maxsize.w, csize.w);
+    maxsize.h = std::max(maxsize.h, csize.h);
   }
 
   if (rows == 0) {
@@ -87,8 +88,8 @@ void OMatrixLayout::Layout() {
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {
     csize = ptr->frame->GetDefaultSize();
-    maxsize.w = max(maxsize.w, csize.w);
-    maxsize.h = max(maxsize.h, csize.h);
+    maxsize.w = std::max(maxsize.w, csize.w);
+    maxsize.h = std::max(maxsize.h, csize.h);
   }
 
   for (ptr=*_list; ptr != NULL; ptr=ptr->next) {

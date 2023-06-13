@@ -25,6 +25,8 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 
+#include <algorithm>
+
 #include <X11/X.h>
 #include <X11/Xatom.h>
 
@@ -248,7 +250,7 @@ void OXMain::_SetDragPixmap(OXIcon *icon) {
   _font->GetFontMetrics(&fm);
   _ta = fm.ascent;
 
-  w = max(icon->GetWidth(), _tw);
+  w = std::max(icon->GetWidth(), _tw);
   h = icon->GetHeight() + _th+1 + 6;
 
   ix = (w - icon->GetWidth()) >> 1;
